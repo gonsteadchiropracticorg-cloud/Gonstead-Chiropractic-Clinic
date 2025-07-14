@@ -58,7 +58,7 @@ export const EmailContactSection = () => {
   }
 
   return (
-    <div className="w-full bg-gradient-to-br from-white via-slate-50 to-blue-50 dark:from-slate-800 dark:via-slate-700 dark:to-blue-900 rounded-2xl shadow-2xl border border-blue-200/30 dark:border-blue-700/30 p-8 transform transition-all duration-500 hover:shadow-3xl hover:scale-[1.02] relative overflow-hidden backdrop-blur-sm">
+    <div className="w-full bg-[rgb(205,223,222)] dark:from-slate-800 dark:via-slate-700 dark:to-blue-900 rounded-2xl shadow-2xl border border-blue-200/30 dark:border-blue-700/30 p-8 transform transition-all duration-500 hover:shadow-3xl hover:scale-[1.02] relative overflow-hidden backdrop-blur-sm">
       {/* Unique Get in Touch Background Pattern */}
       <div className="absolute inset-0">
         <div className="absolute top-0 right-0 w-40 h-40 bg-[rgb(49,83,113)]/10 dark:bg-white/10 rounded-full blur-2xl animate-pulse"></div>

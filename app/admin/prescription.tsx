@@ -591,14 +591,14 @@ export default function PrescriptionPage() {
         {/* Prescription Display */}
         <div ref={prescriptionRef} className="bg-white shadow-2xl border border-[#0d5c75]/20 rounded-lg overflow-hidden">
           {/* Professional Prescription Header */}
-          <div className="bg-[rgb(58,121,130)] px-8 py-6 relative">
+          <div className="bg-[rgb(64,133,133)] px-8 py-6 relative">
             <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center gap-6">
                 {/* Professional Logo Section */}
                 <div className="relative">
-                  <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center shadow-2xl border-2 border-white/30">
+                  <div className="w-20 h-20 flex items-center justify-center">
                     <Image
-                      src="/images/gonstead-chiropractic-logo-new.png"
+                      src="/images/gonstead-logo-new.png"
                       alt="Gonstead Chiropractic Logo"
                       width={70}
                       height={70}

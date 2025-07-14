@@ -1411,7 +1411,7 @@ Phone: +92 304 699 6267
             <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
               <div className="w-16 h-16 relative bg-transparent">
                 <Image
-                  src="/images/gonstead-chiropractic-logo-new.png"
+                  src="/images/gonstead-logo-new.png"
                   alt="Gonstead Logo"
                   fill
                   className="object-contain"
