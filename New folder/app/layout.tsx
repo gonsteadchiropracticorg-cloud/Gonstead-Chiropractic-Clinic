@@ -1,0 +1,102 @@
+import type React from "react"
+import type { Metadata } from "next"
+import { Poppins, Open_Sans } from "next/font/google"
+import "./globals.css"
+import { Toaster } from "@/components/ui/toaster"
+import { LanguageProvider } from "@/components/language-provider"
+import { WhatsAppFloat } from "@/components/whatsapp-float"
+import { AdvancedChatbot } from "@/components/advanced-chatbot"
+import { ThemeProvider } from "@/components/theme-provider"
+import { ErrorBoundary } from "@/components/error-boundary"
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-poppins",
+  display: "swap",
+})
+
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-open-sans",
+  display: "swap",
+})
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://gonsteadchiropractic.vercel.app/"),
+  title: "Dr. Bashir - Gonstead Certified Specialist V | Advanced Chiropractic Care",
+  description:
+    "Expert Gonstead chiropractic care by Dr. Bashir. Certified Specialist Level V with advanced machine-assisted spinal alignment. Precision treatment with cutting-edge technology.",
+  keywords:
+    "gonstead chiropractic, dr bashir, certified specialist, spinal alignment, chiropractic clinic, machine assisted treatment, video consultation, emergency chiropractic care, patient dashboard, doctor dashboard",
+  authors: [{ name: "Dr. Bashir", url: "https://gonsteadchiropractic.vercel.app/" }],
+  creator: "Dr. Bashir",
+  publisher: "Gonstead Chiropractic Clinic",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://gonsteadchiropractic.vercel.app/",
+    title: "Dr. Bashir - Gonstead Certified Specialist V",
+    description:
+      "Expert Gonstead chiropractic care with advanced machine-assisted treatment and precision spinal alignment.",
+    siteName: "Dr. Bashir Gonstead Chiropractic",
+    images: [
+      {
+        url: "/images/gonstead-chiropractic-logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Dr. Bashir Gonstead Chiropractic Clinic",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Dr. Bashir - Gonstead Certified Specialist V",
+    description:
+      "Expert Gonstead chiropractic care with advanced machine-assisted treatment and precision spinal alignment.",
+    images: ["/images/gonstead-chiropractic-logo.png"],
+    creator: "@drbashir_gonstead",
+  },
+  icons: {
+    icon: [
+      { url: "/images/gonstead-chiropractic-logo.png", sizes: "32x32", type: "image/png" },
+      { url: "/images/gonstead-chiropractic-logo.png", sizes: "16x16", type: "image/png" },
+    ],
+    shortcut: "/images/gonstead-chiropractic-logo.png",
+    apple: [{ url: "/images/gonstead-chiropractic-logo.png", sizes: "180x180", type: "image/png" }],
+  },
+  manifest: "/manifest.json",
+    generator: 'v0.dev'
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${openSans.variable}`}>
+      <head>
+        <link rel="icon" href="/images/gonstead-chiropractic-logo.png" />
+        <link rel="apple-touch-icon" href="/images/gonstead-chiropractic-logo.png" />
+        <meta name="theme-color" content="#0d5c75" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Gonstead Chiropractic" />
+      </head>
+      <body className={`${openSans.className} antialiased`} suppressHydrationWarning>
+        <ErrorBoundary>
+          <ThemeProvider>
+            <LanguageProvider>
+              {children}
+              <WhatsAppFloat />
+              <AdvancedChatbot />
+              <Toaster />
+            </LanguageProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
+      </body>
+    </html>
+  )
+}
