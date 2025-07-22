@@ -7,6 +7,12 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: process.env.VERCEL ? true : false,
   },
+  experimental: {
+    // Force generation of routes manifest
+    appDocumentPreloading: true,
+  },
+  // Explicitly enable standalone output for Vercel
+  output: process.env.VERCEL ? undefined : 'standalone',
   images: {
     // unoptimized: true, // Commented out to test deployment fix
     remotePatterns: [
