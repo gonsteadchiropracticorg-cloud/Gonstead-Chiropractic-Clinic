@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Fixed Vercel deployment - routes-manifest.json generation
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
