@@ -156,6 +156,11 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
 
   // Calculate statistics
   const calculateStats = useCallback(() => {
+    if (!appointments || !Array.isArray(appointments)) {
+      setStats({ total: 0, today: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 })
+      return
+    }
+    
     const today = new Date().toDateString()
     const stats = {
       total: appointments.length,

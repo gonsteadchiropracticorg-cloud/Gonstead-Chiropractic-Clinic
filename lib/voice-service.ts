@@ -112,10 +112,10 @@ export class VoiceService {
       // Fallback to browser's built-in TTS
       return this.useBrowserTTS(cleanText)
     } catch (error) {
-        const errorMessage = typeof error === 'object' && error && 'message' in error ? error.message : (typeof error === 'string' ? error : 'Unknown error occurred')
+        const errorMessage = typeof error === 'object' && error && 'message' in error ? String(error.message) : (typeof error === 'string' ? error : 'Unknown error occurred')
         console.error('Text-to-speech error:', {
           message: errorMessage,
-          name: typeof error === 'object' && error && 'name' in error ? error.name : 'Error'
+          name: typeof error === 'object' && error && 'name' in error ? String(error.name) : 'Error'
         })
         return {
           success: false,
@@ -201,16 +201,17 @@ export class VoiceService {
           resolve(true)
         }
 
-        audio.onerror = (error) => {
+        audio.onerror = (event) => {
           this.isPlaying = false
+          const target = event.target as HTMLAudioElement
           const errorDetails = {
-            message: error.message || 'Unknown audio error',
-            type: error.type || 'error',
-            target: error.target?.src || 'unknown source',
-            readyState: error.target?.readyState,
-            networkState: error.target?.networkState,
-            errorCode: error.target?.error?.code || 'unknown',
-            errorMessage: error.target?.error?.message || 'No detailed error'
+            message: 'Audio error occurred',
+            type: event.type || 'error',
+            target: target?.src || 'unknown source',
+            readyState: target?.readyState,
+            networkState: target?.networkState,
+            errorCode: target?.error?.code || 'unknown',
+            errorMessage: target?.error?.message || 'No detailed error'
           }
           console.error('Audio playback error:', errorDetails)
           reject(new Error(`Audio playback failed: ${errorDetails.errorMessage}`))
