@@ -230,7 +230,7 @@ export default function ComprehensiveMedicalChatbot({ onAppointmentBooked }: Com
     setIsTyping(true)
 
     // Simulate typing delay
-    setTimeout(() => {
+    setTimeout(async () => {
       const response = generateMedicalResponse(userInput)
       addBotMessage(response.response, response.metadata)
       setIsTyping(false)
