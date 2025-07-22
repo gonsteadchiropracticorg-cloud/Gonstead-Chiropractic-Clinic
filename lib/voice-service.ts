@@ -324,7 +324,12 @@ export class VoiceService {
 
   // Update voice settings
   updateVoiceSettings(settings: Partial<VoiceSettings>): void {
-    this.voiceConfig.settings = { ...this.voiceConfig.settings, ...settings }
+    this.voiceConfig.settings = { 
+      ...this.voiceConfig.settings, 
+      ...Object.fromEntries(
+        Object.entries(settings).filter(([_, value]) => value !== undefined)
+      )
+    } as VoiceSettings
   }
 
   // Set voice type for different users
