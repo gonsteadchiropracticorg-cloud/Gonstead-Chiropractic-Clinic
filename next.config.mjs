@@ -7,7 +7,7 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
-    unoptimized: true,
+    // unoptimized: true, // Commented out to test deployment fix
     remotePatterns: [
       {
         protocol: 'https',
