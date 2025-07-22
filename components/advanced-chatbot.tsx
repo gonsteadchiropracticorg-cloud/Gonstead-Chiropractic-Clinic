@@ -81,7 +81,7 @@ const [isHovered, setIsHovered] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I'm your Gonstead Chiropractic assistant. I can help you book appointments, answer questions about treatments, or connect you with Dr. Bashir Khan. How can I assist you today?",
+      text: "Hello! I'm your Gonstead Chiropractic assistant. I can help you book appointments, answer questions about treatments, or connect you with Bashir Khan Chiropractic. How can I assist you today?",
       sender: "bot",
       timestamp: new Date(),
     },
@@ -285,7 +285,7 @@ const speakWithBrowserTTS = (text: string): Promise<boolean> => {
 
     toast({
       title: "Incoming Call",
-      description: "Dr. Bashir Khan is calling you",
+      description: "Bashir Khan Chiropractic is calling you",
     })
   }
 
@@ -299,7 +299,7 @@ const speakWithBrowserTTS = (text: string): Promise<boolean> => {
 
     const callMessage: Message = {
       id: Date.now().toString(),
-      text: "Voice call connected with Dr. Bashir Khan",
+      text: "Voice call connected with Bashir Khan Chiropractic",
       sender: "bot",
       timestamp: new Date(),
       type: "voice",
@@ -308,7 +308,7 @@ const speakWithBrowserTTS = (text: string): Promise<boolean> => {
 
     toast({
       title: "Call Connected",
-      description: "You are now connected with Dr. Bashir Khan",
+      description: "You are now connected with Bashir Khan Chiropractic",
     })
   }
 
@@ -373,7 +373,7 @@ const speakWithBrowserTTS = (text: string): Promise<boolean> => {
     if (!appointmentBooking) {
       // Start booking process
       setAppointmentBooking({ step: 1 })
-      return "Great! I'll help you book an appointment with Dr. Bashir Khan. Let's start with your full name. What's your name?"
+      return "Great! I'll help you book an appointment with Bashir Khan Chiropractic. Let's start with your full name. What's your name?"
     }
 
     switch (appointmentBooking.step) {
@@ -402,7 +402,7 @@ const speakWithBrowserTTS = (text: string): Promise<boolean> => {
 
       case 4: // Getting preferred time
         setAppointmentBooking(prev => ({ ...prev!, preferredTime: userMessage, step: 5 }))
-        return "Great! Do you have any specific concerns or notes about your condition that you'd like Dr. Bashir Khan to know beforehand? (You can type 'none' if no specific notes)"
+        return "Great! Do you have any specific concerns or notes about your condition that you'd like Bashir Khan Chiropractic to know beforehand? (You can type 'none' if no specific notes)"
 
       case 5: // Getting notes and confirmation
         const notes = message === 'none' ? '' : userMessage
@@ -483,7 +483,7 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
 
   const getFallbackResponse = (message: string): string => {
     if (message.includes("gonstead") || message.includes("technique")) {
-      return "The Gonstead technique is a comprehensive system of analyzing and adjusting the spine. Dr. Bashir Khan specializes in this precise method which focuses on specific spinal analysis and targeted adjustments for optimal results. Would you like to book an appointment?"
+      return "The Gonstead technique is a comprehensive system of analyzing and adjusting the spine. Bashir Khan Chiropractic specializes in this precise method which focuses on specific spinal analysis and targeted adjustments for optimal results. Would you like to book an appointment?"
     }
 
     if (message.includes("location") || message.includes("address") || message.includes("where")) {
@@ -495,15 +495,15 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
     }
 
     if (message.includes("doctor") || message.includes("bashir")) {
-      return "Dr. Bashir Khan is a certified Gonstead Chiropractic specialist with 15+ years of experience in spinal health and adjustment techniques. He's dedicated to providing personalized care for each patient's unique needs. Would you like to book a consultation with him?"
+      return "Bashir Khan Chiropractic is a certified Gonstead Chiropractic specialist with 15+ years of experience in spinal health and adjustment techniques. Our clinic is dedicated to providing personalized care for each patient's unique needs. Would you like to book a consultation?"
     }
 
     if (message.includes("call") || message.includes("phone") || message.includes("talk")) {
-      return "Would you like me to connect you with Dr. Bashir Khan for a voice consultation? I can arrange a call right now if he's available, or you can book an appointment for a more detailed consultation."
+      return "Would you like me to connect you with Bashir Khan Chiropractic for a voice consultation? I can arrange a call right now if available, or you can book an appointment for a more detailed consultation."
     }
 
     if (message.includes("emergency") || message.includes("urgent") || message.includes("pain")) {
-      return "For urgent cases or severe pain, please call our emergency line at +92 304 699 6267 immediately. Dr. Bashir Khan provides emergency consultations. Would you like me to help you book an urgent appointment?"
+      return "For urgent cases or severe pain, please call our emergency line at +92 304 699 6267 immediately. Bashir Khan Chiropractic provides emergency consultations. Would you like me to help you book an urgent appointment?"
     }
 
     if (message.includes("hours") || message.includes("time") || message.includes("open") || message.includes("timing") || message.includes("schedule")) {
@@ -629,7 +629,7 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
                 <Image src="/images/gonstead-logo-new.png" alt="Gonstead Logo" fill className="object-contain filter drop-shadow-sm" />
               </div>
               <div className="min-w-0">
-                <CardTitle className="text-sm md:text-lg font-poppins font-semibold truncate">Dr. Bashir Khan Assistant</CardTitle>
+                <CardTitle className="text-sm md:text-lg font-poppins font-semibold truncate">Bashir Khan Chiropractic Assistant</CardTitle>
                 <p className="text-xs opacity-90 truncate">Gonstead Chiropractic Clinic</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -709,12 +709,12 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
                   <div className="w-20 h-20 mx-auto mb-4 relative">
                     <Image
                       src="/images/dr-bashir-photo.jpeg"
-                      alt="Dr. Bashir Khan"
+                      alt="Bashir Khan Chiropractic"
                       fill
                       className="object-cover rounded-full"
                     />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">Dr. Bashir Khan</h3>
+                  <h3 className="text-xl font-bold mb-2">Bashir Khan Chiropractic</h3>
                   <p className="text-sm opacity-75 mb-6">Incoming Voice Call</p>
                   <div className="flex gap-4 justify-center">
                     <Button onClick={acceptCall} className="bg-green-600 hover:bg-green-700 rounded-full w-14 h-14">

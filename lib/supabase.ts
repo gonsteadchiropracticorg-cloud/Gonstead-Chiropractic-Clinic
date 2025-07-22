@@ -168,6 +168,9 @@ export interface Patient {
   last_visit?: string
   created_at: string
   updated_at: string
+  prescription_generated?: boolean
+  prescription_count?: number
+  last_prescription_date?: string
   demographics?: {
     age?: number
     gender?: string

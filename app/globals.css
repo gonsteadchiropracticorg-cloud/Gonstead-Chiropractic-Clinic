@@ -154,6 +154,54 @@
   animation: subtle-pulse 3s ease-in-out infinite;
 }
 
+/* Appointment Confirmation Animations */
+.appointment-success-glow {
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
+  animation: success-pulse 2s ease-in-out infinite;
+}
+
+.appointment-card-hover {
+  transition: all 0.3s ease-in-out;
+  transform: translateY(0);
+}
+
+.appointment-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.document-requirement-card {
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.document-requirement-card:hover {
+  border-color: currentColor;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.rtl-document-requirement-card:hover {
+  transform: translateX(-4px);
+}
+
+.confirmation-gradient-bg {
+  background: linear-gradient(135deg, 
+    rgba(42, 157, 143, 0.1) 0%, 
+    rgba(35, 138, 122, 0.1) 50%, 
+    rgba(42, 157, 143, 0.05) 100%);
+}
+
+/* Success Animation Keyframes */
+@keyframes success-pulse {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(34, 197, 94, 0.5);
+  }
+}
+
 /* Spine-Inspired Animations */
 @keyframes spine-pulse {
   0%,

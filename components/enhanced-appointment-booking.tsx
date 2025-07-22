@@ -8,12 +8,50 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar, Video, CheckCircle, Loader2, Phone, MessageCircle, CreditCard, Clock, MapPin, AlertTriangle, Info } from "lucide-react"
+import { Calendar as CalendarIcon, Video, CheckCircle, Loader2, Phone, MessageCircle, CreditCard, Clock, MapPin, AlertTriangle, Info, X } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useLanguage } from "./language-provider"
 import { useToast } from "@/hooks/use-toast"
-import { createPatient } from "@/lib/supabase"
+import { createPatient, getAllPatients, supabase } from "@/lib/supabase"
 import { notifyNewAppointment, showBrowserNotification, requestNotificationPermission } from "@/lib/whatsapp-notifications"
+import { AppointmentConfirmation } from "./appointment-confirmation"
+
+// Business logic constants
+const BUSINESS_HOURS_START = 9 // 9:00 AM
+const BUSINESS_HOURS_END = 18 // 6:00 PM
+const APPOINTMENT_GAP_MINUTES = 40
+const SLOT_DURATION_MINUTES = 30
+const LUNCH_BREAK_START = 13 // 1:00 PM
+const LUNCH_BREAK_END = 14 // 2:00 PM
+
+// Types
+interface TimeSlot {
+  time: string
+  datetime: string
+  available: boolean
+  booked?: boolean
+}
+
+interface BookedAppointment {
+  datetime: string
+  duration: number
+}
+
+// Bilingual Messages
+const messages = {
+  slotBooked: {
+    en: "This appointment slot is already booked. Please choose a different time.",
+    ur: "یہ وقت پہلے ہی کسی مریض کے لیے بک ہو چکا ہے۔ براہ کرم کوئی اور وقت منتخب کریں۔"
+  },
+  outsideHours: {
+    en: "Selected time is outside business hours (9:00 AM - 6:00 PM).",
+    ur: "منتخب کردہ وقت کلینک کے اوقات (صبح 9 بجے سے شام 6 بجے) سے باہر ہے۔"
+  },
+  tooClose: {
+    en: "This time is too close to another appointment. Please select a time with at least 40 minutes gap.",
+    ur: "یہ وقت دوسری اپائنٹمنٹ سے بہت قریب ہے۔ براہ کرم کم از کم 40 منٹ کا فرق رکھتے ہوئے وقت منتخب کریں۔"
+  }
+}
 
 export function EnhancedAppointmentBooking() {
   const [formData, setFormData] = useState({
@@ -21,7 +59,9 @@ export function EnhancedAppointmentBooking() {
     phone: "",
     email: "",
     sessionType: "in_clinic" as "in_clinic" | "video",
-    preferredTime: "",
+    selectedDate: "",
+    selectedTime: "",
+    preferredTime: "", // Combined datetime-local value
     notes: "",
     paymentMethod: "cash" as "cash" | "jazzcash" | "easypaisa",
     urgency: "normal" as "normal" | "urgent" | "emergency",
@@ -33,6 +73,10 @@ export function EnhancedAppointmentBooking() {
   const [isMounted, setIsMounted] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [isSundaySelected, setIsSundaySelected] = useState(false)
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([])
+  const [bookedAppointments, setBookedAppointments] = useState<BookedAppointment[]>([])
+  const [validationError, setValidationError] = useState<string>("")
+  const [timeValidationMessage, setTimeValidationMessage] = useState<string>("")
   const { t, language } = useLanguage()
   const { toast } = useToast()
 
@@ -46,6 +90,72 @@ export function EnhancedAppointmentBooking() {
     return today.getDay() === 0 // Check if today is Sunday
   }
 
+  // Generate validation message based on selected time
+  const generateValidationMessage = (selectedDateTime: Date): string => {
+    if (!selectedDateTime || isNaN(selectedDateTime.getTime())) {
+      return ""
+    }
+
+    // Check if Sunday
+    if (isSunday(selectedDateTime)) {
+      return language === "ur" 
+        ? "⚠️ اتوار کو کلینک بند ہے۔ پیر سے ہفتہ تک کوئی دن منتخب کریں۔"
+        : "⚠️ Clinic is closed on Sundays. Please select Monday through Saturday."
+    }
+
+    const hour = selectedDateTime.getHours()
+    const minutes = selectedDateTime.getMinutes()
+    const now = new Date()
+
+    // Check if time is in the past
+    if (selectedDateTime < now) {
+      return language === "ur"
+        ? "⏰ یہ وقت گزر چکا ہے۔ براہ کرم آنے والا وقت منتخب کریں۔"
+        : "⏰ This time has already passed. Please select a future time."
+    }
+
+    // Check business hours
+    if (hour < BUSINESS_HOURS_START || hour >= BUSINESS_HOURS_END) {
+      return language === "ur"
+        ? `🕘 کلینک کے اوقات: صبح ${BUSINESS_HOURS_START}:00 سے شام ${BUSINESS_HOURS_END}:00 تک`
+        : `🕘 Clinic hours: ${BUSINESS_HOURS_START}:00 AM - ${BUSINESS_HOURS_END}:00 PM`
+    }
+
+    // Check lunch break
+    if (hour >= LUNCH_BREAK_START && hour < LUNCH_BREAK_END) {
+      return language === "ur"
+        ? "🍽️ دوپہر کا وقفہ (1:00 PM - 2:00 PM)۔ براہ کرم کوئی اور وقت منتخب کریں۔"
+        : "🍽️ Lunch break (1:00 PM - 2:00 PM). Please choose a different time."
+    }
+
+    // Check if too close to other appointments (simplified check)
+    // In a real app, this would check against actual booked appointments
+    const conflictFound = bookedAppointments.some(appointment => {
+      const appointmentTime = new Date(appointment.datetime).getTime()
+      const selectedTime = selectedDateTime.getTime()
+      const timeDiff = Math.abs(selectedTime - appointmentTime) / (1000 * 60)
+      return timeDiff < APPOINTMENT_GAP_MINUTES
+    })
+
+    if (conflictFound) {
+      return language === "ur"
+        ? "⚡ یہ وقت دوسری اپائنٹمنٹ سے بہت قریب ہے۔ کم از کم 40 منٹ کا فرق رکھیں۔"
+        : "⚡ This time is too close to another appointment. Please allow at least 40 minutes gap."
+    }
+
+    // If all validations pass, show a positive message
+    const timeStr = selectedDateTime.toLocaleTimeString('en-US', {
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true
+    })
+    const dateStr = selectedDateTime.toLocaleDateString()
+    
+    return language === "ur"
+      ? `✅ ${dateStr} کو ${timeStr} بجے اپائنٹمنٹ دستیاب ہے۔`
+      : `✅ Appointment available on ${dateStr} at ${timeStr}.`
+  }
+
   // Fix hydration mismatch by ensuring client-only rendering for dynamic content
   useEffect(() => {
     setIsMounted(true)
@@ -53,15 +163,46 @@ export function EnhancedAppointmentBooking() {
     requestNotificationPermission()
   }, [])
 
+  // Fetch existing appointments to prevent double-booking
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const { data: appointments, error } = await supabase
+          .from('patients')
+          .select('appointment_date')
+          .not('appointment_date', 'is', null)
+          .order('appointment_date', { ascending: true })
+
+        if (error) {
+          console.error('Error fetching appointments:', error)
+          return
+        }
+
+        const formattedAppointments = appointments.map(appointment => ({
+          datetime: appointment.appointment_date
+        }))
+        
+        setBookedAppointments(formattedAppointments)
+      } catch (error) {
+        console.error('Error fetching appointments:', error)
+      }
+    }
+
+    if (isMounted) {
+      fetchAppointments()
+    }
+  }, [isMounted])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
-      // Validate phone number (support international numbers)
-      const phoneRegex = /^(\+\d{1,3}[\s-]?)?(\(?\d{3}\)?[\s-]?)?\d{3}[\s-]?\d{4}$|^(\+\d{1,3})?\d{10,14}$/
-      if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-        throw new Error(language === "ur" ? "غلط فون نمبر" : "Invalid phone number format")
+      // Validate phone number (support Pakistani and international numbers)
+      const cleanPhone = formData.phone.replace(/[\s-()]/g, '')
+      const phoneRegex = /^(\+92|0)?3[0-9]{9}$|^(\+\d{1,3})?\d{10,14}$/
+      if (!phoneRegex.test(cleanPhone)) {
+        throw new Error(language === "ur" ? "غلط فون نمبر - پاکستانی نمبر (03xxxxxxxxx) یا بین الاقوامی نمبر درج کریں" : "Invalid phone number - Please enter Pakistani (03xxxxxxxxx) or international format")
       }
 
       // Validate required fields
@@ -69,16 +210,42 @@ export function EnhancedAppointmentBooking() {
         throw new Error(language === "ur" ? "نام درج کریں" : "Name is required")
       }
 
-      if (!formData.preferredTime) {
+      if (!formData.selectedDate || !formData.selectedTime) {
         throw new Error(language === "ur" ? "تاریخ اور وقت منتخب کریں" : "Please select date and time")
       }
 
-      // Validate Sunday selection
-      const selectedDateTime = new Date(formData.preferredTime)
+      // Validate appointment slot
+      const selectedDateTime = new Date(`${formData.selectedDate}T${formData.selectedTime}`)
+      
+      // Check if Sunday
       if (isSunday(selectedDateTime)) {
         throw new Error(language === "ur" 
           ? "اتوار کو کلینک بند ہے۔ براہ کرم پیر سے ہفتہ تک کوئی دن منتخب کریں۔" 
           : "Clinic is closed on Sundays. Please select Monday through Saturday.")
+      }
+      
+      // Validate business hours
+      const hour = selectedDateTime.getHours()
+      if (hour < BUSINESS_HOURS_START || hour >= BUSINESS_HOURS_END) {
+        throw new Error(messages.outsideHours[language])
+      }
+      
+      // Validate lunch break
+      if (hour >= LUNCH_BREAK_START && hour < LUNCH_BREAK_END) {
+        throw new Error(language === "ur" 
+          ? "دوپہر کے کھانے کا وقت (1:00 PM - 2:00 PM) میں اپائنٹمنٹ دستیاب نہیں۔" 
+          : "Appointments not available during lunch break (1:00 PM - 2:00 PM).")
+      }
+      
+      // Check for conflicts with existing appointments
+      const selectedTime = selectedDateTime.getTime()
+      for (const appointment of bookedAppointments) {
+        const appointmentTime = new Date(appointment.datetime).getTime()
+        const timeDiff = Math.abs(selectedTime - appointmentTime) / (1000 * 60) // in minutes
+        
+        if (timeDiff < APPOINTMENT_GAP_MINUTES) {
+          throw new Error(messages.tooClose[language])
+        }
       }
 
       // Create patient record in Supabase
@@ -87,7 +254,7 @@ export function EnhancedAppointmentBooking() {
         phone: formData.phone,
         email: formData.email,
         session_type: formData.sessionType,
-        appointment_date: formData.preferredTime,
+        appointment_date: `${formData.selectedDate}T${formData.selectedTime}`,
         status: "pending" as const,
         urgency: formData.urgency,
         notes: formData.notes,
@@ -96,6 +263,14 @@ export function EnhancedAppointmentBooking() {
 
       const newPatient = await createPatient(patientData)
       const appointmentId = newPatient.id
+
+      // Update local state with the new appointment to prevent double booking
+      const newBookedAppointment: BookedAppointment = {
+        id: appointmentId,
+        datetime: `${formData.selectedDate}T${formData.selectedTime}`,
+        name: formData.name
+      }
+      setBookedAppointments(prev => [...prev, newBookedAppointment])
 
       setAppointmentId(appointmentId)
       setIsSubmitted(true)
@@ -107,7 +282,7 @@ export function EnhancedAppointmentBooking() {
         phone: formData.phone,
         email: formData.email,
         session_type: formData.sessionType,
-        appointment_date: formData.preferredTime,
+        appointment_date: `${formData.selectedDate}T${formData.selectedTime}`,
         status: "pending" as const,
         urgency: formData.urgency,
         payment_method: formData.paymentMethod || "cash" as const,
@@ -142,7 +317,7 @@ export function EnhancedAppointmentBooking() {
           patientName: formData.name,
           phone: formData.phone,
           email: formData.email,
-          appointmentDate: formData.preferredTime,
+          appointmentDate: `${formData.selectedDate}T${formData.selectedTime}`,
           sessionType: formData.sessionType,
           urgency: formData.urgency,
           notes: formData.notes
@@ -153,7 +328,7 @@ export function EnhancedAppointmentBooking() {
           detail: {
             ...patientForLocalStorage,
             // Ensure correct field mapping for admin dashboard
-            appointmentDate: formData.preferredTime,
+            appointmentDate: `${formData.selectedDate}T${formData.selectedTime}`,
             sessionType: formData.sessionType,
           }
         })
@@ -187,44 +362,52 @@ export function EnhancedAppointmentBooking() {
     }
   }
 
+  // Priority rendering: Show confirmation section first when submitted
   if (isSubmitted) {
     return (
-      <Card className="border-[rgb(76,157,144)] bg-gradient-to-br from-[rgb(76,157,144)]/10 to-[rgb(66,147,134)]/10 dark:from-[rgb(76,157,144)]/20 dark:to-[rgb(66,147,134)]/20 shadow-2xl">
-        <CardContent className="text-center p-6 md:p-8">
-          <div className="animate-bounce mb-6">
-            <CheckCircle className="h-16 w-16 md:h-24 md:w-24 text-[rgb(76,157,144)] mx-auto" />
-          </div>
-          <h3 className="text-2xl md:text-4xl font-bold text-[rgb(76,157,144)] dark:text-[rgb(76,157,144)] mb-4">
-            {language === "ur" ? "کامیابی!" : "Success!"}
-          </h3>
-          <p className="text-[rgb(66,147,134)] dark:text-[rgb(86,167,154)] mb-6 text-base md:text-lg">
-            {language === "ur"
-              ? "آپ کی اپائنٹمنٹ کامیابی سے بک ہو گئی ہے۔"
-              : "Your appointment has been successfully booked."}
-          </p>
-
-          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow-inner mb-6 border border-[rgb(76,157,144)]/20">
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-              <strong>Appointment ID:</strong> {appointmentId}
-            </p>
-            <p className="text-xs text-gray-500">
-              {language === "ur" ? "یہ ID محفوظ رکھیں" : "Please save this ID for your records"}
-            </p>
-          </div>
-
-          <div className="flex justify-center">
-            <Button
-              asChild
-              className="bg-gradient-to-r from-[rgb(76,157,144)] to-[rgb(66,147,134)] hover:from-[rgb(66,147,134)] hover:to-[rgb(56,137,124)] text-white"
-            >
-              <a href="tel:+923046996267" className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                {language === "ur" ? "ڈاکٹر کو کال کریں" : "Call Dr. Bashir"}
-              </a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-50 to-emerald-50">
+        <AppointmentConfirmation 
+          appointmentData={{
+            name: formData.name,
+            phone: formData.phone,
+            sessionType: formData.sessionType,
+            preferredTime: `${formData.selectedDate}T${formData.selectedTime}`,
+            appointmentId: appointmentId
+          }}
+          onBackToHome={() => {
+            setIsSubmitted(false)
+            setFormData({
+              name: "",
+              phone: "",
+              email: "",
+              sessionType: "in_clinic",
+              selectedDate: "",
+              selectedTime: "",
+              preferredTime: "",
+              notes: "",
+              paymentMethod: "cash",
+              urgency: "normal",
+              bookingType: "direct",
+            })
+          }}
+          onNewAppointment={() => {
+            setIsSubmitted(false)
+            setFormData({
+              name: "",
+              phone: "",
+              email: "",
+              sessionType: "in_clinic",
+              selectedDate: "",
+              selectedTime: "",
+              preferredTime: "",
+              notes: "",
+              paymentMethod: "cash",
+              urgency: "normal",
+              bookingType: "direct",
+            })
+          }}
+        />
+      </div>
     )
   }
 
@@ -418,7 +601,7 @@ export function EnhancedAppointmentBooking() {
               <div className="flex items-center space-x-4 p-4 md:p-6 border-2 border-[rgb(66,139,124)]/20 rounded-2xl hover:border-[rgb(66,139,124)]/50 hover:bg-[rgb(66,139,124)]/5 transition-all duration-300 cursor-pointer">
                 <RadioGroupItem value="in_clinic" id="clinic" className="border-[rgb(50,106,122)] data-[state=checked]:bg-[rgb(50,106,122)] data-[state=checked]:border-[rgb(50,106,122)] text-[rgb(50,106,122)] w-5 h-5" />
                 <Label htmlFor="clinic" className="flex items-center gap-3 md:gap-4 cursor-pointer flex-1">
-                  <Calendar className="h-6 w-6 md:h-8 md:w-8 text-[rgb(66,139,124)]" />
+                  <CalendarIcon className="h-6 w-6 md:h-8 md:w-8 text-[rgb(66,139,124)]" />
                   <div>
                     <div className="font-bold text-base md:text-lg text-gray-800 dark:text-gray-200">
                       {language === "ur" ? "کلینک میں گونسٹیڈ ایڈجسٹمنٹ" : "In-clinic Gonstead Adjustment"}
@@ -508,7 +691,20 @@ export function EnhancedAppointmentBooking() {
                 const selectedDateTime = new Date(e.target.value)
                 setSelectedDate(selectedDateTime)
                 setIsSundaySelected(isSunday(selectedDateTime))
-                setFormData((prev) => ({ ...prev, preferredTime: e.target.value }))
+                
+                // Generate validation message
+                const validationMsg = generateValidationMessage(selectedDateTime)
+                setTimeValidationMessage(validationMsg)
+                
+                // Split datetime-local value into date and time components
+                const [dateStr, timeStr] = e.target.value.split('T')
+                
+                setFormData((prev) => ({ 
+                  ...prev, 
+                  preferredTime: e.target.value,
+                  selectedDate: dateStr || '',
+                  selectedTime: timeStr || ''
+                }))
               }}
               className={`border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)] h-10 md:h-12 text-sm md:text-base ${
                 isSundaySelected ? 'border-red-500 bg-red-50' : ''
@@ -516,6 +712,19 @@ export function EnhancedAppointmentBooking() {
               min={new Date().toISOString().slice(0, 16)}
               required
             />
+            {/* Dynamic validation message */}
+            {timeValidationMessage && (
+              <div className={`mt-2 p-2 rounded-md text-xs font-medium flex items-start gap-2 ${
+                timeValidationMessage.includes('✅') 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}>
+                <div className="flex-1">
+                  {timeValidationMessage}
+                </div>
+              </div>
+            )}
+            
             {isSundaySelected && (
               <p className="text-red-600 text-xs font-medium">
                 ⚠️ {language === "ur" ? "اتوار منتخب کیا گیا - کلینک بند" : "Sunday selected - Clinic closed"}
@@ -557,7 +766,7 @@ export function EnhancedAppointmentBooking() {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Calendar className="h-5 w-5 md:h-6 md:w-6" />
+                <CalendarIcon className="h-5 w-5 md:h-6 md:w-6" />
                 {t("book.appointment")}
               </div>
             )}

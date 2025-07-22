@@ -33,7 +33,7 @@ import Image from "next/image"
 import { EnhancedAppointmentBooking } from "@/components/enhanced-appointment-booking"
 import { TechnologyShowcase } from "@/components/technology-showcase"
 import { AdvancedChatbot } from "@/components/advanced-chatbot"
-import { WhatsAppFloat } from "@/components/whatsapp-float"
+import { SportsInjuriesFloat } from "@/components/sports-injuries-float"
 import { LanguageProvider, useLanguage } from "@/components/language-provider"
 import { LanguageToggle } from "@/components/language-toggle"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -42,7 +42,8 @@ import { AppointmentBookingModal } from "@/components/appointment-booking-modal"
 import { VoiceAssistantButton } from "@/components/voice-assistant-button"
 import { EmailContactSection } from "@/components/EmailContactSection"
 import { FooterWeatherWidget } from "@/components/footer-weather-widget"
-import { TrustpilotReviewPreview } from "@/components/TrustpilotReviewPreview"
+import { TrustpilotReviewPreview } from '@/components/TrustpilotReviewPreview'
+import { PreVisitInstructions } from "@/components/pre-visit-instructions"
 
 function HomePageContent() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -115,7 +116,7 @@ function HomePageContent() {
                 </h1>
                 <p className="text-xs sm:text-sm font-medium leading-tight mt-1">
                   <span className="text-white/90 font-medium tracking-wide">
-                    Dr. Bashir Khan
+                    Bashir Khan Chiropractic
                   </span>
                 </p>
                 <span className="text-xs text-white/80 font-medium tracking-wider mt-0.5">
@@ -305,7 +306,7 @@ function HomePageContent() {
                       onClick={() => {
                         const link = document.createElement('a');
                         link.href = '/images/visiting-card.png';
-                        link.download = 'Dr_Bashir_Khan_Visiting_Card.png';
+                        link.download = 'Bashir_Khan_Chiropractic_Visiting_Card.png';
                         link.click();
                       }}
                       className="border border-emerald-300/50 text-emerald-300 hover:bg-emerald-300/10 hover:border-emerald-300 px-4 py-2 text-sm font-medium rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105 flex items-center gap-2"
@@ -361,7 +362,7 @@ function HomePageContent() {
                         {/* Professional Title Overlay */}
                         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                           <div className="space-y-2">
-                            <h3 className="text-2xl font-bold">Dr. Bashir Khan</h3>
+                            <h3 className="text-2xl font-bold">Bashir Khan Chiropractic</h3>
                             <p className="text-blue-300 font-medium">Gonstead Certified Specialist</p>
                             <div className="flex items-center gap-2 text-sm text-cyan-200">
                               <Award className="h-4 w-4" />
@@ -782,6 +783,11 @@ function HomePageContent() {
                   </div>
                 </div>
               </div>
+              
+              {/* Pre-Visit Instructions Section */}
+              <div className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <PreVisitInstructions />
+              </div>
             </div>
           </section>
 
@@ -810,7 +816,7 @@ function HomePageContent() {
                   </span>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#0d5c75] via-[#2a9d8f] to-[#0d5c75] bg-clip-text text-transparent mb-6 font-poppins leading-tight">
-                  Dr. Bashir Khan
+                  Bashir Khan Chiropractic
                 </h2>
                 <div className="inline-block mb-6">
                   <span className="text-xl md:text-2xl font-semibold text-[#2a9d8f] dark:text-blue-400 bg-gradient-to-r from-[#2a9d8f]/10 to-[#0d5c75]/10 px-6 py-2 rounded-full border border-[#2a9d8f]/20">
@@ -880,7 +886,7 @@ function HomePageContent() {
                 {/* Content Section - Mobile Second */}
                 <div className="order-2 lg:order-1 space-y-6">
                   <div>
-                    <h3 className="text-2xl font-bold text-[#0d5c75] dark:text-white mb-2">Dr. Bashir Khan</h3>
+                    <h3 className="text-2xl font-bold text-[#0d5c75] dark:text-white mb-2">Bashir Khan Chiropractic</h3>
                     <p className="text-lg text-[#2a9d8f] dark:text-blue-400 font-semibold mb-4">
                       Gonstead Certified Specialist
                     </p>
@@ -1165,6 +1171,76 @@ function HomePageContent() {
             <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#00b67a]/20 to-transparent"></div>
           </section>
 
+          {/* Patient Education Access Section */}
+          <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 text-white py-12 px-4 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950">
+            {/* Sophisticated Background Elements */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+            </div>
+            
+            {/* Subtle grid pattern */}
+            <div className="absolute inset-0 opacity-5" style={{
+              backgroundImage: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><defs><pattern id='grid' width='60' height='60' patternUnits='userSpaceOnUse'><path d='M 60 0 L 0 0 0 60' fill='none' stroke='white' stroke-width='1'/></pattern></defs><rect width='100%' height='100%' fill='url(%23grid)'/></svg>")`
+            }}></div>
+            
+            {/* Main Content */}
+            <div className="relative max-w-6xl mx-auto">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                {/* Left Content */}
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="flex items-center justify-center lg:justify-start mb-4">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl mr-4 shadow-lg">
+                      <BookOpen className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-200 to-teal-200 bg-clip-text text-transparent">
+                      Advanced Patient Education Resources
+                    </h2>
+                  </div>
+                  
+                  <p className="text-lg text-slate-300 mb-6 max-w-2xl leading-relaxed">
+                    Discover valuable insights into chiropractic care and enhance your healing journey with our meticulously curated guides.
+                  </p>
+                  
+                  {/* Enhanced Benefits */}
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-4 mb-8">
+                    <div className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 backdrop-blur-sm border border-emerald-500/20 rounded-full px-5 py-3 hover:from-emerald-600/30 hover:to-teal-600/30 transition-all duration-300 shadow-md hover:shadow-lg">
+                      <Award className="w-5 h-5 text-emerald-300" />
+                      <span className="text-sm text-emerald-200 font-medium">Expert-Approved</span>
+                    </div>
+                    <div className="flex items-center space-x-2 bg-gradient-to-r from-teal-600/20 to-cyan-600/20 backdrop-blur-sm border border-teal-500/20 rounded-full px-5 py-3 hover:from-teal-600/30 hover:to-cyan-600/30 transition-all duration-300 shadow-md hover:shadow-lg">
+                      <Clock className="w-5 h-5 text-teal-300" />
+                      <span className="text-sm text-teal-200 font-medium">Always Updated</span>
+                    </div>
+                    <div className="flex items-center space-x-2 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 backdrop-blur-sm border border-cyan-500/20 rounded-full px-5 py-3 hover:from-cyan-600/30 hover:to-blue-600/30 transition-all duration-300 shadow-md hover:shadow-lg">
+                      <Users className="w-5 h-5 text-cyan-300" />
+                      <span className="text-sm text-cyan-200 font-medium">Easy to Follow</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Right CTA */}
+                <div className="flex-shrink-0">
+                  <a
+                    href="/educational-guide.html"
+                    className="group inline-flex items-center px-10 py-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl 
+                             hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-2xl hover:shadow-lg
+                             transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:ring-offset-2 focus:ring-offset-slate-900
+                             border border-emerald-400/20 backdrop-blur-sm"
+                    aria-label="View comprehensive educational guide for chiropractic patients"
+                  >
+                    <BookOpen className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-300 animate-bounce-slow" />
+                    <span className="relative">
+                      View Guide
+                      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white/50 group-hover:w-full transition-all duration-300"></span>
+                    </span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+
           {/* Footer */}
           <footer className="bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/20 text-white py-8">
             <div className="container mx-auto px-4">
@@ -1181,7 +1257,7 @@ function HomePageContent() {
                     />
                     <div>
                       <h3 className="text-xl font-bold font-poppins">Gonstead Chiropractic</h3>
-                      <p className="text-xs text-white/80">Dr. Bashir Khan</p>
+                      <p className="text-xs text-white/80">Bashir Khan Chiropractic</p>
                     </div>
                   </div>
                   <p className="text-sm text-white/80 max-w-xs mx-auto md:mx-0">
@@ -1232,7 +1308,7 @@ function HomePageContent() {
 
         {/* Floating Components */}
         <AdvancedChatbot />
-        <WhatsAppFloat />
+        <SportsInjuriesFloat />
     </>
   )
 }

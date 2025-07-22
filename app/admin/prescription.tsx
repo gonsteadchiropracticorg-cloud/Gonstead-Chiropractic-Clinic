@@ -31,6 +31,12 @@ interface PrescriptionMedication {
   instructions: string
 }
 
+interface ChiropracticRecommendation {
+  id: string
+  title: string
+  description: string
+}
+
 interface FeeDetail {
   service: string
   description: string
@@ -56,6 +62,8 @@ interface PrescriptionPatient {
   feeDetails: FeeDetail[]
   totalFee: number
   paymentStatus: 'pending' | 'partial' | 'paid'
+  chiropracticRecommendations: ChiropracticRecommendation[]
+  postureProblems: string
 }
 
 const initialPatient: PrescriptionPatient = {
@@ -70,7 +78,9 @@ const initialPatient: PrescriptionPatient = {
   prescriptionDate: new Date().toISOString().split('T')[0],
   feeDetails: [{ service: "Consultation", description: "Initial Gonstead Assessment", amount: 3000, quantity: 1, total: 3000 }],
   totalFee: 3000,
-  paymentStatus: 'pending'
+  paymentStatus: 'pending',
+  chiropracticRecommendations: [{ id: '1', title: 'Spinal Adjustment', description: 'Regular chiropractic adjustments as needed' }],
+  postureProblems: ""
 }
 
 export default function PrescriptionPage() {
@@ -88,7 +98,9 @@ export default function PrescriptionPage() {
         ...initialPatient,
         ...parsedData,
         medications: parsedData.medications || initialPatient.medications,
-        prescriptionDate: new Date().toISOString().split('T')[0]
+        prescriptionDate: new Date().toISOString().split('T')[0],
+        chiropracticRecommendations: parsedData.chiropracticRecommendations || initialPatient.chiropracticRecommendations,
+        postureProblems: parsedData.postureProblems || ""
       })
     }
   }, [])
@@ -102,8 +114,74 @@ export default function PrescriptionPage() {
       const editingElements = document.querySelectorAll('.editing-controls')
       editingElements.forEach(el => (el as HTMLElement).style.display = 'none')
       
-      // Wait for element to be hidden
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Apply single-page fitting styles
+      const prescriptionElement = prescriptionRef.current
+      const originalStyles = {
+        fontSize: prescriptionElement.style.fontSize,
+        lineHeight: prescriptionElement.style.lineHeight,
+        padding: prescriptionElement.style.padding
+      }
+      
+      // Enhanced single-page layout logic with improved scaling
+      const contentHeight = prescriptionElement.scrollHeight
+      const maxHeight = 1120 // Slightly increased A4 height in pixels at 96 DPI for better fit
+      
+      if (contentHeight > maxHeight) {
+        const scaleFactor = Math.max(Math.min(maxHeight / contentHeight, 0.92), 0.72) // Improved scaling range
+        
+        // Apply comprehensive scaling to all elements
+        prescriptionElement.style.fontSize = `${scaleFactor * 100}%`
+        prescriptionElement.style.lineHeight = `${scaleFactor * 1.4}`
+        prescriptionElement.style.padding = `${scaleFactor * 32}px`
+        
+        // Scale section spacing dynamically
+        const sections = prescriptionElement.querySelectorAll('.mb-6')
+        sections.forEach(section => {
+          (section as HTMLElement).style.marginBottom = `${scaleFactor * 24}px`
+        })
+        
+        // Scale padding and gaps for better fit
+        const contentDivs = prescriptionElement.querySelectorAll('.p-8, .p-6, .p-4, .p-3')
+        contentDivs.forEach(div => {
+          const currentPadding = parseFloat(window.getComputedStyle(div).padding)
+          ;(div as HTMLElement).style.padding = `${currentPadding * scaleFactor}px`
+        })
+        
+        // Scale margins for better spacing
+        const marginElements = prescriptionElement.querySelectorAll('.mt-6, .mt-4, .mt-3, .mt-2')
+        marginElements.forEach(element => {
+          const currentMargin = parseFloat(window.getComputedStyle(element).marginTop)
+          ;(element as HTMLElement).style.marginTop = `${currentMargin * scaleFactor}px`
+        })
+        
+        // Scale gaps in grid layouts
+        const gridElements = prescriptionElement.querySelectorAll('.gap-6, .gap-4, .gap-3, .gap-2')
+        gridElements.forEach(grid => {
+          const currentGap = parseFloat(window.getComputedStyle(grid).gap)
+          ;(grid as HTMLElement).style.gap = `${currentGap * scaleFactor}px`
+        })
+        
+        // Don't scale footer - keep it fixed at bottom
+        const footerElements = prescriptionElement.querySelectorAll('.mt-auto, .footer-fixed')
+        footerElements.forEach(footer => {
+          (footer as HTMLElement).style.transform = 'none';
+          (footer as HTMLElement).style.fontSize = 'inherit';
+          (footer as HTMLElement).style.padding = '24px 0';
+          (footer as HTMLElement).style.marginTop = 'auto';
+        })
+        
+        // Don't scale professional footer section
+        const professionalFooter = prescriptionElement.querySelectorAll('.professional-footer')
+        professionalFooter.forEach(footer => {
+          (footer as HTMLElement).style.transform = 'none';
+          (footer as HTMLElement).style.fontSize = 'inherit';
+          (footer as HTMLElement).style.padding = '24px 32px';
+          (footer as HTMLElement).style.marginTop = '24px';
+        })
+      }
+      
+      // Wait for styles to apply
+      await new Promise(resolve => setTimeout(resolve, 200))
       
       const canvas = await html2canvas(prescriptionRef.current, {
         scale: 2,
@@ -121,22 +199,32 @@ export default function PrescriptionPage() {
       const imgWidth = 210
       const pageHeight = 295
       const imgHeight = (canvas.height * imgWidth) / canvas.width
-      let heightLeft = imgHeight
       
-      let position = 0
-      
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight
-        pdf.addPage()
+      // Try to fit on single page, if not, use original multi-page logic
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
+      } else {
+        let heightLeft = imgHeight
+        let position = 0
+        
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
         heightLeft -= pageHeight
+        
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight
+          pdf.addPage()
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+          heightLeft -= pageHeight
+        }
       }
       
       const fileName = `Prescription_${patient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
       pdf.save(fileName)
+      
+      // Restore original styles
+      prescriptionElement.style.fontSize = originalStyles.fontSize
+      prescriptionElement.style.lineHeight = originalStyles.lineHeight
+      prescriptionElement.style.padding = originalStyles.padding
       
       // Show editing controls again
       editingElements.forEach(el => (el as HTMLElement).style.display = '')
@@ -152,16 +240,50 @@ export default function PrescriptionPage() {
   }
 
   const handlePrint = () => {
-    // Hide editing controls for print
-    const editingElements = document.querySelectorAll('.editing-controls')
-    editingElements.forEach(el => (el as HTMLElement).style.display = 'none')
-    
-    window.print()
-    
-    // Show editing controls again after print
-    setTimeout(() => {
-      editingElements.forEach(el => (el as HTMLElement).style.display = '')
-    }, 1000)
+    try {
+      // Hide editing controls for print
+      const editingElements = document.querySelectorAll('.editing-controls')
+      editingElements.forEach(el => (el as HTMLElement).style.display = 'none')
+      
+      // Add print-specific styles
+      const printStyles = document.createElement('style')
+      printStyles.innerHTML = `
+        @media print {
+          @page { margin: 0.5in; size: A4; }
+          .editing-controls { display: none !important; }
+          header { display: none !important; }
+          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .no-print { display: none !important; }
+          * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+        }
+      `
+      document.head.appendChild(printStyles)
+      
+      // Wait for styles to apply and ensure DOM is ready
+      setTimeout(() => {
+        try {
+          window.print()
+        } catch (printError) {
+          console.error('Print execution error:', printError)
+          alert('Print failed. Please try the PDF download option instead.')
+        }
+        
+        // Clean up after print with error handling
+        setTimeout(() => {
+          try {
+            editingElements.forEach(el => (el as HTMLElement).style.display = '')
+            if (document.head.contains(printStyles)) {
+              document.head.removeChild(printStyles)
+            }
+          } catch (cleanupError) {
+            console.error('Cleanup error:', cleanupError)
+          }
+        }, 1000)
+      }, 200)
+    } catch (error) {
+      console.error('Print error:', error)
+      alert('Print failed. Please try the PDF download option instead.')
+    }
   }
 
   const handleInputChange = (field: keyof PrescriptionPatient, value: string | number) => {
@@ -215,10 +337,33 @@ export default function PrescriptionPage() {
     setPatient({ ...patient, feeDetails, totalFee })
   }
 
+  const handleChiropracticRecommendationChange = (index: number, field: 'title' | 'description', value: string) => {
+    const recommendations = [...patient.chiropracticRecommendations]
+    recommendations[index] = { ...recommendations[index], [field]: value }
+    setPatient({ ...patient, chiropracticRecommendations: recommendations })
+  }
+
+  const addChiropracticRecommendation = () => {
+    const newRecommendation: ChiropracticRecommendation = {
+      id: Date.now().toString(),
+      title: '',
+      description: ''
+    }
+    setPatient({ 
+      ...patient, 
+      chiropracticRecommendations: [...patient.chiropracticRecommendations, newRecommendation]
+    })
+  }
+
+  const removeChiropracticRecommendation = (index: number) => {
+    const recommendations = patient.chiropracticRecommendations.filter((_, i) => i !== index)
+    setPatient({ ...patient, chiropracticRecommendations: recommendations })
+  }
+
   return (
     <div className="min-h-screen bg-[rgb(220,230,229)]">
       {/* Header */}
-      <header className="bg-[rgb(58,121,130)] text-white shadow-2xl">
+      <header className="bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] text-white shadow-2xl">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -235,12 +380,18 @@ export default function PrescriptionPage() {
               
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-12 h-12 relative">
+                  <div className="w-16 h-16 relative">
                     <Image
-                      src="/images/gonstead-chiropractic-logo-new.png"
-                      alt="Gonstead Logo"
+                      src="/images/gonstead-logo-new.png"
+                      alt="Gonstead Chiropractic Logo"
                       fill
                       className="object-contain"
+                      priority
+                      onError={(e) => {
+                        console.error('Logo failed to load:', e);
+                        // Try fallback logo
+                        e.currentTarget.src = '/images/gonstead-chiropractic-logo-new.png';
+                      }}
                     />
                   </div>
                 </div>
@@ -584,102 +735,291 @@ export default function PrescriptionPage() {
                   />
                 </div>
               </div>
+
+              {/* Chiropractic Care Recommendations */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="text-lg font-semibold text-[#0d5c75]">Chiropractic Care Recommendations</Label>
+                  <Button
+                    onClick={addChiropracticRecommendation}
+                    className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Recommendation
+                  </Button>
+                </div>
+                
+                {patient.chiropracticRecommendations.map((recommendation, index) => (
+                  <Card key={recommendation.id} className="mb-4 border-[#0d5c75]/20">
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-semibold text-[#0d5c75]">Title *</Label>
+                          <Input
+                            value={recommendation.title}
+                            onChange={(e) => handleChiropracticRecommendationChange(index, 'title', e.target.value)}
+                            className="mt-1 border-[#0d5c75]/30 focus:border-[#0d5c75]"
+                            placeholder="e.g., Spinal Adjustment"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button
+                            onClick={() => removeChiropracticRecommendation(index)}
+                            variant="destructive"
+                            className="w-full"
+                            disabled={patient.chiropracticRecommendations.length === 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <Label className="text-sm font-semibold text-[#0d5c75]">Description</Label>
+                        <Textarea
+                          value={recommendation.description}
+                          onChange={(e) => handleChiropracticRecommendationChange(index, 'description', e.target.value)}
+                          className="mt-1 border-[#0d5c75]/30 focus:border-[#0d5c75] min-h-[80px]"
+                          placeholder="e.g., Regular chiropractic adjustments as needed for spinal alignment"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Posture Problems */}
+              <div className="mt-6">
+                <Label className="text-sm font-semibold text-[#0d5c75]">Posture Problems (Optional)</Label>
+                <Textarea
+                  value={patient.postureProblems}
+                  onChange={(e) => handleInputChange('postureProblems', e.target.value)}
+                  className="mt-1 border-[#0d5c75]/30 focus:border-[#0d5c75] min-h-[100px]"
+                  placeholder="Enter any posture-related problems or observations"
+                />
+              </div>
             </CardContent>
           </Card>
         )}
 
         {/* Prescription Display */}
-        <div ref={prescriptionRef} className="bg-white shadow-2xl border border-[#0d5c75]/20 rounded-lg overflow-hidden">
-          {/* Professional Prescription Header */}
-          <div className="bg-[rgb(64,133,133)] px-8 py-6 relative">
-            <div className="flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-6">
-                {/* Professional Logo Section */}
-                <div className="relative">
-                  <div className="w-20 h-20 flex items-center justify-center">
-                    <Image
-                      src="/images/gonstead-logo-new.png"
-                      alt="Gonstead Chiropractic Logo"
-                      width={70}
-                      height={70}
-                      className="object-contain filter drop-shadow-lg"
-                    />
+        <div ref={prescriptionRef} className="bg-white shadow-2xl border border-[#0d5c75]/20 rounded-lg overflow-hidden min-h-[297mm] flex flex-col">
+          {/* Professional Prescription Header - Outstanding & Eye-Catching */}
+          <div className="relative bg-gradient-to-br from-[#0d5c75] via-[#1a6b7a] to-[#2a9d8f] px-0 py-0 overflow-hidden">
+            {/* Animated Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 left-0 w-full h-full">
+                <div className="absolute top-10 left-10 w-20 h-20 border-2 border-white/20 rounded-full animate-pulse"></div>
+                <div className="absolute top-20 right-20 w-16 h-16 border-2 border-[#f3a800]/30 rounded-full animate-pulse delay-1000"></div>
+                <div className="absolute bottom-10 left-1/3 w-12 h-12 border-2 border-white/15 rounded-full animate-pulse delay-2000"></div>
+                <div className="absolute bottom-20 right-1/4 w-14 h-14 border-2 border-[#f3a800]/20 rounded-full animate-pulse delay-3000"></div>
+              </div>
+            </div>
+            
+            {/* Premium Top Border */}
+            <div className="h-2 bg-gradient-to-r from-[#f3a800] via-[#ffd700] to-[#f3a800] shadow-lg"></div>
+            
+            {/* Main Header Content */}
+            <div className="relative z-10 px-8 py-8">
+              {/* Top Section - Clinic Branding */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-8">
+                  {/* Premium Logo Section - Maximum Enlarged */}
+                  <div className="relative">
+                    <div className="w-80 h-80 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center shadow-2xl border-4 border-white/30">
+                      <div className="w-76 h-76 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <Image
+                          src="/images/gonstead-logo-new.png"
+                          alt="Gonstead Chiropractic Logo"
+                          width={350}
+                          height={350}
+                          className="object-contain filter drop-shadow-2xl"
+                          priority
+                          onError={(e) => {
+                            console.error('Logo failed to load:', e);
+                            e.currentTarget.src = '/images/gonstead-chiropractic-logo-new.png';
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {/* Logo Glow Effect */}
+                    <div className="absolute inset-0 w-80 h-80 bg-[#f3a800]/20 rounded-full animate-pulse"></div>
                   </div>
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#f3a800] rounded-full flex items-center justify-center shadow-lg">
-                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                  
+                  {/* Main Title & Branding */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-1 h-12 bg-gradient-to-b from-[#f3a800] to-[#ffd700] rounded-full shadow-lg"></div>
+                      <div>
+                        <h1 className="text-4xl font-black font-poppins text-white tracking-wide drop-shadow-2xl">
+                          GONSTEAD CHIROPRACTIC
+                        </h1>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-8 h-0.5 bg-gradient-to-r from-[#f3a800] to-transparent"></div>
+                          <p className="text-lg font-bold text-[#f3a800] tracking-widest drop-shadow-lg">
+                            PROFESSIONAL CLINIC
+                          </p>
+                          <div className="w-8 h-0.5 bg-gradient-to-l from-[#f3a800] to-transparent"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Specialty Badge */}
+                    <div className="flex items-center gap-3 mt-3">
+                      <div className="bg-gradient-to-r from-[#f3a800] to-[#ffd700] px-4 py-1 rounded-full shadow-lg border border-white/30">
+                        <p className="text-xs font-bold text-white tracking-wide">CERTIFIED SPECIALIST</p>
+                      </div>
+                      <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/30">
+                        <p className="text-xs font-semibold text-white tracking-wide">LICENSED PRACTITIONER</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
-                {/* Doctor Information */}
-                <div className="space-y-1">
-                  <h1 className="text-3xl font-bold font-poppins text-white tracking-wide">
-                    Bashir Khan Chiropractic
-                  </h1>
-                  <p className="text-white/90 text-lg font-semibold">
-                    Gonstead Certified Specialist
-                  </p>
-                  <p className="text-white/80 text-sm font-medium">
-                    MBBS, DC (Chiropractic) • Licensed Practitioner
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="w-2 h-2 bg-[#f3a800] rounded-full"></div>
-                    <p className="text-xs text-white/70">Board Certified • Professional Excellence</p>
+                {/* Digital Badge & QR Code Area */}
+                <div className="text-right space-y-3">
+                  <div className="bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-sm border border-white/30 rounded-xl px-6 py-4 shadow-2xl">
+                    <div className="flex items-center justify-end gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <p className="text-sm font-bold text-white tracking-wide">DIGITAL PRESCRIPTION</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-white/80 font-medium">Secure • Verified • Professional</p>
+                    </div>
+                  </div>
+                  
+                  {/* Premium Status Indicator */}
+                  <div className="flex justify-end">
+                    <div className="bg-gradient-to-r from-[#f3a800] to-[#ffd700] px-4 py-2 rounded-full shadow-lg border-2 border-white/30">
+                      <p className="text-xs font-black text-white tracking-widest">PREMIUM HEALTHCARE</p>
+                    </div>
                   </div>
                 </div>
               </div>
               
-              {/* Clinic Information */}
-              <div className="text-right space-y-2">
-                <div className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-lg border border-white/30">
-                  <p className="text-sm font-bold tracking-wide">GONSTEAD CHIROPRACTIC CLINIC</p>
+              {/* Doctor Information Section */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/30 p-6 shadow-2xl mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    {/* Doctor Avatar/Icon */}
+                    <div className="w-16 h-16 bg-gradient-to-br from-[#f3a800] to-[#ffd700] rounded-full flex items-center justify-center shadow-lg">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <Stethoscope className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    
+                    {/* Doctor Details */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold font-poppins text-white tracking-wide drop-shadow-lg">
+                          Bashir Khan Chiropractic
+                        </h2>
+                        <div className="bg-green-500 px-2 py-1 rounded-full">
+                          <p className="text-xs font-bold text-white">VERIFIED</p>
+                        </div>
+                      </div>
+                      <p className="text-white/90 text-lg font-semibold tracking-wide">
+                        Gonstead Certified Specialist
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-white/80">
+                        <span className="bg-white/20 px-2 py-1 rounded-full font-medium">MBBS</span>
+                        <span className="bg-white/20 px-2 py-1 rounded-full font-medium">DC (Chiropractic)</span>
+                        <span className="bg-white/20 px-2 py-1 rounded-full font-medium">Board Certified</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Professional Certifications */}
+                  <div className="text-right space-y-2">
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                      <p className="text-sm font-semibold text-white">Active License</p>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-3 h-3 bg-[#f3a800] rounded-full animate-pulse delay-500"></div>
+                      <p className="text-sm font-semibold text-white">Professional Excellence</p>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse delay-1000"></div>
+                      <p className="text-sm font-semibold text-white">Continuing Education</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1 text-white/90">
-                  <p className="text-sm font-medium flex items-center justify-end gap-2">
-                    <span className="w-2 h-2 bg-white/60 rounded-full"></span>
-                    Near Peshawar Model School, Tehsil Road
-                  </p>
-                  <p className="text-sm font-medium flex items-center justify-end gap-2">
-                    <span className="w-2 h-2 bg-[#f3a800] rounded-full"></span>
-                    Nowshera, Khyber Pakhtunkhwa
-                  </p>
-                  <p className="text-sm font-medium flex items-center justify-end gap-2">
-                    <span className="w-2 h-2 bg-white/60 rounded-full"></span>
-                    Phone: +92 304 699 6267
-                  </p>
-                  <p className="text-sm font-medium flex items-center justify-end gap-2">
-                    <span className="w-2 h-2 bg-white/60 rounded-full"></span>
-                    Email: gonsteadchiropractic.org@gmail.com
-                  </p>
+              </div>
+              
+              {/* Clinic Contact Information */}
+              <div className="bg-gradient-to-r from-white/15 to-white/5 backdrop-blur-sm rounded-xl border border-white/30 p-6 shadow-2xl mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                      <div className="w-5 h-5 bg-[#f3a800] rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                      Clinic Address
+                    </h3>
+                    <div className="space-y-2 text-white/90">
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <span className="w-2 h-2 bg-[#f3a800] rounded-full"></span>
+                        Near Peshawar Model School, Tehsil Road
+                      </p>
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <span className="w-2 h-2 bg-white/60 rounded-full"></span>
+                        Nowshera, Khyber Pakhtunkhwa
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                      <div className="w-5 h-5 bg-[#f3a800] rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                      Contact Information
+                    </h3>
+                    <div className="space-y-2 text-white/90">
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                        Phone: +92 304 699 6267
+                      </p>
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                        Email: gonsteadchiropractic.org@gmail.com
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Professional Badge */}
-                <div className="mt-3 inline-block">
-                  <div className="bg-[#f3a800] border-2 border-white/30 px-3 py-1 rounded-full shadow-md">
-                    <p className="text-xs font-bold text-white tracking-wide">DIGITAL PRESCRIPTION</p>
+              </div>
+              
+              {/* Prescription Details Bar */}
+              <div className="bg-gradient-to-r from-[#f3a800] to-[#ffd700] rounded-xl p-4 shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <FileText className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white tracking-wide">MEDICAL PRESCRIPTION</h3>
+                      <p className="text-sm text-white/80 font-medium">Professional Healthcare Document</p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                      <p className="text-sm font-bold text-white">
+                        Prescription ID: RX-{String(Math.floor(Math.random() * 100000)).padStart(5, '0')}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Prescription ID and Date */}
-            <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/30">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-white/60 rounded-full"></div>
-                <p className="text-sm font-medium text-white/80">
-                  Prescription ID: RX-{new Date().getFullYear()}-{String(new Date().getMonth() + 1).padStart(2, '0')}-{String(new Date().getDate()).padStart(2, '0')}-{String(Math.floor(Math.random() * 1000)).padStart(3, '0')}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-[#f3a800] rounded-full"></div>
-                <p className="text-sm font-medium text-white/80">
-                  Issue Date: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
-              </div>
-            </div>
+            {/* Premium Bottom Border */}
+            <div className="h-2 bg-gradient-to-r from-[#f3a800] via-[#ffd700] to-[#f3a800] shadow-lg"></div>
           </div>
 
           {/* Prescription Content */}
-          <div className="p-8">
+          <div className="p-8 flex-1 flex flex-col">
             {/* Patient Information */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-[#0d5c75]/10">
               <h2 className="text-lg font-bold text-[#0d5c75] mb-3 flex items-center gap-2">
@@ -702,122 +1042,176 @@ export default function PrescriptionPage() {
                 <div>
                   <span className="font-semibold text-[#0d5c75]">Email:</span> {patient.email || 'N/A'}
                 </div>
-                <div>
-                  <span className="font-semibold text-[#0d5c75]">Date:</span> {new Date(patient.prescriptionDate).toLocaleDateString()}
-                </div>
               </div>
             </div>
 
-            {/* Diagnosis & Symptoms */}
-            <div className="mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-bold text-[#0d5c75] mb-2">Diagnosis</h3>
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm text-gray-800">{patient.diagnosis || 'No diagnosis specified'}</p>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-[#0d5c75] mb-2">Symptoms</h3>
-                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <p className="text-sm text-gray-800">{patient.symptoms || 'No symptoms specified'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Medications */}
-            <div className="mb-6">
-              <h3 className="text-lg font-bold text-[#0d5c75] mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Prescribed Medications
-              </h3>
-              <div className="space-y-4">
-                {patient.medications.filter(med => med.medication).map((medication, index) => (
-                  <div key={index} className="p-4 border border-[#0d5c75]/20 rounded-lg bg-green-50">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-bold text-[#0d5c75] text-lg">{index + 1}. {medication.medication}</h4>
-                      <div className="text-right text-sm text-gray-600">
-                        <p><span className="font-semibold">Dosage:</span> {medication.dosage}</p>
-                        <p><span className="font-semibold">Frequency:</span> {medication.frequency}</p>
-                        {medication.duration && <p><span className="font-semibold">Duration:</span> {medication.duration}</p>}
+            {/* Diagnosis & Symptoms - Strict Conditional Rendering */}
+            {(patient.diagnosis?.trim() || patient.symptoms?.trim()) && (
+              <div className="mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {patient.diagnosis?.trim() && (
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0d5c75] mb-2">Diagnosis</h3>
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-sm text-gray-800">{patient.diagnosis.trim()}</p>
                       </div>
                     </div>
-                    {medication.instructions && (
-                      <div className="mt-2 p-2 bg-white rounded border border-[#0d5c75]/10">
-                        <p className="text-sm text-gray-700"><span className="font-semibold">Instructions:</span> {medication.instructions}</p>
+                  )}
+                  {patient.symptoms?.trim() && (
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0d5c75] mb-2">Symptoms</h3>
+                      <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <p className="text-sm text-gray-800">{patient.symptoms.trim()}</p>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Medical Advice & Follow-up */}
-            <div className="mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {patient.advice && (
-                  <div>
-                    <h3 className="text-lg font-bold text-[#0d5c75] mb-2">Medical Advice</h3>
-                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                      <p className="text-sm text-gray-800">{patient.advice}</p>
                     </div>
-                  </div>
-                )}
-                {patient.followUp && (
-                  <div>
-                    <h3 className="text-lg font-bold text-[#0d5c75] mb-2">Follow-up Instructions</h3>
-                    <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      <p className="text-sm text-gray-800">{patient.followUp}</p>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Fee Summary */}
-            <div className="mb-6">
-              <h3 className="text-lg font-bold text-[#0d5c75] mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Fee Details & Payment Information
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg border border-[#0d5c75]/20">
-                <div className="space-y-3">
-                  {patient.feeDetails.filter(fee => fee.service).map((fee, index) => (
-                    <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-[#0d5c75]">{fee.service}</h4>
-                        {fee.description && <p className="text-sm text-gray-600">{fee.description}</p>}
-                        <p className="text-xs text-gray-500">Quantity: {fee.quantity} × ₨ {fee.amount.toLocaleString()}</p>
+            {/* Medications - Strict Conditional Rendering */}
+            {patient.medications.filter(med => 
+              med.medication?.trim() && 
+              (med.dosage?.trim() || med.frequency?.trim() || med.duration?.trim() || med.instructions?.trim())
+            ).length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-[#0d5c75] mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Prescribed Medications
+                </h3>
+                <div className="space-y-4">
+                  {patient.medications.filter(med => 
+                    med.medication?.trim() && 
+                    (med.dosage?.trim() || med.frequency?.trim() || med.duration?.trim() || med.instructions?.trim())
+                  ).map((medication, index) => (
+                    <div key={index} className="p-4 border border-[#0d5c75]/20 rounded-lg bg-green-50">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-bold text-[#0d5c75] text-lg">{index + 1}. {medication.medication}</h4>
+                        <div className="text-right text-sm text-gray-600">
+                          {medication.dosage?.trim() && <p><span className="font-semibold">Dosage:</span> {medication.dosage}</p>}
+                          {medication.frequency?.trim() && <p><span className="font-semibold">Frequency:</span> {medication.frequency}</p>}
+                          {medication.duration?.trim() && <p><span className="font-semibold">Duration:</span> {medication.duration}</p>}
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-[#0d5c75]">₨ {fee.total.toLocaleString()}</p>
-                      </div>
+                      {medication.instructions?.trim() && (
+                        <div className="mt-2 p-2 bg-white rounded border border-[#0d5c75]/10">
+                          <p className="text-sm text-gray-700"><span className="font-semibold">Instructions:</span> {medication.instructions}</p>
+                        </div>
+                      )}
                     </div>
                   ))}
-                  <div className="pt-3 border-t-2 border-[#0d5c75]/30">
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-lg font-bold text-[#0d5c75]">Total Amount:</h4>
-                      <span className="text-xl font-bold text-[#f3a800]">₨ {patient.totalFee.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Chiropractic Care Recommendations - Strict Conditional Rendering */}
+            {patient.chiropracticRecommendations.filter(rec => 
+              rec.title?.trim() && rec.description?.trim()
+            ).length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-[#0d5c75] mb-4 flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5" />
+                  Chiropractic Care Recommendations
+                </h3>
+                <div className="space-y-4">
+                  {patient.chiropracticRecommendations.filter(rec => 
+                    rec.title?.trim() && rec.description?.trim()
+                  ).map((recommendation, index) => (
+                    <div key={recommendation.id} className="p-4 border border-[#0d5c75]/20 rounded-lg bg-blue-50">
+                      <h4 className="font-bold text-[#0d5c75] text-lg mb-2">{index + 1}. {recommendation.title}</h4>
+                      <p className="text-sm text-gray-700">{recommendation.description}</p>
                     </div>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-sm font-semibold text-[#0d5c75]">Payment Status:</span>
-                      <span className={`text-sm font-bold px-3 py-1 rounded-full ${
-                        patient.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
-                        patient.paymentStatus === 'partial' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {patient.paymentStatus === 'paid' ? 'Fully Paid' :
-                         patient.paymentStatus === 'partial' ? 'Partial Payment' : 'Payment Pending'}
-                      </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Posture Problems Section - Strict Conditional Rendering */}
+            {patient.postureProblems?.trim() && (
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-[#0d5c75] mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Posture Problems
+                </h3>
+                <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                  <p className="text-sm text-gray-800">{patient.postureProblems.trim()}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Medical Advice & Follow-up - Strict Conditional Rendering */}
+            {(patient.advice?.trim() || patient.followUp?.trim()) && (
+              <div className="mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {patient.advice?.trim() && (
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0d5c75] mb-2">Medical Advice</h3>
+                      <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                        <p className="text-sm text-gray-800">{patient.advice.trim()}</p>
+                      </div>
+                    </div>
+                  )}
+                  {patient.followUp?.trim() && (
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0d5c75] mb-2">Follow-up Instructions</h3>
+                      <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <p className="text-sm text-gray-800">{patient.followUp.trim()}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Fee Summary - Strict Conditional Rendering */}
+            {patient.feeDetails.filter(fee => 
+              fee.service?.trim() && fee.amount > 0
+            ).length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-[#0d5c75] mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Fee Details & Payment Information
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg border border-[#0d5c75]/20">
+                  <div className="space-y-3">
+                    {patient.feeDetails.filter(fee => 
+                      fee.service?.trim() && fee.amount > 0
+                    ).map((fee, index) => (
+                      <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-[#0d5c75]">{fee.service}</h4>
+                          {fee.description?.trim() && <p className="text-sm text-gray-600">{fee.description}</p>}
+                          <p className="text-xs text-gray-500">Quantity: {fee.quantity} × ₨ {fee.amount.toLocaleString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-[#0d5c75]">₨ {fee.total.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="pt-3 border-t-2 border-[#0d5c75]/30">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-lg font-bold text-[#0d5c75]">Total Amount:</h4>
+                        <span className="text-xl font-bold text-[#f3a800]">₨ {patient.totalFee.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-sm font-semibold text-[#0d5c75]">Payment Status:</span>
+                        <span className={`text-sm font-bold px-3 py-1 rounded-full ${
+                          patient.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                          patient.paymentStatus === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {patient.paymentStatus === 'paid' ? 'Fully Paid' :
+                           patient.paymentStatus === 'partial' ? 'Partial Payment' : 'Payment Pending'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Footer */}
-            <div className="mt-8 pt-6 border-t border-[#0d5c75]/20">
+            {/* Footer - Fixed Position */}
+            <div className="mt-auto pt-6 border-t border-[#0d5c75]/20 footer-fixed">
               <div className="flex justify-between items-end">
                 <div className="text-sm text-gray-600">
                   <p className="font-semibold text-[#0d5c75]">Important Notes:</p>
@@ -832,9 +1226,60 @@ export default function PrescriptionPage() {
                     <p className="text-xs text-gray-500">Doctor's Signature</p>
                     <div className="w-32 h-12 border-b border-[#0d5c75]/30 mt-2"></div>
                   </div>
-                  <p className="font-bold text-[#0d5c75]">Dr. Bashir Khan</p>
+                  <p className="font-bold text-[#0d5c75]">Bashir Khan Chiropractic</p>
                   <p className="text-sm text-gray-600">Gonstead Certified Specialist</p>
-                  <p className="text-xs text-gray-500">Generated on: {new Date().toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Professional Footer Section matching Header */}
+            <div className="mt-6 bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] px-8 py-6 rounded-lg professional-footer">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  {/* Professional Logo Section */}
+                  <div className="relative">
+                    <div className="w-16 h-16 flex items-center justify-center">
+                      <Image
+                        src="/images/gonstead-logo-new.png"
+                        alt="Gonstead Chiropractic Logo"
+                        width={55}
+                        height={55}
+                        className="object-contain filter drop-shadow-lg"
+                        priority
+                        onError={(e) => {
+                          console.error('Logo failed to load:', e);
+                          // Try fallback logo
+                          e.currentTarget.src = '/images/gonstead-chiropractic-logo-new.png';
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Footer Clinic Information */}
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-bold font-poppins text-white tracking-wide">
+                      GONSTEAD CHIROPRACTIC CLINIC
+                    </h2>
+                    <p className="text-white/90 text-base font-semibold">
+                      Bashir Khan Chiropractic - Gonstead Technique Specialist
+                    </p>
+                    <p className="text-white/80 text-sm font-medium">
+                      Near Peshawar Model School, Tehsil Road, Nowshera
+                    </p>
+                    <p className="text-white/80 text-sm font-medium">
+                      Phone: +92 304 699 6267
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Professional Badge */}
+                <div className="text-right">
+                  <div className="bg-[#f3a800] border-2 border-white/30 px-4 py-2 rounded-full shadow-md">
+                    <p className="text-sm font-bold text-white tracking-wide">PROFESSIONAL HEALTHCARE</p>
+                  </div>
+                  <div className="mt-2 text-white/70 text-xs">
+                    <p>Licensed • Certified • Trusted</p>
+                  </div>
                 </div>
               </div>
             </div>

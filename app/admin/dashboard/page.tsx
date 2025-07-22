@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import React from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -37,6 +37,7 @@ import {
   Edit3,
   Plus,
   Minus,
+  Cloud,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -108,6 +109,8 @@ export default function AdminDashboard() {
     notes: "",
   })
 
+  const prescriptionRef = useRef<HTMLDivElement>(null)
+
   const router = useRouter()
   const { toast } = useToast()
 
@@ -121,6 +124,7 @@ export default function AdminDashboard() {
     }, 1000)
     return () => clearInterval(timer)
   }, [])
+
 
   // Helper function to format time in 12-hour format
   const formatTime12Hour = (date: Date) => {
@@ -158,7 +162,7 @@ export default function AdminDashboard() {
       setStats(prev => ({
         ...prev,
         totalPatients: prev.totalPatients + 1,
-        todayAppointments: new Date(newPatient.appointmentDate).toDateString() === today 
+        todayAppointments: new Date(newPatient.appointment_date).toDateString() === today 
           ? prev.todayAppointments + 1 
           : prev.todayAppointments,
         pendingAppointments: newPatient.status === 'pending' 
@@ -170,7 +174,7 @@ export default function AdminDashboard() {
       }))
       toast({
         title: "📋 New Patient Registration",
-        description: `${newPatient.name} has successfully scheduled an appointment for ${new Date(newPatient.appointmentDate).toLocaleDateString()}`,
+        description: `${newPatient.name} has successfully scheduled an appointment for ${new Date(newPatient.appointment_date).toLocaleDateString()}`,
       })
     }
 
@@ -323,6 +327,7 @@ export default function AdminDashboard() {
     try {
       await createPatient({
         ...newPatient,
+        status: "pending",
         sessions_completed: 0,
       })
       await loadPatients()
@@ -369,7 +374,20 @@ export default function AdminDashboard() {
   }
 
   const generatePrescription = (patient: Patient) => {
-    // Reset prescription data
+    // Check if patient has an existing prescription
+    const hasExistingPrescription = patient.prescription_generated || (patient.prescription_count ?? 0) > 0
+    
+    if (hasExistingPrescription) {
+      // Show existing prescription with option to generate new one
+      showExistingPrescription(patient)
+    } else {
+      // Generate new prescription
+      createNewPrescription(patient)
+    }
+  }
+  
+  const showExistingPrescription = (patient: Patient) => {
+    // Load existing prescription data
     setPrescriptionNotes(patient.notes || "")
     setPrescriptionMedicine("")
     setChiropracticSuggestions([
@@ -380,6 +398,38 @@ export default function AdminDashboard() {
     ])
     setSelectedPatient(patient)
     setIsPrescriptionDialogOpen(true)
+  }
+  
+  const createNewPrescription = (patient: Patient) => {
+    // Reset prescription data for new prescription
+    setPrescriptionNotes(patient.notes || "")
+    setPrescriptionMedicine("")
+    setChiropracticSuggestions([
+      "Apply ice for 15-20 minutes, 3 times daily",
+      "Gentle neck stretches as demonstrated",
+      "Maintain proper posture while sitting",
+      "Sleep with proper pillow support",
+    ])
+    setSelectedPatient(patient)
+    setIsPrescriptionDialogOpen(true)
+  }
+  
+  const generateNewPrescription = () => {
+    if (selectedPatient) {
+      // Clear existing prescription data and create new one
+      setPrescriptionNotes(selectedPatient.notes || "")
+      setPrescriptionMedicine("")
+      setChiropracticSuggestions([
+        "Apply ice for 15-20 minutes, 3 times daily",
+        "Gentle neck stretches as demonstrated",
+        "Maintain proper posture while sitting",
+        "Sleep with proper pillow support",
+      ])
+      toast({
+        title: "New Prescription Started",
+        description: "You can now create a new prescription for this patient",
+      })
+    }
   }
 
   const addChiropracticSuggestion = () => {
@@ -427,6 +477,16 @@ export default function AdminDashboard() {
       pdf.save(
         `${selectedPatient?.name.replace(/\s+/g, "_")}_prescription_${new Date().toISOString().split("T")[0]}.pdf`,
       )
+
+      // Update patient record to mark prescription as generated
+      if (selectedPatient) {
+        await updatePatient(selectedPatient.id, {
+          prescription_generated: true,
+          prescription_count: (selectedPatient.prescription_count || 0) + 1,
+          last_prescription_date: new Date().toISOString()
+        })
+        await loadPatients() // Refresh the patient list
+      }
 
       toast({
         title: "PDF Downloaded",
@@ -626,11 +686,11 @@ Phone: +92 304 699 6267
               </div>
               
               {/* Clinic Information */}
-              <h1 className="text-2xl font-bold text-[#0d5c75] mb-2 font-poppins">Gonstead Chiropractic</h1>
-              <p className="text-lg font-semibold text-[#2a9d8f] mb-1">Dr. Bashir Khan</p>
-              <p className="text-sm text-gray-600 mb-1">Gonstead Certified Specialist</p>
-              <p className="text-xs text-[#0d5c75] mb-1">Excellence in Chiropractic Care</p>
-              <p className="text-xs text-[#0d5c75] font-semibold">+92 304 699 6267</p>
+              <h1 className="text-lg font-bold text-[#0d5c75] mb-2 font-poppins">Gonstead Chiropractic</h1>
+              <p className="text-sm font-semibold text-[#2a9d8f] mb-1">Dr. Bashir Khan</p>
+              <p className={`text-xs text-gray-600 mb-1`}>Gonstead Certified Specialist</p>
+              <p className={`text-xs text-[#0d5c75] mb-1`}>Excellence in Chiropractic Care</p>
+              <p className={`text-xs text-[#0d5c75] font-semibold`}>+92 304 699 6267</p>
             </div>
             
             {/* Loading Animation */}
@@ -641,10 +701,10 @@ Phone: +92 304 699 6267
                 <div className="absolute inset-2 border-2 border-[#2a9d8f]/30 rounded-full"></div>
                 <div className="absolute inset-2 border-2 border-[#2a9d8f] border-t-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
               </div>
-              <p className="text-[#0d5c75] font-bold text-lg">
+              <p className="text-[#0d5c75] font-bold text-sm">
                 {!authChecked ? "🔐 Verifying Credentials" : "📊 Loading Dashboard"}
               </p>
-              <p className="text-gray-600 text-sm mt-2">
+              <p className="text-gray-600 text-[10px] mt-2">
                 {!authChecked
                   ? "Securing your admin access..."
                   : "Preparing patient management system..."}
@@ -652,7 +712,7 @@ Phone: +92 304 699 6267
             </div>
             
             {/* Professional Badge */}
-            <div className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+            <div className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-6 py-2 rounded-full text-xs font-bold shadow-lg">
               ADMIN PORTAL
             </div>
           </div>
@@ -669,9 +729,11 @@ Phone: +92 304 699 6267
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-[rgb(220,230,229)]"} transform scale-105`}>
-      {/* Enhanced Professional Header - Fixed visibility */}
-      <header className="relative bg-white/20 backdrop-blur-xl shadow-[0_8px_32px_rgba(13,92,117,0.15)] border-0 p-6 overflow-hidden mt-4 mx-4 rounded-2xl">
+    <React.Fragment>
+
+      <div className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-[rgb(220,230,229)]"}`}>
+      {/* Compact Professional Header */}
+      <header className="relative bg-white/20 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.10)] border-0 p-3 overflow-hidden mt-1 mx-4 rounded-xl">
         {/* Animated Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/10 to-[#2a9d8f]/5 animate-pulse"></div>
         
@@ -681,11 +743,11 @@ Phone: +92 304 699 6267
         {/* Content */}
         <div className="relative z-10 container mx-auto flex justify-between items-center">
           {/* Left Section - Logo and Title */}
-          <div className="flex items-center gap-6">
-            {/* Enhanced Logo */}
+          <div className="flex items-center gap-4">
+            {/* Compact Logo */}
             <div className="relative group">
-              <div className="w-24 h-24 relative transition-transform duration-300 hover:scale-110">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/10 to-[#2a9d8f]/10 rounded-full blur-xl group-hover:blur-lg transition-all duration-300"></div>
+              <div className="w-14 h-14 relative transition-transform duration-300 hover:scale-110">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/10 to-[#2a9d8f]/10 rounded-full blur-lg group-hover:blur-md transition-all duration-300"></div>
                 <Image
                   src="/images/gonstead-chiropractic-logo-new.png"
                   alt="Gonstead Chiropractic Logo"
@@ -694,21 +756,21 @@ Phone: +92 304 699 6267
                 />
               </div>
               {/* Professional Badge */}
-              <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-gradient-to-r from-[#f3a800] to-[#e07c1c] rounded-full flex items-center justify-center shadow-lg">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-[#f3a800] to-[#e07c1c] rounded-full flex items-center justify-center shadow-lg">
+                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
               </div>
             </div>
             
-            {/* Title Section */}
-            <div className="space-y-1">
-              <h1 className={`text-3xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm`}>
+            {/* Compact Title Section */}
+            <div className="space-y-0.5">
+              <h1 className={`text-xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm`}>
                 Dr. Bashir Khan
               </h1>
               <p className={`text-base font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm`}>
                 Gonstead Chiropractic Specialist
               </p>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-[#f3a800] rounded-full animate-pulse"></div>
+                <div className="w-1.5 h-1.5 bg-[#f3a800] rounded-full animate-pulse"></div>
                 <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider`}>
                   PROFESSIONAL MANAGEMENT PORTAL
                 </p>
@@ -716,36 +778,49 @@ Phone: +92 304 699 6267
             </div>
           </div>
 
-          {/* Right Section - Time and Controls */}
-          <div className="flex items-center gap-6">
-            {/* Weather Widget */}
-            <WeatherWidget isDarkMode={isDarkMode} />
-
-            {/* Enhanced Time Display */}
-            <div className={`text-center p-4 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-              <div className="text-xl font-bold font-mono tracking-wider">
-                {typeof window !== 'undefined' ? formatTime12Hour(currentTime) : '--:--:-- --'}
+          {/* Right Section - Combined Time & Weather */}
+          <div className="flex items-center gap-3">
+            {/* Combined Time and Weather Display */}
+            <div className={`flex items-center gap-3 p-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+              {/* Weather Section */}
+              <div className="flex items-center gap-2 border-r border-white/20 pr-3">
+                <Cloud className="h-4 w-4 text-gray-500" />
+                <div>
+                  <div className={`text-sm font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+                    28°C
+                  </div>
+                  <div className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Nowshera</div>
+                </div>
               </div>
-              <div className="text-sm opacity-80 font-medium">
-                {typeof window !== 'undefined' ? formatDate(currentTime) : '-- -- --'}
+              
+              {/* Time Section */}
+              <div className="text-center">
+                <div className="text-sm font-bold font-mono tracking-wider">
+                  {typeof window !== 'undefined' ? formatTime12Hour(currentTime) : '--:--:-- --'}
+                </div>
+                <div className="text-xs opacity-80 font-medium">
+                  {typeof window !== 'undefined' ? formatDate(currentTime) : '-- -- --'}
+                </div>
               </div>
-              <div className="mt-1 flex justify-center">
-                <div className="w-8 h-0.5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full"></div>
+            </div>
+            
+            {/* Compact Theme Toggle */}
+            <div className="flex items-center gap-1.5 p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-600" : "bg-yellow-100"} transition-all duration-300`}>
+                <Sun className={`h-4 w-4 ${isDarkMode ? "text-gray-400" : "text-yellow-500"}`} />
+              </div>
+              <Switch
+                checked={isDarkMode}
+                onCheckedChange={setIsDarkMode}
+                className="data-[state=checked]:bg-gray-600 scale-75"
+              />
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-blue-100" : "bg-gray-200"} transition-all duration-300`}>
+                <Moon className={`h-4 w-4 ${isDarkMode ? "text-blue-400" : "text-gray-400"}`} />
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
-            <div className="flex items-center gap-2">
-              <Sun className={`h-4 w-4 ${isDarkMode ? "text-gray-400" : "text-yellow-500"}`} />
-              <Switch
-                checked={isDarkMode}
-                onCheckedChange={setIsDarkMode}
-                className="data-[state=checked]:bg-gray-600"
-              />
-              <Moon className={`h-4 w-4 ${isDarkMode ? "text-blue-400" : "text-gray-400"}`} />
-            </div>
+          <div className="flex items-center gap-2">
 
             {/* Quick Add Patient */}
             <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
@@ -1287,7 +1362,7 @@ Phone: +92 304 699 6267
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                       <Card>
                                         <CardHeader className="bg-[#0d5c75] text-white py-3">
-                                          <CardTitle className="text-lg">Contact Information</CardTitle>
+                                        <CardTitle className="text-lg text-white">Contact Information</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-4 space-y-2">
                                           <div>
@@ -1307,9 +1382,15 @@ Phone: +92 304 699 6267
 
                                       <Card>
                                         <CardHeader className="bg-[#f3a800] text-white py-3">
-                                          <CardTitle className="text-lg">Appointment Details</CardTitle>
+                                        <CardTitle className="text-lg text-white">Appointment Details</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-4 space-y-2">
+                                          <div>
+                                            <Label className="text-sm font-semibold">Appointment ID</Label>
+                                            <p className="text-sm font-mono bg-gray-50 px-2 py-1 rounded border">
+                                              {selectedPatient.id}
+                                            </p>
+                                          </div>
                                           <div>
                                             <Label className="text-sm font-semibold">Date & Time</Label>
                                             <p className="text-sm">
@@ -1334,7 +1415,7 @@ Phone: +92 304 699 6267
 
                                     <Card>
                                       <CardHeader className="bg-green-600 text-white py-3">
-                                        <CardTitle className="text-lg">Clinical Notes</CardTitle>
+                                        <CardTitle className="text-lg text-white">Clinical Notes</CardTitle>
                                       </CardHeader>
                                       <CardContent className="p-4">
                                         <div>
@@ -1403,8 +1484,8 @@ Phone: +92 304 699 6267
           </CardContent>
         </Card>
       </main>
+      </div>
 
-      {/* Enhanced Prescription Dialog */}
       <Dialog open={isPrescriptionDialogOpen} onOpenChange={setIsPrescriptionDialogOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1424,7 +1505,7 @@ Phone: +92 304 699 6267
           {/* Editable Prescription Form */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <Card>
-              <CardHeader className="bg-[#0d5c75] text-white py-3">
+              <CardHeader className="bg-[#4c9d90] text-white py-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Edit3 className="h-4 w-4" />
                   Treatment Notes
@@ -1503,7 +1584,7 @@ Phone: +92 304 699 6267
                 minHeight: "297mm",
                 margin: "0 auto",
                 padding: "20mm",
-                backgroundColor: "rgb(210,220,219)",
+                backgroundColor: "white",
                 fontFamily: "Arial, sans-serif",
                 fontSize: "12px",
                 lineHeight: "1.4",
@@ -1512,78 +1593,102 @@ Phone: +92 304 699 6267
                 position: "relative",
               }}
             >
-              {/* Professional Header with Clean Design */}
+              {/* Enhanced Professional Header */}
               <div
                 style={{
-                  textAlign: "center",
-                  marginBottom: "20px",
-                  background: "rgba(174, 193, 192, 0.9)",
-                  backdropFilter: "blur(10px)",
-                  color: "#0d5c75",
-                  padding: "15px 15px",
+                  padding: "20px 25px",
+                  background: "linear-gradient(135deg, #0d5c75 0%, #2a9d8f 100%)",
                   borderRadius: "12px",
+                  color: "white",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  boxShadow: "0 8px 32px rgba(13, 92, 117, 0.3)",
                   position: "relative",
-                  border: "1px solid rgba(255,255,255,0.2)",
+                  overflow: "hidden",
                 }}
               >
-                <div
-                  style={{
-                    width: "100px",
-                    height: "100px",
-                    margin: "0 auto 12px",
+                {/* Background pattern */}
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: "url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><pattern id=%22grain%22 width=%22100%22 height=%22100%22 patternUnits=%22userSpaceOnUse%22><circle cx=%2250%22 cy=%2250%22 r=%221%22 fill=%22%23ffffff%22 fill-opacity=%220.1%22/></pattern></defs><rect width=%22100%22 height=%22100%22 fill=%22url(%23grain)%22/></svg>')",
+                  opacity: 0.3
+                }}></div>
+                
+                <div style={{ display: "flex", alignItems: "center", gap: "20px", zIndex: 10, position: "relative" }}>
+                  {/* Enhanced Logo */}
+                  <div style={{
+                    width: "70px",
+                    height: "70px",
+                    background: "rgba(255, 255, 255, 0.15)",
+                    borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    position: "relative",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "90px",
-                      height: "90px",
-                      backgroundColor: "#0d5c75",
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "white",
-                      fontSize: "28px",
+                    backdropFilter: "blur(10px)",
+                    border: "2px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)"
+                  }}>
+                    <img
+                      src="/images/gonstead-logo-new.png"
+                      alt="Gonstead Chiropractic Logo"
+                      style={{ width: "50px", height: "50px", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
+                    />
+                  </div>
+                  
+                  {/* Clinic Information */}
+                  <div>
+                    <h1 style={{ 
+                      fontSize: "28px", 
+                      margin: "0", 
                       fontWeight: "bold",
-                      boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-                    }}
-                  >
-                    G
+                      letterSpacing: "0.5px",
+                      textShadow: "0 2px 4px rgba(0,0,0,0.3)"
+                    }}>
+                      GONSTEAD CHIROPRACTIC CLINIC
+                    </h1>
+                    <p style={{ 
+                      fontSize: "16px", 
+                      margin: "2px 0 0 0", 
+                      fontWeight: "600",
+                      opacity: 0.95
+                    }}>
+                      Dr. Bashir Khan - Gonstead Certified Specialist
+                    </p>
+                    <p style={{ 
+                      fontSize: "14px", 
+                      margin: "2px 0 0 0", 
+                      opacity: 0.9
+                    }}>
+                      Near Peshawar Model School, Tehsil Road, Nowshera
+                    </p>
                   </div>
                 </div>
-                <h1 style={{ 
-                  fontSize: "22px", 
-                  fontWeight: "bold", 
-                  margin: "0 0 6px 0",
-                  letterSpacing: "1px"
-                }}>
-                  GONSTEAD CHIROPRACTIC CLINIC
-                </h1>
+                
+                
+                {/* Decorative elements */}
                 <div style={{
-                  height: "2px",
-                  width: "100px",
-                  background: "rgba(13,92,117,0.6)",
-                  margin: "0 auto 8px auto",
-                }} />
-                <p style={{ 
-                  fontSize: "14px", 
-                  margin: "0 0 4px 0",
-                  fontWeight: "500",
-                }}>
-                  <strong>Bashir Khan Chiropractic</strong> - Gonstead Technique Specialist
-                </p>
-                <p style={{ 
-                  fontSize: "11px", 
-                  margin: "0",
-                  opacity: "0.9",
-                  fontWeight: "400"
-                }}>
-                  Near Peshawar Model School, Tehsil Road, Nowshera | <strong>Phone:</strong> +92 304 699 6267
-                </p>
+                  position: "absolute",
+                  top: "-10px",
+                  right: "-10px",
+                  width: "40px",
+                  height: "40px",
+                  background: "radial-gradient(circle, rgba(243, 168, 0, 0.3) 0%, transparent 70%)",
+                  borderRadius: "50%"
+                }}></div>
+                <div style={{
+                  position: "absolute",
+                  bottom: "-5px",
+                  left: "-5px",
+                  width: "30px",
+                  height: "30px",
+                  background: "radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%)",
+                  borderRadius: "50%"
+                }}></div>
               </div>
 
               {/* Rest of the prescription content with improved print styling */}
@@ -1792,18 +1897,41 @@ Phone: +92 304 699 6267
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-6">
-            <Button variant="outline" onClick={() => setIsPrescriptionDialogOpen(false)}>
-              Close
-            </Button>
-            <Button onClick={downloadPrescriptionPDF} className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white">
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
-            <Button onClick={printPrescription} className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white">
-              <FileText className="h-4 w-4 mr-2" />
-              Print
-            </Button>
+          <div className="flex justify-between items-center mt-6">
+            {/* Smart Prescription Logic Display */}
+            {selectedPatient && selectedPatient.prescription_generated && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Prescription previously generated on {selectedPatient.last_prescription_date ? new Date(selectedPatient.last_prescription_date).toLocaleDateString() : 'N/A'}</span>
+              </div>
+            )}
+            
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setIsPrescriptionDialogOpen(false)}>
+                Close
+              </Button>
+              
+              {/* Generate New Prescription Button - Only show if patient has existing prescription */}
+              {selectedPatient && (selectedPatient.prescription_generated || (selectedPatient.prescription_count ?? 0) > 0) && (
+                <Button 
+                  onClick={generateNewPrescription} 
+                  className="bg-[#f3a800] hover:bg-[#e07c1c] text-white"
+                  title="Generate a new prescription for this patient"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Generate New Prescription
+                </Button>
+              )}
+              
+              <Button onClick={downloadPrescriptionPDF} className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white">
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+              </Button>
+              <Button onClick={printPrescription} className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white">
+                <FileText className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1947,6 +2075,6 @@ Phone: +92 304 699 6267
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </React.Fragment>
   )
 }

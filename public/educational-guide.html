@@ -1,0 +1,2794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Education Platform - Gonstead Chiropractic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+body {
+  font-family: 'Source Sans Pro', sans-serif;
+  line-height: 1.7;
+  color: #1f1f1f;
+  background-color: #f8f9fa;
+  transition: font-size 0.3s ease;
+  font-size: 18px; /* Increased from default 16px */
+  /* Removed transform scale for normal zoom level */
+}
+
+
+        .container {
+            max-width: 1400px; /* Increased from 1200px */
+            margin: 0 auto;
+            padding: 0 32px; /* Increased from 24px */
+        }
+
+        /* Enhanced Header Styles */
+        .header {
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(42, 157, 143, 0.3) 0%, transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(13, 92, 117, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 40% 40%, rgba(26, 120, 100, 0.2) 0%, transparent 60%),
+                linear-gradient(135deg, rgba(13, 92, 117, 0.85), rgba(42, 157, 143, 0.75)),
+                url('/images/education/header.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            padding: 50px 0 70px;
+            position: relative;
+            overflow: hidden;
+            min-height: 550px;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                url('data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3e%3cdefs%3e%3cpattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse"%3e%3cpath d="M 8 0 L 0 0 0 8" fill="none" stroke="white" stroke-width="0.3" opacity="0.08"/%3e%3c/pattern%3e%3c/defs%3e%3crect width="100" height="100" fill="url(%23grid)"/%3e%3c/svg%3e'),
+                conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.03) 60deg, transparent 120deg, rgba(255,255,255,0.02) 180deg, transparent 240deg, rgba(255,255,255,0.03) 300deg, transparent 360deg);
+            animation: headerShimmer 15s linear infinite;
+        }
+        
+        @keyframes headerShimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 400px;
+        }
+
+        .header-left {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3.5rem; /* Increased from 3rem */
+            font-weight: 700;
+            margin-bottom: 20px; /* Increased from 16px */
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #e0f2f1 30%, #ffffff 60%, #b2dfdb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+            position: relative;
+            animation: titleShimmer 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes titleShimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .header p {
+            font-size: 1.5rem; /* Increased from 1.25rem */
+            opacity: 0.9;
+            font-weight: 400;
+            margin-bottom: 40px; /* Increased from 32px */
+            line-height: 1.6; /* Increased from 1.5 */
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 32px;
+            margin-top: 24px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            color: #ffffff;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-image {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+        }
+
+        .header-img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Navigation */
+        .nav-bar {
+            background: white;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0d5c75;
+            text-decoration: none;
+        }
+
+        .breadcrumb {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Content Sections */
+        .content-main {
+            background: white;
+            padding: 60px 0;
+        }
+
+        .content-section {
+            margin-bottom: 80px;
+        }
+
+        .content-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3rem; /* Increased from 2.5rem */
+            font-weight: 700;
+            color: #0d5c75;
+            margin-bottom: 28px; /* Increased from 20px */
+            text-align: center;
+        }
+
+        .section-subtitle {
+            font-size: 1.4rem; /* Increased from 1.2rem */
+            color: #666;
+            text-align: center;
+            margin-bottom: 60px; /* Increased from 50px */
+            max-width: 900px; /* Increased from 800px */
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .content-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-card {
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 60px; /* Increased from 50px */
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+            width: 100%;
+            margin-bottom: 40px; /* Added margin for better spacing */
+        }
+
+        .content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+.card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 72px; /* Increased from 56px */
+            height: 72px; /* Increased from 56px */
+            background: linear-gradient(135deg, #0d5c75, #2a9d8f);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px; /* Increased from 16px */
+            font-size: 1.5rem; /* Increased from 1.2rem */
+        }
+
+        .card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem; /* Increased from 1.5rem */
+            font-weight: 600;
+            color: #1f1f1f;
+            margin: 0;
+        }
+
+        .card-content {
+            line-height: 1.8;
+            color: #4a5568;
+            font-size: 1.1rem; /* Increased from 1rem */
+        }
+
+        .card-content h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem; /* Increased from 1.3rem */
+            font-weight: 600;
+            color: #2d3748;
+            margin: 35px 0 18px 0; /* Increased margins */
+        }
+
+        .card-content h4 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem; /* Increased from 1.1rem */
+            font-weight: 600;
+            color: #4a5568;
+            margin: 28px 0 12px 0; /* Increased margins */
+        }
+
+        .card-content p {
+            margin-bottom: 15px;
+        }
+
+        .card-content ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .card-content li {
+            margin-bottom: 8px;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+            border-left: 4px solid #2a9d8f;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+
+        .highlight-box h4 {
+            color: #0d5c75;
+            margin-bottom: 10px;
+        }
+
+        .diagnostic-framework {
+            background: #fff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .diagnostic-framework h4 {
+            color: #0d5c75;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .diagnostic-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 24px; /* Increased from 20px */
+            padding: 20px; /* Increased from 15px */
+            background: #f8f9fa;
+            border-radius: 12px; /* Increased from 8px */
+        }
+
+        .step-number {
+            width: 48px; /* Increased from 32px */
+            height: 48px; /* Increased from 32px */
+            background: #2a9d8f;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.2rem; /* Added font size */
+            margin-right: 20px; /* Increased from 15px */
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #1f1f1f;
+            margin-bottom: 8px; /* Increased from 5px */
+            font-size: 1.2rem; /* Added font size */
+        }
+
+        .step-description {
+            color: #4a5568;
+            line-height: 1.7; /* Increased from 1.6 */
+            font-size: 1.05rem; /* Added font size */
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .comparison-table th {
+            background: #0d5c75;
+            color: white;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .visual-section {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .visual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .visual-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .visual-item img {
+            max-width: 100%;
+            height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .visual-item img:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Enhanced chart display */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+        
+        .chart-image {
+            max-width: 100%;
+            height: auto;
+            min-height: 400px;
+            object-fit: contain;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .visual-caption {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .collapsible-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            background: #f8f9fa;
+            padding: 24px; /* Increased from 20px */
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+            min-height: 70px; /* Added minimum height */
+        }
+
+        .collapsible-header:hover {
+            background: #e9ecef;
+        }
+
+        .collapsible-title {
+            font-weight: 600;
+            color: #1f1f1f;
+            font-size: 1.2rem; /* Added font size */
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible-content {
+            padding: 0 24px; /* Increased from 20px */
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-content.active {
+            max-height: 1000px;
+            padding: 24px; /* Increased from 20px */
+        }
+
+        .collapsible-icon.active {
+            transform: rotate(180deg);
+        }
+
+        .quote-box {
+            background: linear-gradient(135deg, #0d5c75, #2a9d8f);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quote-box::before {
+            content: '"';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            font-size: 80px;
+            opacity: 0.1;
+            font-family: serif;
+        }
+
+        .quote-text {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .quote-author {
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .intro-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .intro-text {
+            font-size: 1.2rem;
+            color: #4a5568;
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Search Section Styles */
+        .search-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 40px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 64px; /* Increased from 50px */
+            padding: 0 70px 0 24px; /* Increased padding */
+            border: 2px solid rgba(0, 150, 136, 0.4); /* Increased border width */
+            border-radius: 16px; /* Increased border radius */
+            font-family: 'Inter', 'Poppins', sans-serif;
+            font-size: 20px; /* Increased from 16px */
+            color: #333333;
+            background: white;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .search-input:focus {
+            border-color: #009688;
+            box-shadow: 0 4px 15px rgba(0, 150, 136, 0.15);
+        }
+
+        .search-input::placeholder {
+            color: #999999;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 24px; /* Increased from 20px */
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #009688;
+            font-size: 24px; /* Increased from 18px */
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .search-icon:hover {
+            color: #00695c;
+        }
+
+        .search-filters {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .filter-dropdown {
+            padding: 16px 20px; /* Increased padding */
+            border: 2px solid #e5e7eb; /* Increased border width */
+            border-radius: 12px; /* Increased border radius */
+            background: white;
+            font-family: 'Inter', 'Poppins', sans-serif;
+            font-size: 18px; /* Increased from 14px */
+            color: #333333;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            min-height: 56px; /* Added minimum height */
+        }
+
+        .filter-dropdown:hover {
+            border-color: #009688;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-dropdown:focus {
+            border-color: #009688;
+            box-shadow: 0 0 0 3px rgba(0, 150, 136, 0.1);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .container {
+                padding: 0 20px;
+            }
+            
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .content-card {
+                padding: 40px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .header p {
+                font-size: 1.1rem;
+            }
+            
+            .content-card {
+                padding: 30px;
+            }
+            
+            .visual-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+            
+            .header {
+                padding: 60px 0 40px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .header-stats {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .content-card {
+                padding: 24px;
+            }
+
+            .visual-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .diagnostic-step {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .step-number {
+                margin-bottom: 10px;
+            }
+
+            /* Dr. Gonstead Introduction Mobile Styles */
+            .doctor-introduction {
+                flex-direction: column !important;
+                text-align: center !important;
+                gap: 25px !important;
+                padding: 30px 20px !important;
+            }
+            
+            .doctor-introduction img {
+                width: 150px !important;
+                height: 150px !important;
+            }
+            
+            .doctor-introduction h3 {
+                font-size: 1.8rem !important;
+            }
+            
+            .doctor-introduction p {
+                font-size: 1rem !important;
+            }
+
+            /* Search Section Mobile Styles */
+            .search-section {
+                padding: 30px 0;
+            }
+
+            .search-input {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .search-filters {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .filter-dropdown {
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .header p {
+                font-size: 0.9rem;
+            }
+            
+            .content-card {
+                padding: 20px;
+            }
+            
+            .professional-icons-container {
+                top: 8px;
+                right: 8px;
+                gap: 4px;
+            }
+            
+            .professional-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+            
+            .enhanced-zoom-controls {
+                padding: 4px 8px;
+            }
+            
+            .enhanced-zoom-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+        }
+
+        /* Professional Icons Container */
+        .professional-icons-container {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            max-width: 300px;
+            justify-content: flex-end;
+        }
+        
+        .professional-icon {
+            background: #009688;
+            color: white;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border: none;
+            font-size: 18px;
+        }
+        
+        .professional-icon:hover {
+            background: #00695c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .professional-icon-extended {
+            background: #009688;
+            color: white;
+            border-radius: 25px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .professional-icon-extended:hover {
+            background: #00695c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .professional-icon-extended select {
+            background: white;
+            color: #009688;
+            border: none;
+            border-radius: 15px;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        /* Enhanced Zoom Controls */
+        .enhanced-zoom-controls {
+            background: #009688;
+            border-radius: 25px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .enhanced-zoom-btn {
+            background: white;
+            color: #009688;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        
+        .enhanced-zoom-btn:hover {
+            background: #f0f0f0;
+            transform: scale(1.1);
+        }
+        
+        .enhanced-zoom-level {
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 45px;
+            text-align: center;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .professional-icons-container {
+                top: 10px;
+                right: 10px;
+                gap: 6px;
+                max-width: 250px;
+            }
+            
+            .professional-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+            
+            .professional-icon-extended {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .professional-icon-extended select {
+                padding: 3px 6px;
+                font-size: 11px;
+            }
+            
+            .enhanced-zoom-controls {
+                padding: 4px 8px;
+                gap: 6px;
+            }
+            
+            .enhanced-zoom-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+            
+            .enhanced-zoom-level {
+                font-size: 11px;
+                min-width: 35px;
+            }
+        }
+        
+        
+        /* Google Translate Widget - Hidden (using new design) */
+        .translate-widget {
+            display: none;
+        }
+        
+        /* Override Google Translate default styling */
+        .goog-te-banner-frame {
+            display: none !important;
+        }
+        
+        body {
+            top: 0 !important;
+        }
+        
+        .goog-te-gadget {
+            font-family: 'Source Sans Pro', sans-serif !important;
+            color: #0d5c75 !important;
+            font-size: 14px !important;
+        }
+        
+        .goog-te-gadget-simple {
+            background-color: transparent !important;
+            border: none !important;
+            color: #0d5c75 !important;
+            font-size: 14px !important;
+            padding: 4px 8px !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .goog-te-gadget-simple:hover {
+            background-color: #f0f9ff !important;
+            color: #009688 !important;
+        }
+        
+        .goog-te-gadget-icon {
+            display: none !important;
+        }
+        
+        .goog-te-combo {
+            background-color: white !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 4px !important;
+            padding: 4px 8px !important;
+            font-family: 'Source Sans Pro', sans-serif !important;
+            font-size: 14px !important;
+            color: #0d5c75 !important;
+            cursor: pointer !important;
+            outline: none !important;
+        }
+        
+        .goog-te-combo:hover {
+            border-color: #009688 !important;
+        }
+        
+        .goog-te-combo:focus {
+            border-color: #009688 !important;
+            box-shadow: 0 0 0 3px rgba(0, 150, 136, 0.1) !important;
+        }
+        
+        @media (max-width: 768px) {
+            .translate-widget {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                padding: 6px;
+            }
+            
+            .goog-te-gadget {
+                font-size: 12px !important;
+            }
+            
+            .goog-te-gadget-simple {
+                font-size: 12px !important;
+                padding: 3px 6px !important;
+            }
+            
+            .goog-te-combo {
+                font-size: 12px !important;
+                padding: 3px 6px !important;
+            }
+        }
+
+        /* Sticky Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 280px;
+            height: calc(100vh - 100px);
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            z-index: 50;
+            padding: 20px;
+        }
+
+        .sidebar-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0d5c75;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc-item {
+            margin-bottom: 10px;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 8px 12px;
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .toc-link:hover {
+            background: #f0f9ff;
+            color: #0d5c75;
+            border-left-color: #009688;
+        }
+
+        .toc-link.active {
+            background: linear-gradient(135deg, #e6fffa, #f0f9ff);
+            color: #0d5c75;
+            border-left-color: #009688;
+            font-weight: 500;
+        }
+
+        .toc-sub-item {
+            margin-left: 15px;
+            margin-bottom: 5px;
+        }
+
+        .toc-sub-item .toc-link {
+            font-size: 0.85rem;
+            padding: 6px 10px;
+            color: #666;
+        }
+
+        /* Main Content with Sidebar */
+        .main-content {
+            padding: 48px 0;
+            margin-left: 0; /* Remove sidebar space */
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .results-info {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .sort-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .sort-select {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Course Grid */
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .course-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .course-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .course-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .course-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(13, 92, 117, 0.8), rgba(42, 157, 143, 0.8));
+        }
+
+        .course-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 3rem;
+            z-index: 2;
+        }
+
+        .course-content {
+            padding: 24px;
+        }
+
+        .course-category {
+            color: #2a9d8f;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .course-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f1f1f;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .course-description {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .course-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .course-meta i {
+            color: #2a9d8f;
+        }
+
+        .course-level {
+            display: inline-block;
+            background: #f0f9ff;
+            color: #0369a1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .course-level.beginner {
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .course-level.intermediate {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .course-level.advanced {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            /* Hide sidebar on tablets and small screens */
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 30px;
+            }
+
+            .header-left {
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .header-stats {
+                justify-content: center;
+                gap: 24px;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .header-image {
+                max-width: 300px;
+            }
+
+            .search-title {
+                font-size: 1.5rem;
+            }
+
+            .courses-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .filter-tags {
+                justify-content: flex-start;
+            }
+
+            .nav-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 48px;
+            color: #666;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #2a9d8f;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .header {
+            background: linear-gradient(135deg, rgba(0, 150, 136, 0.3), rgba(13, 92, 117, 0.2)), url('/images/education/header.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-blend-mode: normal;
+        }
+
+        body.dark-mode .nav-bar {
+            background: #2d2d2d;
+            border-bottom: 1px solid #444;
+        }
+
+        body.dark-mode .search-section {
+            background: linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%);
+        }
+
+        body.dark-mode .search-input {
+            background: #3a3a3a;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .search-input:focus {
+            border-color: #009688;
+            box-shadow: 0 4px 15px rgba(0, 150, 136, 0.3);
+        }
+
+        body.dark-mode .filter-dropdown {
+            background: #3a3a3a;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .filter-dropdown:hover {
+            border-color: #009688;
+        }
+
+        body.dark-mode .content-main {
+            background: #1a1a1a;
+        }
+
+        body.dark-mode .content-card {
+            background: #2d2d2d;
+            border-color: #444;
+        }
+
+        body.dark-mode .content-card:hover {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode .card-title {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .card-content {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .card-content h3 {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .card-content h4 {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .highlight-box {
+            background: linear-gradient(135deg, #2a4a5a, #3a3a5a);
+            border-left-color: #009688;
+        }
+
+        body.dark-mode .diagnostic-framework {
+            background: #2d2d2d;
+            border-color: #444;
+        }
+
+        body.dark-mode .diagnostic-step {
+            background: #3a3a3a;
+        }
+
+        body.dark-mode .step-title {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .step-description {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .comparison-table {
+            background: #2d2d2d;
+        }
+
+        body.dark-mode .comparison-table th {
+            background: #1a4a5a;
+        }
+
+        body.dark-mode .comparison-table td {
+            border-bottom-color: #444;
+        }
+
+        body.dark-mode .comparison-table tr:hover {
+            background: #3a3a3a;
+        }
+
+        body.dark-mode .visual-item {
+            background: #2d2d2d;
+            border-color: #444;
+        }
+
+        body.dark-mode .visual-caption {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .collapsible-section {
+            border-color: #444;
+        }
+
+        body.dark-mode .collapsible-header {
+            background: #3a3a3a;
+        }
+
+        body.dark-mode .collapsible-header:hover {
+            background: #454545;
+        }
+
+        body.dark-mode .collapsible-title {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .quote-box {
+            background: linear-gradient(135deg, #1a4a5a, #2a5a6a);
+        }
+
+        body.dark-mode .sidebar {
+            background: #2d2d2d;
+            border-color: #444;
+        }
+
+        body.dark-mode .sidebar-title {
+            color: #009688;
+        }
+
+        body.dark-mode .toc-link {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .toc-link:hover {
+            background: #3a3a3a;
+            color: #009688;
+        }
+
+        body.dark-mode .toc-link.active {
+            background: linear-gradient(135deg, #1a4a4a, #2a4a5a);
+            color: #009688;
+        }
+
+        body.dark-mode .course-card {
+            background: #2d2d2d;
+        }
+
+        body.dark-mode .course-card:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+        }
+
+        body.dark-mode .course-title {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .course-description {
+            color: #c0c0c0;
+        }
+
+        /* Hero Section Enhancement for Dark Mode */
+        body.dark-mode .header {
+            background-image: linear-gradient(135deg, rgba(0, 150, 136, 0.2), rgba(13, 92, 117, 0.3)), url('/images/education/header.png');
+            background-blend-mode: overlay;
+        }
+
+        body.dark-mode .course-meta {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .sort-select {
+            background: #3a3a3a;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .results-info {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .sort-dropdown {
+            color: #c0c0c0;
+        }
+
+        /* Dark mode responsive adjustments */
+        @media (max-width: 768px) {
+            body.dark-mode #theme-toggle {
+                top: 10px;
+                left: 10px;
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            body.dark-mode #custom-translate-container {
+                top: 10px;
+                right: 10px;
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Professional Icons Container -->
+    <div class="professional-icons-container">
+        <!-- Day/Night Mode Toggle -->
+        <button id="theme-toggle" class="professional-icon" title="Toggle Day/Night Mode" aria-label="Toggle Day/Night Mode">
+            <i class="fas fa-moon" id="theme-icon"></i>
+        </button>
+        
+    </div>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Patient Education Platform</h1>
+                    <p>Your comprehensive guide to understanding chiropractic care and optimizing your healing journey</p>
+                    <div class="header-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">8</span>
+                            <span class="stat-label">Educational Topics</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">95%</span>
+                            <span class="stat-label">Patient Satisfaction</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">25+</span>
+                            <span class="stat-label">Years Experience</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Smart Search Bar -->
+    <section class="search-section">
+        <div class="container">
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <input 
+                        type="text" 
+                        id="smartSearch" 
+                        class="search-input" 
+                        placeholder="Search topics, spine areas, symptoms, or keywords…"
+                        aria-label="Search educational content"
+                    >
+                    <button class="search-icon" aria-label="Search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="search-filters">
+                    <select id="topicFilter" class="filter-dropdown" aria-label="Filter by topic">
+                        <option value="">All Topics</option>
+                        <option value="gonstead-technique">Gonstead Technique</option>
+                        <option value="anatomy">Spine Anatomy</option>
+                        <option value="treatment">Treatment Plans</option>
+                        <option value="exercises">Exercises</option>
+                        <option value="prevention">Prevention</option>
+                        <option value="rehabilitation">Rehabilitation</option>
+                        <option value="research">Research</option>
+                    </select>
+                    <select id="bodyAreaFilter" class="filter-dropdown" aria-label="Filter by body area">
+                        <option value="">All Body Areas</option>
+                        <option value="cervical">Cervical Spine</option>
+                        <option value="thoracic">Thoracic Spine</option>
+                        <option value="lumbar">Lumbar Spine</option>
+                        <option value="pelvis">Pelvis</option>
+                        <option value="extremities">Extremities</option>
+                        <option value="full-spine">Full Spine</option>
+                    </select>
+                    <select id="contentTypeFilter" class="filter-dropdown" aria-label="Filter by content type">
+                        <option value="">All Content Types</option>
+                        <option value="article">Articles</option>
+                        <option value="video">Videos</option>
+                        <option value="guide">Guides</option>
+                        <option value="research">Research Papers</option>
+                        <option value="exercise">Exercise Instructions</option>
+                        <option value="case-study">Case Studies</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="content-header">
+                <div class="results-info">
+                    <span id="resultsCount">8</span> educational resources available
+                </div>
+                <div class="sort-dropdown">
+                    <span>Sort by:</span>
+                    <select class="sort-select" id="sortSelect">
+                        <option value="recommended">Recommended</option>
+                        <option value="alphabetical">Alphabetical</option>
+                        <option value="difficulty">Difficulty</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Gonstead Chiropractic Research Content -->
+            <section class="content-section">
+                <h2 class="section-title">The Gonstead Chiropractic Technique</h2>
+                <p class="section-subtitle">A Comprehensive Analysis of Dr. Clarence S. Gonstead's Revolutionary Approach to Chiropractic Care</p>
+                
+                <div class="intro-section">
+                    <!-- Dr. Clarence Gonstead Introduction -->
+                    <div class="doctor-introduction" style="display: flex; align-items: center; gap: 40px; margin-bottom: 40px; padding: 40px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
+                        <div class="doctor-image" style="flex-shrink: 0;">
+                            <img src="/images/clarence-gonstead.png" alt="Dr. Clarence S. Gonstead - Founder of the Gonstead Chiropractic Technique" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 6px solid #0d5c75; box-shadow: 0 8px 24px rgba(13, 92, 117, 0.3);">
+                        </div>
+                        <div class="doctor-content" style="flex: 1;">
+                            <h3 style="color: #0d5c75; font-size: 2.2rem; font-weight: 700; margin-bottom: 15px; font-family: 'Poppins', sans-serif;">Dr. Clarence S. Gonstead</h3>
+                            <p style="color: #2a9d8f; font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; font-style: italic;">Founder of the Gonstead Chiropractic Technique</p>
+                            <p style="color: #4a5568; font-size: 1.1rem; line-height: 1.7; margin-bottom: 15px;">A visionary chiropractor who revolutionized spinal care through scientific precision and biomechanical understanding. Dr. Gonstead's innovative approach transformed chiropractic from a rudimentary practice into a sophisticated, evidence-based healing art.</p>
+                            <p style="color: #4a5568; font-size: 1.1rem; line-height: 1.7;">His legacy continues to influence thousands of practitioners worldwide, ensuring that patients receive the most precise and effective chiropractic care available.</p>
+                        </div>
+                    </div>
+                    
+                    <p class="intro-text">This comprehensive guide explores the Gonstead Chiropractic Technique, integrating both in-depth academic research and simplified explanations tailored for a broad audience. We will explore its historical development, core principles, diagnostic and adjustment protocols, clinical outcomes, and its standing in modern chiropractic practice.</p>
+                </div>
+
+                <div class="content-grid">
+                    <!-- History and Evolution -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <h3 class="card-title">History & Evolution</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="quote-box">
+                                <p class="quote-text">"The body has an amazing ability to heal itself, and chiropractic care helps by removing interference in the nervous system."</p>
+                                <p class="quote-author">- Dr. Clarence S. Gonstead</p>
+                            </div>
+                            
+                            <h4>Origins and Contributions by Dr. Clarence S. Gonstead</h4>
+                            <p>Clarence Selmer Gonstead (1898-1978) was a pivotal figure in chiropractic, transforming it from a rudimentary practice into a more scientifically grounded biomechanical discipline. Born on July 24, 1898, in Willow Lake, South Dakota, Gonstead's early life on a dairy farm in Primrose, Wisconsin, fostered a keen interest in mechanical problem-solving.</p>
+                            
+                            <p>Gonstead's personal experience with severe rheumatoid arthritis, which was successfully treated by chiropractor Dr. J. B. Olson, proved to be a life-altering event. This experience inspired him to pursue chiropractic education. He graduated from the Palmer School of Chiropractic and Infirmary in 1923.</p>
+                            
+                            <div class="highlight-box">
+                                <h4>Key Innovation: The Gonstead Disc Concept</h4>
+                                <p>Gonstead, along with his younger brother Merton, developed the "Gonstead Disc Concept," which posited that the vertebral disc, rather than solely the vertebral bone, was often the primary cause of nerve pressure in subluxations. This concept was a significant departure from the prevailing theories and contributed to a more comprehensive understanding of discogenic back pain.</p>
+                            </div>
+                            
+                            <h4>Establishment of the Gonstead Clinic and GCSS</h4>
+                            <p>Dr. Gonstead's practice grew rapidly due to his clinical success. His first office in downtown Mount Horeb often saw patients overflowing into the street.</p>
+                            
+                            <!-- Dr. Gonstead's First Clinic Historical Image -->
+                            <div class="chart-container" style="margin: 35px 0; background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);">
+                                <h5 style="text-align: center; margin-bottom: 25px; color: #0d5c75; font-weight: 700; font-size: 1.4rem;">Dr. Gonstead's First Chiropractic Office - 1923</h5>
+                                <img src="/images/education/first time gonstead clinic.jpg" 
+                                     alt="Dr. Clarence Gonstead's first chiropractic office in downtown Mount Horeb, Wisconsin - 1923, showing the humble beginnings of what would become a revolutionary chiropractic practice"
+                                     class="chart-image"
+                                     onclick="openImageModal(this)"
+                                     style="width: 100%; max-width: 800px; margin: 0 auto; display: block; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); border: 3px solid #2a9d8f;">
+                                <p class="visual-caption" style="text-align: center; margin-top: 20px; font-size: 16px; color: #4a5568; font-weight: 500; line-height: 1.6;">Click to enlarge - Historical photograph of Dr. Clarence Gonstead's first chiropractic office in downtown Mount Horeb, Wisconsin (1923). This modest beginning would grow into one of the most influential chiropractic practices in history, as patients from around the world would eventually travel to seek his revolutionary approach to spinal care. The success of this humble practice led to patients literally overflowing into the street, necessitating the construction of the world-renowned Gonstead Clinic in 1964.</p>
+                                
+                                <!-- Professional Narrative Text -->
+                                <div style="margin-top: 30px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #2a9d8f;">
+                                    <h6 style="color: #0d5c75; font-weight: 600; font-size: 1.2rem; margin-bottom: 15px; font-family: 'Poppins', sans-serif;">The Foundation of Excellence</h6>
+                                    <p style="color: #4a5568; font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px;">In 1923, Dr. Clarence Gonstead opened his first chiropractic office in downtown Mount Horeb, Wisconsin. This humble beginning marked the start of what would become one of the most revolutionary approaches to spinal care in chiropractic history. From this modest practice, Dr. Gonstead would develop his systematic approach to diagnosis and treatment that would eventually influence practitioners worldwide.</p>
+                                    <p style="color: #4a5568; font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px;">Dr. Gonstead's unwavering dedication to his patients and his relentless pursuit of clinical excellence quickly distinguished his practice. His methodical approach to spinal analysis, combined with his mechanical engineering background, allowed him to develop precise diagnostic techniques that would become the hallmark of the Gonstead method. Word of his remarkable clinical results spread rapidly throughout the region.</p>
+                                    <p style="color: #4a5568; font-size: 1.05rem; line-height: 1.7; margin-bottom: 0;">As his reputation grew, patients began traveling from increasingly distant locations to seek his care. The success of his early practice would eventually necessitate the construction of the world-famous Gonstead Clinic in 1964, but it all began in this simple office where Dr. Gonstead first demonstrated that precision, dedication, and scientific methodology could transform the art of chiropractic healing.</p>
+                                </div>
+                            </div>
+                            
+                            <p>In 1964, the new Gonstead Clinic of Chiropractic was completed east of Mount Horeb. This impressive two-level facility spanned 29,000 square feet and included:</p>
+                            <ul>
+                                <li>11 adjusting rooms</li>
+                                <li>Chemistry laboratory</li>
+                                <li>Research facilities</li>
+                                <li>Seminar rooms</li>
+                                <li>Full-service motel for out-of-town patients</li>
+                                <li>Limousine service from Madison airport</li>
+                            </ul>
+                            
+                            <!-- Historical Gonstead Clinic Image -->
+                            <div class="chart-container" style="margin: 40px 0;">
+                                <h5 style="text-align: center; margin-bottom: 20px; color: #0d5c75; font-weight: 600;">The Historic Gonstead Clinic - 2007</h5>
+                                <img src="/images/education/gonstead clinic_page-0001.jpg" 
+                                     alt="Historic Gonstead Clinic of Chiropractic - 2007 photograph showing the renowned facility in Mount Horeb, Wisconsin"
+                                     class="chart-image"
+                                     onclick="openImageModal(this)"
+                                     style="width: 100%; max-width: 1000px; margin: 0 auto; display: block; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                                <p class="visual-caption" style="text-align: center; margin-top: 20px; font-size: 16px; color: #666; font-weight: 500;">Click to enlarge - Historical photograph of the legendary Gonstead Clinic of Chiropractic (2007), the world-renowned facility in Mount Horeb, Wisconsin. This 29,000 square foot clinic became the epicenter of Gonstead chiropractic education and treatment, attracting patients and practitioners from around the globe to learn from Dr. Clarence Gonstead's revolutionary approach to spinal care.</p>
+                            </div>
+                            
+                            <p>The Gonstead Clinical Studies Society (GCSS), formed in 1979, is a non-profit organization dedicated to advancing the art, science, and philosophy of the Gonstead System through research, education, and fellowship.</p>
+                        </div>
+                    </div>
+
+                    <!-- Core Principles & Diagnostic Tools -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-stethoscope"></i>
+                            </div>
+                            <h3 class="card-title">Core Principles & Diagnostic Tools</h3>
+                        </div>
+                        <div class="card-content">
+                            <p>The Gonstead Chiropractic Technique is characterized by a meticulous and comprehensive approach to spinal analysis, relying on a five-component diagnostic framework to identify the precise location and nature of vertebral subluxations.</p>
+                            
+                            <div class="diagnostic-framework">
+                                <h4>Five-Component Diagnostic Framework</h4>
+                                
+                                <div class="diagnostic-step">
+                                    <div class="step-number">1</div>
+                                    <div class="step-content">
+                                        <div class="step-title">Full-Spine Weight-Bearing X-rays</div>
+                                        <div class="step-description">Utilizes 14x36 inch films for AP and lateral views to assess the entire spine, including vertebral count, posture, and disc integrity under weight-bearing conditions.</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="diagnostic-step">
+                                    <div class="step-number">2</div>
+                                    <div class="step-content">
+                                        <div class="step-title">Static & Motion Palpation</div>
+                                        <div class="step-description">Involves feeling the spine at rest (static) and during movement (motion) to identify swelling, tenderness, muscle spasm, and restricted joint movement.</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="diagnostic-step">
+                                    <div class="step-number">3</div>
+                                    <div class="step-content">
+                                        <div class="step-title">Nervoscope/Thermography</div>
+                                        <div class="step-description">Uses an instrument to detect heat differentials along the spine, which can indicate inflammation and nerve interference.</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="diagnostic-step">
+                                    <div class="step-number">3A</div>
+                                    <div class="step-content">
+                                        <div class="step-title">Neurocalometer</div>
+                                        <div class="step-description">A Neurocalometer is a specialized chiropractic device used to measure temperature differences along the spine to detect nerve interference and guide spinal adjustments. This precision instrument helps identify areas of neurological dysfunction by measuring thermal patterns that indicate inflammation or nerve irritation.</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="diagnostic-step">
+                                    <div class="step-number">4</div>
+                                    <div class="step-content">
+                                        <div class="step-title">Visual Assessment</div>
+                                        <div class="step-description">Observes the patient's posture, gait, and body symmetry to identify visual cues of underlying spinal issues and compensatory patterns.</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="diagnostic-step">
+                                    <div class="step-number">5</div>
+                                    <div class="step-content">
+                                        <div class="step-title">Symptom/Case Management</div>
+                                        <div class="step-description">Integrates patient symptoms and case history with objective findings to guide the diagnostic process and identify the primary subluxation.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="highlight-box">
+                                <h4>Primary vs. Secondary Subluxations</h4>
+                                <p>A fundamental concept in the Gonstead System is the distinction between "primary" and "secondary" subluxations. The body often compensates for a primary subluxation by developing secondary misalignments in other areas of the spine. The Gonstead practitioner's goal is to identify and adjust only the primary subluxation, believing that addressing the root cause will allow the secondary compensations to resolve naturally.</p>
+                            </div>
+                            
+                            <div class="visual-section">
+                                <h4>Spinal Nerve Chart & Anatomical References</h4>
+                                
+                                <!-- Enhanced Chart Display -->
+                                <div class="chart-container">
+                                    <h5 style="text-align: center; margin-bottom: 20px; color: #0d5c75; font-weight: 600;">Comprehensive Spinal Nerve Chart</h5>
+                                    <img src="/images/education/spinalnervechart.jpeg" 
+                                         alt="Spinal Nerve Chart showing nerve pathways and their connection to various body systems and organs"
+                                         class="chart-image"
+                                         onclick="openImageModal(this)"
+                                         style="width: 100%; max-width: 1200px; margin: 0 auto; display: block;">
+                                    <p class="visual-caption" style="text-align: center; margin-top: 15px; font-size: 14px; color: #666;">Click to enlarge - Comprehensive spinal nerve chart illustrating the relationship between spinal segments and their neurological connections to various body systems. This visual aid helps understand the Gonstead principle that proper spinal alignment is essential for optimal nervous system function.</p>
+                                </div>
+                                
+                                <div class="visual-grid">
+                                    <div class="visual-item">
+                                        <img src="/images/education/the-31-pairs-of-spinal-nerves-diagram.jpeg" alt="The 31 pairs of spinal nerves anatomical diagram" onclick="openImageModal(this)">
+                                        <p class="visual-caption">Detailed anatomical diagram showing the 31 pairs of spinal nerves that emerge from the spinal cord. This educational image demonstrates the complex nervous system organization that Gonstead practitioners work to optimize through precise spinal adjustments.</p>
+                                    </div>
+                                    <div class="visual-item">
+                                        <img src="/images/education/chiropractic-spinal-examination.jpeg" alt="Chiropractic spinal examination demonstrating diagnostic techniques" onclick="openImageModal(this)">
+                                        <p class="visual-caption">Professional chiropractic spinal examination demonstrating the hands-on diagnostic techniques used in the Gonstead method. This shows the careful palpation and assessment procedures that form part of the five-component diagnostic framework.</p>
+                                    </div>
+                                    <div class="visual-item">
+                                        <img src="/images/education/spinal-nerve-and-organ-function-chart.jpeg" alt="Spinal nerve and organ function relationship chart" onclick="openImageModal(this)">
+                                        <p class="visual-caption">Educational chart showing the relationship between spinal nerve function and organ systems, demonstrating how chiropractic adjustments can influence overall health and body function.</p>
+                                    </div>
+                                    <div class="visual-item">
+                                        <img src="/images/Instrumentation Gonstead.png" alt="Neurocalometer - Gonstead chiropractic diagnostic instrument" onclick="openImageModal(this)">
+                                        <h5>Neurocalometer</h5>
+                                        <p class="visual-caption">A specialized chiropractic diagnostic instrument used to measure temperature differences along the spine. The Neurocalometer detects nerve interference and guides precise spinal adjustments by measuring thermal patterns that indicate inflammation or nerve irritation.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Adjustment Protocol & Tools -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <h3 class="card-title">Adjustment Protocol & Tools</h3>
+                        </div>
+                        <div class="card-content">
+                            <p>The Gonstead adjustment protocol is renowned for its precision, specificity, and effectiveness, stemming from a deep understanding of spinal biomechanics.</p>
+                            
+                            <h4>Short-Lever, High-Velocity, Low-Amplitude Thrusts</h4>
+                            <p>The core of the Gonstead adjustment involves a specific type of thrust:</p>
+                            <ul>
+                                <li><strong>Short-Lever:</strong> The contact point is as close as possible to the misaligned vertebra, minimizing torque and stress on surrounding tissues</li>
+                                <li><strong>High-Velocity:</strong> The thrust is delivered quickly, aiming to overcome joint resistance without engaging conscious muscle guarding</li>
+                                <li><strong>Low-Amplitude:</strong> The depth is minimal, moving the joint only to its physiological limit for safety</li>
+                            </ul>
+                            
+                            <h4>Specialized Tables</h4>
+                            <p>Dr. Gonstead developed specialized chiropractic tables to optimize patient positioning:</p>
+                            
+                            <!-- Enhanced Nervous System Chart Display -->
+                            <div class="chart-container" style="margin-top: 30px;">
+                                <h5 style="text-align: center; margin-bottom: 20px; color: #0d5c75; font-weight: 600;">Nervous System Connection</h5>
+                                <img src="/images/education/autonomic-motor-sensory.gif" 
+                                     alt="Autonomic Motor Sensory System Diagram"
+                                     class="chart-image"
+                                     onclick="openImageModal(this)"
+                                     style="width: 100%; max-width: 800px; margin: 0 auto; display: block;">
+                                <p class="visual-caption" style="text-align: center; margin-top: 15px; font-size: 14px; color: #666;">Click to enlarge - Educational diagram showing the autonomic, motor, and sensory nervous system pathways, illustrating how spinal adjustments can affect overall body function.</p>
+                            </div>
+                            
+                            <div class="visual-grid">
+                                <div class="visual-item">
+                                    <img src="/images/education/chiropractic-spinal-examination.jpeg" alt="Professional Chiropractic Spinal Examination">
+                                    <h5>Professional Spinal Examination</h5>
+                                    <p class="visual-caption">Comprehensive examination techniques using advanced diagnostic protocols to ensure precise identification of spinal subluxations and optimal treatment outcomes.</p>
+                                </div>
+                                <div class="visual-item">
+                                    <img src="/images/education/spinal-nerve-and-organ-function-chart.jpeg" alt="Spinal Nerve and Organ Function Chart">
+                                    <h5>Spinal-Organ Connection</h5>
+                                    <p class="visual-caption">Educational chart demonstrating the intricate relationship between spinal nerve function and organ systems, highlighting the holistic approach of chiropractic care.</p>
+                                </div>
+                            </div>
+                            
+                            <h4>Contact Techniques</h4>
+                            <p>Specificity extends to precise hand placements and contacts used for each adjustment. The chiropractor uses specific parts of their hand to make contact with specific points on the vertebra, ensuring direct transmission of force and allowing the practitioner to feel the subtle movements during adjustment.</p>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Evidence & Outcomes -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3 class="card-title">Clinical Evidence & Outcomes</h3>
+                        </div>
+                        <div class="card-content">
+                            <p>The clinical efficacy and outcomes associated with the Gonstead Chiropractic Technique have been explored through various research methodologies, including randomized trials and case reports.</p>
+                            
+                            <h4>Research Findings</h4>
+                            <p>Research on the Gonstead technique highlights its application in specific conditions and its potential for positive patient outcomes:</p>
+                            
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Randomized Trials</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <p>While comprehensive, large-scale randomized controlled trials (RCTs) specifically on the Gonstead technique are less numerous, some pilot studies have been conducted:</p>
+                                    <ul>
+                                        <li>Practice-based randomized controlled-comparison clinical trial on essential hypertension showed potential benefits in blood pressure reduction</li>
+                                        <li>Studies on unilateral spinal adjustments demonstrated effectiveness in ameliorating cervical lateral-flexion end-range asymmetries</li>
+                                        <li>Research shows immediate and sustained improvements in spinal mobility when applied to restricted end-range areas</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Case Reports</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <p>A significant portion of evidence comes from case reports detailing successful applications:</p>
+                                    <ul>
+                                        <li><strong>Cervicogenic Dizziness:</strong> Case study of a 29-year-old man with decade-long progressive cervicogenic dizziness showed remarkable improvement following Gonstead adjustments</li>
+                                        <li><strong>Amenorrhea:</strong> Case study of a 25-year-old female student with primary amenorrhea experienced positive outcomes following Gonstead adjustments</li>
+                                        <li>Multiple case reports demonstrate effectiveness for various musculoskeletal and neurological conditions</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="highlight-box">
+                                <h4>Safety Profile</h4>
+                                <p>The Gonstead technique is generally considered safe when performed by trained and certified practitioners. The emphasis on specificity, short-lever contacts, and low-amplitude thrusts aims to minimize risks associated with spinal manipulation. The thorough five-component analysis prior to adjustment further enhances safety by ensuring that only the necessary segments are adjusted.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Education & Training -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <h3 class="card-title">Education & Training</h3>
+                        </div>
+                        <div class="card-content">
+                            <p>The integrity and perpetuation of the Gonstead Chiropractic Technique are maintained through rigorous educational standards and a structured certification process.</p>
+                            
+                            <h4>Role of GCSS in Training</h4>
+                            <p>The Gonstead Clinical Studies Society (GCSS) plays a central role in preserving, promoting, and advancing the Gonstead System:</p>
+                            
+                            <ul>
+                                <li><strong>Training and Seminars:</strong> Organizes comprehensive training programs for both chiropractic students and practicing doctors</li>
+                                <li><strong>Diplomate Certification:</strong> Offers highly regarded Diplomate Program (DGCSS) requiring 1-2 years of rigorous study</li>
+                                <li><strong>Publications:</strong> Actively contributes to scientific literature through research and case reports</li>
+                                <li><strong>Continuing Education:</strong> Maintains standards through annual peer-reviewed case presentations</li>
+                            </ul>
+                            
+                            <div class="highlight-box">
+                                <h4>Certification Process</h4>
+                                <p>The GCSS Diplomate Program involves extensive classroom hours, hands-on practical sessions, and comprehensive examinations. Certified practitioners must complete ongoing competency assessments to maintain their certification, ensuring adherence to the highest standards of practice.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contemporary Relevance & Critiques -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <h3 class="card-title">Contemporary Relevance & Critiques</h3>
+                        </div>
+                        <div class="card-content">
+                            <p>The Gonstead Chiropractic Technique continues to hold significant relevance in modern chiropractic practice, with substantial usage among practitioners globally.</p>
+                            
+                            <h4>Modern Usage</h4>
+                            <p>The Gonstead System remains one of the most widely taught and practiced chiropractic techniques:</p>
+                            <ul>
+                                <li>58.5% to 59% of chiropractors incorporate the Gonstead System into their practices</li>
+                                <li>Second most commonly used chiropractic technique globally</li>
+                                <li>Around 28.9% of patients have been treated with the Gonstead technique</li>
+                            </ul>
+                            
+                            <h4>Criticisms and Considerations</h4>
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Reliance on X-rays</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <p>Critics raise concerns about patient exposure to radiation with extensive use of full-spine X-rays. The debate centers on balancing diagnostic thoroughness with potential radiation risks. Gonstead practitioners argue these X-rays are crucial for accurate diagnosis and identifying subtle spinal anomalies.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Instrumentation Questions</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <p>Some critics question the diagnostic specificity and reliability of the Nervoscope as a sole indicator for subluxation. The scientific community seeks more robust evidence from independent, peer-reviewed studies to validate the clinical utility of such instrumentation.</p>
+                                </div>
+                            </div>
+                            
+                            <h4>Ongoing Research Directions</h4>
+                            <p>Areas needing further investigation include:</p>
+                            <ul>
+                                <li>Larger-scale clinical trials comparing Gonstead to other techniques</li>
+                                <li>Validation of diagnostic tools and their reliability</li>
+                                <li>Long-term outcome studies and cost-effectiveness analysis</li>
+                                <li>Research into precise physiological mechanisms of action</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Important Considerations -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h3 class="card-title">Important Considerations for Patients</h3>
+                        </div>
+                        <div class="card-content">
+                            <p>While the Gonstead technique is generally safe and effective, patients should be aware of certain considerations:</p>
+                            
+                            <div class="highlight-box">
+                                <h4>X-ray Exposure</h4>
+                                <p>The Gonstead technique relies heavily on full-spine X-rays. Discuss with your chiropractor the necessity of each X-ray, especially for children or pregnant women. Ensure X-rays are taken only when clinically necessary and with appropriate shielding.</p>
+                            </div>
+                            
+                            <div class="highlight-box">
+                                <h4>Choosing a Qualified Practitioner</h4>
+                                <p>Choose a Gonstead chiropractor who is properly trained and certified. Look for practitioners who have completed advanced training through the GCSS. Don't hesitate to ask about their qualifications, experience, and approach to care.</p>
+                            </div>
+                            
+                            <div class="highlight-box">
+                                <h4>Complementary Healthcare</h4>
+                                <p>Chiropractic care is a complementary healthcare approach, not a substitute for conventional medical diagnosis or treatment. For severe pain, sudden neurological symptoms, or known medical conditions, consult with a medical doctor first.</p>
+                            </div>
+                            
+                            <div class="highlight-box">
+                                <h4>Individual Results</h4>
+                                <p>Individual results with chiropractic care can vary. Have realistic expectations and communicate openly with your chiropractor about your progress and any concerns.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comprehensive Treatment and Rehabilitation Protocol -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <h3 class="card-title">Comprehensive Gonstead Treatment and Rehabilitation Protocol</h3>
+                        </div>
+                        <div class="card-content">
+                            <p>This comprehensive protocol outlines the systematic approach to treating various human body problems using the Gonstead Chiropractic Technique, integrating diagnostic precision with therapeutic intervention for optimal patient outcomes.</p>
+                            
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Core Treatment Principles</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <h4>Foundational Approach</h4>
+                                    <p>The Gonstead treatment protocol is built upon the fundamental principle that the human body possesses an innate ability to heal when spinal subluxations are precisely identified and corrected. This approach emphasizes:</p>
+                                    <ul>
+                                        <li><strong>Specificity:</strong> Each adjustment targets only the primary subluxation, allowing secondary compensations to resolve naturally</li>
+                                        <li><strong>Precision:</strong> Utilizing the five-component diagnostic system to ensure accurate identification of problematic segments</li>
+                                        <li><strong>Biomechanical Restoration:</strong> Restoring proper spinal mechanics to optimize nervous system function</li>
+                                        <li><strong>Holistic Integration:</strong> Addressing the interconnected nature of spinal health and overall body function</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Cervical Spine Treatment Protocol</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <h4>Upper Cervical (C1-C2) Management</h4>
+                                    <p>The upper cervical region requires specialized attention due to its unique anatomy and critical role in neurological function:</p>
+                                    <ul>
+                                        <li><strong>Atlas (C1) Subluxation:</strong> Precise lateral adjustment using minimal force to restore proper atlantooccipital relationship</li>
+                                        <li><strong>Axis (C2) Correction:</strong> Rotational adjustments to address rotatory subluxations affecting brainstem function</li>
+                                        <li><strong>Neurological Considerations:</strong> Careful assessment of cranial nerve function and vertebral artery integrity</li>
+                                    </ul>
+                                    
+                                    <h4>Mid-Cervical (C3-C5) Treatment</h4>
+                                    <p>This region commonly presents with postural-related subluxations requiring:</p>
+                                    <ul>
+                                        <li>Lateral flexion corrections for unilateral muscle tension</li>
+                                        <li>Rotational adjustments to restore proper facet joint mechanics</li>
+                                        <li>Forward head posture rehabilitation protocols</li>
+                                    </ul>
+                                    
+                                    <h4>Lower Cervical (C6-C7) Management</h4>
+                                    <p>The cervicothoracic junction requires specific attention to:</p>
+                                    <ul>
+                                        <li>Transitional zone biomechanics</li>
+                                        <li>Nerve root compression affecting upper extremity function</li>
+                                        <li>Integration with thoracic spine mechanics</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Thoracic Spine Treatment Protocol</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <h4>Upper Thoracic (T1-T4) Management</h4>
+                                    <p>The upper thoracic region often compensates for cervical dysfunction and requires:</p>
+                                    <ul>
+                                        <li><strong>Postural Correction:</strong> Addressing forward head posture and rounded shoulders</li>
+                                        <li><strong>Rib Mobilization:</strong> Integrating costovertebral joint function with spinal adjustments</li>
+                                        <li><strong>Sympathetic Nervous System:</strong> Consideration of autonomic dysfunction affecting cardiovascular and respiratory function</li>
+                                    </ul>
+                                    
+                                    <h4>Mid-Thoracic (T5-T8) Treatment</h4>
+                                    <p>This region commonly presents with viscerosomatic reflexes requiring:</p>
+                                    <ul>
+                                        <li>Specific adjustments targeting organ-related subluxations</li>
+                                        <li>Integration of breathing mechanics with spinal correction</li>
+                                        <li>Assessment of digestive system relationships</li>
+                                    </ul>
+                                    
+                                    <h4>Lower Thoracic (T9-T12) Management</h4>
+                                    <p>The thoracolumbar junction presents unique challenges:</p>
+                                    <ul>
+                                        <li>Transitional zone biomechanics affecting lumbar function</li>
+                                        <li>Diaphragmatic dysfunction correction</li>
+                                        <li>Integration with lumbar spine treatment protocols</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Lumbar Spine Treatment Protocol</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <h4>Upper Lumbar (L1-L2) Management</h4>
+                                    <p>The upper lumbar region often presents with:</p>
+                                    <ul>
+                                        <li><strong>Disc Pathology:</strong> Specific protocols for disc derangement and herniation</li>
+                                        <li><strong>Nerve Root Compression:</strong> Decompression techniques for radicular symptoms</li>
+                                        <li><strong>Postural Integration:</strong> Addressing anterior pelvic tilt and lordotic curve abnormalities</li>
+                                    </ul>
+                                    
+                                    <h4>Mid-Lumbar (L3-L4) Treatment</h4>
+                                    <p>This region commonly requires:</p>
+                                    <ul>
+                                        <li>Specific adjustments for weight-bearing related subluxations</li>
+                                        <li>Integration with hip joint mechanics</li>
+                                        <li>Assessment of core stability and muscular imbalances</li>
+                                    </ul>
+                                    
+                                    <h4>Lower Lumbar (L5-S1) Management</h4>
+                                    <p>The lumbosacral junction presents complex biomechanical challenges:</p>
+                                    <ul>
+                                        <li>Sacroiliac joint dysfunction integration</li>
+                                        <li>Disc pathology at the most mobile segment</li>
+                                        <li>Pelvic mechanics and lower extremity function</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Neurological Rehabilitation Protocols</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <h4>Central Nervous System Integration</h4>
+                                    <p>The Gonstead approach recognizes the intimate relationship between spinal function and neurological health:</p>
+                                    <ul>
+                                        <li><strong>Autonomic Nervous System:</strong> Specific protocols for sympathetic and parasympathetic dysfunction</li>
+                                        <li><strong>Sensory Integration:</strong> Addressing proprioceptive and sensory processing disorders</li>
+                                        <li><strong>Motor Function:</strong> Rehabilitation of movement patterns and coordination</li>
+                                    </ul>
+                                    
+                                    <h4>Peripheral Nervous System Management</h4>
+                                    <p>Comprehensive approach to peripheral nerve dysfunction:</p>
+                                    <ul>
+                                        <li>Nerve root decompression protocols</li>
+                                        <li>Peripheral nerve entrapment syndromes</li>
+                                        <li>Neuroplasticity enhancement through specific adjustments</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Systemic Health Integration</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <h4>Cardiovascular System Support</h4>
+                                    <p>The Gonstead technique addresses cardiovascular health through:</p>
+                                    <ul>
+                                        <li><strong>Autonomic Regulation:</strong> Balancing sympathetic and parasympathetic tone</li>
+                                        <li><strong>Thoracic Spine Adjustments:</strong> Optimizing cardiac nerve supply</li>
+                                        <li><strong>Postural Correction:</strong> Improving circulation through proper spinal alignment</li>
+                                    </ul>
+                                    
+                                    <h4>Respiratory System Enhancement</h4>
+                                    <p>Comprehensive approach to breathing dysfunction:</p>
+                                    <ul>
+                                        <li>Diaphragmatic function restoration</li>
+                                        <li>Rib cage mobility enhancement</li>
+                                        <li>Thoracic spine optimization for respiratory mechanics</li>
+                                    </ul>
+                                    
+                                    <h4>Digestive System Integration</h4>
+                                    <p>Addressing gastrointestinal dysfunction through:</p>
+                                    <ul>
+                                        <li>Vagal nerve optimization</li>
+                                        <li>Thoracolumbar sympathetic regulation</li>
+                                        <li>Viscerosomatic reflex normalization</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Extremity Rehabilitation Protocols</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <h4>Upper Extremity Management</h4>
+                                    <p>Comprehensive approach to upper extremity dysfunction:</p>
+                                    <ul>
+                                        <li><strong>Shoulder Complex:</strong> Integration of cervical spine corrections with shoulder mechanics</li>
+                                        <li><strong>Elbow and Wrist:</strong> Addressing nerve entrapment syndromes through spinal optimization</li>
+                                        <li><strong>Hand Function:</strong> Restoring fine motor control through cervical spine adjustments</li>
+                                    </ul>
+                                    
+                                    <h4>Lower Extremity Management</h4>
+                                    <p>Addressing lower extremity dysfunction through:</p>
+                                    <ul>
+                                        <li><strong>Hip Joint:</strong> Integration with lumbar spine and pelvic mechanics</li>
+                                        <li><strong>Knee Function:</strong> Addressing biomechanical imbalances through spinal correction</li>
+                                        <li><strong>Ankle and Foot:</strong> Restoring proper weight-bearing mechanics</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                    <span class="collapsible-title">Maintenance and Prevention Protocols</span>
+                                    <i class="fas fa-chevron-down collapsible-icon"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <h4>Ongoing Care Management</h4>
+                                    <p>The Gonstead approach emphasizes preventive care through:</p>
+                                    <ul>
+                                        <li><strong>Regular Assessment:</strong> Periodic re-evaluation using the five-component system</li>
+                                        <li><strong>Lifestyle Modification:</strong> Ergonomic and postural education</li>
+                                        <li><strong>Exercise Integration:</strong> Specific exercises to maintain spinal health</li>
+                                    </ul>
+                                    
+                                    <h4>Patient Education and Empowerment</h4>
+                                    <p>Comprehensive patient education includes:</p>
+                                    <ul>
+                                        <li>Understanding of spinal biomechanics</li>
+                                        <li>Recognition of early warning signs</li>
+                                        <li>Self-care strategies for spinal health maintenance</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="highlight-box">
+                                <h4>Clinical Implementation</h4>
+                                <p>The successful implementation of the Gonstead treatment and rehabilitation protocol requires a systematic approach that integrates precise diagnostic procedures with targeted therapeutic interventions. This comprehensive methodology ensures that each patient receives individualized care based on their specific spinal presentation and health needs, maximizing therapeutic outcomes while minimizing treatment duration.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading State -->
+            <div class="loading" id="loadingState">
+                <div class="spinner"></div>
+                <p>Loading educational resources...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="background: #0d5c75; color: white; text-align: center; padding: 40px 0; margin-top: 60px;">
+        <div class="container">
+            <p style="margin-bottom: 8px; font-size: 0.9rem;">&copy; 2024 Gonstead Chiropractic - Dr. Bashir Khan. All rights reserved.</p>
+            <p style="font-size: 0.9rem; opacity: 0.8;">For appointments: +92 304 6996267 | Email: info@gonsteadchiropractic.com</p>
+        </div>
+    </footer>
+
+
+    <!-- JavaScript for Search and Filter Functionality -->
+    <script>
+        // Disable third-party script warnings
+        window.addEventListener('error', function(e) {
+            if (e.message && e.message.includes('suggest')) {
+                e.preventDefault();
+                return true;
+            }
+        });
+        
+        // Toggle collapsible sections
+        function toggleCollapsible(element) {
+            try {
+                const content = element.nextElementSibling;
+                const icon = element.querySelector('.collapsible-icon');
+                
+                if (content.classList.contains('active')) {
+                    content.classList.remove('active');
+                    icon.classList.remove('active');
+                } else {
+                    content.classList.add('active');
+                    icon.classList.add('active');
+                }
+            } catch (error) {
+                console.log('Collapsible toggle error handled');
+            }
+        }
+        
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+
+
+            // Search functionality
+            const searchInput = document.getElementById('smartSearch');
+            const topicFilter = document.getElementById('topicFilter');
+            const bodyAreaFilter = document.getElementById('bodyAreaFilter');
+            const contentTypeFilter = document.getElementById('contentTypeFilter');
+            const sortSelect = document.getElementById('sortSelect');
+            const resultsCount = document.getElementById('resultsCount');
+            const contentCards = document.querySelectorAll('.content-card');
+            const collapsibleSections = document.querySelectorAll('.collapsible-section');
+            
+            let currentTopicFilter = '';
+            let currentBodyAreaFilter = '';
+            let currentContentTypeFilter = '';
+            
+            // Search function
+            function performSearch() {
+                try {
+                    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+                    let visibleCount = 0;
+                    
+                    // Search through content cards
+                    contentCards.forEach(card => {
+                        const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+                        const content = card.querySelector('.card-content')?.textContent.toLowerCase() || '';
+                        
+                        const matchesSearch = !searchTerm || title.includes(searchTerm) || content.includes(searchTerm);
+                        const matchesTopicFilter = !currentTopicFilter || title.includes(currentTopicFilter.replace('-', ' '));
+                        const matchesBodyAreaFilter = !currentBodyAreaFilter || content.includes(currentBodyAreaFilter);
+                        const matchesContentTypeFilter = !currentContentTypeFilter || true; // All cards are articles for now
+                        
+                        if (matchesSearch && matchesTopicFilter && matchesBodyAreaFilter && matchesContentTypeFilter) {
+                            card.style.display = 'block';
+                            visibleCount++;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                    
+                    // Search through collapsible sections
+                    collapsibleSections.forEach(section => {
+                        const title = section.querySelector('.collapsible-title')?.textContent.toLowerCase() || '';
+                        const content = section.querySelector('.collapsible-content')?.textContent.toLowerCase() || '';
+                        
+                        const matchesSearch = !searchTerm || title.includes(searchTerm) || content.includes(searchTerm);
+                        const matchesTopicFilter = !currentTopicFilter || title.includes(currentTopicFilter.replace('-', ' '));
+                        const matchesBodyAreaFilter = !currentBodyAreaFilter || content.includes(currentBodyAreaFilter);
+                        
+                        if (matchesSearch && matchesTopicFilter && matchesBodyAreaFilter) {
+                            section.style.display = 'block';
+                            // Auto-expand if search term is found
+                            if (searchTerm && (title.includes(searchTerm) || content.includes(searchTerm))) {
+                                const contentDiv = section.querySelector('.collapsible-content');
+                                const icon = section.querySelector('.collapsible-icon');
+                                if (contentDiv && icon) {
+                                    contentDiv.classList.add('active');
+                                    icon.classList.add('active');
+                                }
+                            }
+                        } else {
+                            section.style.display = 'none';
+                        }
+                    });
+                    
+                    if (resultsCount) {
+                        resultsCount.textContent = visibleCount;
+                    }
+                } catch (error) {
+                    console.log('Search function error handled');
+                }
+            }
+            
+            // Event listeners
+            if (searchInput) {
+                searchInput.addEventListener('input', performSearch);
+            }
+            
+            if (topicFilter) {
+                topicFilter.addEventListener('change', function() {
+                    currentTopicFilter = this.value;
+                    performSearch();
+                });
+            }
+            
+            if (bodyAreaFilter) {
+                bodyAreaFilter.addEventListener('change', function() {
+                    currentBodyAreaFilter = this.value;
+                    performSearch();
+                });
+            }
+            
+            if (contentTypeFilter) {
+                contentTypeFilter.addEventListener('change', function() {
+                    currentContentTypeFilter = this.value;
+                    performSearch();
+                });
+            }
+            
+            // Search icon click
+            const searchIcon = document.querySelector('.search-icon');
+            if (searchIcon) {
+                searchIcon.addEventListener('click', performSearch);
+            }
+            
+            // Sort functionality
+            if (sortSelect) {
+                sortSelect.addEventListener('change', () => {
+                    try {
+                        // Add sorting logic here if needed
+                        console.log('Sort changed to:', sortSelect.value);
+                    } catch (error) {
+                        console.log('Sort function error handled');
+                    }
+                });
+            }
+        });
+    </script>
+    
+    <!-- Google Translate Widget -->
+    <div id="google_translate_element" class="translate-widget"></div>
+    
+<script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'ur,ar,hi,es,fr,de,it,pt,zh,ja,ko,tr,ru,pl,nl,sv,da,no,fi,cs,hu,ro,bg,hr,sk,sl,et,lv,lt,mt,ga,cy,is,mk,sq,sr,bs,me,ka,hy,az,kk,ky,uz,tk,tg,mn,ne,si,my,th,vi,lo,km,ms,id,tl,sw,zu,af,am,ig,yo,ha,st,xh,sn,ny,mg,rw,so,om,ti,bn,gu,kn,ml,mr,or,pa,ta,te,as,mai,bho,sa,gom,mni,sat,ks,sd,dv,ps,fa,ku,ckb,lrc,mzn,glk,bal,brh,sd,ur',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                gaTrack: true,
+                gaId: 'UA-XXXXX-X'
+            }, 'google_translate_element');
+        }
+        
+        // Load Google Translate script
+        (function() {
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+          ...
+        })();
+    </script>
+    
+	<!-- Zoom Functionality Script -->
+	<script>
+	    // Zoom functionality
+let currentZoom = parseFloat(localStorage.getItem('pageZoom')) || 200;
+
+	    // Apply zoom on page load
+	    document.addEventListener('DOMContentLoaded', function() {
+	        applyZoom(currentZoom);
+	        updateZoomDisplay();
+	    });
+
+	    function applyZoom(zoomLevel) {
+	        const zoomContainer = document.querySelector('.zoom-container');
+	        if (zoomContainer) {
+	            zoomContainer.style.transform = 'scale(' + (zoomLevel / 100) + ')';
+	            zoomContainer.style.transformOrigin = 'top center';
+	        }
+	        currentZoom = zoomLevel;
+	        localStorage.setItem('pageZoom', zoomLevel);
+	    }
+    	
+	    function updateZoomDisplay() {
+	        const zoomDisplay = document.getElementById('zoom-level');
+	        if (zoomDisplay) {
+            zoomDisplay.textContent = '200%';
+	        }
+	    }
+        
+        
+        // Keyboard shortcuts for zoom
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === '=' || e.key === '+') {
+                    e.preventDefault();
+                    if (currentZoom < 200) {
+                        currentZoom += 10;
+                        applyZoom(currentZoom);
+                        updateZoomDisplay();
+                    }
+                } else if (e.key === '-') {
+                    e.preventDefault();
+                    if (currentZoom > 50) {
+                        currentZoom -= 10;
+                        applyZoom(currentZoom);
+                        updateZoomDisplay();
+                    }
+                } else if (e.key === '0') {
+                    e.preventDefault();
+	    	    currentZoom = 200;
+                    applyZoom(currentZoom);
+                    updateZoomDisplay();
+                }
+            }
+        });
+        
+        // Dark Mode Toggle Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            // Check for saved theme preference or default to 'light'
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            
+            // Apply saved theme
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeIcon.className = 'fas fa-sun';
+                themeText.textContent = 'Night Mode';
+            }
+            
+            // Theme toggle event listener
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                
+                if (document.body.classList.contains('dark-mode')) {
+                    themeIcon.className = 'fas fa-sun';
+                    themeText.textContent = 'Night Mode';
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    themeIcon.className = 'fas fa-moon';
+                    themeText.textContent = 'Day Mode';
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        });
+        
+        // Custom Translation Interface
+        document.addEventListener('DOMContentLoaded', function() {
+            const languageSelect = document.getElementById('language-select');
+            
+            // Wait for Google Translate to load
+            function waitForGoogleTranslate() {
+                if (typeof google !== 'undefined' && google.translate) {
+                    // Google Translate is loaded, initialize custom interface
+                    initializeCustomTranslate();
+                } else {
+                    // Wait a bit more
+                    setTimeout(waitForGoogleTranslate, 500);
+                }
+            }
+            
+            function initializeCustomTranslate() {
+                if (languageSelect) {
+                    languageSelect.addEventListener('change', function() {
+                        const selectedLanguage = this.value;
+                        
+                        // Find the Google Translate dropdown
+                        const googleSelect = document.querySelector('.goog-te-combo');
+                        if (googleSelect) {
+                            // Set the value in Google Translate dropdown
+                            googleSelect.value = selectedLanguage;
+                            
+                            // Trigger the change event
+                            const event = new Event('change', { bubbles: true });
+                            googleSelect.dispatchEvent(event);
+                        } else {
+                            // If Google Translate isn't ready, try to trigger translation directly
+                            if (typeof google !== 'undefined' && google.translate) {
+                                try {
+                                    // Alternative method to trigger translation
+                                    const translateElement = google.translate.TranslateElement();
+                                    if (translateElement) {
+                                        translateElement.showBanner();
+                                    }
+                                } catch (error) {
+                                    console.log('Translation trigger error handled');
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Start waiting for Google Translate
+            setTimeout(waitForGoogleTranslate, 1000);
+        });
+        
+        // Enhanced Zoom Functionality
+        let currentPageZoom = 1.0;
+        
+        function adjustZoom(delta) {
+            currentPageZoom += delta;
+            if (currentPageZoom < 0.7) currentPageZoom = 0.7;
+            if (currentPageZoom > 1.5) currentPageZoom = 1.5;
+            
+            // Use transform instead of browser zoom for better compatibility
+            document.body.style.transform = `scale(${currentPageZoom})`;
+            document.body.style.transformOrigin = 'top center';
+            
+            // Adjust body width to prevent horizontal scrolling
+            document.body.style.width = `${100 / currentPageZoom}%`;
+            
+            document.getElementById('zoom-display').textContent = Math.round(currentPageZoom * 100) + '%';
+            localStorage.setItem('pageZoom', currentPageZoom);
+        }
+        
+        // Reset zoom to normal and load saved zoom level
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clear any existing zoom settings
+            localStorage.removeItem('pageZoom');
+            
+            // Reset to normal zoom
+            currentPageZoom = 1.0;
+            document.body.style.transform = 'scale(1.0)';
+            document.body.style.transformOrigin = 'top center';
+            document.body.style.width = '100%';
+            
+            const zoomDisplay = document.getElementById('zoom-display');
+            if (zoomDisplay) {
+                zoomDisplay.textContent = '100%';
+            }
+        });
+        
+        // Image Modal Functionality
+        function openImageModal(img) {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('imageModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'imageModal';
+                modal.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <div style="position: relative; max-width: 90%; max-height: 90%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+                            <button onclick="closeImageModal()" style="position: absolute; top: 10px; right: 10px; background: #009688; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+                            <img id="modalImage" style="max-width: 100%; max-height: 80vh; object-fit: contain;" />
+                            <p id="modalCaption" style="margin-top: 15px; text-align: center; color: #666; font-size: 14px;"></p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Close modal when clicking outside
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal || e.target === modal.firstElementChild) {
+                        closeImageModal();
+                    }
+                });
+            }
+            
+            // Set image and caption
+            const modalImage = document.getElementById('modalImage');
+            const modalCaption = document.getElementById('modalCaption');
+            
+            modalImage.src = img.src;
+            modalImage.alt = img.alt;
+            modalCaption.textContent = img.alt;
+            
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+        
+        // Keyboard shortcuts for modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+        
+        // Enhanced Google Translate Integration
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'ur,ar,hi,es,fr,de,it,pt,zh,ja,ko,tr,ru,pl,nl,sv,da,no,fi,cs,hu,ro,bg,hr,sk,sl,et,lv,lt,mt,ga,cy,is,mk,sq,sr,bs,me,ka,hy,az,kk,ky,uz,tk,tg,mn,ne,si,my,th,vi,lo,km,ms,id,tl,sw,zu,af,am,ig,yo,ha,st,xh,sn,ny,mg,rw,so,om,ti,bn,gu,kn,ml,mr,or,pa,ta,te,as,mai,bho,sa,gom,mni,sat,ks,sd,dv,ps,fa,ku,ckb,lrc,mzn,glk,bal,brh,sd,ur',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                gaTrack: true,
+                gaId: 'UA-XXXXX-X'
+            }, 'google_translate_element');
+            
+            // Hide the default Google Translate widget after initialization
+            setTimeout(function() {
+                const googleTranslateElement = document.getElementById('google_translate_element');
+                if (googleTranslateElement) {
+                    googleTranslateElement.style.display = 'none';
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

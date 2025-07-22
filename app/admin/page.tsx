@@ -59,6 +59,8 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
+import VoiceSettingsComponent from "@/components/voice-settings"
+import { updatePatient } from "@/lib/supabase"
 
 interface PatientRecord {
   id: string
@@ -203,18 +205,62 @@ export default function AdminDashboard() {
     })
   }
 
-  const updatePatientStatus = (patientId: string, newStatus: PatientRecord["status"]) => {
-    setPatients((prev) =>
-      prev.map((p) =>
+  const updatePatientStatus = async (patientId: string, newStatus: PatientRecord["status"]) => {
+    try {
+      // Find the current patient to get session count
+      const currentPatient = patients.find(p => p.id === patientId)
+      if (!currentPatient) {
+        throw new Error("Patient not found")
+      }
+
+      // Prepare update data for Supabase
+      const updateData: any = {
+        status: newStatus,
+      }
+
+      // If marking as completed, increment sessions and update last visit
+      if (newStatus === "completed") {
+        updateData.sessions = (currentPatient.sessions || 0) + 1
+        updateData.last_visit = new Date().toISOString()
+      }
+
+      // Update in Supabase database
+      const updatedPatient = await updatePatient(patientId, updateData)
+      
+      if (!updatedPatient) {
+        throw new Error("Failed to update patient in database")
+      }
+
+      // Create updated patient list
+      const updatedPatients = patients.map((p) =>
         p.id === patientId
-          ? { ...p, status: newStatus, lastVisit: newStatus === "completed" ? new Date().toISOString() : p.lastVisit }
+          ? { 
+              ...p, 
+              status: newStatus, 
+              sessions: newStatus === "completed" ? (p.sessions || 0) + 1 : p.sessions,
+              lastVisit: newStatus === "completed" ? new Date().toISOString() : p.lastVisit 
+            }
           : p,
-      ),
-    )
-    toast({
-      title: "Status Updated",
-      description: `Patient status changed to ${newStatus}`,
-    })
+      )
+
+      // Update local state to reflect changes
+      setPatients(updatedPatients)
+
+      // Update localStorage with the same updated data
+      localStorage.setItem("gonstead_patients", JSON.stringify(updatedPatients))
+
+      toast({
+        title: "Status Updated Successfully",
+        description: `Patient status changed to ${newStatus}${newStatus === "completed" ? " and session count updated" : ""}`,
+      })
+    } catch (error) {
+      console.error("Error updating patient status:", error)
+      toast({
+        title: "Update Failed",
+        description: `Failed to update patient status: ${error.message || "Please try again."}`,
+        variant: "destructive",
+      })
+    }
   }
 
   const updatePatientDetails = (updatedPatient: PatientRecord) => {

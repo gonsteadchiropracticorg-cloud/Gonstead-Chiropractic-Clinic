@@ -12,6 +12,7 @@ import { Calendar, Video, Clock, CheckCircle, AlertTriangle, Info } from "lucide
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useLanguage } from "./language-provider"
 import { useToast } from "@/hooks/use-toast"
+import { AppointmentConfirmation } from "./appointment-confirmation"
 
 export function AppointmentBooking() {
   const [formData, setFormData] = useState({
@@ -85,17 +86,17 @@ export function AppointmentBooking() {
 
   if (isSubmitted) {
     return (
-      <Card className="border-green-500 bg-green-50">
-        <CardContent className="text-center p-8">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-green-700 mb-2">{language === "ur" ? "کامیابی!" : "Success!"}</h3>
-          <p className="text-green-600">
-            {language === "ur"
-              ? "آپ کی اپائنٹمنٹ کامیابی سے بک ہو گئی ہے۔ ڈاکٹر باہر جلد ہی آپ سے رابطہ کریں گے۔"
-              : "Your appointment has been successfully booked. Dr. Bahir will contact you shortly."}
-          </p>
-        </CardContent>
-      </Card>
+      <AppointmentConfirmation 
+        appointmentData={formData}
+        onBackToHome={() => {
+          setIsSubmitted(false)
+          setFormData({ name: "", phone: "", sessionType: "clinic", preferredTime: "" })
+        }}
+        onNewAppointment={() => {
+          setIsSubmitted(false)
+          setFormData({ name: "", phone: "", sessionType: "clinic", preferredTime: "" })
+        }}
+      />
     )
   }
 

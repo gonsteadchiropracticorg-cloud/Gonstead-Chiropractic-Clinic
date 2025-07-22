@@ -423,16 +423,17 @@ export default function ImportExportPage() {
             id: values[0] || `import_${Date.now()}_${i}`,
             name: values[1] || "",
             phone: values[2] || "",
-            email: values[3] || null,
+            email: values[3] || undefined,
             session_type: (values[4] as "in_clinic" | "video") || "in_clinic",
             appointment_date: values[5] || new Date().toISOString(),
             status: (values[6] as "pending" | "confirmed" | "completed" | "cancelled") || "pending",
             urgency: (values[7] as "normal" | "urgent" | "emergency") || "normal",
             payment_method: (values[8] as "cash" | "jazzcash" | "easypaisa") || "cash",
             sessions_completed: parseInt(values[9]) || 0,
-            notes: values[10] || null,
+            notes: values[10] || undefined,
             created_at: values[11] || new Date().toISOString(),
-            last_visit: values[12] || null,
+            updated_at: new Date().toISOString(),
+            last_visit: values[12] || undefined,
             importStatus: 'pending'
           }
 
@@ -493,16 +494,17 @@ export default function ImportExportPage() {
             id: values[0] || `import_${Date.now()}_${i}`,
             name: values[1] || "",
             phone: values[2] || "",
-            email: values[3] || null,
+            email: values[3] || undefined,
             session_type: (values[4] as "in_clinic" | "video") || "in_clinic",
             appointment_date: values[5] || new Date().toISOString(),
             status: (values[6] as "pending" | "confirmed" | "completed" | "cancelled") || "pending",
             urgency: (values[7] as "normal" | "urgent" | "emergency") || "normal",
             payment_method: (values[8] as "cash" | "jazzcash" | "easypaisa") || "cash",
             sessions_completed: parseInt(values[9]) || 0,
-            notes: values[10] || null,
+            notes: values[10] || undefined,
             created_at: values[11] || new Date().toISOString(),
-            last_visit: values[12] || null,
+            updated_at: new Date().toISOString(),
+            last_visit: values[12] || undefined,
             importStatus: 'pending'
           }
 

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Education Platform - Gonstead Chiropractic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            line-height: 1.6;
+            color: #1f1f1f;
+            background-color: #f8f9fa;
+            transition: font-size 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Professional Icons Container */
+        .professional-icons-container {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            max-width: 300px;
+            justify-content: flex-end;
+        }
+        
+        .professional-icon {
+            background: #009688;
+            color: white;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border: none;
+            font-size: 18px;
+        }
+        
+        .professional-icon:hover {
+            background: #00695c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .professional-icon-extended {
+            background: #009688;
+            color: white;
+            border-radius: 25px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .professional-icon-extended:hover {
+            background: #00695c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .professional-icon-extended select {
+            background: white;
+            color: #009688;
+            border: none;
+            border-radius: 15px;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        /* Enhanced Zoom Controls */
+        .enhanced-zoom-controls {
+            background: #009688;
+            border-radius: 25px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .enhanced-zoom-btn {
+            background: white;
+            color: #009688;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        
+        .enhanced-zoom-btn:hover {
+            background: #f0f0f0;
+            transform: scale(1.1);
+        }
+        
+        .enhanced-zoom-level {
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 45px;
+            text-align: center;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .professional-icons-container {
+                top: 10px;
+                right: 10px;
+                gap: 6px;
+                max-width: 250px;
+            }
+            
+            .professional-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+            
+            .professional-icon-extended {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .professional-icon-extended select {
+                padding: 3px 6px;
+                font-size: 11px;
+            }
+            
+            .enhanced-zoom-controls {
+                padding: 4px 8px;
+                gap: 6px;
+            }
+            
+            .enhanced-zoom-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+            
+            .enhanced-zoom-level {
+                font-size: 11px;
+                min-width: 35px;
+            }
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, rgba(13, 92, 117, 0.8), rgba(42, 157, 143, 0.8));
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            padding: 40px 0 60px;
+            position: relative;
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 300px;
+        }
+
+        .header-left {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            font-weight: 400;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 32px;
+            margin-top: 24px;
+            justify-content: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            color: #ffffff;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Content Sections */
+        .content-main {
+            background: white;
+            padding: 60px 0;
+        }
+
+        .content-section {
+            margin-bottom: 80px;
+        }
+
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0d5c75;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            text-align: center;
+            margin-bottom: 50px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .content-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-card {
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+            width: 100%;
+        }
+
+        .content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #0d5c75, #2a9d8f);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 1.2rem;
+        }
+
+        .card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f1f1f;
+            margin: 0;
+        }
+
+        .card-content {
+            line-height: 1.8;
+            color: #4a5568;
+            font-size: 1rem;
+        }
+
+        .card-content h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 30px 0 15px 0;
+        }
+
+        .card-content p {
+            margin-bottom: 15px;
+        }
+
+        .card-content ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .card-content li {
+            margin-bottom: 8px;
+        }
+
+        /* Enhanced chart display */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+        
+        .chart-image {
+            max-width: 100%;
+            height: auto;
+            min-height: 500px;
+            object-fit: contain;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .chart-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .visual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .visual-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .visual-item img {
+            max-width: 100%;
+            height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .visual-item img:hover {
+            transform: scale(1.05);
+        }
+
+        .visual-caption {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            background: #0d5c75;
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+        }
+
+        .footer p {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .header-stats {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .content-card {
+                padding: 24px;
+            }
+
+            .visual-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Professional Icons Container -->
+    <div class="professional-icons-container">
+        <!-- Day/Night Mode Toggle -->
+        <button id="theme-toggle" class="professional-icon" title="Toggle Day/Night Mode" aria-label="Toggle Day/Night Mode">
+            <i class="fas fa-moon" id="theme-icon"></i>
+        </button>
+        
+        <!-- Language Translation -->
+        <div id="custom-translate-container" class="professional-icon-extended">
+            <i class="fas fa-globe"></i>
+            <select id="language-select" aria-label="Select language for translation">
+                <option value="en" selected>EN</option>
+                <option value="ur">اردو</option>
+                <option value="ar">عربي</option>
+                <option value="fr">FR</option>
+                <option value="de">DE</option>
+                <option value="es">ES</option>
+                <option value="hi">हिंदी</option>
+                <option value="zh">中文</option>
+            </select>
+        </div>
+        
+        <!-- Enhanced Zoom Controls -->
+        <div class="enhanced-zoom-controls">
+            <button class="enhanced-zoom-btn" onclick="adjustZoom(-0.1)" title="Zoom Out">
+                <i class="fas fa-minus"></i>
+            </button>
+            <span class="enhanced-zoom-level" id="zoom-display">100%</span>
+            <button class="enhanced-zoom-btn" onclick="adjustZoom(0.1)" title="Zoom In">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Patient Education Platform</h1>
+                    <p>Your comprehensive guide to understanding chiropractic care and optimizing your healing journey</p>
+                    <div class="header-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">8</span>
+                            <span class="stat-label">Educational Topics</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">95%</span>
+                            <span class="stat-label">Patient Satisfaction</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">50+</span>
+                            <span class="stat-label">Years of Research</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content-main">
+        <div class="container">
+            <!-- Gonstead Chiropractic Research Content -->
+            <section class="content-section">
+                <h2 class="section-title">The Gonstead Chiropractic Technique</h2>
+                <p class="section-subtitle">A Comprehensive Analysis of Dr. Clarence S. Gonstead's Revolutionary Approach to Chiropractic Care</p>
+                
+                <div class="content-grid">
+                    <!-- History and Evolution -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <h3 class="card-title">History & Evolution</h3>
+                        </div>
+                        <div class="card-content">
+                            <h3>Origins and Contributions by Dr. Clarence S. Gonstead</h3>
+                            <p>Clarence Selmer Gonstead (1898-1978) was a pivotal figure in chiropractic, transforming it from a rudimentary practice into a more scientifically grounded biomechanical discipline. Born on July 24, 1898, in Willow Lake, South Dakota, Gonstead's early life on a dairy farm in Primrose, Wisconsin, fostered a keen interest in mechanical problem-solving.</p>
+                            
+                            <p>Gonstead's personal experience with severe rheumatoid arthritis, which was successfully treated by chiropractor Dr. J. B. Olson, proved to be a life-altering event. This experience inspired him to pursue chiropractic education. He graduated from the Palmer School of Chiropractic and Infirmary in 1923.</p>
+                            
+                            <h3>Key Innovation: The Gonstead Disc Concept</h3>
+                            <p>Gonstead, along with his younger brother Merton, developed the "Gonstead Disc Concept," which posited that the vertebral disc, rather than solely the vertebral bone, was often the primary cause of nerve pressure in subluxations. This concept was a significant departure from the prevailing theories and contributed to a more comprehensive understanding of discogenic back pain.</p>
+                        </div>
+                    </div>
+
+                    <!-- Spinal Nerve Chart -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3 class="card-title">Spinal Nerve Chart & Anatomical References</h3>
+                        </div>
+                        <div class="card-content">
+                            <!-- Enhanced Chart Display -->
+                            <div class="chart-container">
+                                <h3 style="text-align: center; margin-bottom: 20px; color: #0d5c75; font-weight: 600;">Comprehensive Spinal Nerve Chart</h3>
+                                <img src="/images/education/spinalnervechart.jpeg" 
+                                     alt="Spinal Nerve Chart showing nerve pathways and their connection to various body systems and organs"
+                                     class="chart-image"
+                                     onclick="openImageModal(this)">
+                                <p class="visual-caption" style="text-align: center; margin-top: 15px; font-size: 14px; color: #666;">Click to enlarge - Comprehensive spinal nerve chart illustrating the relationship between spinal segments and their neurological connections to various body systems. This visual aid helps understand the Gonstead principle that proper spinal alignment is essential for optimal nervous system function.</p>
+                            </div>
+                            
+                            <div class="visual-grid">
+                                <div class="visual-item">
+                                    <img src="/images/education/the-31-pairs-of-spinal-nerves-diagram.jpeg" alt="The 31 pairs of spinal nerves anatomical diagram" onclick="openImageModal(this)">
+                                    <p class="visual-caption">Detailed anatomical diagram showing the 31 pairs of spinal nerves that emerge from the spinal cord.</p>
+                                </div>
+                                <div class="visual-item">
+                                    <img src="/images/education/chiropractic-spinal-examination.jpeg" alt="Chiropractic spinal examination demonstrating diagnostic techniques" onclick="openImageModal(this)">
+                                    <p class="visual-caption">Professional chiropractic spinal examination demonstrating the hands-on diagnostic techniques used in the Gonstead method.</p>
+                                </div>
+                                <div class="visual-item">
+                                    <img src="/images/education/spinal-nerve-and-organ-function-chart.jpeg" alt="Spinal nerve and organ function relationship chart" onclick="openImageModal(this)">
+                                    <p class="visual-caption">Educational chart showing the relationship between spinal nerve function and organ systems.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Core Principles -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-stethoscope"></i>
+                            </div>
+                            <h3 class="card-title">Core Principles & Diagnostic Tools</h3>
+                        </div>
+                        <div class="card-content">
+                            <p>The Gonstead Chiropractic Technique is characterized by a meticulous and comprehensive approach to spinal analysis, relying on a five-component diagnostic framework to identify the precise location and nature of vertebral subluxations.</p>
+                            
+                            <h3>Five-Component Diagnostic Framework</h3>
+                            <ul>
+                                <li><strong>Full-Spine Weight-Bearing X-rays:</strong> Utilizes 14x36 inch films for AP and lateral views to assess the entire spine</li>
+                                <li><strong>Static & Motion Palpation:</strong> Involves feeling the spine at rest and during movement to identify issues</li>
+                                <li><strong>Nervoscope/Thermography:</strong> Uses an instrument to detect heat differentials along the spine</li>
+                                <li><strong>Visual Assessment:</strong> Observes the patient's posture, gait, and body symmetry</li>
+                                <li><strong>Symptom/Case Management:</strong> Integrates patient symptoms with objective findings</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Gonstead Chiropractic - Dr. Bashir Khan. All rights reserved.</p>
+            <p>For appointments: +92 304 6996267 | Email: info@gonsteadchiropractic.com</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Enhanced Zoom Functionality
+        let currentPageZoom = 1.0;
+        
+        function adjustZoom(delta) {
+            currentPageZoom += delta;
+            if (currentPageZoom < 0.5) currentPageZoom = 0.5;
+            if (currentPageZoom > 2.0) currentPageZoom = 2.0;
+            
+            document.body.style.zoom = currentPageZoom;
+            document.getElementById('zoom-display').textContent = Math.round(currentPageZoom * 100) + '%';
+            localStorage.setItem('pageZoom', currentPageZoom);
+        }
+        
+        // Load saved zoom level
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedZoom = localStorage.getItem('pageZoom');
+            if (savedZoom) {
+                currentPageZoom = parseFloat(savedZoom);
+                document.body.style.zoom = currentPageZoom;
+                document.getElementById('zoom-display').textContent = Math.round(currentPageZoom * 100) + '%';
+            }
+        });
+        
+        // Image Modal Functionality
+        function openImageModal(img) {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('imageModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'imageModal';
+                modal.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <div style="position: relative; max-width: 90%; max-height: 90%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+                            <button onclick="closeImageModal()" style="position: absolute; top: 10px; right: 10px; background: #009688; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+                            <img id="modalImage" style="max-width: 100%; max-height: 80vh; object-fit: contain;" />
+                            <p id="modalCaption" style="margin-top: 15px; text-align: center; color: #666; font-size: 14px;"></p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Close modal when clicking outside
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal || e.target === modal.firstElementChild) {
+                        closeImageModal();
+                    }
+                });
+            }
+            
+            // Set image and caption
+            const modalImage = document.getElementById('modalImage');
+            const modalCaption = document.getElementById('modalCaption');
+            
+            modalImage.src = img.src;
+            modalImage.alt = img.alt;
+            modalCaption.textContent = img.alt;
+            
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+        
+        // Keyboard shortcuts for modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+        
+        // Dark Mode Toggle Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            // Check for saved theme preference or default to 'light'
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            
+            // Apply saved theme
+            if (currentTheme === 'dark') {
+                document.body.style.backgroundColor = '#1a1a1a';
+                document.body.style.color = '#e0e0e0';
+                themeIcon.className = 'fas fa-sun';
+            }
+            
+            // Theme toggle event listener
+            themeToggle.addEventListener('click', function() {
+                if (document.body.style.backgroundColor === 'rgb(26, 26, 26)') {
+                    document.body.style.backgroundColor = '#f8f9fa';
+                    document.body.style.color = '#1f1f1f';
+                    themeIcon.className = 'fas fa-moon';
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.body.style.backgroundColor = '#1a1a1a';
+                    document.body.style.color = '#e0e0e0';
+                    themeIcon.className = 'fas fa-sun';
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
