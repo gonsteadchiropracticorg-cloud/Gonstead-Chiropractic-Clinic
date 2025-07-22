@@ -467,7 +467,7 @@ export default function PrescriptionPage() {
                   <Input
                     type="number"
                     value={patient.age || ''}
-                    onChange={(e) => handleInputChange('age', parseInt(e.target.value) || undefined)}
+                    onChange={(e) => handleInputChange('age', e.target.value ? parseInt(e.target.value) : '')}
                     className="mt-1 border-[#0d5c75]/30 focus:border-[#0d5c75]"
                     placeholder="Enter age"
                   />

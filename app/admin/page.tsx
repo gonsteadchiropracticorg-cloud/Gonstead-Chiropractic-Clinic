@@ -255,9 +255,10 @@ export default function AdminDashboard() {
       })
     } catch (error) {
       console.error("Error updating patient status:", error)
+      const errorMessage = error instanceof Error ? error.message : "Please try again."
       toast({
         title: "Update Failed",
-        description: `Failed to update patient status: ${error.message || "Please try again."}`,
+        description: `Failed to update patient status: ${errorMessage}`,
         variant: "destructive",
       })
     }
