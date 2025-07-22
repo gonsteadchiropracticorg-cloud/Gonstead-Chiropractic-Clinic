@@ -203,10 +203,10 @@ export class VoiceService {
 
         audio.onerror = (event) => {
           this.isPlaying = false
-          const target = event.target as HTMLAudioElement
+          const target = (event && typeof event === 'object' && 'target' in event) ? event.target as HTMLAudioElement : null
           const errorDetails = {
             message: 'Audio error occurred',
-            type: event.type || 'error',
+            type: (event && typeof event === 'object' && 'type' in event) ? event.type : 'error',
             target: target?.src || 'unknown source',
             readyState: target?.readyState,
             networkState: target?.networkState,
@@ -231,9 +231,9 @@ export class VoiceService {
       })
     } catch (error) {
       console.error('Error playing audio:', {
-        message: typeof error === 'object' && 'message' in error ? error.message : (typeof error === 'string' ? error : 'Unknown error'),
-        name: typeof error === 'object' && 'name' in error ? error.name : 'Error',
-        stack: typeof error === 'object' && 'stack' in error ? error.stack : undefined
+        message: typeof error === 'object' && error && 'message' in error ? error.message : (typeof error === 'string' ? error : 'Unknown error'),
+        name: typeof error === 'object' && error && 'name' in error ? error.name : 'Error',
+        stack: typeof error === 'object' && error && 'stack' in error ? error.stack : undefined
       })
       return false
     }
