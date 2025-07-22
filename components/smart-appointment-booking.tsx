@@ -318,6 +318,7 @@ export function SmartAppointmentBooking() {
         appointment_date: formData.selectedTime,
         status: "pending" as const,
         urgency: formData.urgency,
+        payment_method: formData.paymentMethod,
         notes: formData.notes,
         sessions_completed: 0,
       }

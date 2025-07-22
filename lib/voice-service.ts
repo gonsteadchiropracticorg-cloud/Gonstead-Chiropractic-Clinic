@@ -112,15 +112,15 @@ export class VoiceService {
       // Fallback to browser's built-in TTS
       return this.useBrowserTTS(cleanText)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      console.error('Text-to-speech error:', {
-        message: errorMessage,
-        name: error instanceof Error ? error.name : 'Error'
-      })
-      return {
-        success: false,
-        error: errorMessage
-      }
+        const errorMessage = typeof error === 'object' && error && 'message' in error ? error.message : (typeof error === 'string' ? error : 'Unknown error occurred')
+        console.error('Text-to-speech error:', {
+          message: errorMessage,
+          name: typeof error === 'object' && error && 'name' in error ? error.name : 'Error'
+        })
+        return {
+          success: false,
+          error: errorMessage
+        }
     }
   }
 
@@ -230,9 +230,9 @@ export class VoiceService {
       })
     } catch (error) {
       console.error('Error playing audio:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        name: error instanceof Error ? error.name : 'Error',
-        stack: error instanceof Error ? error.stack : undefined
+        message: typeof error === 'object' && 'message' in error ? error.message : (typeof error === 'string' ? error : 'Unknown error'),
+        name: typeof error === 'object' && 'name' in error ? error.name : 'Error',
+        stack: typeof error === 'object' && 'stack' in error ? error.stack : undefined
       })
       return false
     }

@@ -12,7 +12,7 @@ import { Calendar as CalendarIcon, Video, CheckCircle, Loader2, Phone, MessageCi
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useLanguage } from "./language-provider"
 import { useToast } from "@/hooks/use-toast"
-import { createPatient, getAllPatients, supabase } from "@/lib/supabase"
+import { createPatient, getPatients, supabase } from "@/lib/supabase"
 import { notifyNewAppointment, showBrowserNotification, requestNotificationPermission } from "@/lib/whatsapp-notifications"
 import { AppointmentConfirmation } from "./appointment-confirmation"
 
@@ -179,7 +179,8 @@ export function EnhancedAppointmentBooking() {
         }
 
         const formattedAppointments = appointments.map(appointment => ({
-          datetime: appointment.appointment_date
+          datetime: appointment.appointment_date,
+          duration: 30 // Default duration in minutes
         }))
         
         setBookedAppointments(formattedAppointments)
@@ -257,6 +258,7 @@ export function EnhancedAppointmentBooking() {
         appointment_date: `${formData.selectedDate}T${formData.selectedTime}`,
         status: "pending" as const,
         urgency: formData.urgency,
+        payment_method: formData.paymentMethod,
         notes: formData.notes,
         sessions_completed: 0,
       }
@@ -266,9 +268,8 @@ export function EnhancedAppointmentBooking() {
 
       // Update local state with the new appointment to prevent double booking
       const newBookedAppointment: BookedAppointment = {
-        id: appointmentId,
         datetime: `${formData.selectedDate}T${formData.selectedTime}`,
-        name: formData.name
+        duration: 30 // Default duration in minutes
       }
       setBookedAppointments(prev => [...prev, newBookedAppointment])
 
