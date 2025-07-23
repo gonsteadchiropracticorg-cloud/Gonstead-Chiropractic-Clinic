@@ -22,12 +22,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true)
     
-    // Only access localStorage on client side - Always default to light unless explicitly set
+    // Only access localStorage on client side
     const stored = localStorage.getItem("gonstead-theme") as Theme | null
     if (stored && ["light", "dark"].includes(stored)) {
       setTheme(stored)
     } else {
-      // Force light mode as default instead of system preference
       setTheme("light")
     }
   }, [])

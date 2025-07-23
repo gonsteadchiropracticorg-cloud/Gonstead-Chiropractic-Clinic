@@ -108,9 +108,9 @@ export function notifyNewAppointment(appointment: AppointmentNotification) {
   
   // Option 2: If you have API credentials, use automated sending
   // const apiConfig = {
-  //   accountSid: process.env.NEXT_PUBLIC_TWILIO_ACCOUNT_SID!,
-  //   authToken: process.env.NEXT_PUBLIC_TWILIO_AUTH_TOKEN!,
-  //   fromNumber: process.env.NEXT_PUBLIC_TWILIO_FROM_NUMBER!
+  //   accountSid: 'YOUR_TWILIO_ACCOUNT_SID',
+  //   authToken: 'YOUR_TWILIO_AUTH_TOKEN',
+  //   fromNumber: '+14155238886' // Your Twilio WhatsApp number
   // }
   // sendAutomatedWhatsAppNotification(apiConfig, doctorWhatsApp, appointment)
 }

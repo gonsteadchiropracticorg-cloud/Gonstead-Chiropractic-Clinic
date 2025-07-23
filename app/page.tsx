@@ -222,7 +222,7 @@ function HomePageContent() {
               }}
             >
               {/* Professional Dark Overlay for Text Readability */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[rgb(76,157,144)]/70 via-[rgb(56,127,134)]/50 to-[rgb(36,97,124)]/70 dark:from-[rgb(76,157,144)]/85 dark:via-[rgb(56,127,134)]/70 dark:to-[rgb(36,97,124)]/85 border backdrop-blur-lg"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-[rgb(76,157,144)]/85 via-[rgb(56,127,134)]/80 to-[rgb(36,97,124)]/85 dark:from-[rgb(76,157,144)]/90 dark:via-[rgb(56,127,134)]/85 dark:to-[rgb(36,97,124)]/90"></div>
               
               {/* Additional Professional Overlay for Depth */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20"></div>

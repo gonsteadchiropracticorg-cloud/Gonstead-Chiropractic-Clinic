@@ -28,7 +28,7 @@ export class GoogleAIService {
   private baseUrl: string
 
   constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY!
+    this.apiKey = "AIzaSyA2fde6Xtaq8fPl7xnpRJvKRrVH-ZHDUWI"
     this.baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
   }
 
