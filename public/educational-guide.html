@@ -30,22 +30,20 @@ body {
             padding: 0 32px; /* Increased from 24px */
         }
 
-        /* Enhanced Header Styles */
+        /* Enhanced Header Styles - Clean Gradient Design */
         .header {
             background: 
-                radial-gradient(circle at 20% 80%, rgba(42, 157, 143, 0.3) 0%, transparent 40%),
-                radial-gradient(circle at 80% 20%, rgba(13, 92, 117, 0.4) 0%, transparent 40%),
-                radial-gradient(circle at 40% 40%, rgba(26, 120, 100, 0.2) 0%, transparent 60%),
-                linear-gradient(135deg, rgba(13, 92, 117, 0.85), rgba(42, 157, 143, 0.75)),
-                url('/images/chiropractic-hero-background.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+                radial-gradient(circle at 20% 80%, rgba(42, 157, 143, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(13, 92, 117, 0.5) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(26, 120, 100, 0.3) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(13, 92, 117, 0.95), rgba(42, 157, 143, 0.85));
             color: white;
-            padding: 50px 0 70px;
+            padding: 60px 0 80px;
             position: relative;
             overflow: hidden;
-            min-height: 550px;
+            min-height: 600px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
 
         .header::before {
@@ -56,14 +54,10 @@ body {
             right: 0;
             bottom: 0;
             background: 
-                url('data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3e%3cdefs%3e%3cpattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse"%3e%3cpath d="M 8 0 L 0 0 0 8" fill="none" stroke="white" stroke-width="0.3" opacity="0.08"/%3e%3c/pattern%3e%3c/defs%3e%3crect width="100" height="100" fill="url(%23grid)"/%3e%3c/svg%3e'),
-                conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.03) 60deg, transparent 120deg, rgba(255,255,255,0.02) 180deg, transparent 240deg, rgba(255,255,255,0.03) 300deg, transparent 360deg);
-            animation: headerShimmer 15s linear infinite;
-        }
-        
-        @keyframes headerShimmer {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+                radial-gradient(ellipse at top, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(42, 157, 143, 0.2) 0%, transparent 50%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .header-content {
@@ -200,11 +194,28 @@ body {
 
         .section-title {
             font-family: 'Poppins', sans-serif;
-            font-size: 3rem; /* Increased from 2.5rem */
-            font-weight: 700;
-            color: #0d5c75;
-            margin-bottom: 28px; /* Increased from 20px */
+            font-size: 3.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #0d5c75 0%, #2a9d8f 50%, #0d5c75 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 32px;
             text-align: center;
+            position: relative;
+            padding-bottom: 20px;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 4px;
+            background: linear-gradient(135deg, #0d5c75, #2a9d8f);
+            border-radius: 2px;
         }
 
         .section-subtitle {
@@ -227,19 +238,46 @@ body {
         }
 
         .content-card {
-            background: #f8f9fa;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            padding: 60px; /* Increased from 50px */
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            border-radius: 20px;
+            padding: 70px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 8px 40px rgba(0,0,0,0.08),
+                0 2px 12px rgba(42, 157, 143, 0.1),
+                inset 0 1px 0 rgba(255,255,255,0.9);
             width: 100%;
-            margin-bottom: 40px; /* Added margin for better spacing */
+            margin-bottom: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .content-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(42, 157, 143, 0.02) 0%, rgba(13, 92, 117, 0.02) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
         }
 
         .content-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.15),
+                0 8px 30px rgba(42, 157, 143, 0.2),
+                inset 0 1px 0 rgba(255,255,255,1);
+            border-color: rgba(42, 157, 143, 0.3);
+        }
+        
+        .content-card:hover::before {
+            opacity: 1;
         }
 
 .card-header {
@@ -249,16 +287,46 @@ body {
         }
 
         .card-icon {
-            width: 72px; /* Increased from 56px */
-            height: 72px; /* Increased from 56px */
-            background: linear-gradient(135deg, #0d5c75, #2a9d8f);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #0d5c75 0%, #2a9d8f 50%, #26a69a 100%);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 20px; /* Increased from 16px */
-            font-size: 1.5rem; /* Increased from 1.2rem */
+            margin-right: 24px;
+            font-size: 1.8rem;
+            box-shadow: 
+                0 8px 25px rgba(13, 92, 117, 0.3),
+                inset 0 2px 4px rgba(255,255,255,0.2);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .card-icon::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #2a9d8f, #0d5c75);
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .content-card:hover .card-icon::before {
+            opacity: 1;
+        }
+        
+        .content-card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 
+                0 12px 35px rgba(13, 92, 117, 0.4),
+                inset 0 2px 4px rgba(255,255,255,0.3);
         }
 
         .card-title {
@@ -1387,11 +1455,24 @@ body {
         }
 
         body.dark-mode .header {
-            background: linear-gradient(135deg, rgba(0, 150, 136, 0.3), rgba(13, 92, 117, 0.2)), url('/images/education/header.png');
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 150, 136, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(13, 92, 117, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(26, 120, 100, 0.2) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(13, 92, 117, 0.9), rgba(0, 150, 136, 0.8)),
+                url('/images/gonstead-hero-night.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-blend-mode: normal;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+        }
+        
+        body.dark-mode .header::before {
+            background: 
+                radial-gradient(ellipse at top, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(0, 150, 136, 0.15) 0%, transparent 50%),
+                rgba(0, 0, 0, 0.3);
         }
 
         body.dark-mode .nav-bar {
@@ -1837,13 +1918,6 @@ body {
                                     </div>
                                 </div>
                                 
-                                <div class="diagnostic-step">
-                                    <div class="step-number">3A</div>
-                                    <div class="step-content">
-                                        <div class="step-title">Neurocalometer</div>
-                                        <div class="step-description">A Neurocalometer is a specialized chiropractic device used to measure temperature differences along the spine to detect nerve interference and guide spinal adjustments. This precision instrument helps identify areas of neurological dysfunction by measuring thermal patterns that indicate inflammation or nerve irritation.</div>
-                                    </div>
-                                </div>
                                 
                                 <div class="diagnostic-step">
                                     <div class="step-number">4</div>
@@ -1890,15 +1964,6 @@ body {
                                         <img src="/images/education/chiropractic-spinal-examination.jpeg" alt="Chiropractic spinal examination demonstrating diagnostic techniques" onclick="openImageModal(this)">
                                         <p class="visual-caption">Professional chiropractic spinal examination demonstrating the hands-on diagnostic techniques used in the Gonstead method. This shows the careful palpation and assessment procedures that form part of the five-component diagnostic framework.</p>
                                     </div>
-                                    <div class="visual-item">
-                                        <img src="/images/education/spinal-nerve-and-organ-function-chart.jpeg" alt="Spinal nerve and organ function relationship chart" onclick="openImageModal(this)">
-                                        <p class="visual-caption">Educational chart showing the relationship between spinal nerve function and organ systems, demonstrating how chiropractic adjustments can influence overall health and body function.</p>
-                                    </div>
-                                    <div class="visual-item">
-                                        <img src="/images/Instrumentation Gonstead.png" alt="Neurocalometer - Gonstead chiropractic diagnostic instrument" onclick="openImageModal(this)">
-                                        <h5>Neurocalometer</h5>
-                                        <p class="visual-caption">A specialized chiropractic diagnostic instrument used to measure temperature differences along the spine. The Neurocalometer detects nerve interference and guides precise spinal adjustments by measuring thermal patterns that indicate inflammation or nerve irritation.</p>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1926,27 +1991,12 @@ body {
                             <h4>Specialized Tables</h4>
                             <p>Dr. Gonstead developed specialized chiropractic tables to optimize patient positioning:</p>
                             
-                            <!-- Enhanced Nervous System Chart Display -->
-                            <div class="chart-container" style="margin-top: 30px;">
-                                <h5 style="text-align: center; margin-bottom: 20px; color: #0d5c75; font-weight: 600;">Nervous System Connection</h5>
-                                <img src="/images/education/autonomic-motor-sensory.gif" 
-                                     alt="Autonomic Motor Sensory System Diagram"
-                                     class="chart-image"
-                                     onclick="openImageModal(this)"
-                                     style="width: 100%; max-width: 800px; margin: 0 auto; display: block;">
-                                <p class="visual-caption" style="text-align: center; margin-top: 15px; font-size: 14px; color: #666;">Click to enlarge - Educational diagram showing the autonomic, motor, and sensory nervous system pathways, illustrating how spinal adjustments can affect overall body function.</p>
-                            </div>
                             
                             <div class="visual-grid">
                                 <div class="visual-item">
                                     <img src="/images/education/chiropractic-spinal-examination.jpeg" alt="Professional Chiropractic Spinal Examination">
                                     <h5>Professional Spinal Examination</h5>
                                     <p class="visual-caption">Comprehensive examination techniques using advanced diagnostic protocols to ensure precise identification of spinal subluxations and optimal treatment outcomes.</p>
-                                </div>
-                                <div class="visual-item">
-                                    <img src="/images/education/spinal-nerve-and-organ-function-chart.jpeg" alt="Spinal Nerve and Organ Function Chart">
-                                    <h5>Spinal-Organ Connection</h5>
-                                    <p class="visual-caption">Educational chart demonstrating the intricate relationship between spinal nerve function and organ systems, highlighting the holistic approach of chiropractic care.</p>
                                 </div>
                             </div>
                             
