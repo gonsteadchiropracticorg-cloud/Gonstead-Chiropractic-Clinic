@@ -101,9 +101,9 @@ export function EmailJSContactForm() {
 
     try {
       // Updated EmailJS configuration with correct template ID
-      const serviceId = "service_nj00ksk"
-      const templateId = "template_gonstead" // Using a generic template ID that you should create in EmailJS
-      const publicKey = "STD49hXa06xbHgXCK"
+      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!
+      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID! // Using a generic template ID that you should create in EmailJS
+      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
 
       const templateParams = {
         from_name: formData.name,

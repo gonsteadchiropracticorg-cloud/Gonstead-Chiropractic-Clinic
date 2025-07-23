@@ -94,8 +94,8 @@
   }
 
   .dark body {
-    background-color: hsl(30, 60, 80) !important; /* Lighter dark blue */
-    color: #000000 !important; /* Black text for better readability */
+    background-color: #1a202c !important; /* Proper dark background */
+    color: #f7fafc !important; /* Light text for dark mode */
   }
 
   .font-poppins {
@@ -522,9 +522,98 @@
   animation: slide-in-right 0.6s ease-out;
 }
 
+.animate-slide-in-left {
+  animation: slide-in-left 0.6s ease-out;
+}
+
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 3s ease infinite;
+}
+
+/* Additional Hero Section Animations */
+@keyframes slide-in-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float-3d {
+  0%, 100% { 
+    transform: translateY(0px) rotateY(0deg) rotateX(0deg); 
+  }
+  25% { 
+    transform: translateY(-10px) rotateY(5deg) rotateX(2deg); 
+  }
+  50% { 
+    transform: translateY(-20px) rotateY(0deg) rotateX(0deg); 
+  }
+  75% { 
+    transform: translateY(-10px) rotateY(-5deg) rotateX(-2deg); 
+  }
+}
+
+@keyframes pulse-3d {
+  0%, 100% { 
+    transform: scale(1) rotateZ(0deg); 
+    opacity: 0.5; 
+  }
+  50% { 
+    transform: scale(1.1) rotateZ(180deg); 
+    opacity: 0.8; 
+  }
+}
+
+@keyframes tilt-3d {
+  0%, 100% { 
+    transform: rotateY(0deg) rotateX(0deg); 
+  }
+  25% { 
+    transform: rotateY(5deg) rotateX(2deg); 
+  }
+  50% { 
+    transform: rotateY(0deg) rotateX(0deg); 
+  }
+  75% { 
+    transform: rotateY(-5deg) rotateX(-2deg); 
+  }
+}
+
+.animate-float-3d {
+  animation: float-3d 6s ease-in-out infinite;
+}
+
+.animate-pulse-3d {
+  animation: pulse-3d 4s ease-in-out infinite;
+}
+
+.animate-tilt-3d {
+  animation: tilt-3d 8s ease-in-out infinite;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
+.animation-delay-1500 {
+  animation-delay: 1.5s;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-2500 {
+  animation-delay: 2.5s;
+}
+
+.animation-delay-3000 {
+  animation-delay: 3s;
 }
 
 /* Enhanced scrollbar styling */
@@ -789,24 +878,28 @@ html.light {
 }
 
 /* Dark mode text readability fixes */
-.dark * {
-  color: #000000 !important;
-}
-
 .dark .text-white {
   color: #ffffff !important;
 }
 
+.dark .text-gray-300 {
+  color: #cbd5e0 !important;
+}
+
+.dark .text-gray-400 {
+  color: #a0aec0 !important;
+}
+
 .dark .text-gray-500 {
-  color: #333333 !important;
+  color: #718096 !important;
 }
 
 .dark .text-gray-600 {
-  color: #222222 !important;
+  color: #4a5568 !important;
 }
 
 .dark .text-muted-foreground {
-  color: #000000 !important;
+  color: #a0aec0 !important;
 }
 
 /* Additional utility classes */
