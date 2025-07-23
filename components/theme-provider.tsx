@@ -18,17 +18,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light")
   const [mounted, setMounted] = useState(false)
 
-  // Handle hydration
+  // Handle hydration - prevent initial flash
   useEffect(() => {
-    setMounted(true)
-    
-    // Only access localStorage on client side
+    // Get theme from localStorage synchronously to prevent hydration mismatch
     const stored = localStorage.getItem("gonstead-theme") as Theme | null
-    if (stored && ["light", "dark"].includes(stored)) {
-      setTheme(stored)
-    } else {
-      setTheme("light")
-    }
+    const initialTheme = (stored && ["light", "dark"].includes(stored)) ? stored : "light"
+    
+    // Set theme immediately to prevent flash
+    setTheme(initialTheme)
+    setMounted(true)
   }, [])
 
   // Apply theme changes
@@ -36,14 +34,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return
 
     const root = window.document.documentElement
+    const body = document.body
 
     // Save to localStorage
     localStorage.setItem("gonstead-theme", theme)
 
     // Remove existing theme classes
     root.classList.remove("light", "dark")
+    body.classList.remove("light", "dark")
+    
+    // Add new theme classes
     root.classList.add(theme)
+    body.classList.add(theme)
+    
+    // Set CSS custom properties for more reliable theming
+    root.setAttribute('data-theme', theme)
   }, [theme, mounted])
+
+  // Don't render children until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return null
+  }
 
   return <ThemeContext.Provider value={{ theme, setTheme, actualTheme: theme, mounted }}>{children}</ThemeContext.Provider>
 }

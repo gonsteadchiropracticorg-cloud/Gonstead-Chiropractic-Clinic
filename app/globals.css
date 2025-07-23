@@ -88,14 +88,14 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background-color: #F1F5F9; /* Soft blue-gray background */
+    background-color: #F8F5F0; /* Original ivory background */
     color: #0a3a47; /* Dark teal text */
     font-family: 'Roboto', sans-serif;
   }
 
   .dark body {
-    background-color: hsl(30, 60, 80) !important; /* Lighter dark blue */
-    color: #000000 !important; /* Black text for better readability */
+    background-color: #1a202c !important; /* Dark theme background */
+    color: #ffffff !important; /* White text for dark theme */
   }
 
   .font-poppins {
@@ -790,23 +790,27 @@ html.light {
 
 /* Dark mode text readability fixes */
 .dark * {
-  color: #000000 !important;
+  color: #ffffff !important;
 }
 
 .dark .text-white {
   color: #ffffff !important;
 }
 
+.dark .text-black {
+  color: #000000 !important;
+}
+
 .dark .text-gray-500 {
-  color: #333333 !important;
+  color: #9ca3af !important;
 }
 
 .dark .text-gray-600 {
-  color: #222222 !important;
+  color: #6b7280 !important;
 }
 
 .dark .text-muted-foreground {
-  color: #000000 !important;
+  color: #d1d5db !important;
 }
 
 /* Additional utility classes */

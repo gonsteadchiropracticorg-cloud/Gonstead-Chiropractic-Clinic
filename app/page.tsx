@@ -86,7 +86,7 @@ function HomePageContent() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900">
+      <div className="min-h-screen bg-gradient-to-br from-[#F1F5F9] via-[#E0F2F1] to-[#F8F5F0] dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900">
           {/* Enhanced Professional Navigation - COMPREHENSIVE MODERN DESIGN */}
       <nav className="fixed top-0 left-0 right-0 z-[9999] bg-[rgb(70,146,138)]/95 dark:bg-[rgb(70,146,138)]/95 backdrop-blur-xl border-b border-white/20 shadow-[0_4px_32px_rgba(70,146,138,0.25)]">
         <div className="container mx-auto px-2 sm:px-4">
@@ -212,7 +212,7 @@ function HomePageContent() {
 
           {/* Hero Section - Professional Medical Design with Background Image */}
           <section id="home" className="relative pt-28 sm:pt-32 min-h-[75vh] lg:min-h-[80vh] flex items-center overflow-hidden">
-            {/* Professional Background Image with Overlays */}
+            {/* Professional Background Image with Enhanced Glassmorphism Blur Effect */}
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
               style={{
@@ -221,31 +221,14 @@ function HomePageContent() {
                 backgroundPosition: 'center center'
               }}
             >
-              {/* Professional Dark Overlay for Text Readability */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[rgb(76,157,144)]/85 via-[rgb(56,127,134)]/80 to-[rgb(36,97,124)]/85 dark:from-[rgb(76,157,144)]/90 dark:via-[rgb(56,127,134)]/85 dark:to-[rgb(36,97,124)]/90"></div>
+              {/* Darkened Glassmorphism Blur Overlay - enhanced depth and visibility */}
+              <div className="absolute inset-0 backdrop-blur-[3px] bg-gradient-to-br from-[rgb(76,157,144)]/55 via-[rgb(56,127,134)]/50 to-[rgb(36,97,124)]/55 dark:from-[rgb(76,157,144)]/65 dark:via-[rgb(56,127,134)]/60 dark:to-[rgb(36,97,124)]/65"></div>
               
-              {/* Additional Professional Overlay for Depth */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20"></div>
-              {/* 3D Depth Layers */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent transform translate-z-0"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform translate-z-10 animate-pulse"></div>
-              {/* 3D Medical Cross Pattern with Depth */}
-              <div className="absolute inset-0 opacity-15 transform-gpu">
-                <div className="absolute top-5 sm:top-10 left-5 sm:left-10 w-4 sm:w-8 h-16 sm:h-32 bg-white/40 transform rotate-45 rounded-lg shadow-2xl animate-float-3d"></div>
-                <div className="absolute top-5 sm:top-10 left-5 sm:left-10 w-16 sm:w-32 h-4 sm:h-8 bg-white/40 transform rotate-45 rounded-lg shadow-2xl animate-float-3d animation-delay-1000"></div>
-                <div className="absolute top-10 sm:top-20 right-10 sm:right-20 w-3 sm:w-6 h-12 sm:h-24 bg-white/30 transform rotate-45 rounded-lg shadow-xl animate-float-3d animation-delay-2000"></div>
-                <div className="absolute top-10 sm:top-20 right-10 sm:right-20 w-12 sm:w-24 h-3 sm:h-6 bg-white/30 transform rotate-45 rounded-lg shadow-xl animate-float-3d animation-delay-2000"></div>
-                <div className="absolute bottom-10 sm:bottom-20 left-1/4 sm:left-1/3 w-5 sm:w-10 h-20 sm:h-40 bg-white/35 transform rotate-45 rounded-lg shadow-xl animate-float-3d animation-delay-3000"></div>
-                <div className="absolute bottom-10 sm:bottom-20 left-1/4 sm:left-1/3 w-20 sm:w-40 h-5 sm:h-10 bg-white/35 transform rotate-45 rounded-lg shadow-xl animate-float-3d animation-delay-3000"></div>
-              </div>
+              {/* Enhanced Glass Layer for Professional Depth */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10 backdrop-blur-[1px]"></div>
               
-              {/* 3D Professional Gradient Orbs with Depth */}
-              <div className="absolute top-10 sm:top-20 left-5 sm:left-10 w-48 sm:w-96 h-48 sm:h-96 bg-gradient-to-r from-white/15 to-emerald-300/25 rounded-full blur-3xl animate-pulse-3d transform-gpu translate-z-20"></div>
-              <div className="absolute bottom-10 sm:bottom-20 right-5 sm:right-10 w-40 sm:w-80 h-40 sm:h-80 bg-gradient-to-r from-teal-300/20 to-cyan-300/20 rounded-full blur-3xl animate-pulse-3d animation-delay-1000 transform-gpu translate-z-30"></div>
-              <div className="absolute top-1/2 left-1/4 sm:left-1/3 w-32 sm:w-64 h-32 sm:h-64 bg-gradient-to-r from-emerald-300/15 to-teal-300/15 rounded-full blur-3xl animate-pulse-3d animation-delay-2000 transform-gpu translate-z-40"></div>
-              {/* Additional 3D Floating Elements */}
-              <div className="absolute top-1/3 right-1/4 w-20 h-20 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 rounded-full blur-2xl animate-float-3d animation-delay-1500 transform-gpu"></div>
-              <div className="absolute bottom-1/3 left-1/2 w-16 h-16 bg-gradient-to-br from-teal-400/15 to-green-500/15 rounded-full blur-xl animate-float-3d animation-delay-2500 transform-gpu"></div>
+              {/* Subtle Glass Shimmer Effects */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/6 to-transparent animate-pulse opacity-50"></div>
               
               {/* Professional Spine Pattern - Mobile Hidden */}
               <div className="hidden sm:block absolute right-10 top-1/4 w-3 h-96 bg-gradient-to-b from-transparent via-white/20 to-transparent rounded-full shadow-lg"></div>
@@ -784,10 +767,6 @@ function HomePageContent() {
                 </div>
               </div>
               
-              {/* Pre-Visit Instructions Section */}
-              <div className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-700">
-                <PreVisitInstructions />
-              </div>
             </div>
           </section>
 

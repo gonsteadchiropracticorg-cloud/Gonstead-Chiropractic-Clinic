@@ -17,8 +17,57 @@
             font-family: 'Source Sans Pro', sans-serif;
             line-height: 1.6;
             color: #1f1f1f;
-            background-color: #f8f9fa;
-            transition: font-size 0.3s ease;
+            background-color: #f8f5f0; /* Original ivory background for day mode */
+            transition: all 0.3s ease;
+        }
+        
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode .header {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)),
+                        url('/images/chiropractic-hero-background.png');
+        }
+        
+        body.dark-mode .content-main {
+            background: #2d3748;
+        }
+        
+        body.dark-mode .content-card {
+            background: #4a5568;
+            border-color: #2d3748;
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode .card-title {
+            color: #ffffff;
+        }
+        
+        body.dark-mode .card-content {
+            color: #cbd5e0;
+        }
+        
+        body.dark-mode .card-content h3 {
+            color: #ffffff;
+        }
+        
+        body.dark-mode .section-title {
+            color: #4dd0e1;
+        }
+        
+        body.dark-mode .section-subtitle {
+            color: #a0aec0;
+        }
+        
+        body.dark-mode .visual-caption {
+            color: #a0aec0;
+        }
+        
+        body.dark-mode .chart-container {
+            background: #2d3748;
         }
 
         .container {
@@ -27,162 +76,10 @@
             padding: 0 24px;
         }
 
-        /* Professional Icons Container */
-        .professional-icons-container {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            z-index: 1100;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            max-width: 300px;
-            justify-content: flex-end;
-        }
-        
-        .professional-icon {
-            background: #009688;
-            color: white;
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            border: none;
-            font-size: 18px;
-        }
-        
-        .professional-icon:hover {
-            background: #00695c;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        
-        .professional-icon-extended {
-            background: #009688;
-            color: white;
-            border-radius: 25px;
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            border: none;
-            font-size: 14px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        
-        .professional-icon-extended:hover {
-            background: #00695c;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        
-        .professional-icon-extended select {
-            background: white;
-            color: #009688;
-            border: none;
-            border-radius: 15px;
-            padding: 4px 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            outline: none;
-        }
-        
-        /* Enhanced Zoom Controls */
-        .enhanced-zoom-controls {
-            background: #009688;
-            border-radius: 25px;
-            padding: 6px 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-        
-        .enhanced-zoom-btn {
-            background: white;
-            color: #009688;
-            border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.2s ease;
-        }
-        
-        .enhanced-zoom-btn:hover {
-            background: #f0f0f0;
-            transform: scale(1.1);
-        }
-        
-        .enhanced-zoom-level {
-            color: white;
-            font-size: 12px;
-            font-weight: 600;
-            min-width: 45px;
-            text-align: center;
-        }
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .professional-icons-container {
-                top: 10px;
-                right: 10px;
-                gap: 6px;
-                max-width: 250px;
-            }
-            
-            .professional-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 14px;
-            }
-            
-            .professional-icon-extended {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-            
-            .professional-icon-extended select {
-                padding: 3px 6px;
-                font-size: 11px;
-            }
-            
-            .enhanced-zoom-controls {
-                padding: 4px 8px;
-                gap: 6px;
-            }
-            
-            .enhanced-zoom-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 14px;
-            }
-            
-            .enhanced-zoom-level {
-                font-size: 11px;
-                min-width: 35px;
-            }
-        }
 
-        /* Header Styles */
+        /* Header Styles with Enhanced Glassmorphism */
         .header {
-            background: linear-gradient(135deg, rgba(13, 92, 117, 0.8), rgba(42, 157, 143, 0.8));
+            background: url('/images/chiropractic-hero-background.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -192,10 +89,36 @@
             overflow: hidden;
             min-height: 400px;
         }
+        
+        /* Glassmorphism Blur Overlay for Header */
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(13, 92, 117, 0.75), rgba(42, 157, 143, 0.70));
+            backdrop-filter: blur(2px);
+            z-index: 1;
+        }
+        
+        /* Enhanced Glass Layer for Professional Depth */
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(1px);
+            z-index: 1;
+        }
 
         .header-content {
             position: relative;
-            z-index: 2;
+            z-index: 3;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -254,7 +177,7 @@
 
         /* Content Sections */
         .content-main {
-            background: white;
+            background: #ffffff; /* Pure white for day mode */
             padding: 60px 0;
         }
 
@@ -290,7 +213,7 @@
         }
 
         .content-card {
-            background: #f8f9fa;
+            background: #f8f5f0; /* Original ivory card background */
             border: 1px solid #e5e7eb;
             border-radius: 16px;
             padding: 50px;
@@ -463,39 +386,6 @@
     </style>
 </head>
 <body>
-    <!-- Professional Icons Container -->
-    <div class="professional-icons-container">
-        <!-- Day/Night Mode Toggle -->
-        <button id="theme-toggle" class="professional-icon" title="Toggle Day/Night Mode" aria-label="Toggle Day/Night Mode">
-            <i class="fas fa-moon" id="theme-icon"></i>
-        </button>
-        
-        <!-- Language Translation -->
-        <div id="custom-translate-container" class="professional-icon-extended">
-            <i class="fas fa-globe"></i>
-            <select id="language-select" aria-label="Select language for translation">
-                <option value="en" selected>EN</option>
-                <option value="ur">اردو</option>
-                <option value="ar">عربي</option>
-                <option value="fr">FR</option>
-                <option value="de">DE</option>
-                <option value="es">ES</option>
-                <option value="hi">हिंदी</option>
-                <option value="zh">中文</option>
-            </select>
-        </div>
-        
-        <!-- Enhanced Zoom Controls -->
-        <div class="enhanced-zoom-controls">
-            <button class="enhanced-zoom-btn" onclick="adjustZoom(-0.1)" title="Zoom Out">
-                <i class="fas fa-minus"></i>
-            </button>
-            <span class="enhanced-zoom-level" id="zoom-display">100%</span>
-            <button class="enhanced-zoom-btn" onclick="adjustZoom(0.1)" title="Zoom In">
-                <i class="fas fa-plus"></i>
-            </button>
-        </div>
-    </div>
 
     <!-- Header -->
     <header class="header">
@@ -623,27 +513,54 @@
 
     <!-- JavaScript -->
     <script>
-        // Enhanced Zoom Functionality
-        let currentPageZoom = 1.0;
-        
-        function adjustZoom(delta) {
-            currentPageZoom += delta;
-            if (currentPageZoom < 0.5) currentPageZoom = 0.5;
-            if (currentPageZoom > 2.0) currentPageZoom = 2.0;
-            
-            document.body.style.zoom = currentPageZoom;
-            document.getElementById('zoom-display').textContent = Math.round(currentPageZoom * 100) + '%';
-            localStorage.setItem('pageZoom', currentPageZoom);
-        }
-        
-        // Load saved zoom level
+        // Theme Toggle Functionality (Fixed)
         document.addEventListener('DOMContentLoaded', function() {
-            const savedZoom = localStorage.getItem('pageZoom');
-            if (savedZoom) {
-                currentPageZoom = parseFloat(savedZoom);
-                document.body.style.zoom = currentPageZoom;
-                document.getElementById('zoom-display').textContent = Math.round(currentPageZoom * 100) + '%';
+            // Check for saved theme preference or default to 'light'
+            const currentTheme = localStorage.getItem('gonstead-education-theme') || 'light';
+            
+            // Apply saved theme
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-mode');
             }
+            
+            // Add theme toggle button to top-right corner
+            const themeToggle = document.createElement('button');
+            themeToggle.innerHTML = '🌙';
+            themeToggle.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                background: rgba(13, 92, 117, 0.9);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                transition: all 0.3s ease;
+            `;
+            
+            // Update button icon based on current theme
+            if (currentTheme === 'dark') {
+                themeToggle.innerHTML = '☀️';
+            }
+            
+            themeToggle.addEventListener('click', function() {
+                if (document.body.classList.contains('dark-mode')) {
+                    document.body.classList.remove('dark-mode');
+                    themeToggle.innerHTML = '🌙';
+                    localStorage.setItem('gonstead-education-theme', 'light');
+                } else {
+                    document.body.classList.add('dark-mode');
+                    themeToggle.innerHTML = '☀️';
+                    localStorage.setItem('gonstead-education-theme', 'dark');
+                }
+            });
+            
+            document.body.appendChild(themeToggle);
         });
         
         // Image Modal Functionality
@@ -697,37 +614,6 @@
             if (e.key === 'Escape') {
                 closeImageModal();
             }
-        });
-        
-        // Dark Mode Toggle Functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const themeToggle = document.getElementById('theme-toggle');
-            const themeIcon = document.getElementById('theme-icon');
-            
-            // Check for saved theme preference or default to 'light'
-            const currentTheme = localStorage.getItem('theme') || 'light';
-            
-            // Apply saved theme
-            if (currentTheme === 'dark') {
-                document.body.style.backgroundColor = '#1a1a1a';
-                document.body.style.color = '#e0e0e0';
-                themeIcon.className = 'fas fa-sun';
-            }
-            
-            // Theme toggle event listener
-            themeToggle.addEventListener('click', function() {
-                if (document.body.style.backgroundColor === 'rgb(26, 26, 26)') {
-                    document.body.style.backgroundColor = '#f8f9fa';
-                    document.body.style.color = '#1f1f1f';
-                    themeIcon.className = 'fas fa-moon';
-                    localStorage.setItem('theme', 'light');
-                } else {
-                    document.body.style.backgroundColor = '#1a1a1a';
-                    document.body.style.color = '#e0e0e0';
-                    themeIcon.className = 'fas fa-sun';
-                    localStorage.setItem('theme', 'dark');
-                }
-            });
         });
     </script>
 </body>
