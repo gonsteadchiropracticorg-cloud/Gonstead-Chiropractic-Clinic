@@ -21,8 +21,8 @@ body {
 
 /* Enhanced Hero Section */
 .header {
-    background: linear-gradient(135deg, rgba(0, 150, 136, 0.95), rgba(0, 105, 92, 0.95)), 
-                url('../images/gonstead-hero-day.jpg') center/cover;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)), 
+                url('../images/gonstead-hero-night.jpg') center/cover;
     color: white;
     padding: 80px 0 60px;
     position: relative;
@@ -31,6 +31,7 @@ body {
     display: flex;
     align-items: center;
     animation: heroFadeIn 1.5s ease-out;
+    backdrop-filter: blur(20px);
 }
 
 @keyframes heroFadeIn {
@@ -310,8 +311,10 @@ body.dark-mode {
 
 /* Professional dark mode hero section with night background image */
 body.dark-mode .header {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)),
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1)),
+                linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4)),
                 url('../images/gonstead-hero-night.jpg') center/cover;
+    backdrop-filter: blur(25px);
 }
 
 /* Enhanced stat items for dark mode */

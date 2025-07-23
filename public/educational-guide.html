@@ -30,20 +30,25 @@ body {
             padding: 0 32px; /* Increased from 24px */
         }
 
-        /* Enhanced Header Styles - Clean Gradient Design */
+        /* Enhanced Header Styles - Enhanced Visual Design with Background Image */
         .header {
             background: 
                 radial-gradient(circle at 20% 80%, rgba(42, 157, 143, 0.4) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(13, 92, 117, 0.5) 0%, transparent 50%),
                 radial-gradient(circle at 40% 40%, rgba(26, 120, 100, 0.3) 0%, transparent 70%),
-                linear-gradient(135deg, rgba(13, 92, 117, 0.95), rgba(42, 157, 143, 0.85));
+                linear-gradient(135deg, rgba(13, 92, 117, 0.85), rgba(42, 157, 143, 0.75)),
+                url('/images/education/header.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             color: white;
             padding: 60px 0 80px;
             position: relative;
             overflow: hidden;
             min-height: 600px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
         }
 
         .header::before {
@@ -54,10 +59,42 @@ body {
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(ellipse at top, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom, rgba(42, 157, 143, 0.2) 0%, transparent 50%);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+                radial-gradient(ellipse at top, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(42, 157, 143, 0.25) 0%, transparent 50%),
+                radial-gradient(circle at 60% 30%, rgba(26, 120, 100, 0.1) 0%, transparent 40%),
+                rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(45deg, transparent 0%, rgba(42, 157, 143, 0.1) 25%, transparent 50%, rgba(13, 92, 117, 0.1) 75%, transparent 100%),
+                radial-gradient(ellipse at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 30%),
+                radial-gradient(ellipse at 80% 20%, rgba(42, 157, 143, 0.15) 0%, transparent 30%);
+            animation: headerGlow 8s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+        
+        @keyframes headerGlow {
+            0% {
+                opacity: 0.6;
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.02) rotate(0.5deg);
+            }
+            100% {
+                opacity: 0.7;
+                transform: scale(1.01) rotate(-0.3deg);
+            }
         }
 
         .header-content {
@@ -1698,18 +1735,49 @@ body {
                 <div class="header-left">
                     <h1>Patient Education Platform</h1>
                     <p>Your comprehensive guide to understanding chiropractic care and optimizing your healing journey</p>
-                    <div class="header-stats">
-                        <div class="stat-item">
-                            <span class="stat-number">8</span>
-                            <span class="stat-label">Educational Topics</span>
+                    
+<div class="search-container">
+                        <div class="search-input-wrapper">
+                            <input 
+                                type="text" 
+                                id="smartSearch" 
+                                class="search-input" 
+                                placeholder="Search topics, spine areas, symptoms, or keywords…"
+                                aria-label="Search educational content"
+                            />
+                            <button class="search-icon" aria-label="Search">
+                                <i class="fas fa-search"></i>
+                            </button>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-number">95%</span>
-                            <span class="stat-label">Patient Satisfaction</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">25+</span>
-                            <span class="stat-label">Years Experience</span>
+                        <div class="search-filters">
+                            <select id="topicFilter" class="filter-dropdown" aria-label="Filter by topic">
+                                <option value="">All Topics</option>
+                                <option value="gonstead-technique">Gonstead Technique</option>
+                                <option value="anatomy">Spine Anatomy</option>
+                                <option value="treatment">Treatment Plans</option>
+                                <option value="exercises">Exercises</option>
+                                <option value="prevention">Prevention</option>
+                                <option value="rehabilitation">Rehabilitation</option>
+                                <option value="research">Research</option>
+                            </select>
+                            <select id="bodyAreaFilter" class="filter-dropdown" aria-label="Filter by body area">
+                                <option value="">All Body Areas</option>
+                                <option value="cervical">Cervical Spine</option>
+                                <option value="thoracic">Thoracic Spine</option>
+                                <option value="lumbar">Lumbar Spine</option>
+                                <option value="pelvis">Pelvis</option>
+                                <option value="extremities">Extremities</option>
+                                <option value="full-spine">Full Spine</option>
+                            </select>
+                            <select id="contentTypeFilter" class="filter-dropdown" aria-label="Filter by content type">
+                                <option value="">All Content Types</option>
+                                <option value="article">Articles</option>
+                                <option value="video">Videos</option>
+                                <option value="guide">Guides</option>
+                                <option value="research">Research Papers</option>
+                                <option value="exercise">Exercise Instructions</option>
+                                <option value="case-study">Case Studies</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -1717,55 +1785,6 @@ body {
         </div>
     </header>
 
-    <!-- Smart Search Bar -->
-    <section class="search-section">
-        <div class="container">
-            <div class="search-container">
-                <div class="search-input-wrapper">
-                    <input 
-                        type="text" 
-                        id="smartSearch" 
-                        class="search-input" 
-                        placeholder="Search topics, spine areas, symptoms, or keywords…"
-                        aria-label="Search educational content"
-                    >
-                    <button class="search-icon" aria-label="Search">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-                <div class="search-filters">
-                    <select id="topicFilter" class="filter-dropdown" aria-label="Filter by topic">
-                        <option value="">All Topics</option>
-                        <option value="gonstead-technique">Gonstead Technique</option>
-                        <option value="anatomy">Spine Anatomy</option>
-                        <option value="treatment">Treatment Plans</option>
-                        <option value="exercises">Exercises</option>
-                        <option value="prevention">Prevention</option>
-                        <option value="rehabilitation">Rehabilitation</option>
-                        <option value="research">Research</option>
-                    </select>
-                    <select id="bodyAreaFilter" class="filter-dropdown" aria-label="Filter by body area">
-                        <option value="">All Body Areas</option>
-                        <option value="cervical">Cervical Spine</option>
-                        <option value="thoracic">Thoracic Spine</option>
-                        <option value="lumbar">Lumbar Spine</option>
-                        <option value="pelvis">Pelvis</option>
-                        <option value="extremities">Extremities</option>
-                        <option value="full-spine">Full Spine</option>
-                    </select>
-                    <select id="contentTypeFilter" class="filter-dropdown" aria-label="Filter by content type">
-                        <option value="">All Content Types</option>
-                        <option value="article">Articles</option>
-                        <option value="video">Videos</option>
-                        <option value="guide">Guides</option>
-                        <option value="research">Research Papers</option>
-                        <option value="exercise">Exercise Instructions</option>
-                        <option value="case-study">Case Studies</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </section>
 
 
 
@@ -1953,6 +1972,26 @@ body {
                                          onclick="openImageModal(this)"
                                          style="width: 100%; max-width: 1200px; margin: 0 auto; display: block;">
                                     <p class="visual-caption" style="text-align: center; margin-top: 15px; font-size: 14px; color: #666;">Click to enlarge - Comprehensive spinal nerve chart illustrating the relationship between spinal segments and their neurological connections to various body systems. This visual aid helps understand the Gonstead principle that proper spinal alignment is essential for optimal nervous system function.</p>
+                                </div>
+
+                                <!-- Nervous System Function Educational GIF -->
+                                <div class="chart-container" style="margin: 40px 0; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); padding: 35px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); border: 2px solid rgba(42, 157, 143, 0.2);">
+                                    <h5 style="text-align: center; margin-bottom: 25px; color: #0d5c75; font-weight: 700; font-size: 1.4rem; font-family: 'Poppins', sans-serif;">Nervous System Function Demonstration</h5>
+                                    <div style="text-align: center;">
+                                        <img src="/images/education/autonomic-motor-sensory.gif" 
+                                             alt="Autonomic, Motor, and Sensory Nervous System Function - Educational Animation demonstrating the three primary divisions of the nervous system and their roles in body function" 
+                                             class="chart-image"
+                                             onclick="openImageModal(this)"
+                                             style="width: 100%; max-width: 650px; height: auto; border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); border: 3px solid rgba(42, 157, 143, 0.3); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); margin: 0 auto; display: block;">
+                                    </div>
+                                    <p class="visual-caption" style="text-align: center; margin-top: 20px; font-size: 16px; color: #4a5568; font-weight: 500; line-height: 1.6;">Click to enlarge - Interactive educational animation demonstrating the three primary divisions of the nervous system: <strong>Autonomic</strong> (controlling involuntary functions like heart rate and digestion), <strong>Motor</strong> (controlling voluntary muscle movements), and <strong>Sensory</strong> (processing sensory information). This visualization helps illustrate why proper spinal alignment through Gonstead chiropractic care is essential for optimal nervous system function and overall health.</p>
+                                    
+                                    <!-- Educational Context Box -->
+                                    <div style="margin-top: 30px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #2a9d8f;">
+                                        <h6 style="color: #0d5c75; font-weight: 600; font-size: 1.2rem; margin-bottom: 15px; font-family: 'Poppins', sans-serif;">Understanding Nervous System Integration</h6>
+                                        <p style="color: #4a5568; font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px;">The nervous system functions as an integrated network where spinal misalignments (subluxations) can disrupt communication between the brain and body. The Gonstead technique's precision in identifying and correcting these subluxations helps restore optimal nervous system function.</p>
+                                        <p style="color: #4a5568; font-size: 1.05rem; line-height: 1.7; margin-bottom: 0;">By understanding how autonomic, motor, and sensory systems work together, patients can better appreciate why specific Gonstead adjustments can have wide-ranging effects on their health and well-being, from improved organ function to enhanced movement and reduced pain.</p>
+                                    </div>
                                 </div>
                                 
                                 <div class="visual-grid">
@@ -2655,30 +2694,41 @@ let currentZoom = parseFloat(localStorage.getItem('pageZoom')) || 200;
             const themeIcon = document.getElementById('theme-icon');
             const themeText = document.getElementById('theme-text');
             
+            // Clear any existing theme to ensure fresh start
+            document.body.classList.remove('dark-mode');
+            
             // Check for saved theme preference or default to 'light'
             const currentTheme = localStorage.getItem('theme') || 'light';
             
             // Apply saved theme
             if (currentTheme === 'dark') {
                 document.body.classList.add('dark-mode');
-                themeIcon.className = 'fas fa-sun';
-                themeText.textContent = 'Night Mode';
+                if (themeIcon) themeIcon.className = 'fas fa-sun';
+                if (themeText) themeText.textContent = 'Night Mode';
+            } else {
+                // Ensure light mode is properly set
+                document.body.classList.remove('dark-mode');
+                if (themeIcon) themeIcon.className = 'fas fa-moon';
+                if (themeText) themeText.textContent = 'Day Mode';
+                localStorage.setItem('theme', 'light');
             }
             
             // Theme toggle event listener
-            themeToggle.addEventListener('click', function() {
-                document.body.classList.toggle('dark-mode');
-                
-                if (document.body.classList.contains('dark-mode')) {
-                    themeIcon.className = 'fas fa-sun';
-                    themeText.textContent = 'Night Mode';
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    themeIcon.className = 'fas fa-moon';
-                    themeText.textContent = 'Day Mode';
-                    localStorage.setItem('theme', 'light');
-                }
-            });
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('dark-mode');
+                    
+                    if (document.body.classList.contains('dark-mode')) {
+                        if (themeIcon) themeIcon.className = 'fas fa-sun';
+                        if (themeText) themeText.textContent = 'Night Mode';
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        if (themeIcon) themeIcon.className = 'fas fa-moon';
+                        if (themeText) themeText.textContent = 'Day Mode';
+                        localStorage.setItem('theme', 'light');
+                    }
+                });
+            }
         });
         
         // Custom Translation Interface
