@@ -24,6 +24,7 @@ import { SpineTimeline } from "@/components/dashboard/spine-timeline"
 import { SymptomTracker } from "@/components/dashboard/symptom-tracker"
 import { ExerciseLibrary } from "@/components/dashboard/exercise-library"
 import { PatientReviewForm } from "@/components/patient-review-form"
+import EducationHub from "../../../components/EducationHub"
 import type { Patient, Appointment } from "@/lib/dashboard-types"
 
 export default function PatientDashboard() {
@@ -369,69 +370,7 @@ export default function PatientDashboard() {
             </TabsContent>
 
             <TabsContent value="education" className="space-y-4">
-              {/* Educational Content */}
-              <Card className="border-[#0d5c75]/20 bg-white shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
-                  <CardTitle className="font-poppins">Educational Resources</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[
-                      {
-                        title: "Understanding Your Spine",
-                        description: "Learn about spinal anatomy and how the Gonstead technique works",
-                        duration: "5 min read",
-                        type: "article",
-                      },
-                      {
-                        title: "Proper Posture at Work",
-                        description: "Video guide on maintaining good posture during daily activities",
-                        duration: "8 min video",
-                        type: "video",
-                      },
-                      {
-                        title: "Home Care Instructions",
-                        description: "Post-treatment care and what to expect after adjustments",
-                        duration: "3 min read",
-                        type: "article",
-                      },
-                      {
-                        title: "Exercise Progression",
-                        description: "How to safely advance your home exercise program",
-                        duration: "6 min video",
-                        type: "video",
-                      },
-                    ].map((resource, index) => (
-                      <div
-                        key={index}
-                        className="p-4 border border-gray-200 rounded-lg hover:bg-[#F8F5F0] transition-colors cursor-pointer"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center ${resource.type === "video" ? "bg-red-100" : "bg-blue-100"}`}
-                          >
-                            {resource.type === "video" ? (
-                              <Play className="h-5 w-5 text-red-600" />
-                            ) : (
-                              <BookOpen className="h-5 w-5 text-blue-600" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-[#0A3A47] font-poppins mb-1">{resource.title}</h4>
-                            <p className="text-sm text-gray-600 font-open-sans mb-2">{resource.description}</p>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-[#2a9d8f] font-semibold">{resource.duration}</span>
-                              <Button size="sm" variant="outline" className="border-[#0d5c75] text-[#0d5c75]">
-                                {resource.type === "video" ? "Watch" : "Read"}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <EducationHub patient={currentPatient} />
             </TabsContent>
           </Tabs>
         </div>

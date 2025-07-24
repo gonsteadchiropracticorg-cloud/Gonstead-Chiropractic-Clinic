@@ -17,10 +17,10 @@ body {
   font-family: 'Source Sans Pro', sans-serif;
   line-height: 1.7;
   color: #1f1f1f;
-  background-color: #f8f9fa;
-  transition: font-size 0.3s ease;
-  font-size: 18px; /* Increased from default 16px */
-  /* Removed transform scale for normal zoom level */
+  background: linear-gradient(135deg, #f8f5f0 0%, #ffffff 100%);
+  transition: all 0.3s ease;
+  font-size: 18px;
+  min-height: 100vh;
 }
 
 
@@ -2688,30 +2688,19 @@ let currentZoom = parseFloat(localStorage.getItem('pageZoom')) || 200;
             }
         });
         
-        // Dark Mode Toggle Functionality
+        // Force Light Mode for Educational Page
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggle = document.getElementById('theme-toggle');
             const themeIcon = document.getElementById('theme-icon');
             const themeText = document.getElementById('theme-text');
             
-            // Clear any existing theme to ensure fresh start
+            // Force light mode for educational page
             document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
             
-            // Check for saved theme preference or default to 'light'
-            const currentTheme = localStorage.getItem('theme') || 'light';
-            
-            // Apply saved theme
-            if (currentTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                if (themeIcon) themeIcon.className = 'fas fa-sun';
-                if (themeText) themeText.textContent = 'Night Mode';
-            } else {
-                // Ensure light mode is properly set
-                document.body.classList.remove('dark-mode');
-                if (themeIcon) themeIcon.className = 'fas fa-moon';
-                if (themeText) themeText.textContent = 'Day Mode';
-                localStorage.setItem('theme', 'light');
-            }
+            // Set proper icon and text for light mode
+            if (themeIcon) themeIcon.className = 'fas fa-moon';
+            if (themeText) themeText.textContent = 'Day Mode';
             
             // Theme toggle event listener
             if (themeToggle) {
