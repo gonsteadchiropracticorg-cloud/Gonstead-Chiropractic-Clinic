@@ -103,29 +103,44 @@ function HomePageContent() {
                   priority
                 />
               </div>
-              
-              {/* Professional Medical Brand */}
+              {/* Professional Medical Brand - Compact Design */}
               <div className="flex flex-col justify-center">
-                <h1 className="text-sm sm:text-base lg:text-lg xl:text-xl font-bold font-poppins leading-tight">
-                  <span className="block text-white font-semibold tracking-wide">
-                    GONSTEAD CHIROPRACTIC
-                  </span>
-                  <span className="block text-xs sm:text-sm text-white/90 font-medium tracking-wider mt-1">
-                    CLINIC
-                  </span>
-                </h1>
-                <p className="text-xs sm:text-sm font-medium leading-tight mt-1">
-                  <span className="text-white/90 font-medium tracking-wide">
+                {/* Main Clinic Name - Compact */}
+                <div className="leading-none">
+                  <h1 className="text-xs sm:text-sm lg:text-base font-bold font-poppins">
+                    {/* Main title with gradient */}
+                    <span className="block bg-gradient-to-r from-white via-cyan-100 to-white bg-clip-text text-transparent font-black tracking-wide">
+                      GONSTEAD CHIROPRACTIC
+                    </span>
+                    {/* Compact clinic badge */}
+                    <span className="inline-flex items-center bg-gradient-to-r from-emerald-400/15 to-cyan-400/15 backdrop-blur-sm border border-white/15 rounded-full px-2 py-0.5 text-white font-medium tracking-wide text-xs mt-0.5">
+                      <span className="w-1 h-1 bg-emerald-400 rounded-full mr-1.5 animate-pulse"></span>
+                      CLINIC
+                    </span>
+                  </h1>
+                </div>
+                
+                {/* Doctor Name - Compact */}
+                <div className="mt-1">
+                  <p className="text-xs font-medium text-white/90 tracking-wide">
                     Bashir Khan Chiropractic
+                  </p>
+                </div>
+                
+                {/* Specialist Badge - Inline and Compact */}
+                <div className="mt-0.5">
+                  <span className="inline-flex items-center bg-gradient-to-r from-emerald-500/15 to-green-500/15 backdrop-blur-sm border border-emerald-400/30 rounded-md px-2 py-0.5 text-xs font-medium text-emerald-300 dark:text-emerald-300 tracking-wide shadow-sm">
+                    <svg className="w-2.5 h-2.5 mr-1.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9V6a1 1 0 112 0v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3z" clipRule="evenodd" />
+                    </svg>
+                    SPINAL HEALTH SPECIALIST
+                    <span className="w-1 h-1 bg-emerald-400 rounded-full ml-1.5 animate-pulse"></span>
                   </span>
-                </p>
-                <span className="text-xs text-white/80 font-medium tracking-wider mt-0.5">
-                  SPINAL HEALTH SPECIALIST
-                </span>
+                </div>
               </div>
             </div>
 
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-3">
               {[
                 { id: "home", label: "Home" },
                 { id: "about", label: "About" },
@@ -137,26 +152,26 @@ function HomePageContent() {
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`text-base font-semibold transition-all duration-300 px-4 py-2 rounded-lg hover:bg-white/20 hover:text-white ${
+                  className={`text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-md hover:bg-white/15 ${
                     activeSection === item.id
-                      ? "text-white bg-white/20 shadow-lg"
-                      : "text-white/90 hover:text-white"
+                      ? "text-white bg-white/15 border border-white/20"
+                      : "text-white/85 hover:text-white"
                   }`}
                 >
                   {item.label}
                 </button>
               ))}
             </div>
-            <div className="hidden md:flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-white/10 hover:bg-white/20 rounded-lg px-3 py-2 transition-all duration-300">
+            <div className="hidden md:flex items-center gap-2">
+              <div className="flex items-center bg-white/10 hover:bg-white/15 rounded-md px-2 py-1 transition-all duration-200">
                 <ThemeToggle />
               </div>
-              <div className="flex items-center gap-2 bg-white/10 hover:bg-white/20 rounded-lg px-3 py-2 transition-all duration-300">
+              <div className="flex items-center bg-white/10 hover:bg-white/15 rounded-md px-2 py-1 transition-all duration-200">
                 <LanguageToggle />
               </div>
               <AppointmentBookingModal
-                buttonText="Book Appointment"
-                className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#1e7a6b] text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                buttonText="Book Now"
+                className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#1e7a6b] text-white px-4 py-2 rounded-md font-medium shadow-md hover:shadow-lg transition-all duration-200 text-sm"
               />
             </div>
             <button
