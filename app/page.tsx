@@ -225,8 +225,8 @@ function HomePageContent() {
         </div>
       </nav>
 
-          {/* Hero Section - Professional Medical Design with Background Image */}
-          <section id="home" className="relative pt-28 sm:pt-32 min-h-[75vh] lg:min-h-[80vh] flex items-center overflow-hidden">
+      {/* Hero Section - Professional Medical Design with Background Image */}
+      <section id="home" className="relative pt-28 sm:pt-32 min-h-[75vh] lg:min-h-[80vh] flex items-center overflow-hidden">
             {/* Professional Background Image with Enhanced Glassmorphism Blur Effect */}
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -264,7 +264,7 @@ function HomePageContent() {
                   </div>
 
                   {/* Main Heading */}
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-3 sm:space-y-4">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-white font-poppins leading-tight">
                       {t("hero.precision")}
                       <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 animate-gradient">
@@ -281,19 +281,19 @@ function HomePageContent() {
                   </div>
 
                   {/* CTA Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <AppointmentBookingModal
                       buttonText={t("hero.book.consultation")}
                       fullWidth={false}
-                      className="bg-gradient-to-r from-[rgb(76,157,144)] to-[rgb(56,137,124)] hover:from-[rgb(66,147,134)] hover:to-[rgb(46,127,114)] text-white px-6 sm:px-10 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl shadow-2xl shadow-[rgb(76,157,144)]/25 border border-[rgb(76,157,144)]/20 transition-all duration-300 hover:scale-105 hover:shadow-[rgb(76,157,144)]/40 w-full sm:w-auto"
+                      className="bg-gradient-to-r from-[rgb(76,157,144)] to-[rgb(56,137,124)] hover:from-[rgb(66,147,134)] hover:to-[rgb(46,127,114)] text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg shadow-xl shadow-[rgb(76,157,144)]/25 border border-[rgb(76,157,144)]/20 transition-all duration-300 hover:scale-105 hover:shadow-[rgb(76,157,144)]/40 w-full sm:w-auto"
                     />
                     <Button
                       variant="outline"
                       onClick={() => scrollToSection("about")}
-                      className="border-2 border-[rgb(76,157,144)]/50 text-emerald-300 hover:bg-[rgb(76,157,144)]/10 hover:border-[rgb(76,157,144)] px-6 sm:px-10 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 w-full sm:w-auto"
+                      className="border-2 border-[rgb(76,157,144)]/50 text-emerald-300 hover:bg-[rgb(76,157,144)]/10 hover:border-[rgb(76,157,144)] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105 w-full sm:w-auto"
                     >
-                      <PlayCircle className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                      <span className="text-sm sm:text-base">{t("hero.discover.method")}</span>
+                      <PlayCircle className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
+                      <span className="text-base">{t("hero.discover.method")}</span>
                     </Button>
                   </div>
                   
@@ -317,18 +317,18 @@ function HomePageContent() {
                   </div>
 
                   {/* Professional Stats */}
-                  <div className="grid grid-cols-3 gap-8 pt-10 border-t border-blue-400/20">
+                  <div className="grid grid-cols-3 gap-6 pt-8 border-t border-blue-400/20">
                     <div className="text-center group">
-                      <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-cyan-400 mb-2 group-hover:scale-110 transition-transform">2000+</div>
-                      <div className="text-sm text-blue-200 font-medium">{t("hero.patients.healed")}</div>
+                      <div className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-cyan-400 mb-2 group-hover:scale-110 transition-transform">2000+</div>
+                      <div className="text-sm sm:text-base text-blue-200 font-medium">{t("hero.patients.healed")}</div>
                     </div>
                     <div className="text-center group">
-                      <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-teal-400 mb-2 group-hover:scale-110 transition-transform">15+</div>
-                      <div className="text-sm text-cyan-200 font-medium">{t("hero.years.mastery")}</div>
+                      <div className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-teal-400 mb-2 group-hover:scale-110 transition-transform">15+</div>
+                      <div className="text-sm sm:text-base text-cyan-200 font-medium">{t("hero.years.mastery")}</div>
                     </div>
                     <div className="text-center group">
-                      <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-teal-400 to-green-400 mb-2 group-hover:scale-110 transition-transform">99%</div>
-                      <div className="text-sm text-teal-200 font-medium">{t("hero.success.rate")}</div>
+                      <div className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-teal-400 to-green-400 mb-2 group-hover:scale-110 transition-transform">99%</div>
+                      <div className="text-sm sm:text-base text-teal-200 font-medium">{t("hero.success.rate")}</div>
                     </div>
                   </div>
                 </div>

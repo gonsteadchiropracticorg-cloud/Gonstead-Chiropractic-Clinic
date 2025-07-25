@@ -150,6 +150,30 @@ export default function AdminDashboard() {
     setPatientCount(patients.length)
   }, [patients])
 
+  // Load viewed patients from localStorage on component mount
+  useEffect(() => {
+    const savedViewedPatients = localStorage.getItem('viewedPatients')
+    console.log('Loading viewed patients from localStorage:', savedViewedPatients)
+    if (savedViewedPatients) {
+      try {
+        const parsedViewed = JSON.parse(savedViewedPatients)
+        console.log('Parsed viewed patients:', parsedViewed)
+        setViewedPatients(new Set(parsedViewed))
+      } catch (error) {
+        console.error('Error parsing viewed patients from localStorage:', error)
+      }
+    }
+  }, [])
+
+  // Save viewed patients to localStorage whenever it changes (skip initial empty set)
+  useEffect(() => {
+    if (viewedPatients.size > 0) {
+      const viewedArray = [...viewedPatients]
+      console.log('Saving viewed patients to localStorage:', viewedArray)
+      localStorage.setItem('viewedPatients', JSON.stringify(viewedArray))
+    }
+  }, [viewedPatients])
+
   useEffect(() => {
     checkAuthAndLoadData()
     
@@ -325,11 +349,19 @@ export default function AdminDashboard() {
   const handleAddPatient = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await createPatient({
+      const patientData = {
         ...newPatient,
         status: "pending",
         sessions_completed: 0,
-      })
+        booking_source: "admin_dashboard", // Mark as admin-created
+      }
+      const newPatientRecord = await createPatient(patientData)
+      
+      // Mark admin-created patients as viewed immediately (no red dot needed)
+      if (newPatientRecord?.id) {
+        setViewedPatients(prev => new Set([...prev, newPatientRecord.id]))
+      }
+      
       await loadPatients()
       setIsAddPatientDialogOpen(false)
       setNewPatient({
@@ -1223,8 +1255,8 @@ Phone: +92 304 699 6267
                             <div>
                               <div className={`font-semibold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex items-center gap-2`}>
                                 {patient.name}
-                                {!viewedPatients.has(patient.id) && (
-                                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New patient" />
+                                {!viewedPatients.has(patient.id) && patient.booking_source !== 'admin_dashboard' && (
+                                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New patient booking from website" />
                                 )}
                               </div>
                               <div className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
