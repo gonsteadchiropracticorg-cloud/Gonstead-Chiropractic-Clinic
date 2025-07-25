@@ -226,7 +226,7 @@ function HomePageContent() {
       </nav>
 
       {/* Hero Section - Professional Medical Design with Background Image */}
-      <section id="home" className="relative pt-28 sm:pt-32 min-h-[75vh] lg:min-h-[80vh] flex items-center overflow-hidden">
+      <section id="home" className="relative pt-28 sm:pt-32 min-h-[60vh] lg:min-h-[65vh] flex items-center overflow-hidden">
             {/* Professional Background Image with Enhanced Glassmorphism Blur Effect */}
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"

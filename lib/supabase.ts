@@ -171,6 +171,7 @@ export interface Patient {
   prescription_generated?: boolean
   prescription_count?: number
   last_prescription_date?: string
+  booking_source?: "main_page" | "admin_dashboard"
   demographics?: {
     age?: number
     gender?: string
