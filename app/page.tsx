@@ -231,7 +231,7 @@ function HomePageContent() {
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
               style={{
-                backgroundImage: 'url(/images/chiropractic-hero-background.png)',
+                backgroundImage: 'url(/images/chiropractic-hero-background.jpg)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center center'
               }}
