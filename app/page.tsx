@@ -517,7 +517,7 @@ function HomePageContent() {
                     icon: Heart,
                     title: t("about.compassionate.care"),
                     description: t("about.compassionate.description"),
-                    image: "/images/Compassionate Care.png",
+                    image: "/images/Compassionate Care.jpg",
                   },
                   {
                     icon: Shield,
