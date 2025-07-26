@@ -20,7 +20,7 @@ export function TechnologyShowcase() {
       icon: <Activity className="h-8 w-8 text-[#2a9d8f]" />,
       title: language === "ur" ? "سرویکل ڈراپ ٹیبل" : "Cervical Drop Table",
       description: language === "ur" ? "گردن کی ہڈیوں کا محفوظ علاج" : "Safe cervical spine treatment",
-      image: "/images/Cervical-Drop-Table.png",
+      image: "/images/Cervical-Drop-Table.jpg",
     },
     {
       icon: <Target className="h-8 w-8 text-[#2a9d8f]" />,
