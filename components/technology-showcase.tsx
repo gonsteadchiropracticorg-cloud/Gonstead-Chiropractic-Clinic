@@ -26,7 +26,7 @@ export function TechnologyShowcase() {
       icon: <Target className="h-8 w-8 text-[#2a9d8f]" />,
       title: language === "ur" ? "پریسیژن ایڈجسٹمنٹ" : "Precision Adjustment",
       description: language === "ur" ? "بالکل درست جگہ پر علاج" : "Targeted treatment with accuracy",
-      image: "/images/Precision-Adjustment.png",
+      image: "/images/Precision-Adjustment.jpg",
     },
     {
       icon: <Zap className="h-8 w-8 text-[#2a9d8f]" />,
