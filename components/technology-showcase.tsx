@@ -32,7 +32,7 @@ export function TechnologyShowcase() {
       icon: <Zap className="h-8 w-8 text-[#2a9d8f]" />,
       title: language === "ur" ? "فوری نتائج" : "Immediate Results",
       description: language === "ur" ? "پہلے سیشن میں بہتری" : "Improvement from first session",
-      image: "/images/Immediate-Results.png",
+      image: "/images/Immediate-Results.jpg",
     },
   ]
 
