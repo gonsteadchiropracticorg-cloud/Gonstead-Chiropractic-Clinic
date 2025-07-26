@@ -523,7 +523,7 @@ function HomePageContent() {
                     icon: Shield,
                     title: t("about.safe.proven"),
                     description: t("about.safe.description"),
-                    image: "/images/Safe & Proven.png",
+                    image: "/images/Safe & Proven.jpg",
                   },
                 ].map((feature, index) => (
                   <Card key={index} className="group relative overflow-hidden text-center hover:shadow-2xl transition-all duration-500 border-[#0d5c75]/20 hover:border-[#0d5c75]/40 transform hover:scale-105 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
