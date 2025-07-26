@@ -14,7 +14,7 @@ export function TechnologyShowcase() {
       title: language === "ur" ? "ایڈجسٹو آرتھروسٹم™" : "Adjustive Arthrostim™",
       description:
         language === "ur" ? "جدید مشین سے ریڑھ کی ہڈی کی درست پوزیشن" : "Advanced machine-assisted spinal positioning",
-      image: "/images/Adjustive-Arthrostim.png",
+      image: "/images/Adjustive-Arthrostim.jpg",
     },
     {
       icon: <Activity className="h-8 w-8 text-[#2a9d8f]" />,
