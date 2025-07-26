@@ -511,7 +511,7 @@ function HomePageContent() {
                     icon: Zap,
                     title: t("about.effective.treatment"),
                     description: t("about.effective.description"),
-                    image: "/images/Effective Treatment.png",
+                    image: "/images/Effective Treatment.jpg",
                   },
                   {
                     icon: Heart,
