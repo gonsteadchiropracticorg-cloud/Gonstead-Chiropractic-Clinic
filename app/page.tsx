@@ -505,7 +505,7 @@ function HomePageContent() {
                     icon: Target,
                     title: t("about.precise.diagnosis"),
                     description: t("about.precise.description"),
-                    image: "/images/Precise Diagnosis.png",
+                    image: "/images/Precise Diagnosis.jpg",
                   },
                   {
                     icon: Zap,
