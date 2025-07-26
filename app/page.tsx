@@ -482,7 +482,7 @@ function HomePageContent() {
           <section id="about" className="relative py-20 bg-white dark:bg-[rgb(30,63,99)] overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                 style={{backgroundImage: 'url(/images/extra pictures/!!!.png)'}}>
+                 style={{backgroundImage: 'url(/images/medical-background-professional.PNG)'}}>
               {/* Glass Blur Overlay */}
               <div className="absolute inset-0 bg-[rgba(174,193,191,0.8)] backdrop-blur-sm"></div>
             </div>
@@ -560,7 +560,7 @@ function HomePageContent() {
           <section id="services" className="relative py-20 overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                 style={{backgroundImage: 'url(/images/extra pictures/##.png)'}}>
+                 style={{backgroundImage: 'url(/images/human skeleton.png)'}}>
             </div>
             <div className="container mx-auto px-4 relative z-10">
               <div className="text-center mb-16">
@@ -790,7 +790,7 @@ function HomePageContent() {
           <section id="doctor" className="relative py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/20 overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                 style={{backgroundImage: 'url(/images/doctor-background.png)'}}>
+                 style={{backgroundImage: 'url(/images/clarence-gonstead.png)'}}>
               {/* Glass Blur Overlay */}
               <div className="absolute inset-0 bg-[rgba(174,193,191,0.8)] backdrop-blur-sm"></div>
             </div>
@@ -959,7 +959,7 @@ function HomePageContent() {
           <section id="contact" className="relative py-20 bg-white dark:bg-[rgb(30,63,99)] overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                 style={{backgroundImage: 'url(/images/background.png)'}}>
+                 style={{backgroundImage: 'url(/images/spinal-nerves-subluxation-poster.jpeg)'}}>
               {/* Glass Blur Overlay */}
               <div className="absolute inset-0 bg-[rgba(174,193,191,0.8)] backdrop-blur-sm"></div>
             </div>
