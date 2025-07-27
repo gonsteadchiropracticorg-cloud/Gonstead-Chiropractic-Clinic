@@ -101,6 +101,8 @@ function HomePageContent() {
                   height={80}
                   className="object-contain w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20"
                   priority
+                  quality={75}
+                  sizes="(max-width: 768px) 64px, (max-width: 1024px) 72px, 80px"
                 />
               </div>
               {/* Professional Medical Brand - Compact Design */}
@@ -326,6 +328,8 @@ function HomePageContent() {
                           fill
                           className="object-cover object-center scale-105 hover:scale-110 transition-transform duration-500"
                           priority
+                          quality={75}
+                          sizes="(max-width: 768px) 280px, (max-width: 1024px) 320px, 400px"
                         />
                         
                         {/* Professional Overlay Gradient */}
@@ -818,6 +822,8 @@ function HomePageContent() {
                         fill
                         className="object-cover object-center scale-110 group-hover:scale-115 transition-transform duration-700"
                         priority
+                        quality={80}
+                        sizes="(max-width: 768px) 280px, (max-width: 1024px) 320px, 400px"
                       />
                       {/* Professional Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0d5c75]/15 via-transparent to-transparent"></div>
@@ -1222,6 +1228,8 @@ function HomePageContent() {
                       width={80}
                       height={80}
                       className="filter brightness-110 animate-pulse"
+                      quality={75}
+                      sizes="80px"
                     />
                     <div>
                       <h3 className="text-xl font-bold font-poppins">Gonstead Chiropractic</h3>
