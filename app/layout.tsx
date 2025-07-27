@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/components/language-provider"
 import { WhatsAppFloat } from "@/components/whatsapp-float"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -89,6 +90,7 @@ export default function RootLayout({
           <ThemeProvider>
             {children}
             <Toaster />
+            <SpeedInsights />
           </ThemeProvider>
         </ErrorBoundary>
       </body>
