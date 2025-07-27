@@ -125,17 +125,9 @@ function HomePageContent() {
                   <p className="text-xs font-medium text-white/90 tracking-wide">
                     Bashir Khan Chiropractic
                   </p>
-                </div>
-                
-                {/* Specialist Badge - Inline and Compact */}
-                <div className="mt-0.5">
-                  <span className="inline-flex items-center bg-gradient-to-r from-emerald-500/15 to-green-500/15 backdrop-blur-sm border border-emerald-400/30 rounded-md px-2 py-0.5 text-xs font-medium text-emerald-300 dark:text-emerald-300 tracking-wide shadow-sm">
-                    <svg className="w-2.5 h-2.5 mr-1.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9V6a1 1 0 112 0v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3z" clipRule="evenodd" />
-                    </svg>
+                  <p className="text-xs font-medium text-emerald-300 tracking-wide mt-0.5">
                     SPINAL HEALTH SPECIALIST
-                    <span className="w-1 h-1 bg-emerald-400 rounded-full ml-1.5 animate-pulse"></span>
-                  </span>
+                  </p>
                 </div>
               </div>
             </div>
