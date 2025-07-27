@@ -33,6 +33,21 @@ CREATE TABLE IF NOT EXISTS admin_users (
     profile JSONB DEFAULT '{}'
 );
 
+-- Create staff_users table for clinic staff with read-only access
+CREATE TABLE IF NOT EXISTS staff_users (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(20) CHECK (role IN ('receptionist', 'assistant', 'nurse')) DEFAULT 'receptionist',
+    phone VARCHAR(20),
+    shift_schedule JSONB DEFAULT '{}',
+    permissions JSONB DEFAULT '{"view_appointments": true, "edit_appointments": false}',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    last_login TIMESTAMPTZ,
+    profile JSONB DEFAULT '{}'
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_patients_phone ON patients(phone);
 CREATE INDEX IF NOT EXISTS idx_patients_appointment_date ON patients(appointment_date);
@@ -55,6 +70,24 @@ CREATE POLICY "Admin can delete patients" ON patients
 -- Create RLS policies for admin_users table
 CREATE POLICY "Admin can view admin users" ON admin_users
     FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Create RLS policies for staff_users table
+CREATE POLICY "Staff can view their own profile" ON staff_users
+    FOR SELECT USING (auth.uid()::text = id::text OR auth.role() = 'authenticated');
+
+CREATE POLICY "Admin can manage all staff" ON staff_users
+    FOR ALL USING (auth.role() = 'authenticated');
+
+-- Allow staff to view patients (read-only)
+CREATE POLICY "Staff can view all patients" ON patients
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM staff_users 
+            WHERE staff_users.id::text = auth.uid()::text 
+            AND staff_users.is_active = true
+            AND (staff_users.permissions->>'view_appointments')::boolean = true
+        )
+    );
 
 -- Insert the admin user
 INSERT INTO admin_users (email, role, profile) 

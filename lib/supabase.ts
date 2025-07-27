@@ -172,6 +172,133 @@ export async function signOutAdmin() {
   }
 }
 
+// Staff authentication functions for secure reset portal
+export async function signInStaff(email: string, password: string) {
+  try {
+    console.log("Staff attempting to sign in:", email)
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password.trim(),
+    })
+
+    if (error) {
+      console.error("Staff sign in error:", error.message)
+      throw error
+    }
+
+    if (data.user) {
+      console.log("Staff sign in successful:", data.user.email)
+      return { user: data.user, error: null }
+    }
+
+    throw new Error("Sign in failed - no user data returned")
+  } catch (error: any) {
+    console.error("Staff sign in error:", error)
+    return { user: null, error }
+  }
+}
+
+export async function createStaffUser(email: string, password: string, role: string = 'staff') {
+  try {
+    console.log("Creating new staff user:", email)
+    
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: password.trim(),
+      options: {
+        data: {
+          role: role,
+          clinic_name: 'Gonstead Chiropractic Clinic',
+          created_by: 'admin_portal'
+        }
+      }
+    })
+
+    if (error) {
+      console.error("Staff creation error:", error.message)
+      throw error
+    }
+
+    if (data.user) {
+      console.log("Staff user created successfully:", data.user.email)
+      return { user: data.user, error: null }
+    }
+
+    throw new Error("User creation failed - no user data returned")
+  } catch (error: any) {
+    console.error("Create staff user error:", error)
+    return { user: null, error }
+  }
+}
+
+export async function resetStaffPassword(email: string) {
+  try {
+    console.log("Sending password reset email to:", email)
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`
+    })
+
+    if (error) {
+      console.error("Password reset error:", error.message)
+      throw error
+    }
+
+    console.log("Password reset email sent successfully")
+    return { error: null }
+  } catch (error: any) {
+    console.error("Reset password error:", error)
+    return { error }
+  }
+}
+
+export async function updateStaffEmail(newEmail: string) {
+  try {
+    console.log("Updating staff email to:", newEmail)
+    
+    const { data, error } = await supabase.auth.updateUser({
+      email: newEmail.trim()
+    })
+
+    if (error) {
+      console.error("Email update error:", error.message)
+      throw error
+    }
+
+    if (data.user) {
+      console.log("Email updated successfully:", data.user.email)
+      return { user: data.user, error: null }
+    }
+
+    throw new Error("Email update failed - no user data returned")
+  } catch (error: any) {
+    console.error("Update email error:", error)
+    return { user: null, error }
+  }
+}
+
+export async function deleteStaffAccount() {
+  try {
+    console.log("Signing out staff user (account deletion requires admin action)")
+    
+    // Note: Actual user deletion requires admin/service role
+    // For now, we'll sign out the user
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      console.error("Sign out error:", error.message)
+      throw error
+    }
+
+    console.log("User signed out successfully")
+    return { error: null }
+  } catch (error: any) {
+    console.error("Delete account error:", error)
+    return { error }
+  }
+}
+
 // Test database connection
 export const testConnection = async () => {
   try {

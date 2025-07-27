@@ -114,8 +114,8 @@ export default function AdminAuth() {
       let errorMessage = "Authentication failed. Please try again."
 
       if (error.message?.includes("Failed to fetch")) {
-        errorMessage = "Connection issue. Using offline authentication."
-        handleOfflineAuth()
+        errorMessage = "Connection issue. Please check your internet connection and try again."
+        setError(errorMessage)
         return
       } else if (error.message) {
         errorMessage = error.message
@@ -129,24 +129,12 @@ export default function AdminAuth() {
 
   const handleOfflineAuth = () => {
     try {
-      if (email.trim() === "admin@gonsteadchiropractic.com" && password.trim() === "admin123") {
-        localStorage.setItem("admin_authenticated", "true")
-        localStorage.setItem("admin_email", email.trim())
-        localStorage.setItem("admin_login_time", new Date().toISOString())
-
-        toast({
-          title: "Offline Access Granted!",
-          description: "Successfully signed in with offline authentication",
-          duration: 3000,
-        })
-
-        router.replace("/admin/dashboard")
-      } else {
-        setError("Invalid credentials for offline access")
-      }
+      // Offline authentication has been disabled for security.
+      // All admin access must go through proper Supabase authentication.
+      setError("Offline access is not available. Please check your internet connection and try again.")
     } catch (error) {
       console.error("Offline auth error:", error)
-      setError("Offline authentication failed")
+      setError("Authentication failed - please ensure you have internet connectivity")
     }
   }
 

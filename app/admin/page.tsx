@@ -173,19 +173,14 @@ export default function AdminDashboard() {
   }, [])
 
   const handleLogin = () => {
-    if (loginCode === "123456") {
-      setIsAuthenticated(true)
-      toast({
-        title: "Login Successful",
-        description: "Welcome to the admin dashboard",
-      })
-    } else {
-      toast({
-        title: "Invalid Code",
-        description: "Please enter the correct access code",
-        variant: "destructive",
-      })
-    }
+    // Simple access code login has been disabled for security.
+    // All admin access must go through proper authentication via /admin/auth
+    toast({
+      title: "Authentication Required",
+      description: "Please use the secure admin authentication portal",
+      variant: "destructive",
+    })
+    router.replace("/admin/auth")
   }
 
   const deletePatient = (patientId: string) => {
