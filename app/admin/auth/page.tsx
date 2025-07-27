@@ -11,17 +11,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Shield, Lock, User, AlertCircle, CheckCircle, Wifi, WifiOff, KeyRound } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { signInAdmin, getCurrentUser } from "@/lib/supabase"
+import { signInAdmin, signUpAdmin, getCurrentUser } from "@/lib/supabase"
 import Image from "next/image"
 
 export default function AdminAuth() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [connectionStatus, setConnectionStatus] = useState<"online" | "offline" | "checking">("checking")
+  const [mode, setMode] = useState<"signin" | "signup">("signin")
 
   const router = useRouter()
   const { toast } = useToast()
@@ -72,64 +75,116 @@ export default function AdminAuth() {
     e.preventDefault()
     setIsLoading(true)
     setError("")
+    setSuccess("")
 
     try {
-      console.log("Auth: Attempting sign in with:", email)
-
-      // Validate credentials first
+      // Validate input
       if (!email.trim() || !password.trim()) {
         throw new Error("Please enter both email and password")
       }
 
-      if (email.trim() !== "admin@gonsteadchiropractic.com") {
-        throw new Error("Invalid admin email address")
+      if (mode === "signup") {
+        // Sign-up validation
+        if (password !== confirmPassword) {
+          throw new Error("Passwords do not match")
+        }
+
+        if (password.length < 6) {
+          throw new Error("Password must be at least 6 characters long")
+        }
+
+        console.log("Auth: Attempting sign up with:", email)
+
+        // Attempt registration
+        const { user, error } = await signUpAdmin(email.trim(), password.trim())
+
+        if (error) {
+          console.error("Auth: Sign up error:", error)
+          throw error
+        }
+
+        if (!user) {
+          throw new Error("Registration failed - no user data returned")
+        }
+
+        console.log("Auth: Sign up successful for:", user.email)
+
+        setSuccess("Registration successful! Please check your email to verify your account, then sign in.")
+        
+        // Switch to sign-in mode after successful registration
+        setTimeout(() => {
+          setMode("signin")
+          setSuccess("")
+          setPassword("")
+          setConfirmPassword("")
+        }, 3000)
+
+        toast({
+          title: "Registration Successful!",
+          description: "Please check your email to verify your account",
+          duration: 5000,
+        })
+      } else {
+        // Sign-in mode
+        console.log("Auth: Attempting sign in with:", email)
+
+        // Attempt authentication
+        const { user, error } = await signInAdmin(email.trim(), password.trim())
+
+        if (error) {
+          console.error("Auth: Sign in error:", error)
+          
+          // If user not found and using non-admin email, suggest sign-up
+          if (error.message?.includes("Invalid login credentials") && 
+              email.trim() !== "admin@gonsteadchiropractic.com") {
+            throw new Error("Account not found. Would you like to create a new account?")
+          }
+          
+          throw error
+        }
+
+        if (!user) {
+          throw new Error("Authentication failed - no user data returned")
+        }
+
+        console.log("Auth: Sign in successful for:", user.email)
+
+        // Store authentication
+        localStorage.setItem("admin_authenticated", "true")
+        localStorage.setItem("admin_email", user.email || email.trim())
+        localStorage.setItem("admin_login_time", new Date().toISOString())
+
+        toast({
+          title: "Welcome Back!",
+          description: "Successfully signed in to admin dashboard",
+          duration: 3000,
+        })
+
+        // Redirect to dashboard
+        router.replace("/admin/dashboard")
       }
-
-      if (password.trim() !== "admin123") {
-        throw new Error("Invalid admin password")
-      }
-
-      // Attempt authentication
-      const { user, error } = await signInAdmin(email.trim(), password.trim())
-
-      if (error) {
-        console.error("Auth: Sign in error:", error)
-        throw error
-      }
-
-      if (!user) {
-        throw new Error("Authentication failed - no user data returned")
-      }
-
-      console.log("Auth: Sign in successful for:", user.email)
-
-      // Store authentication
-      localStorage.setItem("admin_authenticated", "true")
-      localStorage.setItem("admin_email", user.email || email.trim())
-      localStorage.setItem("admin_login_time", new Date().toISOString())
-
-      toast({
-        title: "Welcome Back!",
-        description: "Successfully signed in to admin dashboard",
-        duration: 3000,
-      })
-
-      // Redirect to dashboard
-      router.replace("/admin/dashboard")
     } catch (error: any) {
-      console.error("Auth: Sign in failed:", error)
+      console.error(`Auth: ${mode} failed:`, error)
 
-      let errorMessage = "Authentication failed. Please try again."
+      let errorMessage = mode === "signup" 
+        ? "Registration failed. Please try again." 
+        : "Authentication failed. Please try again."
 
-      if (error.message?.includes("Invalid admin email")) {
-        errorMessage = "Please use the correct admin email address."
-      } else if (error.message?.includes("Invalid admin password")) {
-        errorMessage = "Please use the correct admin password."
-      } else if (error.message?.includes("Failed to fetch")) {
+      if (error.message?.includes("Failed to fetch")) {
         errorMessage = "Connection issue. Using offline authentication."
-        // Try offline authentication
-        handleOfflineAuth()
-        return
+        if (mode === "signin") {
+          handleOfflineAuth()
+          return
+        }
+      } else if (error.message?.includes("Account not found")) {
+        errorMessage = error.message
+        // Auto-suggest switching to sign-up mode
+        setTimeout(() => {
+          if (confirm("Would you like to create a new account with this email?")) {
+            setMode("signup")
+            setError("")
+          }
+        }, 1000)
       } else if (error.message) {
         errorMessage = error.message
       }
@@ -239,10 +294,54 @@ export default function AdminAuth() {
         </CardHeader>
 
         <CardContent className="p-6">
+          {/* Mode Toggle */}
+          <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signin")
+                setError("")
+                setSuccess("")
+                setConfirmPassword("")
+              }}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                mode === "signin"
+                  ? "bg-white text-[#0d5c75] shadow-sm"
+                  : "text-gray-600 hover:text-[#0d5c75]"
+              }`}
+              disabled={isLoading}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signup")
+                setError("")
+                setSuccess("")
+              }}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                mode === "signup"
+                  ? "bg-white text-[#0d5c75] shadow-sm"
+                  : "text-gray-600 hover:text-[#0d5c75]"
+              }`}
+              disabled={isLoading}
+            >
+              Sign Up
+            </button>
+          </div>
+
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {success && (
+            <Alert className="mb-4 border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">{success}</AlertDescription>
             </Alert>
           )}
 
@@ -297,6 +396,25 @@ export default function AdminAuth() {
               </div>
             </div>
 
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-[#0d5c75] font-semibold flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Confirm Password
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)]"
+                  placeholder="Confirm your password"
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+
             <div className="space-y-3">
               <Button
                 type="submit"
@@ -306,28 +424,30 @@ export default function AdminAuth() {
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    Signing In...
+                    {mode === "signup" ? "Creating Account..." : "Signing In..."}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Shield className="h-4 w-4" />
-                    Sign In to Dashboard
+                    {mode === "signup" ? "Create Admin Account" : "Sign In to Dashboard"}
                   </div>
                 )}
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleQuickAccess}
-                className="w-full border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white bg-transparent"
-                disabled={isLoading}
-              >
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  Quick Access (Bypass)
-                </div>
-              </Button>
+              {mode === "signin" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleQuickAccess}
+                  className="w-full border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white bg-transparent"
+                  disabled={isLoading}
+                >
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Quick Access (Bypass)
+                  </div>
+                </Button>
+              )}
             </div>
           </form>
 

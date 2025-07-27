@@ -30,25 +30,12 @@ const AUTH_CREDENTIALS = {
   password: "admin123",
 }
 
-// Admin authentication function with fallback
+// Admin authentication function with user registration support
 export async function signInAdmin(email: string, password: string) {
   try {
     console.log("Attempting to sign in with:", email)
 
-    // First try simple credential check
-    if (email.trim() === AUTH_CREDENTIALS.email && password.trim() === AUTH_CREDENTIALS.password) {
-      console.log("Simple auth successful")
-      return {
-        user: {
-          id: "admin-user",
-          email: email.trim(),
-          created_at: new Date().toISOString(),
-        },
-        error: null,
-      }
-    }
-
-    // Try Supabase authentication as secondary
+    // Try Supabase authentication first
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -61,16 +48,66 @@ export async function signInAdmin(email: string, password: string) {
       }
 
       if (error) {
-        console.log("Supabase auth failed, using fallback:", error.message)
+        console.log("Supabase auth failed:", error.message)
+        // If user not found, we'll try fallback credentials
+        if (error.message.includes("Invalid login credentials")) {
+          console.log("User might not exist, checking fallback credentials...")
+        }
       }
     } catch (supabaseError) {
-      console.log("Supabase connection failed, using fallback:", supabaseError)
+      console.log("Supabase connection failed:", supabaseError)
+    }
+
+    // Fallback to hardcoded credentials for admin access
+    if (email.trim() === AUTH_CREDENTIALS.email && password.trim() === AUTH_CREDENTIALS.password) {
+      console.log("Fallback auth successful")
+      return {
+        user: {
+          id: "admin-user",
+          email: email.trim(),
+          created_at: new Date().toISOString(),
+        },
+        error: null,
+      }
     }
 
     // If both fail, return error
     throw new Error("Invalid credentials. Please check your email and password.")
   } catch (error: any) {
     console.error("Sign in error:", error)
+    return { user: null, error }
+  }
+}
+
+// Function to register a new admin user
+export async function signUpAdmin(email: string, password: string) {
+  try {
+    console.log("Attempting to register new user:", email)
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: password.trim(),
+      options: {
+        data: {
+          role: 'admin',
+          clinic_name: 'Gonstead Chiropractic Clinic'
+        }
+      }
+    })
+
+    if (error) {
+      console.error("Registration error:", error.message)
+      throw error
+    }
+
+    if (data.user) {
+      console.log("User registered successfully:", data.user.email)
+      return { user: data.user, error: null }
+    }
+
+    throw new Error("Registration failed - no user data returned")
+  } catch (error: any) {
+    console.error("Sign up error:", error)
     return { user: null, error }
   }
 }
