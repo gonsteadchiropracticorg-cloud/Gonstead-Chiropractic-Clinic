@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     siteName: "Dr. Bashir Gonstead Chiropractic",
     images: [
       {
-        url: "/images/gonstead-chiropractic-logo.png",
+        url: "/images/gonstead-chiropractic-logo-new.png",
         width: 1200,
         height: 630,
         alt: "Dr. Bashir Gonstead Chiropractic Clinic",
@@ -55,16 +55,16 @@ export const metadata: Metadata = {
     title: "Dr. Bashir - Gonstead Certified Specialist V",
     description:
       "Expert Gonstead chiropractic care with advanced machine-assisted treatment and precision spinal alignment.",
-    images: ["/images/gonstead-chiropractic-logo.png"],
+    images: ["/images/gonstead-chiropractic-logo-new.png"],
     creator: "@drbashir_gonstead",
   },
   icons: {
     icon: [
-      { url: "/images/gonstead-chiropractic-logo.png", sizes: "32x32", type: "image/png" },
-      { url: "/images/gonstead-chiropractic-logo.png", sizes: "16x16", type: "image/png" },
+      { url: "/images/gonstead-logo-new.ico", sizes: "32x32", type: "image/x-icon" },
+      { url: "/images/gonstead-logo-new.ico", sizes: "16x16", type: "image/x-icon" },
     ],
-    shortcut: "/images/gonstead-chiropractic-logo.png",
-    apple: [{ url: "/images/gonstead-chiropractic-logo.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/images/gonstead-logo-new.ico",
+    apple: [{ url: "/images/gonstead-chiropractic-logo-new.png", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/manifest.json",
     generator: 'v0.dev'
@@ -78,8 +78,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${openSans.variable}`}>
       <head>
-        <link rel="icon" href="/images/gonstead-chiropractic-logo.png" />
-        <link rel="apple-touch-icon" href="/images/gonstead-chiropractic-logo.png" />
+        <link rel="icon" href="/images/gonstead-logo-new.ico" />
+        <link rel="apple-touch-icon" href="/images/gonstead-chiropractic-logo-new.png" />
         <meta name="theme-color" content="#0d5c75" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
