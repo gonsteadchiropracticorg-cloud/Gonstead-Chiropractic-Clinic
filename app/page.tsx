@@ -295,7 +295,7 @@ function HomePageContent() {
                       variant="ghost"
                       onClick={() => {
                         const link = document.createElement('a');
-                        link.href = '/images/visiting-card.png';
+                        link.href = '/images/visiting-card.jpg';
                         link.download = 'Bashir_Khan_Chiropractic_Visiting_Card.png';
                         link.click();
                       }}
