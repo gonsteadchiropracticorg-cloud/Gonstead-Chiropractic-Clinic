@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { getCurrentUser } from "@/lib/supabase"
 import Image from "next/image"
 
 interface PrescriptionPatient {
@@ -66,11 +67,66 @@ function PrescriptionPageContent() {
   const [patientPhone, setPatientPhone] = useState("")
   const [patientEmail, setPatientEmail] = useState("")
   const [patientAddress, setPatientAddress] = useState("")
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   
   const router = useRouter()
   const prescriptionRef = useRef<HTMLDivElement>(null)
 
+  // Authentication check
   useEffect(() => {
+    checkAuthAndLoadData()
+  }, [])
+
+  const checkAuthAndLoadData = async () => {
+    try {
+      console.log("Prescription: Checking authentication...")
+
+      // Check localStorage first to prevent loops
+      const isAuthenticated = localStorage.getItem("admin_authenticated")
+      const storedEmail = localStorage.getItem("admin_email")
+
+      if (isAuthenticated === "true" && storedEmail) {
+        console.log("Prescription: Found localStorage auth, proceeding...")
+        setIsAuthenticated(true)
+        setIsCheckingAuth(false)
+        loadPatientData()
+        return
+      }
+
+      // If no localStorage, check Supabase auth
+      const { user, error } = await getCurrentUser()
+
+      if (error) {
+        console.error("Prescription: Auth error:", error)
+        throw error
+      }
+
+      if (!user) {
+        console.log("Prescription: No user found, redirecting to auth")
+        router.replace("/admin/auth")
+        return
+      }
+
+      console.log("Prescription: User authenticated:", user.email)
+
+      // Store auth in localStorage to prevent future loops
+      localStorage.setItem("admin_authenticated", "true")
+      localStorage.setItem("admin_email", user.email || "")
+
+      setIsAuthenticated(true)
+      setIsCheckingAuth(false)
+      loadPatientData()
+    } catch (error) {
+      console.error("Prescription: Auth check failed:", error)
+      // Clear localStorage on auth failure
+      localStorage.removeItem("admin_authenticated")
+      localStorage.removeItem("admin_email")
+      router.replace("/admin/auth")
+    }
+  }
+
+  const loadPatientData = () => {
     try {
       const patientData = localStorage.getItem('prescriptionPatient')
       if (patientData) {
@@ -88,7 +144,7 @@ function PrescriptionPageContent() {
       // Reset to initial state if localStorage data is corrupted
       localStorage.removeItem('prescriptionPatient')
     }
-  }, [])
+  }
 
 
   const printPrescription = () => {
@@ -185,6 +241,25 @@ function PrescriptionPageContent() {
       const totalAmount = parseFloat(sessionFee) * parseInt(totalSessions)
       console.log('Total amount calculated:', totalAmount)
     }
+  }
+
+  // Show loading screen while checking auth
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-md w-full mx-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0d5c75] mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Verifying Access</h2>
+          <p className="text-gray-600">Checking your authentication credentials...</p>
+          <div className="mt-6 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] h-2 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    )
+  }
+
+  // If not authenticated, show nothing (user will be redirected)
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
@@ -1237,10 +1312,9 @@ function PrescriptionPageContent() {
                   <div className="field-group">
                     <div className="field-label">Current Time:</div>
                     <input 
-                      type="text" 
+                      type="time" 
                       className="field-input" 
-                      value={new Date().toLocaleTimeString()} 
-                      readOnly
+                      defaultValue={typeof window !== 'undefined' ? new Date().toLocaleTimeString('en-US', { hour12: false }).slice(0, 5) : ''}
                     />
                   </div>
                 )}

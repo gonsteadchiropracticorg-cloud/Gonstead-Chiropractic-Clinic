@@ -69,7 +69,6 @@ export default function AdminDashboard() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [isPatientDialogOpen, setIsPatientDialogOpen] = useState(false)
   const [isAddPatientDialogOpen, setIsAddPatientDialogOpen] = useState(false)
-  const [isPrescriptionDialogOpen, setIsPrescriptionDialogOpen] = useState(false)
   const [isVideoCallDialogOpen, setIsVideoCallDialogOpen] = useState(false)
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
   const [isEditPatientDialogOpen, setIsEditPatientDialogOpen] = useState(false)
@@ -81,10 +80,6 @@ export default function AdminDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [patientCount, setPatientCount] = useState(0)
   const [authChecked, setAuthChecked] = useState(false)
-  const [prescriptionNotes, setPrescriptionNotes] = useState("")
-  const [prescriptionMedicine, setPrescriptionMedicine] = useState("")
-  const [chiropracticSuggestions, setChiropracticSuggestions] = useState<string[]>([])
-  const [newSuggestion, setNewSuggestion] = useState("")
   const [clinicLocation, setClinicLocation] = useState({
     address: "Near Police Station, Tehsil Road, Nowshera",
     coordinates: { lat: 34.0153, lng: 71.9804 },
@@ -108,8 +103,19 @@ export default function AdminDashboard() {
     payment_method: "cash" as "cash" | "jazzcash" | "easypaisa",
     notes: "",
   })
+  
+  // Prescription dialog state variables
+  const [isPrescriptionDialogOpen, setIsPrescriptionDialogOpen] = useState(false)
+  const [prescriptionNotes, setPrescriptionNotes] = useState("")
+  const [prescriptionMedicine, setPrescriptionMedicine] = useState("")
+  const [chiropracticSuggestions, setChiropracticSuggestions] = useState<string[]>([
+    "Apply ice for 15-20 minutes, 3 times daily",
+    "Gentle neck stretches as demonstrated",
+    "Maintain proper posture while sitting",
+    "Sleep with proper pillow support",
+  ])
+  const [newSuggestion, setNewSuggestion] = useState("")
 
-  const prescriptionRef = useRef<HTMLDivElement>(null)
 
   const router = useRouter()
   const { toast } = useToast()
@@ -1467,7 +1473,12 @@ Phone: +92 304 699 6267
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => generatePrescription(patient)}
+                              onClick={() => {
+                                // Store patient data for prescription page
+                                localStorage.setItem('prescriptionPatient', JSON.stringify(patient))
+                                // Navigate to prescription page
+                                router.push('/admin/prescription')
+                              }}
                               className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
                               title="Generate Prescription"
                             >

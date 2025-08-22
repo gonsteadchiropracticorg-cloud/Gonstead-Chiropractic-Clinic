@@ -291,6 +291,43 @@ function HomePageContent() {
                     </Button>
                   </div>
                   
+                  {/* Professional Visiting Card Download */}
+                  <div className="flex justify-center sm:justify-start pt-4 border-t border-blue-400/20 mt-4">
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        const link = document.createElement('a')
+                        link.href = '/images/visiting-card.jpg'
+                        link.download = 'Gonstead-Chiropractic-Visiting-Card.jpg'
+                        document.body.appendChild(link)
+                        link.click()
+                        document.body.removeChild(link)
+                      }}
+                      className="group bg-gradient-to-r from-white/10 to-white/5 hover:from-white/20 hover:to-white/10 text-white border border-white/20 hover:border-white/40 px-4 sm:px-6 py-2 sm:py-3 rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-white/10"
+                    >
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                          <svg 
+                            className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300 group-hover:text-white transition-colors" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                          </svg>
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm sm:text-base font-semibold text-white group-hover:text-cyan-200 transition-colors">
+                            Download Visiting Card
+                          </div>
+                          <div className="text-xs text-blue-300 group-hover:text-white transition-colors">
+                            Professional contact info
+                          </div>
+                        </div>
+                      </div>
+                    </Button>
+                  </div>
+                  
 
                   {/* Professional Stats */}
                   <div className="grid grid-cols-3 gap-6 pt-8 border-t border-blue-400/20">
