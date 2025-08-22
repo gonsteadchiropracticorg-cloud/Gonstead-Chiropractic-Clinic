@@ -6,7 +6,7 @@ import { useTheme } from "./theme-provider"
 import { useState, useEffect } from "react"
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme, mounted: themeProviderMounted } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -14,10 +14,12 @@ export function ThemeToggle() {
   }, [])
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light")
+    if (setTheme && typeof setTheme === 'function') {
+      setTheme(theme === "light" ? "dark" : "light")
+    }
   }
 
-  if (!mounted) {
+  if (!mounted || !themeProviderMounted) {
     return (
       <Button variant="outline" size="icon" className="relative overflow-hidden">
         <Sun className="h-[1.2rem] w-[1.2rem]" />
