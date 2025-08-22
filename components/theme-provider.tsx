@@ -51,9 +51,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.setAttribute('data-theme', theme)
   }, [theme, mounted])
 
-  // Don't render children until mounted to prevent hydration mismatch
+  // Render children with default theme until mounted to prevent chunk loading errors
   if (!mounted) {
-    return null
+    return <div className="light" data-theme="light">{children}</div>
   }
 
   return <ThemeContext.Provider value={{ theme, setTheme, actualTheme: theme, mounted }}>{children}</ThemeContext.Provider>

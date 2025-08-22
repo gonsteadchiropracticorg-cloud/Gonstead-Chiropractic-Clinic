@@ -274,7 +274,7 @@ export default function AdminDashboard() {
   }
 
   const openPrescription = (patient: PatientRecord) => {
-    // Navigate to prescription page with patient data
+    // Navigate to new prescription page with patient data
     localStorage.setItem('prescriptionPatient', JSON.stringify(patient))
     router.push('/admin/prescription')
   }
