@@ -972,6 +972,7 @@ function HomePageContent() {
             </div>
           </section>
 
+
           {/* Contact & Booking Section */}
           <section id="contact" className="relative py-20 bg-white dark:bg-[rgb(30,63,99)] overflow-hidden">
             {/* Background Image */}
@@ -1182,71 +1183,105 @@ function HomePageContent() {
             <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#00b67a]/20 to-transparent"></div>
           </section>
 
-          {/* Patient Education Access Section */}
-          <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 text-white py-12 px-4 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950">
-            {/* Sophisticated Background Elements */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          {/* Professional Patient Education Resources Section - Enhanced & Separated */}
+          <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-blue-900/20">
+            {/* Background Enhancement */}
+            <div className="absolute inset-0">
+              <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-500/5 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-500/3 rounded-full blur-3xl animate-pulse animation-delay-2000"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-emerald-500/8 rounded-full blur-2xl animate-pulse animation-delay-1000"></div>
             </div>
             
-            {/* Subtle grid pattern */}
-            <div className="absolute inset-0 opacity-5" style={{
-              backgroundImage: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><defs><pattern id='grid' width='60' height='60' patternUnits='userSpaceOnUse'><path d='M 60 0 L 0 0 0 60' fill='none' stroke='white' stroke-width='1'/></pattern></defs><rect width='100%' height='100%' fill='url(%23grid)'/></svg>")`
-            }}></div>
-            
-            {/* Main Content */}
+            {/* Professional Container with Rounded Borders */}
             <div className="relative max-w-6xl mx-auto">
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-                {/* Left Content */}
-                <div className="flex-1 text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-4">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl mr-4 shadow-lg">
-                      <BookOpen className="w-6 h-6 text-white" />
+              <div className="bg-gradient-to-br from-emerald-900 via-slate-800 to-teal-900 dark:from-emerald-950 dark:via-slate-900 dark:to-teal-950 rounded-3xl shadow-2xl border border-emerald-500/20 backdrop-blur-xl overflow-hidden">
+                {/* Sophisticated Background Elements */}
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+                  <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                </div>
+                
+                {/* Subtle grid pattern */}
+                <div className="absolute inset-0 opacity-5" style={{
+                  backgroundImage: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><defs><pattern id='grid' width='60' height='60' patternUnits='userSpaceOnUse'><path d='M 60 0 L 0 0 0 60' fill='none' stroke='white' stroke-width='1'/></pattern></defs><rect width='100%' height='100%' fill='url(%23grid)'/></svg>")`
+                }}></div>
+                
+                {/* Decorative Top Border */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent"></div>
+                
+                {/* Main Content */}
+                <div className="relative p-8 sm:p-12 lg:p-16 text-white">
+                  <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+                    {/* Left Content */}
+                    <div className="flex-1 text-center lg:text-left">
+                      {/* Enhanced Header */}
+                      <div className="flex items-center justify-center lg:justify-start mb-6">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl mr-6 shadow-xl">
+                          <BookOpen className="w-8 h-8 text-white" />
+                        </div>
+                        <div>
+                          <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-200 to-teal-200 bg-clip-text text-transparent leading-tight">
+                            Advanced Patient
+                          </h2>
+                          <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-teal-200 to-emerald-200 bg-clip-text text-transparent">
+                            Education Resources
+                          </h2>
+                        </div>
+                      </div>
+                      
+                      {/* Enhanced Description */}
+                      <div className="relative mb-8">
+                        <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/10 via-transparent to-teal-500/10 rounded-2xl blur-xl"></div>
+                        <p className="relative text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+                          Discover valuable insights into chiropractic care and enhance your healing journey with our meticulously curated guides and educational materials.
+                        </p>
+                      </div>
+                      
+                      {/* Enhanced Benefits Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+                        <div className="flex items-center justify-center lg:justify-start space-x-3 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 backdrop-blur-sm border border-emerald-500/30 rounded-2xl px-6 py-4 hover:from-emerald-600/30 hover:to-teal-600/30 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+                          <Award className="w-6 h-6 text-emerald-300" />
+                          <span className="text-sm font-semibold text-emerald-200">Expert-Approved</span>
+                        </div>
+                        <div className="flex items-center justify-center lg:justify-start space-x-3 bg-gradient-to-r from-teal-600/20 to-cyan-600/20 backdrop-blur-sm border border-teal-500/30 rounded-2xl px-6 py-4 hover:from-teal-600/30 hover:to-cyan-600/30 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+                          <Clock className="w-6 h-6 text-teal-300" />
+                          <span className="text-sm font-semibold text-teal-200">Always Updated</span>
+                        </div>
+                        <div className="flex items-center justify-center lg:justify-start space-x-3 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 backdrop-blur-sm border border-cyan-500/30 rounded-2xl px-6 py-4 hover:from-cyan-600/30 hover:to-blue-600/30 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+                          <Users className="w-6 h-6 text-cyan-300" />
+                          <span className="text-sm font-semibold text-cyan-200">Easy to Follow</span>
+                        </div>
+                      </div>
                     </div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-200 to-teal-200 bg-clip-text text-transparent">
-                      Advanced Patient Education Resources
-                    </h2>
-                  </div>
-                  
-                  <p className="text-lg text-slate-300 mb-6 max-w-2xl leading-relaxed">
-                    Discover valuable insights into chiropractic care and enhance your healing journey with our meticulously curated guides.
-                  </p>
-                  
-                  {/* Enhanced Benefits */}
-                  <div className="flex flex-wrap justify-center lg:justify-start gap-4 mb-8">
-                    <div className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 backdrop-blur-sm border border-emerald-500/20 rounded-full px-5 py-3 hover:from-emerald-600/30 hover:to-teal-600/30 transition-all duration-300 shadow-md hover:shadow-lg">
-                      <Award className="w-5 h-5 text-emerald-300" />
-                      <span className="text-sm text-emerald-200 font-medium">Expert-Approved</span>
-                    </div>
-                    <div className="flex items-center space-x-2 bg-gradient-to-r from-teal-600/20 to-cyan-600/20 backdrop-blur-sm border border-teal-500/20 rounded-full px-5 py-3 hover:from-teal-600/30 hover:to-cyan-600/30 transition-all duration-300 shadow-md hover:shadow-lg">
-                      <Clock className="w-5 h-5 text-teal-300" />
-                      <span className="text-sm text-teal-200 font-medium">Always Updated</span>
-                    </div>
-                    <div className="flex items-center space-x-2 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 backdrop-blur-sm border border-cyan-500/20 rounded-full px-5 py-3 hover:from-cyan-600/30 hover:to-blue-600/30 transition-all duration-300 shadow-md hover:shadow-lg">
-                      <Users className="w-5 h-5 text-cyan-300" />
-                      <span className="text-sm text-cyan-200 font-medium">Easy to Follow</span>
+                    
+                    {/* Enhanced Right CTA */}
+                    <div className="flex-shrink-0">
+                      <div className="relative">
+                        {/* Glowing Background Effect */}
+                        <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/30 to-teal-500/30 rounded-3xl blur-2xl animate-pulse"></div>
+                        <a
+                          href="/educational-guide.html"
+                          className="group relative inline-flex items-center px-12 py-6 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-2xl 
+                                   hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-2xl hover:shadow-emerald-500/25
+                                   transform hover:-translate-y-2 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-400/50
+                                   border-2 border-emerald-400/30 backdrop-blur-sm text-lg"
+                          aria-label="View comprehensive educational guide for chiropractic patients"
+                        >
+                          <BookOpen className="w-8 h-8 mr-4 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" />
+                          <div>
+                            <span className="block font-bold text-xl">View Guide</span>
+                            <span className="block text-sm text-emerald-100 font-normal">Comprehensive Resources</span>
+                          </div>
+                          {/* Animated shine effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000 ease-out"></div>
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>
                 
-                {/* Right CTA */}
-                <div className="flex-shrink-0">
-                  <a
-                    href="/educational-guide.html"
-                    className="group inline-flex items-center px-10 py-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl 
-                             hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-2xl hover:shadow-lg
-                             transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:ring-offset-2 focus:ring-offset-slate-900
-                             border border-emerald-400/20 backdrop-blur-sm"
-                    aria-label="View comprehensive educational guide for chiropractic patients"
-                  >
-                    <BookOpen className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-300 animate-bounce-slow" />
-                    <span className="relative">
-                      View Guide
-                      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white/50 group-hover:w-full transition-all duration-300"></span>
-                    </span>
-                  </a>
-                </div>
+                {/* Decorative Bottom Border */}
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-teal-400/60 to-transparent"></div>
               </div>
             </div>
           </section>

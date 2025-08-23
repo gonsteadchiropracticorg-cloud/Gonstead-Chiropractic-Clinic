@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import { voiceService } from "../lib/voice-service"
 import { googleAIService } from "../lib/google-ai-service"
+import { generateKnowledgeResponse } from "../lib/chatbot-knowledge"
 // Speech recognition types will be handled inline
 
 interface Message {
@@ -482,39 +483,13 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
   }
 
   const getFallbackResponse = (message: string): string => {
-    if (message.includes("gonstead") || message.includes("technique")) {
-      return "The Gonstead technique is a comprehensive system of analyzing and adjusting the spine. Bashir Khan Chiropractic specializes in this precise method which focuses on specific spinal analysis and targeted adjustments for optimal results. Would you like to book an appointment?"
+    // Import and use the comprehensive knowledge base
+    try {
+      return generateKnowledgeResponse(message)
+    } catch (error) {
+      console.error('Error accessing knowledge base:', error)
+      return "I understand you're looking for information about our chiropractic services. Our Gonstead Chiropractic Clinic team is here to help with your spinal health needs. Would you like to book an appointment, learn about our treatments, or speak directly with our specialists?"
     }
-
-    if (message.includes("location") || message.includes("address") || message.includes("where")) {
-      return "Our clinic is located near Peshawar Model School, Tehsil Road, Nowshera. We're easily accessible and have parking available. Our clinic hours are Monday-Saturday, 9 AM to 6 PM. Would you like to book an appointment?"
-    }
-
-    if (message.includes("price") || message.includes("cost") || message.includes("fee")) {
-      return "Our consultation fees are very reasonable. Initial consultation is PKR 2000, and follow-up sessions are PKR 1500. We accept cash, JazzCash, and EasyPaisa payments. Insurance coverage may apply. Would you like to book an appointment?"
-    }
-
-    if (message.includes("doctor") || message.includes("bashir")) {
-      return "Bashir Khan Chiropractic is a certified Gonstead Chiropractic specialist with 15+ years of experience in spinal health and adjustment techniques. Our clinic is dedicated to providing personalized care for each patient's unique needs. Would you like to book a consultation?"
-    }
-
-    if (message.includes("call") || message.includes("phone") || message.includes("talk")) {
-      return "Would you like me to connect you with Bashir Khan Chiropractic for a voice consultation? I can arrange a call right now if available, or you can book an appointment for a more detailed consultation."
-    }
-
-    if (message.includes("emergency") || message.includes("urgent") || message.includes("pain")) {
-      return "For urgent cases or severe pain, please call our emergency line at +92 304 699 6267 immediately. Bashir Khan Chiropractic provides emergency consultations. Would you like me to help you book an urgent appointment?"
-    }
-
-    if (message.includes("hours") || message.includes("time") || message.includes("open") || message.includes("timing") || message.includes("schedule")) {
-      return `📅 CLINIC HOURS & SCHEDULE:\n\n🕘 REGULAR HOURS:\n• Monday - Friday: 9:00 AM - 6:00 PM\n• Saturday: 9:00 AM - 3:00 PM\n• Sunday: Emergency appointments only\n\n⏰ BEST APPOINTMENT TIMES:\n• Morning: 9:00 AM - 12:00 PM (Less crowded)\n• Afternoon: 2:00 PM - 5:00 PM (Popular times)\n• Evening: 5:00 PM - 6:00 PM (Last appointments)\n\n🏥 APPOINTMENT AVAILABILITY:\n• Same-day appointments: Available (subject to availability)\n• Advance booking: Recommended (1-3 days ahead)\n• Emergency care: Available 24/7\n\n📞 To book your preferred time slot, call +92 304 699 6267 or use our online booking system. Which day and time would work best for you?`
-    }
-
-    if (message.includes("available") || message.includes("slot") || message.includes("booking")) {
-      return `📋 APPOINTMENT AVAILABILITY:\n\n✅ SAME DAY SLOTS:\n• 9:00 AM - 10:00 AM\n• 11:00 AM - 12:00 PM\n• 2:00 PM - 3:00 PM\n• 4:00 PM - 5:00 PM\n\n📅 WEEKLY SCHEDULE:\n• Monday-Friday: Full availability\n• Saturday: Morning slots only\n• Sunday: Emergency only\n\n🕐 POPULAR TIME SLOTS:\n• 10:00 AM (Most requested)\n• 2:00 PM (Afternoon preferred)\n• 4:00 PM (Evening convenient)\n\nWhich specific day and time would you prefer for your appointment?`
-    }
-
-    return "I understand you're looking for information about our chiropractic services. Our Gonstead Chiropractic Clinic team is here to help with your spinal health needs. Would you like to book an appointment, learn about our treatments, or speak directly with our specialists?"
   }
 
   const sendMessage = async () => {
@@ -614,9 +589,9 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
   }
 
   return (
-<div ref={chatbotRef} className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50">
+<div ref={chatbotRef} className="fixed bottom-2 right-2 sm:bottom-4 sm:right-4 md:bottom-6 md:right-6 z-50">
       <Card
-        className={`w-[calc(100vw-2rem)] sm:w-[400px] md:w-[450px] lg:w-[500px] xl:w-[520px] max-w-[95vw] shadow-2xl border-[rgb(66,139,124)]/20 transition-all duration-300 backdrop-blur-md bg-white/95 dark:bg-gray-900/95 ${isMinimized ? "h-16" : "h-[85vh] max-h-[600px] min-h-[500px]"} rounded-2xl overflow-hidden`}
+        className={`w-[calc(100vw-1rem)] xs:w-[calc(100vw-2rem)] sm:w-[380px] md:w-[420px] lg:w-[460px] xl:w-[500px] max-w-[98vw] sm:max-w-[95vw] shadow-2xl border-[rgb(66,139,124)]/20 transition-all duration-300 backdrop-blur-md bg-white/95 dark:bg-gray-900/95 ${isMinimized ? "h-14 sm:h-16" : "h-[90vh] max-h-[550px] sm:max-h-[600px] min-h-[450px] sm:min-h-[500px]"} rounded-xl sm:rounded-2xl overflow-hidden flex flex-col`}
       >
         {/* Enhanced Header */}
         <CardHeader className="bg-gradient-to-br from-[rgb(66,139,124)] via-[rgb(72,145,130)] to-[rgb(58,133,118)] text-white p-3 md:p-4 rounded-t-2xl relative overflow-hidden">
@@ -729,7 +704,7 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
             )}
 
             {/* Enhanced Messages Area */}
-            <CardContent className="p-0 h-[320px] md:h-[350px] lg:h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
               <div className="p-3 md:p-4 space-y-3 md:space-y-4">
                 {messages.map((message, index) => (
                   <div
@@ -804,67 +779,67 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
               </div>
             </CardContent>
 
-            {/* Enhanced Input Area */}
-            <div className="p-3 md:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
+            {/* Enhanced Input Area - Fixed positioning */}
+            <div className="flex-shrink-0 p-2 sm:p-3 md:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-sm">
               <div className="flex gap-2">
-                <div className="flex-1 relative">
+                <div className="flex-1 relative min-w-0">
                   <Input
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Type your message or use voice..."
-                    className="pr-12 pl-4 py-2.5 md:py-3 rounded-xl border-gray-200 dark:border-gray-700 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)]/20 bg-white dark:bg-gray-800 text-sm transition-all duration-200"
+                    placeholder="Type your message..."
+                    className="pr-10 sm:pr-12 pl-3 sm:pl-4 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl border-gray-200 dark:border-gray-700 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)]/20 bg-white dark:bg-gray-800 text-sm w-full min-w-0 transition-all duration-200"
                   />
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
-                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg transition-all duration-200 ${
+                    className={`absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 p-1 sm:p-1.5 rounded-lg transition-all duration-200 ${
                       isListening ? "text-red-500 animate-pulse bg-red-50 dark:bg-red-900/20" : "text-gray-400 hover:text-[rgb(66,139,124)] hover:bg-[rgb(66,139,124)]/10"
                     }`}
                     title={isListening ? "Stop listening" : "Use voice input"}
                   >
-                    <Mic className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                    <Mic className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
                   </Button>
                 </div>
                 <Button
                   onClick={sendMessage}
-                  className="bg-gradient-to-r from-[rgb(66,139,124)] to-[rgb(58,133,118)] hover:from-[rgb(72,145,130)] hover:to-[rgb(64,139,124)] text-white px-3 md:px-4 py-2.5 md:py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="flex-shrink-0 bg-gradient-to-r from-[rgb(66,139,124)] to-[rgb(58,133,118)] hover:from-[rgb(72,145,130)] hover:to-[rgb(64,139,124)] text-white px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   disabled={!inputMessage.trim()}
                   title="Send message"
                 >
-                  <Send className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                  <Send className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
                 </Button>
               </div>
 
-              {/* Enhanced Quick Actions */}
-              <div className="flex flex-wrap gap-1.5 md:gap-2 mt-2.5">
+              {/* Enhanced Quick Actions - Better mobile layout */}
+              <div className="flex gap-1 sm:gap-1.5 md:gap-2 mt-2 sm:mt-2.5">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setInputMessage("I want to book an appointment")}
-                  className="text-xs flex-1 md:flex-none border-[rgb(66,139,124)]/20 text-[rgb(66,139,124)] hover:bg-[rgb(66,139,124)]/10 hover:border-[rgb(66,139,124)]/40 rounded-lg transition-all duration-200 min-w-0"
+                  className="flex-1 text-xs border-[rgb(66,139,124)]/20 text-[rgb(66,139,124)] hover:bg-[rgb(66,139,124)]/10 hover:border-[rgb(66,139,124)]/40 rounded-md sm:rounded-lg transition-all duration-200 min-w-0 px-1 sm:px-2"
                 >
                   <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
-                  <span className="truncate">Book</span>
+                  <span className="truncate text-xs">Book</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setInputMessage("Where is your clinic located?")}
-                  className="text-xs flex-1 md:flex-none border-[rgb(66,139,124)]/20 text-[rgb(66,139,124)] hover:bg-[rgb(66,139,124)]/10 hover:border-[rgb(66,139,124)]/40 rounded-lg transition-all duration-200 min-w-0"
+                  className="flex-1 text-xs border-[rgb(66,139,124)]/20 text-[rgb(66,139,124)] hover:bg-[rgb(66,139,124)]/10 hover:border-[rgb(66,139,124)]/40 rounded-md sm:rounded-lg transition-all duration-200 min-w-0 px-1 sm:px-2"
                 >
                   <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                  <span className="truncate">Location</span>
+                  <span className="truncate text-xs">Location</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setInputMessage("What are your clinic hours?")}
-                  className="text-xs flex-1 md:flex-none border-[rgb(66,139,124)]/20 text-[rgb(66,139,124)] hover:bg-[rgb(66,139,124)]/10 hover:border-[rgb(66,139,124)]/40 rounded-lg transition-all duration-200 min-w-0"
+                  className="flex-1 text-xs border-[rgb(66,139,124)]/20 text-[rgb(66,139,124)] hover:bg-[rgb(66,139,124)]/10 hover:border-[rgb(66,139,124)]/40 rounded-md sm:rounded-lg transition-all duration-200 min-w-0 px-1 sm:px-2"
                 >
                   <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
-                  <span className="truncate">Hours</span>
+                  <span className="truncate text-xs">Hours</span>
                 </Button>
               </div>
             </div>

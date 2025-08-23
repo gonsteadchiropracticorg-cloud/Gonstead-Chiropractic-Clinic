@@ -130,8 +130,8 @@ export function LocationModule() {
               {/* Location Pin Overlay */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
                 <div className="animate-bounce">
-                  <div className="w-8 h-8 bg-[#f3a800] rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                    <MapPin className="h-4 w-4 text-white" />
+                    <div className="w-8 h-8 bg-[#D2F5E2] rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                    <MapPin className="h-4 w-4 text-gray-800" />
                   </div>
                 </div>
               </div>
@@ -160,19 +160,19 @@ export function LocationModule() {
               </h4>
               <ul className="text-sm text-[#0A3A47] space-y-2 font-open-sans">
                 <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#f3a800] rounded-full"></div>
+                  <div className="w-2 h-2 bg-[#D2F5E2] rounded-full"></div>
                   {language === "ur" ? "مفت پارکنگ دستیاب" : "Free parking available"}
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#f3a800] rounded-full"></div>
+                  <div className="w-2 h-2 bg-[#D2F5E2] rounded-full"></div>
                   {language === "ur" ? "وہیل چیئر رسائی" : "Wheelchair accessible"}
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#f3a800] rounded-full"></div>
+                  <div className="w-2 h-2 bg-[#D2F5E2] rounded-full"></div>
                   {language === "ur" ? "عوامی ٹرانسپورٹ" : "Public transport nearby"}
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#f3a800] rounded-full"></div>
+                  <div className="w-2 h-2 bg-[#D2F5E2] rounded-full"></div>
                   {language === "ur" ? "آسان رسائی" : "Easy to locate"}
                 </li>
               </ul>
@@ -199,8 +199,8 @@ export function LocationModule() {
                 </div>
                 <div className="mt-3 pt-3 border-t border-gray-200">
                   <div className="flex justify-between items-center">
-                    <span className="text-[#f3a800] font-bold">{language === "ur" ? "ایمرجنسی:" : "Emergency:"}</span>
-                    <span className="text-[#f3a800] font-bold">24/7</span>
+                    <span className="text-green-600 font-bold">{language === "ur" ? "ایمرجنسی:" : "Emergency:"}</span>
+                    <span className="text-green-600 font-bold">24/7</span>
                   </div>
                 </div>
               </div>
@@ -253,7 +253,7 @@ export function LocationModule() {
             </Button>
 
             <Button
-              className="bg-[#f3a800] hover:bg-[#e09700] text-white font-poppins shadow-lg"
+              className="bg-[#D2F5E2] hover:bg-[#B8E6C1] text-gray-800 font-poppins shadow-lg"
               onClick={() => window.open("tel:+923046996267")}
             >
               <Phone className="h-4 w-4 mr-2" />
