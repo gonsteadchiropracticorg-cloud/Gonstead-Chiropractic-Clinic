@@ -249,17 +249,6 @@ export function SportsInjuriesFloat() {
         size="icon"
         title="Sports Injuries Information"
       >
-        {/* Logo in background */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-20">
-          <div className="relative w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12">
-            <Image
-              src="/images/gonstead-logo-new.png"
-              alt="Gonstead Logo"
-              fill
-              className="object-contain filter brightness-200"
-            />
-          </div>
-        </div>
         {/* Sports injuries icon on top */}
         <Activity className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-white filter drop-shadow-sm relative z-10" />
         {/* Pulse animation for active state */}
