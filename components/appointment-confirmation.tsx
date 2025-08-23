@@ -161,7 +161,8 @@ export function AppointmentConfirmation({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4 -mt-8">
+    <div className="w-full min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 px-2 sm:px-4 py-4 sm:py-6">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
       <style jsx>{`
         @media print {
           * {
@@ -247,45 +248,55 @@ export function AppointmentConfirmation({
       `}</style>
       <div id="appointment-confirmation-content">
       {/* Unified Success Header with Appointment Details */}
-      <Card className="border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg appointment-success-glow appointment-card-hover">
-        <CardContent className="text-center p-8">
-          <div className="flex justify-center mb-4">
+      <Card className="border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 shadow-xl sm:shadow-2xl appointment-success-glow appointment-card-hover overflow-hidden">
+        <CardContent className="text-center p-4 sm:p-6 md:p-8">
+          {/* Logo Section - Responsive */}
+          <div className="flex justify-center mb-4 sm:mb-6">
             <div className="relative">
               <img 
                 src="/images/gonstead-logo-new.png" 
                 alt="Gonstead Chiropractic Center Logo" 
-                className="h-20 w-20 object-contain drop-shadow-lg animate-pulse-glow" 
+                className="h-16 w-16 sm:h-20 sm:w-20 object-contain drop-shadow-lg animate-pulse-glow" 
               />
-              <div className="absolute -top-1 -right-1 h-6 w-6 bg-green-400 rounded-full animate-ping"></div>
+              <div className="absolute -top-1 -right-1 h-4 w-4 sm:h-6 sm:w-6 bg-green-400 rounded-full animate-ping"></div>
             </div>
           </div>
           
-          <h1 className="text-3xl font-bold text-green-700 mb-2 font-poppins">
+          {/* Main Title - Mobile Responsive */}
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-700 mb-3 sm:mb-4 font-poppins leading-tight px-2">
             {isUrdu ? "آپ کی ملاقات کی بکنگ مکمل ہو گئی!" : "Your Appointment Reservation Confirmed"}
           </h1>
           
-          <p className="text-green-600 text-lg mb-4">
+          {/* Subtitle - Mobile Responsive */}
+          <p className="text-green-600 text-base sm:text-lg mb-4 sm:mb-6 px-2 leading-relaxed">
             {isUrdu 
               ? "گونستیڈ کائروپریکٹک سینٹر میں آپ کے پیشہ ورانہ علاج کی بکنگ کے لیے آپ کا بہت شکریہ"
               : "We extend our sincere appreciation for scheduling your professional treatment session at Gonstead Chiropractic Center"
             }
           </p>
 
-          <Badge variant="secondary" className="bg-green-100 text-green-800 px-4 py-2 mb-6">
-            <Star className="h-4 w-4 mr-2" />
-            {isUrdu ? `آپ کا اپائنٹمنٹ نمبر: #${appointmentData.appointmentId || `APT${Date.now().toString().slice(-6)}`}` : `Your Appointment ID: #${appointmentData.appointmentId || `APT${Date.now().toString().slice(-6)}`}`}
-          </Badge>
+          {/* Appointment ID Badge - Mobile Responsive */}
+          <div className="inline-flex items-center justify-center">
+            <Badge variant="secondary" className="bg-green-100 text-green-800 px-3 py-2 sm:px-4 sm:py-2 mb-4 sm:mb-6 text-sm sm:text-base">
+              <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="font-semibold">
+                {isUrdu ? `آپ کا اپائنٹمنٹ نمبر: #${appointmentData.appointmentId || `APT${Date.now().toString().slice(-6)}`}` : `Your Appointment ID: #${appointmentData.appointmentId || `APT${Date.now().toString().slice(-6)}`}`}
+              </span>
+            </Badge>
+          </div>
           
-          {/* Appointment Details Section */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200 mt-6">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Calendar className="h-6 w-6 text-green-600" />
-              <h2 className="text-xl font-semibold text-green-700">
+          {/* Appointment Details Section - Mobile Enhanced */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6 rounded-lg border border-green-200 mt-4 sm:mt-6">
+            {/* Section Header - Mobile Responsive */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-4 sm:mb-6">
+              <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+              <h2 className="text-lg sm:text-xl font-semibold text-green-700 text-center sm:text-left">
                 {isUrdu ? "ملاقات کی تفصیلات اور قبل از آمد کی ہدایات" : "Appointment Information & Pre-Visit Guidelines"}
               </h2>
             </div>
-            {/* Patient Details - integrated directly into the green background */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            
+            {/* Patient Details Grid - Mobile Optimized */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6">
               <div className="flex items-center gap-3 p-4 bg-white/30 rounded-lg border border-green-200">
                 <User className="h-5 w-5 text-green-700" />
                 <div>
@@ -386,12 +397,12 @@ export function AppointmentConfirmation({
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      {/* Action Buttons - Mobile Enhanced */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-2">
         <Button 
           onClick={onBackToHome}
           variant="outline" 
-          className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
+          className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white py-3 sm:py-4 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
         >
           <Heart className="h-4 w-4 mr-2" />
           {isUrdu ? "ہوم پیج پر واپس" : "Back to Home"}
@@ -399,7 +410,7 @@ export function AppointmentConfirmation({
         
         <Button 
           onClick={onNewAppointment}
-          className="bg-[#2a9d8f] hover:bg-[#238a7a]"
+          className="bg-[#2a9d8f] hover:bg-[#238a7a] py-3 sm:py-4 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
         >
           <Calendar className="h-4 w-4 mr-2" />
           {isUrdu ? "نئی اپائنٹمنٹ" : "Book New Appointment"}
@@ -408,7 +419,7 @@ export function AppointmentConfirmation({
         <Button 
           onClick={handlePrint}
           variant="outline"
-          className="border-amber-400 text-amber-600 hover:bg-amber-400 hover:text-white"
+          className="border-amber-400 text-amber-600 hover:bg-amber-400 hover:text-white py-3 sm:py-4 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
         >
           <Download className="h-4 w-4 mr-2" />
           {isUrdu ? "پرنٹ کریں" : "Print Details"}
@@ -417,23 +428,23 @@ export function AppointmentConfirmation({
         <Button 
           onClick={downloadPDF}
           variant="outline"
-          className="border-blue-400 text-blue-600 hover:bg-blue-400 hover:text-white"
+          className="border-blue-400 text-blue-600 hover:bg-blue-400 hover:text-white py-3 sm:py-4 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
         >
           <FileDown className="h-4 w-4 mr-2" />
           {isUrdu ? "PDF ڈاؤن لوڈ کریں" : "Download PDF"}
         </Button>
       </div>
 
-      {/* Footer Message */}
-      <Card className="confirmation-gradient-bg border-[#2a9d8f]/20">
-        <CardContent className="text-center p-6">
-          <p className="text-gray-600 mb-2">
+      {/* Footer Message - Mobile Enhanced */}
+      <Card className="confirmation-gradient-bg border-[#2a9d8f]/20 mx-2 sm:mx-0">
+        <CardContent className="text-center p-4 sm:p-6">
+          <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base leading-relaxed px-2">
             {isUrdu 
               ? "آپ کی ملاقات کی تصدیق کے لیے ہمارا عملہ جلد ہی آپ سے رابطہ کرے گا۔ آپ کی صحت اور بہبودی ہمارے لیے انتہائی اہم ہے۔"
               : "Our dedicated team will contact you promptly for appointment confirmation. Your health and well-being remain our paramount concern."
             }
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs sm:text-sm text-gray-500 px-2">
             {isUrdu
               ? "گونستیڈ کائروپریکٹک سینٹر - ریڑھ کی ہڈی کی دیکھ بھال کے مختص ماہرین"
               : "Gonstead Chiropractic Center - Dedicated Specialists in Spinal Care Excellence"
@@ -441,6 +452,7 @@ export function AppointmentConfirmation({
           </p>
         </CardContent>
       </Card>
+      </div>
       </div>
     </div>
   )

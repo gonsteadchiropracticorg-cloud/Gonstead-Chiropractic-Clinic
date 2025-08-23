@@ -252,10 +252,30 @@ export function TrustpilotReviewPreview({
     }
   ]
 
-  // Initialize reviews
+  // Initialize reviews with localStorage persistence
   useEffect(() => {
-    setReviews(sampleReviews)
-    setFilteredReviews(sampleReviews)
+    try {
+      // Load persisted reviews from localStorage
+      const savedReviews = localStorage.getItem('gonstead_patient_reviews')
+      if (savedReviews) {
+        const parsedReviews = JSON.parse(savedReviews)
+        // Merge saved reviews with sample reviews (avoid duplicates)
+        const allReviews = [
+          ...parsedReviews.filter((review: Review) => !sampleReviews.find(sr => sr.id === review.id)),
+          ...sampleReviews
+        ]
+        setReviews(allReviews)
+        setFilteredReviews(allReviews)
+        console.log('Loaded reviews from localStorage:', parsedReviews.length)
+      } else {
+        setReviews(sampleReviews)
+        setFilteredReviews(sampleReviews)
+      }
+    } catch (error) {
+      console.error('Failed to load reviews from localStorage:', error)
+      setReviews(sampleReviews)
+      setFilteredReviews(sampleReviews)
+    }
   }, [])
 
   // Filter and sort reviews
@@ -363,7 +383,30 @@ export function TrustpilotReviewPreview({
       }
       
       // Add to reviews array at the beginning (latest first)
-      setReviews(prev => [review, ...prev])
+      const updatedReviews = [review, ...reviews]
+      setReviews(updatedReviews)
+      
+      // Persist reviews to localStorage for trustworthiness and verification
+      try {
+        localStorage.setItem('gonstead_patient_reviews', JSON.stringify(updatedReviews))
+        console.log('Review saved to localStorage for persistence')
+      } catch (error) {
+        console.error('Failed to save review to localStorage:', error)
+      }
+      
+      // Trigger admin notification for review moderation
+      try {
+        const reviewNotification = new CustomEvent('newPatientReview', {
+          detail: {
+            review,
+            timestamp: new Date().toISOString(),
+            needsModeration: true
+          }
+        })
+        window.dispatchEvent(reviewNotification)
+      } catch (error) {
+        console.error('Failed to trigger review notification:', error)
+      }
       
       // Reset form
       setNewReview({
@@ -380,8 +423,8 @@ export function TrustpilotReviewPreview({
       // Close modal
       setShowLeaveReviewModal(false)
       
-      // Show success message (optional)
-      alert('Thank you for your review! It has been added successfully.')
+      // Show success message with verification notice
+      alert('Thank you for your review! It has been submitted for verification and will be displayed after approval. This helps maintain trust and authenticity for all patients.')
     } else {
       alert('Please fill in all required fields.')
     }

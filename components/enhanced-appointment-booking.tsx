@@ -413,7 +413,7 @@ export function EnhancedAppointmentBooking() {
   }
 
   return (
-    <Card className="border-4 border-[rgb(66,139,124)]/20 shadow-2xl bg-gradient-to-br from-white via-[rgb(66,139,124)]/5 to-[rgb(66,139,124)]/10 dark:from-gray-900 dark:to-gray-800 overflow-hidden relative">
+    <Card className="w-full max-w-4xl mx-auto border-2 sm:border-4 border-[rgb(66,139,124)]/20 shadow-xl sm:shadow-2xl bg-gradient-to-br from-white via-[rgb(66,139,124)]/5 to-[rgb(66,139,124)]/10 dark:from-gray-900 dark:to-gray-800 overflow-hidden relative">
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-10 left-10 w-32 h-32 bg-[rgb(66,139,124)] rounded-full blur-3xl animate-pulse"></div>
@@ -478,7 +478,7 @@ export function EnhancedAppointmentBooking() {
           </p>
           
           {/* Clinic Schedule Notice */}
-          <div className="mt-4 p-3 bg-yellow-400/20 border border-yellow-400/30 rounded-lg backdrop-blur-sm">
+          <div className="mt-4 p-3 bg-orange-400/20 border border-orange-400/30 rounded-lg backdrop-blur-sm">
             <div className="text-sm text-white">
               <strong>CLINIC SCHEDULE NOTICE</strong>
               <p className="mt-1">{language === "ur" ? "براہ کرم نوٹ کریں: ہمارا کلینک اتوار کو بند رہتا ہے۔ اپائنٹمنٹ کے لیے پیر سے ہفتہ تک کا دن منتخب کریں۔" : "Please note: Our clinic is closed on Sundays. Kindly schedule your appointments for Monday through Saturday."}</p>
@@ -488,15 +488,15 @@ export function EnhancedAppointmentBooking() {
         </div>
       </CardHeader>
       
-      <CardContent className="p-6 md:p-8 relative z-10">
-        <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
+      <CardContent className="p-4 sm:p-6 md:p-8 relative z-10">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 md:space-y-8">
           {/* Personal Information */}
-          <div className="space-y-4 md:space-y-6">
-            <h3 className="text-lg md:text-xl font-semibold text-[rgb(66,139,124)] dark:text-[rgb(66,139,124)] border-b-2 border-[rgb(66,139,124)]/20 pb-3">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-[rgb(66,139,124)] dark:text-[rgb(66,139,124)] border-b-2 border-[rgb(66,139,124)]/20 pb-2 sm:pb-3">
               {language === "ur" ? "ذاتی معلومات" : "Personal Information"}
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               <div className="space-y-3">
                 <Label htmlFor="name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   {language === "ur" ? "مکمل نام" : "Full Name"} *
