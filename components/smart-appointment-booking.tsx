@@ -485,7 +485,7 @@ export function SmartAppointmentBooking() {
             {language === "ur" ? "40 منٹ کا فرق برقرار رکھتے ہوئے پیشہ ورانہ بکنگ" : "Professional Booking with 40-Minute Gap Enforcement"}
           </p>
           
-          <div className="mt-4 p-3 bg-yellow-400/20 border border-yellow-400/30 rounded-lg backdrop-blur-sm">
+          <div className="mt-4 p-3 bg-[rgb(227,252,236)] border border-[rgb(227,252,236)] rounded-lg backdrop-blur-sm">
             <div className="text-sm text-white">
               <strong>SMART SCHEDULING NOTICE</strong>
               <p className="mt-1">
@@ -732,7 +732,7 @@ export function SmartAppointmentBooking() {
                       <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
                         {language === "ur" ? "صبح: 9:00 - 1:00" : "Morning: 9:00 AM - 1:00 PM"}
                       </span>
-                      <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                      <span className="bg-[rgb(227,252,236)] text-green-800 px-2 py-1 rounded">
                         {language === "ur" ? "دوپہر کا وقفہ: 1:00 - 2:00" : "Lunch Break: 1:00 - 2:00 PM"}
                       </span>
                       <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
@@ -850,10 +850,10 @@ export function SmartAppointmentBooking() {
                   </div>
                 </Label>
               </div>
-              <div className="flex items-center space-x-3 p-3 md:p-4 border-2 border-yellow-200 rounded-xl hover:border-yellow-400 transition-all">
+              <div className="flex items-center space-x-3 p-3 md:p-4 border-2 border-[rgb(227,252,236)] rounded-xl hover:border-green-400 transition-all">
                 <RadioGroupItem value="urgent" id="urgent" className="border-[rgb(50,106,122)] data-[state=checked]:bg-[rgb(50,106,122)] data-[state=checked]:border-[rgb(50,106,122)] text-[rgb(50,106,122)]" />
                 <Label htmlFor="urgent" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <Clock className="h-4 w-4 md:h-5 md:w-5 text-yellow-600" />
+                  <Clock className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
                   <div>
                     <div className="font-medium text-sm md:text-base">{language === "ur" ? "فوری" : "Urgent"}</div>
                     <div className="text-xs text-gray-500">{language === "ur" ? "آج ہی" : "Same day"}</div>

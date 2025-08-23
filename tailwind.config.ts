@@ -105,11 +105,11 @@ const config: Config = {
         "spine-pulse": {
           "0%, 100%": {
             transform: "scale(1)",
-            boxShadow: "0 0 20px rgba(243, 168, 0, 0.3)",
+            boxShadow: "0 0 20px rgba(227, 252, 236, 0.3)",
           },
           "50%": {
             transform: "scale(1.05)",
-            boxShadow: "0 0 40px rgba(243, 168, 0, 0.6)",
+            boxShadow: "0 0 40px rgba(227, 252, 236, 0.6)",
           },
         },
         "vertebra-reveal": {
@@ -164,7 +164,7 @@ const config: Config = {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "spine-gradient": "linear-gradient(45deg, #0d5c75, #f3a800)",
+        "spine-gradient": "linear-gradient(45deg, #0d5c75, rgb(227,252,236))",
       },
     },
   },

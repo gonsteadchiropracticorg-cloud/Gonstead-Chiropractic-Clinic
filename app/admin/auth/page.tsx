@@ -177,8 +177,8 @@ export default function AdminAuth() {
               </>
             ) : connectionStatus === "offline" ? (
               <>
-                <WifiOff className="h-4 w-4 text-yellow-300" />
-                <span className="text-yellow-300">Offline Mode</span>
+                <WifiOff className="h-4 w-4 text-green-300" />
+                <span className="text-green-300">Offline Mode</span>
               </>
             ) : (
               <>

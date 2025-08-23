@@ -33,7 +33,7 @@ export function TreatmentTracker() {
 
   const treatmentTypesData = [
     { name: "Gonstead Adjustments", value: 65, color: "#2a9d8f" },
-    { name: "Soft Tissue Work", value: 20, color: "#f3a800" },
+    { name: "Soft Tissue Work", value: 20, color: "rgb(227,252,236)" },
     { name: "Exercise Therapy", value: 10, color: "#0d5c75" },
     { name: "Patient Education", value: 5, color: "#6366f1" },
   ]
@@ -103,9 +103,9 @@ export function TreatmentTracker() {
                 <Line
                   type="monotone"
                   dataKey="pain"
-                  stroke="#f3a800"
+                  stroke="rgb(227,252,236)"
                   strokeWidth={3}
-                  dot={{ fill: "#f3a800", strokeWidth: 2, r: 4 }}
+                  dot={{ fill: "rgb(227,252,236)", strokeWidth: 2, r: 4 }}
                   name="Pain Level"
                 />
                 <Line
@@ -214,7 +214,7 @@ export function TreatmentTracker() {
                         style={{ width: `${(rom.current / rom.normal) * 100}%` }}
                       ></div>
                       <div
-                        className="absolute top-0 right-0 w-1 h-3 bg-[#f3a800]"
+                        className="absolute top-0 right-0 w-1 h-3 bg-[rgb(227,252,236)]"
                         style={{ right: `${100 - (rom.normal / rom.normal) * 100}%` }}
                       ></div>
                     </div>
@@ -283,7 +283,7 @@ export function TreatmentTracker() {
                             ? "bg-green-100 text-green-800"
                             : treatment.response === "Good"
                               ? "bg-blue-100 text-blue-800"
-                              : "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
                         }`}
                       >
                         {treatment.response}

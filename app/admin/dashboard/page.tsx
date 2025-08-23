@@ -699,8 +699,8 @@ Phone: +92 304 699 6267
         {/* Animated Background Elements */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-[10%] left-[10%] w-32 h-32 bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-[60%] right-[15%] w-24 h-24 bg-gradient-to-r from-[#f3a800]/20 to-[#0d5c75]/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute bottom-[20%] left-[20%] w-20 h-20 bg-gradient-to-r from-[#2a9d8f]/20 to-[#f3a800]/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute top-[60%] right-[15%] w-24 h-24 bg-gradient-to-r from-[rgb(227,252,236)]/20 to-[#0d5c75]/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute bottom-[20%] left-[20%] w-20 h-20 bg-gradient-to-r from-[#2a9d8f]/20 to-[rgb(227,252,236)]/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
         </div>
         
         {/* Main Loading Card */}
@@ -718,7 +718,7 @@ Phone: +92 304 699 6267
                     className="object-contain"
                   />
                 </div>
-                <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#f3a800] rounded-full flex items-center justify-center shadow-lg">
+                <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-[rgb(227,252,236)] rounded-full flex items-center justify-center shadow-lg">
                   <div className="w-3 h-3 bg-white rounded-full"></div>
                 </div>
               </div>
@@ -794,7 +794,7 @@ Phone: +92 304 699 6267
                 />
               </div>
               {/* Professional Badge */}
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-[#f3a800] to-[#e07c1c] rounded-full flex items-center justify-center shadow-lg">
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-[rgb(227,252,236)] to-green-400 rounded-full flex items-center justify-center shadow-lg">
                 <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
               </div>
             </div>
@@ -808,7 +808,7 @@ Phone: +92 304 699 6267
                 Gonstead Chiropractic Specialist
               </p>
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-[#f3a800] rounded-full animate-pulse"></div>
+                <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full animate-pulse"></div>
                 <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider`}>
                   PROFESSIONAL MANAGEMENT PORTAL
                 </p>
@@ -844,8 +844,8 @@ Phone: +92 304 699 6267
             
             {/* Compact Theme Toggle */}
             <div className="flex items-center gap-1.5 p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-600" : "bg-yellow-100"} transition-all duration-300`}>
-                <Sun className={`h-4 w-4 ${isDarkMode ? "text-gray-400" : "text-yellow-500"}`} />
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-600" : "bg-[rgb(227,252,236)]"} transition-all duration-300`}>
+                <Sun className={`h-4 w-4 ${isDarkMode ? "text-gray-400" : "text-green-500"}`} />
               </div>
               <Switch
                 checked={isDarkMode}
@@ -1097,19 +1097,19 @@ Phone: +92 304 699 6267
           </Card>
 
           <Card
-            className={`border-[#f3a800]/20 ${isDarkMode ? "bg-gray-800 text-white" : "bg-gradient-to-br from-yellow-50 to-yellow-100"}`}
+            className={`border-green-400/20 ${isDarkMode ? "bg-gray-800 text-white" : "bg-gradient-to-br from-green-50 to-green-100"}`}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-[#f3a800]"}`}>
+              <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-green-600"}`}>
                 Today's Appointments
               </CardTitle>
-              <Calendar className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-[#f3a800]"}`} />
+              <Calendar className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-green-600"}`} />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#f3a800]"}`}>
+              <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-green-600"}`}>
                 {stats.todayAppointments}
               </div>
-              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-yellow-600"} mt-1`}>Scheduled for today</p>
+              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-green-500"} mt-1`}>Scheduled for today</p>
             </CardContent>
           </Card>
 

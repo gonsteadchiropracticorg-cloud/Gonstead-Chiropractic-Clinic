@@ -416,14 +416,6 @@ export function AppointmentConfirmation({
           {isUrdu ? "نئی اپائنٹمنٹ" : "Book New Appointment"}
         </Button>
 
-        <Button 
-          onClick={handlePrint}
-          variant="outline"
-          className="border-amber-400 text-amber-600 hover:bg-amber-400 hover:text-white py-3 sm:py-4 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {isUrdu ? "پرنٹ کریں" : "Print Details"}
-        </Button>
 
         <Button 
           onClick={downloadPDF}

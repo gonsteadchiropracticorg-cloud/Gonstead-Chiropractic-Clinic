@@ -313,7 +313,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
                         <div className="w-2 h-2 bg-red-200 rounded-full animate-pulse"></div>
                       )}
                       {event.extendedProps.urgency === 'urgent' && (
-                        <div className="w-2 h-2 bg-yellow-200 rounded-full"></div>
+                        <div className="w-2 h-2 bg-[rgb(227,252,236)] rounded-full"></div>
                       )}
                       <span className="text-xs opacity-75">
                         {event.extendedProps.session_type === 'video' ? '💻' : '🦴'}
@@ -327,7 +327,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
                   "absolute bottom-0 left-0 right-0 h-0.5",
                   event.extendedProps.status === 'completed' && "bg-emerald-300",
                   event.extendedProps.status === 'confirmed' && "bg-blue-300",
-                  event.extendedProps.status === 'pending' && "bg-yellow-300",
+                  event.extendedProps.status === 'pending' && "bg-[rgb(227,252,236)]",
                   event.extendedProps.status === 'cancelled' && "bg-red-300"
                 )}></div>
               </div>
@@ -447,12 +447,12 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-4 left-8 w-32 h-32 border-2 border-[#0d5c75] rounded-full animate-pulse"></div>
           <div className="absolute bottom-4 right-8 w-24 h-24 border-2 border-[#2a9d8f] rounded-full animate-pulse animation-delay-1000"></div>
-          <div className="absolute top-1/2 left-1/3 w-16 h-16 border-2 border-[#f3a800] rounded-full animate-pulse animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/3 w-16 h-16 border-2 border-[rgb(227,252,236)] rounded-full animate-pulse animation-delay-2000"></div>
         </div>
         
         {/* Spine-inspired decorative elements */}
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#0d5c75] via-[#2a9d8f] to-[#f3a800] opacity-30"></div>
-        <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#f3a800] via-[#2a9d8f] to-[#0d5c75] opacity-30"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[rgb(227,252,236)] via-[#2a9d8f] to-[#0d5c75] opacity-30"></div>
         
         <CardHeader className="relative z-10 bg-gradient-to-br from-[#0d5c75] via-[#1a6b7a] to-[#2a9d8f] text-white p-8">
           <div className="flex items-center justify-between">
@@ -496,7 +496,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
               <div className="text-xs text-gray-500 uppercase tracking-wide">Today</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+              <div className="text-2xl font-bold text-green-600">{stats.pending}</div>
               <div className="text-xs text-gray-500 uppercase tracking-wide">Pending</div>
             </div>
             <div className="text-center">
@@ -784,7 +784,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
                 
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800]/10"
+                  className="flex items-center gap-2 border-[rgb(227,252,236)] text-green-600 hover:bg-[rgb(227,252,236)]/10"
                   onClick={() => {
                     // Handle edit - you can implement edit functionality here
                     toast.info('Edit functionality can be implemented here')

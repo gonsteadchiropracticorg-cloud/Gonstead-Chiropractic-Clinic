@@ -144,8 +144,8 @@ export default function AppointmentBookingForm({ onSubmit, onClose, prefilledDat
         </CardDescription>
         
         {/* Clinic Schedule Notice */}
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="text-sm text-yellow-800">
+        <div className="mt-4 p-3 bg-[rgb(227,252,236)] border border-[rgb(227,252,236)] rounded-lg">
+          <div className="text-sm text-green-800">
             <strong>CLINIC SCHEDULE NOTICE</strong>
             <p className="mt-1">Please note: Our clinic is closed on Sundays. Kindly schedule your appointments for Monday through Saturday.</p>
             <p className="mt-1"><strong>Operating Hours:</strong> Monday - Saturday | <strong>Closed:</strong> Sundays & Public Holidays</p>
