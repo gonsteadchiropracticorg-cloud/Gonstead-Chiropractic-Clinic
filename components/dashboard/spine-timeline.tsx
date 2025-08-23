@@ -140,7 +140,7 @@ export function SpineTimeline({ patient }: SpineTimelineProps) {
                     cx="50"
                     cy="50"
                     r="40"
-                    stroke="#f3a800"
+                    stroke="rgb(138,176,141)"
                     strokeWidth="8"
                     fill="none"
                     strokeLinecap="round"
@@ -149,7 +149,7 @@ export function SpineTimeline({ patient }: SpineTimelineProps) {
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xl font-bold text-[#f3a800] font-poppins">{Math.round(painReduction)}%</span>
+                  <span className="text-xl font-bold text-[rgb(138,176,141)] font-poppins">{Math.round(painReduction)}%</span>
                 </div>
               </div>
               <h3 className="font-semibold text-[#0A3A47] font-poppins">Pain Reduction</h3>
@@ -227,7 +227,7 @@ export function SpineTimeline({ patient }: SpineTimelineProps) {
                                 : visit.response.includes("Moderate")
                                   ? "bg-blue-500"
                                   : visit.response.includes("Fair")
-                                    ? "bg-yellow-500"
+                                    ? "bg-[rgb(138,176,141)]"
                                     : "bg-gray-500"
                             } text-white`}
                           >

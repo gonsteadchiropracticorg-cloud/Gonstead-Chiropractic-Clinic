@@ -100,7 +100,7 @@ export default function DoctorDashboard() {
       case "follow-up":
         return "bg-[#2a9d8f]"
       case "reeval":
-        return "bg-[#f3a800]"
+        return "bg-[rgb(227,252,236)]"
       case "emergency":
         return "bg-red-500"
       default:
@@ -115,7 +115,7 @@ export default function DoctorDashboard() {
       case "scheduled":
         return "text-blue-600"
       case "in-progress":
-        return "text-[#f3a800]"
+        return "text-[rgb(227,252,236)]"
       case "completed":
         return "text-gray-600"
       default:
@@ -207,9 +207,9 @@ export default function DoctorDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-[#0A3A47] font-open-sans">Upcoming Re-evals</p>
-                <p className="text-2xl font-bold text-[#f3a800] font-poppins">{dashboardStats.upcomingReEvals}</p>
+                <p className="text-2xl font-bold" style={{ color: 'rgb(227,252,236)' }}>{dashboardStats.upcomingReEvals}</p>
               </div>
-              <FileText className="h-8 w-8 text-[#f3a800]" />
+              <FileText className="h-8 w-8" style={{ color: 'rgb(227,252,236)' }} />
             </div>
           </CardContent>
         </Card>
@@ -253,7 +253,8 @@ export default function DoctorDashboard() {
                           <span className="font-semibold text-[#0A3A47] font-poppins">{appointment.time}</span>
                           <Badge
                             variant="outline"
-                            className={`text-xs ${appointment.type === "initial" ? "border-blue-500 text-blue-600" : appointment.type === "reeval" ? "border-[#f3a800] text-[#f3a800]" : "border-[#2a9d8f] text-[#2a9d8f]"}`}
+                            className={`text-xs ${appointment.type === "initial" ? "border-blue-500 text-blue-600" : appointment.type === "reeval" ? "" : "border-[#2a9d8f] text-[#2a9d8f]"}`}
+                            style={appointment.type === "reeval" ? { borderColor: 'rgb(227,252,236)', color: 'rgb(227,252,236)' } : {}}
                           >
                             {appointment.type}
                           </Badge>
@@ -333,7 +334,7 @@ export default function DoctorDashboard() {
                       <FileText className="h-6 w-6" />
                       <span className="text-xs">Progress Notes</span>
                     </Button>
-                    <Button variant="outline" className="border-[#f3a800] text-[#f3a800] h-20 flex-col gap-2">
+                    <Button variant="outline" className="h-20 flex-col gap-2" style={{ borderColor: 'rgb(227,252,236)', color: 'rgb(227,252,236)' }}>
                       <Calendar className="h-6 w-6" />
                       <span className="text-xs">Schedule</span>
                     </Button>
@@ -371,7 +372,8 @@ export default function DoctorDashboard() {
                     ].map((activity, index) => (
                       <div key={index} className="flex items-center gap-3 p-3 bg-[#F8F5F0] rounded-lg">
                         <div
-                          className={`w-2 h-2 rounded-full ${activity.type === "treatment" ? "bg-[#2a9d8f]" : activity.type === "notes" ? "bg-[#f3a800]" : "bg-[#0d5c75]"}`}
+                          className={`w-2 h-2 rounded-full ${activity.type === "treatment" ? "bg-[#2a9d8f]" : activity.type === "notes" ? "" : "bg-[#0d5c75]"}`}
+                          style={activity.type === "notes" ? { backgroundColor: 'rgb(227,252,236)' } : {}}
                         ></div>
                         <div className="flex-1">
                           <p className="text-sm text-[#0A3A47] font-open-sans">{activity.action}</p>
@@ -454,7 +456,8 @@ export default function DoctorDashboard() {
                               <Badge
                                 key={flag}
                                 variant="outline"
-                                className={`text-xs ${flag === "overdue" ? "border-red-500 text-red-600" : "border-[#f3a800] text-[#f3a800]"}`}
+                                className={`text-xs ${flag === "overdue" ? "border-red-500 text-red-600" : ""}`}
+                                style={flag !== "overdue" ? { borderColor: 'rgb(227,252,236)', color: 'rgb(227,252,236)' } : {}}
                               >
                                 {flag}
                               </Badge>

@@ -44,7 +44,7 @@ export function WeatherWidget({ isDarkMode = false }: WeatherWidgetProps) {
   const getWeatherIcon = () => {
     switch (weather.condition) {
       case "sunny":
-        return <Sun className="h-5 w-5 text-yellow-500" />
+        return <Sun className="h-5 w-5 text-[rgb(138,176,141)]" />
       case "rainy":
         return <CloudRain className="h-5 w-5 text-blue-500" />
       case "partly-cloudy":

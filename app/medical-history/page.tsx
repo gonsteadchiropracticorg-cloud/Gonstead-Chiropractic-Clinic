@@ -138,7 +138,8 @@ export default function MedicalHistoryPage() {
       case "completed":
         return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
       case "follow-up":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
+        return "text-[rgb(70,100,70)] dark:text-[rgb(150,200,150)]" 
+      // Custom inline styling for follow-up status with light green background
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
     }
@@ -330,15 +331,15 @@ export default function MedicalHistoryPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-yellow-200 dark:border-yellow-800">
+          <Card className="border-[rgb(200,230,200)] dark:border-[rgb(100,150,100)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Follow-up</p>
-                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{followUpRecords}</p>
+                  <p className="text-2xl font-bold" style={{ color: 'rgb(70,100,70)' }}>{followUpRecords}</p>
                 </div>
-                <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
-                  <ClipboardList className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(227,252,236,0.3)' }}>
+                  <ClipboardList className="h-6 w-6" style={{ color: 'rgb(70,100,70)' }} />
                 </div>
               </div>
             </CardContent>

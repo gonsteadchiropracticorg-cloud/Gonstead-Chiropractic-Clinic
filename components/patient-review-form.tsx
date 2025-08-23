@@ -189,9 +189,15 @@ export function PatientReviewForm({ patientName, onSubmit, className = "" }: Pat
                     <Star
                       className={`h-8 w-8 transition-all duration-200 ${
                         star <= (hoveredRating || rating)
-                          ? "fill-yellow-400 text-yellow-400 drop-shadow-sm"
-                          : "text-gray-300 hover:text-yellow-300"
+                          ? "drop-shadow-sm"
+                          : "text-gray-300 hover:text-gray-400"
                       }`}
+                      style={star <= (hoveredRating || rating) 
+                        ? { fill: 'rgb(227,252,236)', color: 'rgb(227,252,236)' }
+                        : hoveredRating > 0 
+                          ? { color: 'rgba(227,252,236,0.7)' }
+                          : {}
+                      }
                     />
                   </button>
                 ))}

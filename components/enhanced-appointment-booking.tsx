@@ -563,10 +563,10 @@ export function EnhancedAppointmentBooking() {
                   </div>
                 </Label>
               </div>
-              <div className="flex items-center space-x-3 p-3 md:p-4 border-2 border-yellow-200 rounded-xl hover:border-yellow-400 transition-all">
+              <div className="flex items-center space-x-3 p-3 md:p-4 border-2 border-[rgb(228,253,237)]/50 rounded-xl hover:border-[rgb(228,253,237)] transition-all">
                 <RadioGroupItem value="urgent" id="urgent" className="border-[rgb(50,106,122)] data-[state=checked]:bg-[rgb(50,106,122)] data-[state=checked]:border-[rgb(50,106,122)] text-[rgb(50,106,122)]" />
                 <Label htmlFor="urgent" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <Clock className="h-4 w-4 md:h-5 md:w-5 text-yellow-600" />
+                  <Clock className="h-4 w-4 md:h-5 md:w-5 text-[rgb(138,176,141)]" />
                   <div>
                     <div className="font-medium text-sm md:text-base">{language === "ur" ? "فوری" : "Urgent"}</div>
                     <div className="text-xs text-gray-500">{language === "ur" ? "آج ہی" : "Same day"}</div>

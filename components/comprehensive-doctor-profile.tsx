@@ -24,7 +24,7 @@ export function ComprehensiveDoctorProfile() {
 
   const achievements = [
     {
-      icon: <Trophy className="h-6 w-6 text-yellow-500" />,
+      icon: <Trophy className="h-6 w-6" style={{ color: 'rgb(227,252,236)' }} />,
       title: language === "ur" ? "گونسٹیڈ سرٹیفیکیشن" : "Gonstead Certification",
       description:
         language === "ur"

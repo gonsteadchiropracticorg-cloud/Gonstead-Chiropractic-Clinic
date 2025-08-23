@@ -63,7 +63,7 @@ export function FooterWeatherWidget() {
     switch (condition.toLowerCase()) {
       case 'clear':
       case 'sunny':
-        return <Sun className="h-5 w-5 text-yellow-400" />
+        return <Sun className="h-5 w-5" style={{ color: 'rgb(227,252,236)' }} />
       case 'cloudy':
       case 'overcast':
         return <Cloud className="h-5 w-5 text-gray-400" />
@@ -71,7 +71,7 @@ export function FooterWeatherWidget() {
       case 'rain':
         return <CloudRain className="h-5 w-5 text-blue-400" />
       default:
-        return <Sun className="h-5 w-5 text-yellow-400" />
+        return <Sun className="h-5 w-5" style={{ color: 'rgb(227,252,236)' }} />
     }
   }
 

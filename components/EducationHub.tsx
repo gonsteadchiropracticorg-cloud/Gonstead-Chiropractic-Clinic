@@ -291,7 +291,7 @@ const EducationHub: React.FC<EducationHubProps> = ({ patient }) => {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner': return 'text-green-600 bg-green-100';
-      case 'intermediate': return 'text-yellow-600 bg-yellow-100';
+      case 'intermediate': return 'text-green-600 bg-green-100';
       case 'advanced': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
@@ -508,7 +508,7 @@ const EducationHub: React.FC<EducationHubProps> = ({ patient }) => {
               </button>
 
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                <Star className="h-4 w-4 text-green-500 fill-current" />
                 <span>Rate this module</span>
               </div>
             </div>

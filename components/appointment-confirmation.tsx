@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +21,8 @@ import {
   ArrowRight,
   Camera,
   Download,
-  FileDown
+  FileDown,
+  AlertCircle
 } from "lucide-react"
 import { useLanguage } from "./language-provider"
 
@@ -42,13 +44,27 @@ export function AppointmentConfirmation({
   onNewAppointment 
 }: AppointmentConfirmationProps) {
   const { language } = useLanguage()
+  const [autoDownloadAttempted, setAutoDownloadAttempted] = useState(false)
+  const [isAutoDownloading, setIsAutoDownloading] = useState(false)
+  const [downloadStatus, setDownloadStatus] = useState<'pending' | 'success' | 'failed' | null>(null)
 
   const isUrdu = language === "ur"
 
-  const downloadPDF = async () => {
+  const downloadPDF = async (isAutoDownload = false) => {
     try {
+      if (isAutoDownload) {
+        setIsAutoDownloading(true)
+        setDownloadStatus('pending')
+      }
+
       const element = document.getElementById('appointment-confirmation-content')
-      if (!element) return
+      if (!element) {
+        if (isAutoDownload) {
+          setDownloadStatus('failed')
+          setIsAutoDownloading(false)
+        }
+        return
+      }
 
       // Clone the element to avoid modifying the original
       const elementClone = element.cloneNode(true) as HTMLElement
@@ -62,7 +78,7 @@ export function AppointmentConfirmation({
       })
       
       // Remove action buttons from clone for PDF
-      const actionButtons = elementClone.querySelector('.flex.flex-col.sm\\:flex-row')
+      const actionButtons = elementClone.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-4')
       if (actionButtons && actionButtons.parentNode) {
         actionButtons.parentNode.removeChild(actionButtons)
       }
@@ -121,11 +137,34 @@ export function AppointmentConfirmation({
       
       const fileName = `appointment-confirmation-${appointmentData.name.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`
       pdf.save(fileName)
+
+      if (isAutoDownload) {
+        setDownloadStatus('success')
+        setIsAutoDownloading(false)
+      }
     } catch (error) {
       console.error('Error generating PDF:', error)
-      alert(isUrdu ? 'PDF بناتے وقت خرابی ہوئی' : 'Error generating PDF')
+      if (isAutoDownload) {
+        setDownloadStatus('failed')
+        setIsAutoDownloading(false)
+      } else {
+        alert(isUrdu ? 'PDF بناتے وقت خرابی ہوئی' : 'Error generating PDF')
+      }
     }
   }
+
+  // Auto-download PDF when component mounts
+  useEffect(() => {
+    if (!autoDownloadAttempted) {
+      // Wait for DOM to be ready and give some time for styles to load
+      const timer = setTimeout(() => {
+        setAutoDownloadAttempted(true)
+        downloadPDF(true)
+      }, 2000) // 2 second delay to ensure everything is loaded
+
+      return () => clearTimeout(timer)
+    }
+  }, [autoDownloadAttempted])
 
   const handlePrint = () => {
     window.print()
@@ -163,6 +202,71 @@ export function AppointmentConfirmation({
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 px-2 sm:px-4 py-4 sm:py-6">
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+        
+        {/* Auto-Download Status Banner */}
+        {(isAutoDownloading || downloadStatus) && (
+          <Card className={`border-2 ${
+            downloadStatus === 'success' 
+              ? 'border-green-400 bg-green-50' 
+              : downloadStatus === 'failed' 
+              ? 'border-red-400 bg-red-50'
+              : 'border-blue-400 bg-blue-50'
+          }`}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {isAutoDownloading ? (
+                    <>
+                      <Download className="h-5 w-5 text-blue-600 animate-spin" />
+                      <div>
+                        <p className="font-semibold text-blue-800">
+                          {isUrdu ? "📄 آٹو ڈاؤن لوڈ جاری ہے..." : "📄 Auto-downloading your confirmation..."}
+                        </p>
+                        <p className="text-sm text-blue-600">
+                          {isUrdu ? "آپ کی تصدیقی دستاویز خودکار طور پر ڈاؤن لوڈ ہو رہی ہے" : "Your appointment confirmation is being downloaded automatically"}
+                        </p>
+                      </div>
+                    </>
+                  ) : downloadStatus === 'success' ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-semibold text-green-800">
+                          {isUrdu ? "✅ ڈاؤن لوڈ مکمل!" : "✅ Download Complete!"}
+                        </p>
+                        <p className="text-sm text-green-600">
+                          {isUrdu ? "آپ کی تصدیقی دستاویز کامیابی سے ڈاؤن لوڈ ہو گئی ہے" : "Your appointment confirmation has been downloaded successfully"}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                      <div>
+                        <p className="font-semibold text-red-800">
+                          {isUrdu ? "⚠️ آٹو ڈاؤن لوڈ ناکام" : "⚠️ Auto-download Failed"}
+                        </p>
+                        <p className="text-sm text-red-600">
+                          {isUrdu ? "دستی ڈاؤن لوڈ بٹن استعمال کریں" : "Please use the manual download button below"}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {downloadStatus && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDownloadStatus(null)}
+                    className="hover:bg-white/50"
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       <style jsx>{`
         @media print {
           * {

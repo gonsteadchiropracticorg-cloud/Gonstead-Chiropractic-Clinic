@@ -87,16 +87,16 @@ export function EnhancedLoadingPage({
       {/* Animated Background Elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-[15%] left-[10%] w-40 h-40 bg-gradient-to-r from-[#0d5c75]/30 to-[#2a9d8f]/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-[60%] right-[12%] w-32 h-32 bg-gradient-to-r from-[#f3a800]/30 to-[#0d5c75]/30 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-[25%] left-[15%] w-24 h-24 bg-gradient-to-r from-[#2a9d8f]/30 to-[#f3a800]/30 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-[30%] right-[25%] w-16 h-16 bg-gradient-to-r from-[#f3a800]/20 to-[#2a9d8f]/20 rounded-full blur-lg animate-pulse" style={{ animationDelay: '3s' }}></div>
+        <div className="absolute top-[60%] right-[12%] w-32 h-32 bg-gradient-to-r from-[rgb(227,252,236)]/30 to-[#0d5c75]/30 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-[25%] left-[15%] w-24 h-24 bg-gradient-to-r from-[#2a9d8f]/30 to-[rgb(227,252,236)]/30 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-[30%] right-[25%] w-16 h-16 bg-gradient-to-r from-[rgb(227,252,236)]/20 to-[#2a9d8f]/20 rounded-full blur-lg animate-pulse" style={{ animationDelay: '3s' }}></div>
       </div>
       
       {/* Floating Medical Icons */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[20%] left-[20%] w-8 h-8 bg-[#0d5c75]/20 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }}></div>
         <div className="absolute top-[40%] right-[20%] w-6 h-6 bg-[#2a9d8f]/20 rounded-full animate-bounce" style={{ animationDelay: '1.5s' }}></div>
-        <div className="absolute bottom-[30%] left-[30%] w-4 h-4 bg-[#f3a800]/20 rounded-full animate-bounce" style={{ animationDelay: '2.5s' }}></div>
+        <div className="absolute bottom-[30%] left-[30%] w-4 h-4 bg-[rgb(227,252,236)]/20 rounded-full animate-bounce" style={{ animationDelay: '2.5s' }}></div>
       </div>
       
       {/* Main Loading Card */}
@@ -116,7 +116,7 @@ export function EnhancedLoadingPage({
                   />
                 </div>
               </div>
-              <div className="absolute -top-2 -right-2 w-10 h-10 bg-[#f3a800] rounded-full flex items-center justify-center shadow-lg animate-bounce">
+              <div className="absolute -top-2 -right-2 w-10 h-10 bg-[rgb(227,252,236)] rounded-full flex items-center justify-center shadow-lg animate-bounce">
                 <div className="w-4 h-4 bg-white rounded-full"></div>
               </div>
             </div>
@@ -137,7 +137,7 @@ export function EnhancedLoadingPage({
                 <p className="text-xs text-[#0d5c75] font-semibold tracking-wider">
                   PROFESSIONAL MANAGEMENT SYSTEM
                 </p>
-                <div className="w-2 h-2 bg-[#f3a800] rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-[rgb(227,252,236)] rounded-full animate-pulse"></div>
               </div>
             </div>
           </div>
