@@ -1112,10 +1112,10 @@ function HomePageContent() {
                         <div>
                           <p className="font-semibold text-[#0d5c75] dark:text-white">Email</p>
                           <a
-                            href="mailto:info@gonsteadchiropractic.com"
+                            href="mailto:gonsteadchiropractic.org@gmail.com"
                             className="text-gray-600 dark:text-gray-300 hover:text-[#0d5c75] dark:hover:text-blue-400"
                           >
-                            info@gonsteadchiropractic.com
+                            gonsteadchiropractic.org@gmail.com
                           </a>
                         </div>
                       </div>
@@ -1322,7 +1322,7 @@ function HomePageContent() {
 
                   <div className="flex items-center justify-center md:justify-start gap-2 mb-2" aria-label="Email">
                     <Mail className="h-4 w-4 text-white/80 mt-0.5" />
-                    <a href="mailto:info@gonsteadchiropractic.com" className="hover:text-white transition-colors">{t("clinic.email")}</a>
+                    <a href="mailto:gonsteadchiropractic.org@gmail.com" className="hover:text-white transition-colors">{t("clinic.email")}</a>
                   </div>
 
                   <div className="flex items-center justify-center md:justify-start gap-2" aria-label="Location">

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { getCurrentUser } from "@/lib/supabase"
+import { QRCodeGenerator } from "@/lib/qr-code-utils"
+import { PrescriptionData } from "@/lib/prescription-types"
 import Image from "next/image"
 
 interface PrescriptionPatient {
@@ -69,6 +71,8 @@ function PrescriptionPageContent() {
   const [patientAddress, setPatientAddress] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
+  const [prescriptionId, setPrescriptionId] = useState<string>(`PRESC-${Date.now()}`)
   
   const router = useRouter()
   const prescriptionRef = useRef<HTMLDivElement>(null)
@@ -147,8 +151,82 @@ function PrescriptionPageContent() {
   }
 
 
-  const printPrescription = () => {
-    window.print()
+  const generateQRCode = async () => {
+    try {
+      // Create prescription data for QR code
+      const prescriptionData: PrescriptionData = {
+        id: prescriptionId,
+        patient_id: `PAT-${Math.random().toString(36).substring(2)}`,
+        appointment_id: `APT-${Math.random().toString(36).substring(2)}`,
+        patient_name: patientName || "Sample Patient",
+        patient_age: patientAge,
+        patient_gender: patientGender,
+        patient_phone: patientPhone,
+        patient_email: patientEmail,
+        patient_address: patientAddress,
+        visit_date: visitDate,
+        birth_date: birthDate,
+        joining_date: joiningDate,
+        treatment_plan: treatmentPlan,
+        prescribed_medicine: prescribedMedicine,
+        total_sessions: totalSessions,
+        session_fee: sessionFee,
+        payment_method: paymentMethod,
+        payment_status: paymentStatus,
+        conditions: selectedConditions,
+        custom_fields: customFields,
+        doctor_name: "Dr. Bashir Khan",
+        clinic_name: "GONSTEAD CHIROPRACTIC CLINIC",
+        clinic_address: "Near Peshawar Model School, Tehsil Road Nowshera, KPK",
+        clinic_phone: "+923046996267",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+
+      // Store prescription data
+      const storedPrescriptions = localStorage.getItem('stored_prescriptions')
+      let prescriptions: PrescriptionData[] = []
+      if (storedPrescriptions) {
+        prescriptions = JSON.parse(storedPrescriptions)
+      }
+      
+      // Update or add prescription
+      const existingIndex = prescriptions.findIndex(p => p.id === prescriptionId)
+      if (existingIndex >= 0) {
+        prescriptions[existingIndex] = prescriptionData
+      } else {
+        prescriptions.push(prescriptionData)
+      }
+      
+      localStorage.setItem('stored_prescriptions', JSON.stringify(prescriptions))
+
+      // Generate QR code
+      const qrCode = await QRCodeGenerator.generatePrescriptionQR(prescriptionData)
+      setQrCodeUrl(qrCode)
+      
+      // Update QR code image on prescription
+      const qrImage = document.getElementById('prescriptionQRCode') as HTMLImageElement
+      if (qrImage) {
+        qrImage.src = qrCode
+        qrImage.style.display = 'block'
+      }
+    } catch (error) {
+      console.error('Error generating QR code:', error)
+      alert('Error generating QR code. Please try again.')
+    }
+  }
+
+  const printPrescription = async () => {
+    // Generate QR code before printing if not already generated
+    if (!qrCodeUrl && (patientName || treatmentPlan)) {
+      await generateQRCode()
+      // Wait a bit for QR code to be applied
+      setTimeout(() => {
+        window.print()
+      }, 500)
+    } else {
+      window.print()
+    }
   }
 
   const addCondition = () => {
@@ -602,6 +680,8 @@ function PrescriptionPageContent() {
           align-items: center;
           justify-content: center;
           border: 2px solid rgb(36,80,100);
+          position: relative;
+          padding-right: 120px;
         }
 
         .footer-info {
@@ -628,6 +708,84 @@ function PrescriptionPageContent() {
         .footer-address strong, .footer-phone strong {
           font-weight: bold;
           font-size: 16px;
+        }
+
+        /* QR Code Styling */
+        .qr-code-section {
+          position: absolute;
+          bottom: 95px;
+          right: 20px;
+          z-index: 10;
+        }
+        
+        .qr-code-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 4px;
+          background: white;
+          border: 2px solid rgb(36,80,100);
+          border-radius: 8px;
+          width: 90px;
+          height: 90px;
+          box-shadow: 0 2px 8px rgba(36,80,100,0.15);
+        }
+        
+        .qr-code-image {
+          width: 70px;
+          height: 70px;
+          object-fit: contain;
+        }
+        
+        .qr-code-text {
+          font-size: 7px;
+          font-weight: bold;
+          color: rgb(36,80,100);
+          text-align: center;
+          margin-top: 2px;
+          line-height: 1.1;
+        }
+        
+        /* Ensure footer has enough space for QR code */
+        .footer {
+          position: relative;
+          padding-right: 120px !important; /* Make space for QR code */
+        }
+        
+        @media print {
+          .qr-code-section {
+            position: absolute;
+            bottom: 90px;
+            right: 25px;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            z-index: 999 !important;
+            background: white !important;
+          }
+          
+          .qr-code-container {
+            padding: 4px !important;
+            border: 2px solid rgb(36,80,100) !important;
+            border-radius: 6px !important;
+            width: 80px !important;
+            height: 80px !important;
+            box-shadow: none !important;
+          }
+          
+          .qr-code-image {
+            width: 68px !important;
+            height: 68px !important;
+            print-color-adjust: exact !important;
+          }
+          
+          .qr-code-text {
+            font-size: 7px !important;
+            margin-top: 2px !important;
+          }
+          
+          .footer {
+            padding-right: 110px !important; /* Adjust for print */
+          }
         }
 
         .action-buttons {
@@ -925,7 +1083,7 @@ function PrescriptionPageContent() {
         @media print {
           @page {
             size: A4;
-            margin: 15mm !important;
+            margin: 10mm !important;
           }
           
           * {
@@ -947,38 +1105,44 @@ function PrescriptionPageContent() {
             width: 100% !important;
             display: block !important;
             grid-template-columns: none !important;
+            height: 100vh !important;
           }
           
           body {
             background: white !important;
             margin: 0 !important;
             padding: 0 !important;
-            font-size: 13px !important;
-            line-height: 1.3 !important;
+            font-size: 14px !important;
+            line-height: 1.4 !important;
             -webkit-print-color-adjust: exact !important;
             color: black !important;
+            width: 210mm !important;
+            height: 297mm !important;
           }
           
           .prescription-area {
             background: white !important;
             width: 100% !important;
+            height: 100% !important;
+            display: flex !important;
+            align-items: stretch !important;
           }
           
           .prescription-container {
             border: 3px solid rgb(36,80,100) !important;
             box-shadow: none !important;
             margin: 0 !important;
-            padding: 12mm !important;
+            padding: 15mm !important;
             border-radius: 8px !important;
-            height: auto !important;
-            max-height: none !important;
-            min-height: auto !important;
+            height: calc(297mm - 20mm) !important;
+            max-height: calc(297mm - 20mm) !important;
+            min-height: calc(297mm - 20mm) !important;
             page-break-inside: avoid !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: flex-start !important;
-            width: 100% !important;
-            max-width: calc(210mm - 20mm - 6px) !important;
+            width: calc(210mm - 20mm) !important;
+            max-width: calc(210mm - 20mm) !important;
             box-sizing: border-box !important;
             background: white !important;
             position: relative !important;
@@ -988,8 +1152,8 @@ function PrescriptionPageContent() {
           .header {
             background: rgb(36,80,100) !important;
             color: white !important;
-            margin-bottom: 12px !important;
-            padding: 8px !important;
+            margin-bottom: 15px !important;
+            padding: 12px !important;
             page-break-inside: avoid !important;
           }
           
@@ -998,34 +1162,34 @@ function PrescriptionPageContent() {
             border: 2px solid rgba(255,255,255,0.5) !important;
             box-shadow: none !important;
             backdrop-filter: none !important;
-            width: 60px !important;
-            height: 60px !important;
-            margin: 0 auto 8px !important;
+            width: 80px !important;
+            height: 80px !important;
+            margin: 0 auto 10px !important;
           }
           
           .clinic-logo {
             filter: none !important;
             box-shadow: none !important;
             background: transparent !important;
-            width: 50px !important;
-            height: 50px !important;
+            width: 70px !important;
+            height: 70px !important;
           }
           
           .clinic-name {
-            font-size: 18px !important;
+            font-size: 22px !important;
             color: white !important;
             text-shadow: none !important;
-            margin-bottom: 2px !important;
+            margin-bottom: 4px !important;
           }
           
           .doctor-name {
-            font-size: 14px !important;
+            font-size: 18px !important;
             color: white !important;
-            margin-bottom: 2px !important;
+            margin-bottom: 3px !important;
           }
           
           .specialization {
-            font-size: 12px !important;
+            font-size: 14px !important;
             color: white !important;
             opacity: 1 !important;
           }
@@ -1033,109 +1197,109 @@ function PrescriptionPageContent() {
           .patient-info {
             background: #f8f9fa !important;
             border: 2px solid #e9ecef !important;
-            margin-bottom: 10px !important;
-            padding: 8px !important;
+            margin-bottom: 15px !important;
+            padding: 12px !important;
             page-break-inside: avoid !important;
           }
           
           .patient-info h3 {
-            font-size: 12px !important;
-            margin-bottom: 6px !important;
-            padding-bottom: 2px !important;
+            font-size: 16px !important;
+            margin-bottom: 10px !important;
+            padding-bottom: 4px !important;
           }
           
           .patient-details {
-            gap: 6px !important;
-            margin-bottom: 6px !important;
+            gap: 10px !important;
+            margin-bottom: 10px !important;
           }
           
           .field-label {
-            font-size: 10px !important;
-            margin-bottom: 2px !important;
+            font-size: 12px !important;
+            margin-bottom: 4px !important;
           }
           
           .prescription-section {
             background: #f8f9fa !important;
             border: 2px solid #e9ecef !important;
-            margin-bottom: 10px !important;
-            padding: 8px !important;
+            margin-bottom: 15px !important;
+            padding: 15px !important;
             page-break-inside: avoid !important;
             flex-grow: 1 !important;
           }
           
           .prescription-section h3 {
-            font-size: 12px !important;
-            margin-bottom: 6px !important;
-            padding-bottom: 2px !important;
+            font-size: 16px !important;
+            margin-bottom: 12px !important;
+            padding-bottom: 4px !important;
           }
           
           .prescription-content {
-            gap: 6px !important;
+            gap: 12px !important;
           }
           
           .cure-section, .medicine-section {
-            padding: 4px !important;
+            padding: 8px !important;
           }
           
           .cure-section h4, .medicine-section h4 {
-            font-size: 10px !important;
-            margin-bottom: 4px !important;
+            font-size: 12px !important;
+            margin-bottom: 8px !important;
           }
           
           .cure-input, .medicine-input {
             background: white !important;
             color: black !important;
             border: 1px solid #333 !important;
-            font-size: 11px !important;
-            min-height: 40px !important;
-            max-height: 40px !important;
-            padding: 4px !important;
+            font-size: 13px !important;
+            min-height: 60px !important;
+            max-height: 60px !important;
+            padding: 8px !important;
           }
           
           .sessions-section {
-            padding: 6px !important;
-            margin-top: 6px !important;
-            margin-bottom: 6px !important;
+            padding: 10px !important;
+            margin-top: 10px !important;
+            margin-bottom: 10px !important;
           }
           
           .sessions-section h4 {
-            font-size: 10px !important;
-            margin-bottom: 6px !important;
+            font-size: 12px !important;
+            margin-bottom: 10px !important;
           }
           
           .session-checkboxes {
-            gap: 4px !important;
-            margin-bottom: 6px !important;
+            gap: 8px !important;
+            margin-bottom: 10px !important;
           }
           
           .session-checkbox {
-            gap: 4px !important;
+            gap: 6px !important;
           }
           
           .session-checkbox input[type="checkbox"] {
-            width: 12px !important;
-            height: 12px !important;
+            width: 16px !important;
+            height: 16px !important;
           }
           
           .session-checkbox label {
-            font-size: 9px !important;
+            font-size: 11px !important;
           }
           
           .session-total {
-            gap: 8px !important;
-            margin-top: 6px !important;
+            gap: 12px !important;
+            margin-top: 10px !important;
           }
           
           .session-total label {
-            font-size: 10px !important;
+            font-size: 12px !important;
           }
           
           .session-total input {
             border: 2px solid rgb(36,80,100) !important;
-            padding: 4px 6px !important;
-            width: 60px !important;
-            min-height: 20px !important;
-            font-size: 10px !important;
+            padding: 8px 10px !important;
+            width: 80px !important;
+            min-height: 32px !important;
+            font-size: 12px !important;
             font-weight: bold !important;
             color: black !important;
             background: white !important;
@@ -1145,10 +1309,10 @@ function PrescriptionPageContent() {
             border-bottom: 2px solid rgb(36,80,100) !important;
             background: white !important;
             color: black !important;
-            font-size: 10px !important;
-            min-height: 18px !important;
-            padding: 4px 2px !important;
-            line-height: 1.1 !important;
+            font-size: 12px !important;
+            min-height: 24px !important;
+            padding: 6px 4px !important;
+            line-height: 1.3 !important;
           }
           
           input, textarea, select {
@@ -1160,33 +1324,34 @@ function PrescriptionPageContent() {
           }
           
           .signature-section {
-            gap: 8px !important;
-            margin-top: 8px !important;
-            margin-bottom: 8px !important;
+            gap: 12px !important;
+            margin-top: 15px !important;
+            margin-bottom: 15px !important;
           }
           
           .signature-box {
-            padding: 4px !important;
+            padding: 8px !important;
           }
           
           .signature-line {
-            height: 15px !important;
-            margin-bottom: 2px !important;
+            height: 25px !important;
+            margin-bottom: 5px !important;
           }
           
           .signature-label {
-            font-size: 9px !important;
+            font-size: 12px !important;
           }
 
           .footer {
-            margin-top: 8px !important;
+            margin-top: 15px !important;
             page-break-inside: avoid !important;
             flex-shrink: 0 !important;
             background: rgb(36,80,100) !important;
             color: white !important;
-            min-height: 35px !important;
-            padding: 8px !important;
-            font-size: 11px !important;
+            min-height: 50px !important;
+            padding: 15px !important;
+            font-size: 14px !important;
+            padding-right: 100px !important;
           }
           
           .footer-info {
@@ -1199,7 +1364,7 @@ function PrescriptionPageContent() {
           
           .footer-address strong, .footer-phone strong {
             color: white !important;
-            font-size: 12px !important;
+            font-size: 16px !important;
           }
         }
       `}</style>
@@ -1487,7 +1652,7 @@ function PrescriptionPageContent() {
                 </div>
               )}
 
-              <div className="footer">
+<div className="footer">
                 <div className="footer-info">
                   <div className="footer-address">
                     <strong>Address:</strong> Near Peshawar Model School, Tehsil Road Nowshera, KPK
@@ -1495,6 +1660,20 @@ function PrescriptionPageContent() {
                   <div className="footer-phone">
                     <strong>Phone:</strong> +923046996267
                   </div>
+                </div>
+              </div>
+              
+              {/* QR Code Section - Fixed at bottom right */}
+              <div className="qr-code-section">
+                <div className="qr-code-container">
+                  <img 
+                    src={qrCodeUrl || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSIjMjQ1MDY0IiBzdHJva2Utd2lkdGg9IjIiLz4KPHN2ZyB4PSIxMCIgeT0iMTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNDUwNjQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KPHN2ZyB4PSIxMCIgeT0iMTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNDUwNjQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1xci1jb2RlIj4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMyIgeT0iMyIgcng9IjEiLz4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMTYiIHk9IjMiIHJ4PSIxIi8+CjxyZWN0IHdpZHRoPSI1IiBoZWlnaHQ9IjUiIHg9IjMiIHk9IjE2IiByeD0iMSIvPgo8cGF0aCBkPSJNMjEgMTZ2M2EyIDIgMCAwIDEtMiAyaC0zIi8+CjxwYXRoIGQ9Im0yMSAxMC0xIDEiLz4KPHBhdGggZD0ibTE3IDE3IDEgMSIvPgo8cGF0aCBkPSJtMTAgMTYgMSAxIi8+CjxwYXRoIGQ9Im0xNiAxMCAxIDEiLz4KPHBhdGggZD0ibTkgOSAxIDEiLz4KPHBhdGggZD0iTTggMTNoMSIvPgo8cGF0aCBkPSJNMTIgOWgxIi8+Cjwvc3ZnPgo8L3N2Zz4KPHN2ZyB4PSIyMCIgeT0iNTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSIxMCIgdmlld0JveD0iMCAwIDQwIDEwIj4KPHRleHQgeD0iMjAiIHk9IjciIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI2IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzI0NTA2NCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R2VuZXJhdGUgUVI8L3RleHQ+Cjwvc3ZnPgo8L3N2Zz4K"}
+                    alt="Scan for digital prescription" 
+                    id="prescriptionQRCode"
+                    className="qr-code-image"
+                    style={{ display: qrCodeUrl ? 'block' : 'block' }}
+                  />
+                  <div className="qr-code-text">Scan for digital version</div>
                 </div>
               </div>
               </div>
@@ -1628,13 +1807,16 @@ function PrescriptionPageContent() {
                   </div>
                 </div>
                 
-                {/* Quick Action Buttons */}
-                <div style={{ marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <button className="control-btn btn-add" onClick={addCustomField}>➕ Add Custom Field</button>
-                  <button className="control-btn btn-toggle" onClick={togglePaymentSection}>
-                    💰 {showPayment ? 'Hide' : 'Show'} Payment Section
-                  </button>
-                </div>
+              {/* Quick Action Buttons */}
+              <div style={{ marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button className="control-btn btn-add" onClick={addCustomField}>➕ Add Custom Field</button>
+                <button className="control-btn btn-toggle" onClick={togglePaymentSection}>
+                  💰 {showPayment ? 'Hide' : 'Show'} Payment Section
+                </button>
+                <button className="control-btn btn-add" onClick={generateQRCode}>
+                  📱 Generate QR Code
+                </button>
+              </div>
                 
                 {/* Custom Fields Management */}
                 {Object.keys(customFields).length > 0 && (

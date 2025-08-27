@@ -17,7 +17,7 @@ export const clinicInfo: ClinicInfo = {
   
   contact: {
     phone: '+1 (555) 123-SPINE',
-    email: 'info@gonsteadchiro.com',
+    email: 'gonsteadchiropractic.org@gmail.com',
     website: 'www.gonsteadchiro.com',
     emergencyPhone: '+1 (555) 911-BACK'
   },
