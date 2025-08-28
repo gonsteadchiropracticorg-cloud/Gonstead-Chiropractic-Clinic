@@ -46,24 +46,18 @@ export class QRCodeGenerator {
         version: '2.0'
       }
       
-      // Create multiple viewer URLs for maximum compatibility
+      // Create embedded data format that works without server
       const encoded = encodeURIComponent(JSON.stringify(compactPrescriptionData))
       
-      // Primary URL (works with or without server)
-      const universalViewerUrl = `${QRCodeGenerator.BASE_URL}/prescription-viewer.html?data=${encoded}`
+      // Use data URI format that contains all prescription information
+      const dataUri = `prescription-data:${encoded}`
       
-      // Fallback URLs for different environments
-      const fallbackUrls = [
-        `${QRCodeGenerator.FALLBACK_URL}?data=${encoded}`,
-        `${QRCodeGenerator.BASE_URL}/qr-scan?data=${encoded}`
-      ]
-
       const qrData: QRCodeData = {
         patient_id: prescriptionData.patient_id,
         appointment_id: prescriptionData.appointment_id,
         prescription_id: prescriptionData.id,
-        // Use universal viewer URL for maximum compatibility
-        digital_url: universalViewerUrl,
+        // Use embedded data instead of URL
+        digital_url: dataUri,
         timestamp: new Date().toISOString(),
         clinic_id: 'gonstead-clinic-001'
       }
@@ -71,8 +65,8 @@ export class QRCodeGenerator {
       // Store the complete prescription data with the token
       await QRCodeGenerator.storeSecureToken(secureToken, prescriptionData.id, prescriptionData)
 
-      // Generate QR code as data URL with optimized settings
-      const qrCodeDataURL = await QRCode.toDataURL(qrData.digital_url, {
+      // Generate QR code as data URL with embedded prescription data
+      const qrCodeDataURL = await QRCode.toDataURL(dataUri, {
         errorCorrectionLevel: 'H', // High error correction for better scanning
         type: 'image/png',
         quality: 0.95,

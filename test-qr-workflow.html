@@ -329,42 +329,43 @@
             id: `PRESC-TEST-${Date.now()}`,
             pat: `PAT-TEST-${Math.random().toString(36).substring(2)}`,
             apt: `APT-TEST-${Math.random().toString(36).substring(2)}`,
-            pat_name: "John Doe (Test Patient)",
+            pat_name: "Ahmad Hassan (Demo Patient)",
             dr: "Dr. Bashir Khan",
             clinic: "GONSTEAD CHIROPRACTIC CLINIC",
             visit: new Date().toISOString().split('T')[0],
             age: "35",
             gender: "male",
             phone: "+92 300 1234567",
-            email: "test.patient@email.com",
-            treatment: "Test treatment plan for demonstration purposes. Gonstead spinal adjustment recommended.",
-            medicine: "Test medication - For demonstration only",
+            email: "demo.patient@email.com",
+            treatment: "Gonstead spinal adjustment for lower back pain. Apply ice therapy for 15 minutes twice daily. Avoid heavy lifting for 2 weeks. Follow up after 1 week.",
+            medicine: "Ibuprofen 400mg - Take twice daily after meals for 5 days. Apply topical anti-inflammatory gel as needed.",
             sessions: "8",
             fee: "3000",
             payment_method: "Cash",
             payment_status: "Paid",
-            conditions: ["Test Condition", "Lower Back Pain", "Spinal Misalignment"],
-            token: `test-token-${Date.now()}`,
+            conditions: ["Lower Back Pain", "Spinal Misalignment", "Muscle Tension"],
+            token: `demo-token-${Date.now()}`,
             ts: new Date().getTime(),
             version: "2.0"
         };
 
-        let generatedQRUrl = null;
+        let generatedQRData = null;
+        let generatedQRImage = null;
 
         // Test 1: QR Code Generation
         async function generateTestQR() {
             const statusDiv = document.getElementById('qr-generation-status');
-            statusDiv.innerHTML = '<div class="status info">⏳ Generating QR code...</div>';
+            statusDiv.innerHTML = '<div class="status info">⏳ Generating QR code with embedded data...</div>';
 
             try {
-                // Create the QR data URL
-                const baseUrl = window.location.origin;
+                // Create embedded prescription data (no URL dependency)
                 const encodedData = encodeURIComponent(JSON.stringify(testPrescriptionData));
-                const qrDataUrl = `${baseUrl}/prescription-viewer.html?data=${encodedData}`;
+                const embeddedData = `prescription-data:${encodedData}`;
+                generatedQRData = embeddedData;
                 
-                // For testing, we'll create a simple QR code placeholder
-                // In a real implementation, you would use the QRCodeGenerator
-                const qrCodeDataUrl = await generateQRCodeDataUrl(qrDataUrl);
+                // Generate QR code with embedded data
+                const qrCodeDataUrl = await generateQRCodeDataUrl(embeddedData);
+                generatedQRImage = qrCodeDataUrl;
                 
                 // Display the QR code
                 document.getElementById('generated-qr').src = qrCodeDataUrl;
@@ -372,7 +373,7 @@
                 
                 // Show test data
                 document.getElementById('test-data-display').innerHTML = 
-                    `<strong>Generated QR Data URL:</strong><br><code>${qrDataUrl}</code><br><br>` +
+                    `<strong>🔐 Embedded QR Data:</strong><br><textarea readonly style="width:100%; height:100px; font-family:monospace; font-size:11px;">${embeddedData}</textarea><br><br>`
                     `<strong>Prescription Data:</strong><br><code>${JSON.stringify(testPrescriptionData, null, 2)}</code>`;
                 document.getElementById('test-data-display').style.display = 'block';
                 
