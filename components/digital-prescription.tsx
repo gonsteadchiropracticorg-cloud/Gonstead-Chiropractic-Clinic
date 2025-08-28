@@ -21,6 +21,7 @@ import {
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { PrescriptionData } from '@/lib/prescription-types'
+import { QRCodeGenerator } from '@/lib/qr-code-utils'
 import Image from 'next/image'
 
 interface DigitalPrescriptionProps {
@@ -37,14 +38,18 @@ export function DigitalPrescription({
   const prescriptionRef = useRef<HTMLDivElement>(null)
 
   const handleDownloadPDF = async () => {
+    await downloadPrescription('pdf')
+  }
+
+  const downloadPrescription = async (format: 'pdf' | 'png' | 'jpg') => {
     try {
       const element = prescriptionRef.current
       if (!element) return
 
-      // Clone element for PDF generation
+      // Clone element for rendering
       const elementClone = element.cloneNode(true) as HTMLElement
       
-      // Hide action buttons in PDF
+      // Hide action buttons in output
       const actionButtons = elementClone.querySelectorAll('.action-buttons, .digital-actions')
       actionButtons.forEach(btn => {
         if (btn.parentNode) {
@@ -52,7 +57,7 @@ export function DigitalPrescription({
         }
       })
       
-      // Style for PDF rendering
+      // Style for rendering
       elementClone.style.position = 'absolute'
       elementClone.style.left = '-9999px'
       elementClone.style.top = '0'
@@ -64,7 +69,7 @@ export function DigitalPrescription({
       document.body.appendChild(elementClone)
 
       const canvas = await html2canvas(elementClone, {
-        scale: 1.5,
+        scale: format === 'pdf' ? 1.5 : 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -75,34 +80,49 @@ export function DigitalPrescription({
 
       document.body.removeChild(elementClone)
 
-      const imgData = canvas.toDataURL('image/png', 0.95)
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgAspectRatio = canvas.height / canvas.width
-      
-      const maxWidth = pdfWidth - 20
-      const maxHeight = pdfHeight - 20
-      
-      let finalWidth = maxWidth
-      let finalHeight = maxWidth * imgAspectRatio
-      
-      if (finalHeight > maxHeight) {
-        finalHeight = maxHeight
-        finalWidth = finalHeight / imgAspectRatio
+      // Generate filename with patient name and prescription ID
+      const sanitizedPatientName = prescription.patient_name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()
+      const dateStr = new Date().toISOString().split('T')[0]
+      const baseFileName = `prescription-${sanitizedPatientName}-${prescription.id}-${dateStr}`
+
+      if (format === 'pdf') {
+        const imgData = canvas.toDataURL('image/png', 0.95)
+        const pdf = new jsPDF('p', 'mm', 'a4')
+        
+        const pdfWidth = pdf.internal.pageSize.getWidth()
+        const pdfHeight = pdf.internal.pageSize.getHeight()
+        const imgAspectRatio = canvas.height / canvas.width
+        
+        const maxWidth = pdfWidth - 20
+        const maxHeight = pdfHeight - 20
+        
+        let finalWidth = maxWidth
+        let finalHeight = maxWidth * imgAspectRatio
+        
+        if (finalHeight > maxHeight) {
+          finalHeight = maxHeight
+          finalWidth = finalHeight / imgAspectRatio
+        }
+        
+        const xOffset = (pdfWidth - finalWidth) / 2
+        const yOffset = (pdfHeight - finalHeight) / 2
+        
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight)
+        pdf.save(`${baseFileName}.pdf`)
+      } else {
+        // Download as image (PNG or JPG)
+        const imgData = canvas.toDataURL(`image/${format}`, format === 'jpg' ? 0.9 : 0.95)
+        const link = document.createElement('a')
+        link.download = `${baseFileName}.${format}`
+        link.href = imgData
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
       }
       
-      const xOffset = (pdfWidth - finalWidth) / 2
-      const yOffset = (pdfHeight - finalHeight) / 2
-      
-      pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight)
-      
-      const fileName = `digital-prescription-${prescription.patient_name.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`
-      pdf.save(fileName)
     } catch (error) {
-      console.error('Error generating PDF:', error)
-      alert('Error generating PDF. Please try again.')
+      console.error(`Error generating ${format.toUpperCase()}:`, error)
+      alert(`Error generating ${format.toUpperCase()}. Please try again.`)
     }
   }
 
@@ -224,6 +244,22 @@ export function DigitalPrescription({
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Download PDF
+                    </Button>
+                    <Button 
+                      onClick={() => downloadPrescription('png')} 
+                      variant="outline"
+                      className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PNG
+                    </Button>
+                    <Button 
+                      onClick={() => downloadPrescription('jpg')} 
+                      variant="outline"
+                      className="border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download JPG
                     </Button>
                     <Button 
                       onClick={handlePrint} 

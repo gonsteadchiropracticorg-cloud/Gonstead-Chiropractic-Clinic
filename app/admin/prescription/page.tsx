@@ -710,31 +710,50 @@ function PrescriptionPageContent() {
           font-size: 16px;
         }
 
-        /* QR Code Styling */
+        /* QR Code Styling - Integrated in Footer */
+        .footer {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 20px;
+          background: rgb(36,80,100);
+          color: white;
+          border-radius: 8px;
+          min-height: 60px;
+        }
+        
+        .footer-info {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: calc(100% - 100px); /* Leave space for QR code */
+        }
+        
         .qr-code-section {
-          position: absolute;
-          bottom: 95px;
-          right: 20px;
-          z-index: 10;
+          position: relative;
+          flex-shrink: 0;
+          margin-left: 15px;
         }
         
         .qr-code-container {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 4px;
+          padding: 6px;
           background: white;
-          border: 2px solid rgb(36,80,100);
+          border: 2px solid rgba(255,255,255,0.3);
           border-radius: 8px;
-          width: 90px;
-          height: 90px;
-          box-shadow: 0 2px 8px rgba(36,80,100,0.15);
+          width: 85px;
+          height: 85px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         
         .qr-code-image {
-          width: 70px;
-          height: 70px;
+          width: 65px;
+          height: 65px;
           object-fit: contain;
+          border-radius: 4px;
         }
         
         .qr-code-text {
@@ -742,49 +761,69 @@ function PrescriptionPageContent() {
           font-weight: bold;
           color: rgb(36,80,100);
           text-align: center;
-          margin-top: 2px;
+          margin-top: 3px;
           line-height: 1.1;
-        }
-        
-        /* Ensure footer has enough space for QR code */
-        .footer {
-          position: relative;
-          padding-right: 120px !important; /* Make space for QR code */
+          max-width: 75px;
+          word-wrap: break-word;
         }
         
         @media print {
-          .qr-code-section {
-            position: absolute;
-            bottom: 90px;
-            right: 25px;
+          .footer {
+            background: rgb(36,80,100) !important;
+            color: white !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            z-index: 999 !important;
-            background: white !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 15px 20px !important;
+            min-height: 60px !important;
+          }
+          
+          .footer-info {
+            width: calc(100% - 90px) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+          }
+          
+          .footer-address, .footer-phone {
+            color: white !important;
+          }
+          
+          .qr-code-section {
+            position: relative !important;
+            flex-shrink: 0 !important;
+            margin-left: 10px !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           
           .qr-code-container {
-            padding: 4px !important;
-            border: 2px solid rgb(36,80,100) !important;
+            background: white !important;
+            border: 2px solid rgba(255,255,255,0.9) !important;
             border-radius: 6px !important;
-            width: 80px !important;
-            height: 80px !important;
+            width: 75px !important;
+            height: 75px !important;
+            padding: 4px !important;
             box-shadow: none !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           
           .qr-code-image {
-            width: 68px !important;
-            height: 68px !important;
+            width: 60px !important;
+            height: 60px !important;
+            -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
           
           .qr-code-text {
-            font-size: 7px !important;
+            font-size: 6px !important;
+            color: rgb(36,80,100) !important;
             margin-top: 2px !important;
-          }
-          
-          .footer {
-            padding-right: 110px !important; /* Adjust for print */
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
         }
 
@@ -1652,7 +1691,8 @@ function PrescriptionPageContent() {
                 </div>
               )}
 
-<div className="footer">
+              {/* Footer with integrated QR code */}
+              <div className="footer">
                 <div className="footer-info">
                   <div className="footer-address">
                     <strong>Address:</strong> Near Peshawar Model School, Tehsil Road Nowshera, KPK
@@ -1661,19 +1701,20 @@ function PrescriptionPageContent() {
                     <strong>Phone:</strong> +923046996267
                   </div>
                 </div>
-              </div>
-              
-              {/* QR Code Section - Fixed at bottom right */}
-              <div className="qr-code-section">
-                <div className="qr-code-container">
-                  <img 
-                    src={qrCodeUrl || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSIjMjQ1MDY0IiBzdHJva2Utd2lkdGg9IjIiLz4KPHN2ZyB4PSIxMCIgeT0iMTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNDUwNjQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KPHN2ZyB4PSIxMCIgeT0iMTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNDUwNjQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1xci1jb2RlIj4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMyIgeT0iMyIgcng9IjEiLz4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMTYiIHk9IjMiIHJ4PSIxIi8+CjxyZWN0IHdpZHRoPSI1IiBoZWlnaHQ9IjUiIHg9IjMiIHk9IjE2IiByeD0iMSIvPgo8cGF0aCBkPSJNMjEgMTZ2M2EyIDIgMCAwIDEtMiAyaC0zIi8+CjxwYXRoIGQ9Im0yMSAxMC0xIDEiLz4KPHBhdGggZD0ibTE3IDE3IDEgMSIvPgo8cGF0aCBkPSJtMTAgMTYgMSAxIi8+CjxwYXRoIGQ9Im0xNiAxMCAxIDEiLz4KPHBhdGggZD0ibTkgOSAxIDEiLz4KPHBhdGggZD0iTTggMTNoMSIvPgo8cGF0aCBkPSJNMTIgOWgxIi8+Cjwvc3ZnPgo8L3N2Zz4KPHN2ZyB4PSIyMCIgeT0iNTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSIxMCIgdmlld0JveD0iMCAwIDQwIDEwIj4KPHRleHQgeD0iMjAiIHk9IjciIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI2IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzI0NTA2NCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R2VuZXJhdGUgUVI8L3RleHQ+Cjwvc3ZnPgo8L3N2Zz4K"}
-                    alt="Scan for digital prescription" 
-                    id="prescriptionQRCode"
-                    className="qr-code-image"
-                    style={{ display: qrCodeUrl ? 'block' : 'block' }}
-                  />
-                  <div className="qr-code-text">Scan for digital version</div>
+                
+                {/* QR Code positioned in footer */}
+                <div className="qr-code-section">
+                  <div className="qr-code-container">
+                    <img 
+                      src={qrCodeUrl || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSIjMjQ1MDY0IiBzdHJva2Utd2lkdGg9IjIiLz4KPHN2ZyB4PSIxMCIgeT0iMTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNDUwNjQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KPHN2ZyB4PSIxMCIgeT0iMTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNDUwNjQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1xci1jb2RlIj4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMyIgeT0iMyIgcng9IjEiLz4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMTYiIHk9IjMiIHJ4PSIxIi8+CjxyZWN0IHdpZHRoPSI1IiBoZWlnaHQ9IjUiIHg9IjMiIHk9IjE2IiByeD0iMSIvPgo8cGF0aCBkPSJNMjEgMTZ2M2EyIDIgMCAwIDEtMiAyaC0zIi8+CjxwYXRoIGQ9Im0yMSAxMC0xIDEiLz4KPHBhdGggZD0ibTE3IDE3IDEgMSIvPgo8cGF0aCBkPSJtMTAgMTYgMSAxIi8+CjxwYXRoIGQ9Im0xNiAxMCAxIDEiLz4KPHBhdGggZD0ibTkgOSAxIDEiLz4KPHBhdGggZD0iTTggMTNoMSIvPgo8cGF0aCBkPSJNMTIgOWgxIi8+Cjwvc3ZnPgo8L3N2Zz4KPHN2ZyB4PSIyMCIgeT0iNTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSIxMCIgdmlld0JveD0iMCAwIDQwIDEwIj4KPHRleHQgeD0iMjAiIHk9IjciIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI2IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzI0NTA2NCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R2VuZXJhdGUgUVI8L3RleHQ+Cjwvc3ZnPgo8L3N2Zz4K"}
+                      alt="Scan for digital prescription" 
+                      id="prescriptionQRCode"
+                      className="qr-code-image"
+                      style={{ display: 'block' }}
+                      crossOrigin="anonymous"
+                    />
+                    <div className="qr-code-text">Scan for digital version</div>
+                  </div>
                 </div>
               </div>
               </div>

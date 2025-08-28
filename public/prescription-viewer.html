@@ -530,6 +530,29 @@
         function displayPrescription(prescription) {
             prescriptionData = prescription;
             
+            // Enhanced prescription data processing
+            const enrichedPrescription = {
+                ...prescription,
+                // Ensure all fields have fallback values
+                patient_name: prescription.patient_name || prescription.pat_name || 'Unknown Patient',
+                patient_age: prescription.patient_age || prescription.age || '',
+                patient_gender: prescription.patient_gender || prescription.gender || '',
+                patient_phone: prescription.patient_phone || prescription.phone || '',
+                patient_email: prescription.patient_email || prescription.email || '',
+                treatment_plan: prescription.treatment_plan || prescription.treatment || 'No treatment plan specified',
+                prescribed_medicine: prescription.prescribed_medicine || prescription.medicine || '',
+                total_sessions: prescription.total_sessions || prescription.sessions || '',
+                session_fee: prescription.session_fee || prescription.fee || '',
+                payment_method: prescription.payment_method || '',
+                payment_status: prescription.payment_status || '',
+                conditions: prescription.conditions || [],
+                doctor_name: prescription.doctor_name || prescription.dr || 'Dr. Bashir Khan',
+                clinic_name: prescription.clinic_name || prescription.clinic || 'GONSTEAD CHIROPRACTIC CLINIC',
+                visit_date: prescription.visit_date || prescription.visit || new Date().toISOString().split('T')[0],
+                clinic_address: prescription.clinic_address || 'Near Peshawar Model School, Tehsil Road Nowshera, KPK',
+                clinic_phone: prescription.clinic_phone || '+923046996267'
+            }
+            
             const prescriptionHtml = `
                 <div class="header">
                     <div class="logo-container">
@@ -544,41 +567,41 @@
                     <div class="patient-info">
                         <div class="section-title">Patient Information</div>
                         <div class="patient-details">
-                            <div class="field-group">
+                    <div class="field-group">
                                 <div class="field-label">Patient Name:</div>
-                                <div class="field-value">${prescription.patient_name || ''}</div>
+                                <div class="field-value">${enrichedPrescription.patient_name}</div>
                             </div>
-                            ${prescription.patient_age ? `
+                            ${enrichedPrescription.patient_age ? `
                             <div class="field-group">
                                 <div class="field-label">Age:</div>
-                                <div class="field-value">${prescription.patient_age}</div>
+                                <div class="field-value">${enrichedPrescription.patient_age}</div>
                             </div>` : ''}
-                            ${prescription.patient_gender ? `
+                            ${enrichedPrescription.patient_gender ? `
                             <div class="field-group">
                                 <div class="field-label">Gender:</div>
-                                <div class="field-value">${prescription.patient_gender}</div>
+                                <div class="field-value" style="text-transform: capitalize;">${enrichedPrescription.patient_gender}</div>
                             </div>` : ''}
                             <div class="field-group">
                                 <div class="field-label">Date of Visit:</div>
-                                <div class="field-value">${formatDate(prescription.visit_date)}</div>
+                                <div class="field-value">${formatDate(enrichedPrescription.visit_date)}</div>
                             </div>
-                            ${prescription.patient_phone ? `
+                            ${enrichedPrescription.patient_phone ? `
                             <div class="field-group">
                                 <div class="field-label">Phone:</div>
-                                <div class="field-value">${prescription.patient_phone}</div>
+                                <div class="field-value">${enrichedPrescription.patient_phone}</div>
                             </div>` : ''}
-                            ${prescription.patient_email ? `
+                            ${enrichedPrescription.patient_email ? `
                             <div class="field-group">
                                 <div class="field-label">Email:</div>
-                                <div class="field-value">${prescription.patient_email}</div>
+                                <div class="field-value">${enrichedPrescription.patient_email}</div>
                             </div>` : ''}
                         </div>
                     </div>
 
-                    ${prescription.conditions && prescription.conditions.length > 0 ? `
+                    ${enrichedPrescription.conditions && enrichedPrescription.conditions.length > 0 ? `
                     <div class="conditions-section">
                         <div class="conditions-title">Diagnosed Chiropractic Conditions:</div>
-                        ${prescription.conditions.map(condition => `<div class="condition-item">• ${condition}</div>`).join('')}
+                        ${enrichedPrescription.conditions.map(condition => `<div class="condition-item">• ${condition}</div>`).join('')}
                     </div>` : ''}
 
                     <div class="prescription-section">
@@ -587,17 +610,17 @@
                         <div class="prescription-content">
                             <div class="treatment-box">
                                 <div class="treatment-title">Treatment Plan & Cure:</div>
-                                <div class="treatment-text">${prescription.treatment_plan || 'No treatment plan specified'}</div>
+                                <div class="treatment-text">${enrichedPrescription.treatment_plan}</div>
                             </div>
                             
-                            ${prescription.prescribed_medicine ? `
+                            ${enrichedPrescription.prescribed_medicine ? `
                             <div class="treatment-box">
                                 <div class="treatment-title">Prescribed Medicine:</div>
-                                <div class="treatment-text">${prescription.prescribed_medicine}</div>
+                                <div class="treatment-text">${enrichedPrescription.prescribed_medicine}</div>
                             </div>` : ''}
                         </div>
 
-                        ${prescription.total_sessions ? `
+                        ${enrichedPrescription.total_sessions ? `
                         <div class="sessions-section">
                             <div class="treatment-title">Treatment Sessions:</div>
                             <div class="session-checkboxes">
@@ -608,25 +631,25 @@
                             </div>
                             <div class="session-total">
                                 <span class="field-label">Total Sessions Recommended:</span>
-                                <div class="total-input">${prescription.total_sessions}</div>
+                                <div class="total-input">${enrichedPrescription.total_sessions}</div>
                             </div>
                         </div>` : ''}
 
-                        ${prescription.session_fee ? `
+                        ${enrichedPrescription.session_fee ? `
                         <div class="payment-section">
                             <div class="section-title">Payment Information</div>
                             <div class="payment-grid">
                                 <div class="field-group">
                                     <div class="field-label">Session Fee:</div>
-                                    <div class="field-value">Rs ${prescription.session_fee}</div>
+                                    <div class="field-value">Rs ${enrichedPrescription.session_fee}</div>
                                 </div>
                                 <div class="field-group">
                                     <div class="field-label">Payment Method:</div>
-                                    <div class="field-value">${prescription.payment_method || '-'}</div>
+                                    <div class="field-value">${enrichedPrescription.payment_method || '-'}</div>
                                 </div>
                                 <div class="field-group" style="grid-column: 1 / -1;">
                                     <div class="field-label">Payment Status:</div>
-                                    <div class="field-value">${prescription.payment_status || '-'}</div>
+                                    <div class="field-value">${enrichedPrescription.payment_status || '-'}</div>
                                 </div>
                             </div>
                         </div>` : ''}
@@ -644,19 +667,28 @@
                     </div>
                 </div>
 
-                <div class="footer">
-                    <div>
-                        <strong>Address:</strong> ${prescription.clinic_address || 'Near Peshawar Model School, Tehsil Road Nowshera, KPK'}
+                <div class="footer" style="position: relative; background: #245064; color: white; padding: 15px; text-align: center; display: flex; justify-content: space-between; align-items: center; border-radius: 8px;">
+                    <div style="text-align: left;">
+                        <strong>Address:</strong> ${enrichedPrescription.clinic_address}
                     </div>
-                    <div>
-                        <strong>Phone:</strong> ${prescription.clinic_phone || '+923046996267'}
+                    <div style="text-align: right;">
+                        <strong>Phone:</strong> ${enrichedPrescription.clinic_phone}
+                    </div>
+                    
+                    <!-- QR Code Section in Footer */>
+                    <div style="position: absolute; bottom: 10px; right: 15px; background: white; padding: 6px; border: 2px solid #245064; border-radius: 8px; box-shadow: 0 2px 8px rgba(36,80,100,0.15);">
+                        <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                            <div style="width: 70px; height: 70px; background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAiIGhlaWdodD0iNzAiIHZpZXdCb3g9IjAgMCA3MCA3MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHN2ZyB3aWR0aD0iNzAiIGhlaWdodD0iNzAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjQ1MDY0IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1xci1jb2RlIj4KPHN2ZyB4PSIwIiB5PSIwIiB3aWR0aD0iNzAiIGhlaWdodD0iNzAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjQ1MDY0IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KPHN2ZyB3aWR0aD0iNzAiIGhlaWdodD0iNzAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMyIgeT0iMyIgcng9IjEiIGZpbGw9IiMyNDUwNjQiLz4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMTYiIHk9IjMiIHJ4PSIxIiBmaWxsPSIjMjQ1MDY0Ii8+CjxyZWN0IHdpZHRoPSI1IiBoZWlnaHQ9IjUiIHg9IjMiIHk9IjE2IiByeD0iMSIgZmlsbD0iIzI0NTA2NCIvPgo8cGF0aCBkPSJNMjEgMTZ2M2EyIDIgMCAwIDEtMiAyaC0zIiBzdHJva2U9IiMyNDUwNjQiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0ibTIxIDEwLTEgMSIgc3Ryb2tlPSIjMjQ1MDY0IiBmaWxsPSJub25lIi8+CjxwYXRoIGQ9Im0xNyAxNyAxIDEiIHN0cm9rZT0iIzI0NTA2NCIgZmlsbD0ibm9uZSIvPgo8cGF0aCBkPSJtMTAgMTYgMSAxIiBzdHJva2U9IiMyNDUwNjQiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0ibTE2IDEwIDEgMSIgc3Ryb2tlPSIjMjQ1MDY0IiBmaWxsPSJub25lIi8+CjxwYXRoIGQ9Im05IDkgMSAxIiBzdHJva2U9IiMyNDUwNjQiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTggMTNoMSIgc3Ryb2tlPSIjMjQ1MDY0IiBmaWxsPSJub25lIi8+CjxwYXRoIGQ9Ik0xMiA5aDEiIHN0cm9rZT0iIzI0NTA2NCIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4KPC9zdmc+Cjwvc3ZnPgo8L3N2Zz4K') no-repeat center; background-size: contain;"></div>
+                            <div style="font-size: 7px; font-weight: bold; color: #245064; text-align: center; margin-top: 2px; line-height: 1.1;">Scan QR</div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="digital-info">
-                    <div>Digital Prescription ID: ${prescription.id}</div>
-                    <div>Generated: ${new Date(prescription.created_at || Date.now()).toLocaleString()}</div>
-                    <div>🛡️ Secured by Gonstead Chiropractic Digital System</div>
+                    <div>Digital Prescription ID: ${enrichedPrescription.id}</div>
+                    <div>Generated: ${new Date(enrichedPrescription.created_at || Date.now()).toLocaleString()}</div>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">🛡️ Secured by Gonstead Chiropractic Digital System</div>
+                    ${enrichedPrescription.version ? `<div style="margin-top: 5px; font-size: 10px; color: #999;">Data Version: ${enrichedPrescription.version}</div>` : ''}
                 </div>
             `;
 
