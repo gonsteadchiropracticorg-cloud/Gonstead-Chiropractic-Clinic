@@ -115,18 +115,27 @@ const sidebarItems: MenuItem[] = [
   }
 ]
 
-export function AdminSidebar({ isOpen, onClose, currentPath }: AdminSidebarProps) {
+export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSidebarProps) {
   const router = useRouter()
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [mounted, setMounted] = useState(false)
+
+  // Ensure component is mounted on client side
+  useEffect(() => {
+    setMounted(true)
+    setCurrentTime(new Date())
+  }, [])
 
   // Update time every minute
   useEffect(() => {
+    if (!mounted) return
+    
     const timer = setInterval(() => {
       setCurrentTime(new Date())
     }, 60000)
     return () => clearInterval(timer)
-  }, [])
+  }, [mounted])
 
   const toggleExpanded = (itemId: string) => {
     const newExpanded = new Set(expandedItems)
@@ -193,7 +202,18 @@ export function AdminSidebar({ isOpen, onClose, currentPath }: AdminSidebarProps
                     width={36}
                     height={36}
                     className="object-contain"
+                    priority
+                    onError={(e) => {
+                      console.log('Image failed to load, showing fallback');
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const fallback = target.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'block';
+                    }}
                   />
+                  <div className="text-white font-bold text-sm" style={{ display: 'none' }}>
+                    GC
+                  </div>
                 </div>
                 <div>
                   <h2 className="text-xl font-bold font-poppins tracking-wide">Admin Portal</h2>

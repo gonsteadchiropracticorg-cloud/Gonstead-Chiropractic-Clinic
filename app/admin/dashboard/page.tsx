@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -52,6 +52,7 @@ import {
 import Image from "next/image"
 import { WeatherWidget } from "@/components/weather-widget"
 import { EnhancedLoadingPage } from "@/components/loading-spinner"
+import AdminSidebar from "@/components/AdminSidebar"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 import {
@@ -115,9 +116,11 @@ export default function AdminDashboard() {
     "Sleep with proper pillow support",
   ])
   const [newSuggestion, setNewSuggestion] = useState("")
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
 
   const router = useRouter()
+  const pathname = usePathname()
   const { toast } = useToast()
 
   // Update current time every second with 12-hour format (client-side only)
@@ -782,8 +785,8 @@ Phone: +92 304 699 6267
         <div className="relative z-10 container mx-auto flex justify-between items-center">
           {/* Left Section - Logo and Title */}
           <div className="flex items-center gap-4">
-            {/* Compact Logo */}
-            <div className="relative group">
+            {/* Compact Logo - Clickable for Sidebar */}
+            <div className="relative group cursor-pointer" onClick={() => setIsSidebarOpen(true)}>
               <div className="w-14 h-14 relative transition-transform duration-300 hover:scale-110">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/10 to-[#2a9d8f]/10 rounded-full blur-lg group-hover:blur-md transition-all duration-300"></div>
                 <Image
@@ -1528,6 +1531,13 @@ Phone: +92 304 699 6267
         </Card>
       </main>
       </div>
+
+      {/* AdminSidebar */}
+      <AdminSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        currentPath={pathname}
+      />
 
       <Dialog open={isPrescriptionDialogOpen} onOpenChange={setIsPrescriptionDialogOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">

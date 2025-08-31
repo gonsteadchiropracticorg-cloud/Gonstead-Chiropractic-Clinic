@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { getCurrentUser } from "@/lib/supabase"
-import { QRCodeGenerator } from "@/lib/qr-code-utils"
 import { PrescriptionData } from "@/lib/prescription-types"
+import { prescriptionIdGenerator, PrescriptionIdData } from "@/lib/prescription-id-generator"
+import { prescriptionSaveService, SavePrescriptionData } from "@/lib/prescription-save-service"
 import Image from "next/image"
 
 interface PrescriptionPatient {
@@ -71,8 +72,8 @@ function PrescriptionPageContent() {
   const [patientAddress, setPatientAddress] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
-  const [prescriptionId, setPrescriptionId] = useState<string>(`PRESC-${Date.now()}`)
+  const [currentPrescriptionId, setCurrentPrescriptionId] = useState<PrescriptionIdData | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   
   const router = useRouter()
   const prescriptionRef = useRef<HTMLDivElement>(null)
@@ -150,83 +151,65 @@ function PrescriptionPageContent() {
     }
   }
 
+  // Generate prescription ID when component loads
+  useEffect(() => {
+    if (isAuthenticated && patientName) {
+      generateNewPrescriptionId()
+    }
+  }, [isAuthenticated, patientName])
 
-  const generateQRCode = async () => {
+  const generateNewPrescriptionId = () => {
+    const newId = prescriptionIdGenerator.generatePrescriptionId(patientName)
+    setCurrentPrescriptionId(newId)
+    console.log('Generated new prescription ID:', newId.prescriptionId)
+  }
+
+
+
+  const savePrescriptionData = async () => {
+    if (!currentPrescriptionId || !patientName) {
+      console.log('Cannot save prescription: Missing prescription ID or patient name')
+      return
+    }
+
+    setIsSaving(true)
     try {
-      // Create prescription data for QR code
-      const prescriptionData: PrescriptionData = {
-        id: prescriptionId,
-        patient_id: `PAT-${Math.random().toString(36).substring(2)}`,
-        appointment_id: `APT-${Math.random().toString(36).substring(2)}`,
-        patient_name: patientName || "Sample Patient",
-        patient_age: patientAge,
-        patient_gender: patientGender,
-        patient_phone: patientPhone,
-        patient_email: patientEmail,
-        patient_address: patientAddress,
-        visit_date: visitDate,
-        birth_date: birthDate,
-        joining_date: joiningDate,
-        treatment_plan: treatmentPlan,
-        prescribed_medicine: prescribedMedicine,
-        total_sessions: totalSessions,
-        session_fee: sessionFee,
-        payment_method: paymentMethod,
-        payment_status: paymentStatus,
+      const prescriptionData: SavePrescriptionData = {
+        prescriptionId: currentPrescriptionId.prescriptionId,
+        patientId: currentPrescriptionId.patientId,
+        patientName,
+        patientAge,
+        patientGender,
+        patientPhone,
+        patientEmail,
+        visitDate,
+        birthDate,
+        joiningDate,
         conditions: selectedConditions,
-        custom_fields: customFields,
-        doctor_name: "Dr. Bashir Khan",
-        clinic_name: "GONSTEAD CHIROPRACTIC CLINIC",
-        clinic_address: "Near Peshawar Model School, Tehsil Road Nowshera, KPK",
-        clinic_phone: "+923046996267",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        treatmentPlan,
+        prescribedMedicine,
+        totalSessions: totalSessions ? parseInt(totalSessions) : undefined,
+        sessionFee: sessionFee ? parseFloat(sessionFee) : undefined,
+        paymentMethod,
+        paymentStatus,
+        customFields,
+        createdAt: new Date().toISOString(),
+        status: 'active'
       }
 
-      // Store prescription data
-      const storedPrescriptions = localStorage.getItem('stored_prescriptions')
-      let prescriptions: PrescriptionData[] = []
-      if (storedPrescriptions) {
-        prescriptions = JSON.parse(storedPrescriptions)
-      }
-      
-      // Update or add prescription
-      const existingIndex = prescriptions.findIndex(p => p.id === prescriptionId)
-      if (existingIndex >= 0) {
-        prescriptions[existingIndex] = prescriptionData
-      } else {
-        prescriptions.push(prescriptionData)
-      }
-      
-      localStorage.setItem('stored_prescriptions', JSON.stringify(prescriptions))
-
-      // Generate QR code
-      const qrCode = await QRCodeGenerator.generatePrescriptionQR(prescriptionData)
-      setQrCodeUrl(qrCode)
-      
-      // Update QR code image on prescription
-      const qrImage = document.getElementById('prescriptionQRCode') as HTMLImageElement
-      if (qrImage) {
-        qrImage.src = qrCode
-        qrImage.style.display = 'block'
-      }
+      await prescriptionSaveService.savePrescription(prescriptionData)
+      console.log('Prescription saved successfully:', currentPrescriptionId.prescriptionId)
     } catch (error) {
-      console.error('Error generating QR code:', error)
-      alert('Error generating QR code. Please try again.')
+      console.error('Error saving prescription:', error)
+    } finally {
+      setIsSaving(false)
     }
   }
 
   const printPrescription = async () => {
-    // Generate QR code before printing if not already generated
-    if (!qrCodeUrl && (patientName || treatmentPlan)) {
-      await generateQRCode()
-      // Wait a bit for QR code to be applied
-      setTimeout(() => {
-        window.print()
-      }, 500)
-    } else {
-      window.print()
-    }
+    // Auto-save prescription before printing
+    await savePrescriptionData()
+    window.print()
   }
 
   const addCondition = () => {
@@ -680,8 +663,6 @@ function PrescriptionPageContent() {
           align-items: center;
           justify-content: center;
           border: 2px solid rgb(36,80,100);
-          position: relative;
-          padding-right: 120px;
         }
 
         .footer-info {
@@ -710,122 +691,6 @@ function PrescriptionPageContent() {
           font-size: 16px;
         }
 
-        /* QR Code Styling - Integrated in Footer */
-        .footer {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 20px;
-          background: rgb(36,80,100);
-          color: white;
-          border-radius: 8px;
-          min-height: 60px;
-        }
-        
-        .footer-info {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          width: calc(100% - 100px); /* Leave space for QR code */
-        }
-        
-        .qr-code-section {
-          position: relative;
-          flex-shrink: 0;
-          margin-left: 15px;
-        }
-        
-        .qr-code-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 6px;
-          background: white;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-radius: 8px;
-          width: 85px;
-          height: 85px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        
-        .qr-code-image {
-          width: 65px;
-          height: 65px;
-          object-fit: contain;
-          border-radius: 4px;
-        }
-        
-        .qr-code-text {
-          font-size: 7px;
-          font-weight: bold;
-          color: rgb(36,80,100);
-          text-align: center;
-          margin-top: 3px;
-          line-height: 1.1;
-          max-width: 75px;
-          word-wrap: break-word;
-        }
-        
-        @media print {
-          .footer {
-            background: rgb(36,80,100) !important;
-            color: white !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            padding: 15px 20px !important;
-            min-height: 60px !important;
-          }
-          
-          .footer-info {
-            width: calc(100% - 90px) !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-          }
-          
-          .footer-address, .footer-phone {
-            color: white !important;
-          }
-          
-          .qr-code-section {
-            position: relative !important;
-            flex-shrink: 0 !important;
-            margin-left: 10px !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          
-          .qr-code-container {
-            background: white !important;
-            border: 2px solid rgba(255,255,255,0.9) !important;
-            border-radius: 6px !important;
-            width: 75px !important;
-            height: 75px !important;
-            padding: 4px !important;
-            box-shadow: none !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          
-          .qr-code-image {
-            width: 60px !important;
-            height: 60px !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          
-          .qr-code-text {
-            font-size: 6px !important;
-            color: rgb(36,80,100) !important;
-            margin-top: 2px !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-        }
 
         .action-buttons {
           display: flex;
@@ -1691,7 +1556,7 @@ function PrescriptionPageContent() {
                 </div>
               )}
 
-              {/* Footer with integrated QR code */}
+              {/* Footer */}
               <div className="footer">
                 <div className="footer-info">
                   <div className="footer-address">
@@ -1699,21 +1564,6 @@ function PrescriptionPageContent() {
                   </div>
                   <div className="footer-phone">
                     <strong>Phone:</strong> +923046996267
-                  </div>
-                </div>
-                
-                {/* QR Code positioned in footer */}
-                <div className="qr-code-section">
-                  <div className="qr-code-container">
-                    <img 
-                      src={qrCodeUrl || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSIjMjQ1MDY0IiBzdHJva2Utd2lkdGg9IjIiLz4KPHN2ZyB4PSIxMCIgeT0iMTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNDUwNjQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KPHN2ZyB4PSIxMCIgeT0iMTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNDUwNjQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1xci1jb2RlIj4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMyIgeT0iMyIgcng9IjEiLz4KPHJlY3Qgd2lkdGg9IjUiIGhlaWdodD0iNSIgeD0iMTYiIHk9IjMiIHJ4PSIxIi8+CjxyZWN0IHdpZHRoPSI1IiBoZWlnaHQ9IjUiIHg9IjMiIHk9IjE2IiByeD0iMSIvPgo8cGF0aCBkPSJNMjEgMTZ2M2EyIDIgMCAwIDEtMiAyaC0zIi8+CjxwYXRoIGQ9Im0yMSAxMC0xIDEiLz4KPHBhdGggZD0ibTE3IDE3IDEgMSIvPgo8cGF0aCBkPSJtMTAgMTYgMSAxIi8+CjxwYXRoIGQ9Im0xNiAxMCAxIDEiLz4KPHBhdGggZD0ibTkgOSAxIDEiLz4KPHBhdGggZD0iTTggMTNoMSIvPgo8cGF0aCBkPSJNMTIgOWgxIi8+Cjwvc3ZnPgo8L3N2Zz4KPHN2ZyB4PSIyMCIgeT0iNTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSIxMCIgdmlld0JveD0iMCAwIDQwIDEwIj4KPHRleHQgeD0iMjAiIHk9IjciIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI2IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzI0NTA2NCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R2VuZXJhdGUgUVI8L3RleHQ+Cjwvc3ZnPgo8L3N2Zz4K"}
-                      alt="Scan for digital prescription" 
-                      id="prescriptionQRCode"
-                      className="qr-code-image"
-                      style={{ display: 'block' }}
-                      crossOrigin="anonymous"
-                    />
-                    <div className="qr-code-text">Scan for digital version</div>
                   </div>
                 </div>
               </div>
@@ -1853,9 +1703,6 @@ function PrescriptionPageContent() {
                 <button className="control-btn btn-add" onClick={addCustomField}>➕ Add Custom Field</button>
                 <button className="control-btn btn-toggle" onClick={togglePaymentSection}>
                   💰 {showPayment ? 'Hide' : 'Show'} Payment Section
-                </button>
-                <button className="control-btn btn-add" onClick={generateQRCode}>
-                  📱 Generate QR Code
                 </button>
               </div>
                 

@@ -1,65 +1,41 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { DigitalPrescription } from '@/components/digital-prescription'
-import { QRCodeGenerator } from '@/lib/qr-code-utils'
-import { PrescriptionData } from '@/lib/prescription-types'
+import { PrescriptionData, PrescriptionLookupResult } from '@/lib/prescription-types'
+import { prescriptionTracker } from '@/lib/prescription-tracking'
 import { Card, CardContent } from '@/components/ui/card'
-import { AlertTriangle, Loader2, ShieldX } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { AlertTriangle, Loader2, ShieldX, Activity, FileText } from 'lucide-react'
 
 export default function DigitalPrescriptionPage() {
   const params = useParams()
-  const searchParams = useSearchParams()
+  const router = useRouter()
   const prescriptionId = params.id as string
-  const token = searchParams.get('token')
 
-  const [prescription, setPrescription] = useState<PrescriptionData | null>(null)
+  const [lookupResult, setLookupResult] = useState<PrescriptionLookupResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isValidAccess, setIsValidAccess] = useState(false)
 
   useEffect(() => {
-    validateAndLoadPrescription()
-  }, [prescriptionId, token])
+    loadPrescriptionData()
+  }, [prescriptionId])
 
-  const validateAndLoadPrescription = async () => {
+  const loadPrescriptionData = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Validate security token if provided
-      if (token) {
-        const validation = QRCodeGenerator.validateSecureToken(token)
-        if (!validation.isValid) {
-          setError('Invalid or expired access token. Please scan the QR code again.')
-          setLoading(false)
-          return
-        }
-        
-        if (validation.prescriptionId !== prescriptionId) {
-          setError('Token does not match the requested prescription.')
-          setLoading(false)
-          return
-        }
-        
-        setIsValidAccess(true)
-      }
-
-      // Load prescription data
-      // In a real application, this would fetch from a database
-      // For demo, we'll use sample data or localStorage
-      const prescriptionData = await loadPrescriptionData(prescriptionId)
+      // Use the new prescription tracking service
+      const result = await prescriptionTracker.lookupByPrescriptionId(prescriptionId)
+      setLookupResult(result)
       
-      if (!prescriptionData) {
-        setError('Prescription not found.')
-        setLoading(false)
-        return
+      if (!result.found) {
+        setError(result.error || 'Prescription not found.')
       }
-
-      setPrescription(prescriptionData)
+      
       setLoading(false)
-
     } catch (err) {
       console.error('Error loading prescription:', err)
       setError('Failed to load prescription. Please try again.')
@@ -67,23 +43,8 @@ export default function DigitalPrescriptionPage() {
     }
   }
 
-  const loadPrescriptionData = async (id: string): Promise<PrescriptionData | null> => {
-    // Check localStorage first (for demo purposes)
-    const storedPrescriptions = localStorage.getItem('stored_prescriptions')
-    if (storedPrescriptions) {
-      const prescriptions: PrescriptionData[] = JSON.parse(storedPrescriptions)
-      const found = prescriptions.find(p => p.id === id)
-      if (found) return found
-    }
-
-    // If not found in localStorage, generate sample data for demo
-    if (id.startsWith('PRESC-')) {
-      const samplePrescription = QRCodeGenerator.generateSamplePrescription()
-      samplePrescription.id = id
-      return samplePrescription
-    }
-
-    return null
+  const handleViewFullTracking = () => {
+    router.push(`/patient-tracking?id=${prescriptionId}`)
   }
 
   if (loading) {
@@ -101,39 +62,41 @@ export default function DigitalPrescriptionPage() {
     )
   }
 
-  if (error) {
+  if (error || (lookupResult && !lookupResult.found)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center">
         <Card className="max-w-md w-full mx-4 border-red-300">
           <CardContent className="p-8 text-center">
-            {error.includes('Invalid') || error.includes('expired') ? (
-              <ShieldX className="h-12 w-12 text-red-600 mx-auto mb-4" />
-            ) : (
-              <AlertTriangle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-            )}
-            <h2 className="text-xl font-semibold text-red-800 mb-2">Access Denied</h2>
-            <p className="text-red-600 mb-4">{error}</p>
-            <div className="bg-red-100 p-4 rounded-lg border border-red-200">
+            <AlertTriangle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-red-800 mb-2">Prescription Not Found</h2>
+            <p className="text-red-600 mb-4">{error || 'The requested prescription could not be located.'}</p>
+            <div className="bg-red-100 p-4 rounded-lg border border-red-200 mb-4">
               <p className="text-sm text-red-700">
-                <strong>Security Note:</strong> Digital prescriptions require valid authentication tokens. 
-                Please ensure you're accessing this prescription through the secure QR code provided 
-                by Gonstead Chiropractic Clinic.
+                <strong>Note:</strong> Please verify the prescription ID and ensure you have the correct access link.
               </p>
             </div>
+            <Button 
+              onClick={() => router.push('/patient-tracking')}
+              variant="outline"
+              className="w-full"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Try Patient Tracking Lookup
+            </Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  if (!prescription) {
+  if (!lookupResult?.prescription) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <Card className="max-w-md w-full mx-4">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">Prescription Not Found</h2>
-            <p className="text-gray-600">The requested prescription could not be located.</p>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">No Data Available</h2>
+            <p className="text-gray-600">Prescription data could not be loaded.</p>
           </CardContent>
         </Card>
       </div>
@@ -141,10 +104,34 @@ export default function DigitalPrescriptionPage() {
   }
 
   return (
-    <DigitalPrescription 
-      prescription={prescription} 
-      isPublicView={true}
-      showActions={true}
-    />
+    <div className="space-y-6">
+      {/* Patient Tracking Quick Access */}
+      <div className="bg-gradient-to-r from-blue-500 to-teal-500 text-white p-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Activity className="h-6 w-6" />
+            <div>
+              <h3 className="font-semibold">Complete Patient Tracking Available</h3>
+              <p className="text-sm opacity-90">View comprehensive treatment history, progress, and session details</p>
+            </div>
+          </div>
+          <Button 
+            onClick={handleViewFullTracking}
+            variant="secondary"
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+          >
+            <Activity className="h-4 w-4 mr-2" />
+            View Full Tracking
+          </Button>
+        </div>
+      </div>
+
+      {/* Digital Prescription Display */}
+      <DigitalPrescription 
+        prescription={lookupResult.prescription} 
+        isPublicView={true}
+        showActions={true}
+      />
+    </div>
   )
 }

@@ -21,7 +21,6 @@ import {
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { PrescriptionData } from '@/lib/prescription-types'
-import { QRCodeGenerator } from '@/lib/qr-code-utils'
 import Image from 'next/image'
 
 interface DigitalPrescriptionProps {
