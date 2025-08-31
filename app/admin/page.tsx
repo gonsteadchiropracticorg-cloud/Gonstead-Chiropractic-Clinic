@@ -61,6 +61,8 @@ import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import VoiceSettingsComponent from "@/components/voice-settings"
 import { updatePatient } from "@/lib/supabase"
+import { usePagination, usePaginationKeyboard } from "@/hooks/use-pagination"
+import { PaginationNavigation } from "@/components/ui/pagination-navigation"
 
 interface PatientRecord {
   id: string
@@ -108,6 +110,7 @@ export default function AdminDashboard() {
   const [showNotifications, setShowNotifications] = useState(false)
   const [editingPatient, setEditingPatient] = useState<PatientRecord | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -355,15 +358,33 @@ Phone: +92 304 699 6267
     URL.revokeObjectURL(url)
   }
 
-  const filteredPatients = patients.filter((patient) => {
-    const matchesSearch =
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.phone.includes(searchTerm) ||
-      patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = filterStatus === "all" || patient.status === filterStatus
-    const matchesUrgency = filterUrgency === "all" || patient.urgency === filterUrgency
-    return matchesSearch && matchesStatus && matchesUrgency
+  // Initialize pagination with smart filtering
+  const pagination = usePagination({
+    data: patients,
+    searchTerm,
+    filters: {
+      status: filterStatus,
+      urgency: filterUrgency
+    }
   })
+
+  // Enable keyboard navigation for pagination
+  usePaginationKeyboard(pagination)
+
+  // Auto-refresh functionality
+  useEffect(() => {
+    if (pagination.settings.autoRefresh) {
+      const interval = setInterval(() => {
+        // Refresh patient data
+        const savedPatients = localStorage.getItem("gonstead_patients")
+        if (savedPatients) {
+          setPatients(JSON.parse(savedPatients))
+        }
+      }, 30000) // 30 seconds
+
+      return () => clearInterval(interval)
+    }
+  }, [pagination.settings.autoRefresh])
 
   const stats = {
     totalPatients: patients.length,
@@ -372,6 +393,50 @@ Phone: +92 304 699 6267
     pendingAppointments: patients.filter((p) => p.status === "pending").length,
     completedSessions: patients.reduce((sum, p) => sum + p.sessions, 0),
     emergencyPatients: patients.filter((p) => p.urgency === "emergency").length,
+    currentPagePatients: pagination.currentData.length,
+    totalFilteredPatients: pagination.totalRecords,
+    currentPageNumber: pagination.currentPage,
+    totalPages: pagination.totalPages,
+  }
+
+  // Export functionality for filtered results
+  const exportFilteredResults = () => {
+    const dataToExport = pagination.settings.enablePagination ? pagination.currentData : patients
+    const csvContent = generateCSVContent(dataToExport)
+    downloadCSV(csvContent, `patient-records-page-${pagination.currentPage}.csv`)
+  }
+
+  const generateCSVContent = (data: PatientRecord[]) => {
+    const headers = ['Name', 'Phone', 'Email', 'Appointment Date', 'Status', 'Urgency', 'Session Type', 'Sessions', 'Payment Method']
+    const csvRows = [
+      headers.join(','),
+      ...data.map(patient => [
+        `"${patient.name}"`,
+        `"${patient.phone}"`,
+        `"${patient.email || ''}"`,
+        `"${new Date(patient.appointmentDate).toLocaleString()}"`,
+        `"${patient.status}"`,
+        `"${patient.urgency}"`,
+        `"${patient.sessionType}"`,
+        patient.sessions.toString(),
+        `"${patient.paymentMethod}"`
+      ].join(','))
+    ]
+    return csvRows.join('\n')
+  }
+
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', filename)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
   }
 
   if (!isAuthenticated) {
@@ -845,7 +910,7 @@ Phone: +92 304 699 6267
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {filteredPatients.length === 0 ? (
+            {pagination.totalRecords === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">No Patient Records Found</h3>
@@ -867,9 +932,11 @@ Phone: +92 304 699 6267
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPatients.map((patient, index) => {
+                    {pagination.currentData.map((patient, index) => {
                       // Calculate the actual serial number based on current page and position
-                      const serialNumber = index + 1;
+                      const serialNumber = pagination.settings.enablePagination 
+                        ? (pagination.currentPage - 1) * pagination.recordsPerPage + index + 1
+                        : index + 1;
                       
                       return (
                       <TableRow key={patient.id} className="hover:bg-[#F8F5F0]/50">
@@ -1213,8 +1280,77 @@ Phone: +92 304 699 6267
                 </Table>
               </div>
             )}
+            
+            {/* Professional Pagination Navigation */}
+            {pagination.settings.enablePagination && pagination.totalPages > 1 && (
+              <PaginationNavigation
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                totalRecords={pagination.totalRecords}
+                recordsPerPage={pagination.recordsPerPage}
+                startRecord={pagination.startRecord}
+                endRecord={pagination.endRecord}
+                pageNumbers={pagination.pageNumbers}
+                hasNextPage={pagination.hasNextPage}
+                hasPreviousPage={pagination.hasPreviousPage}
+                isFirstPage={pagination.isFirstPage}
+                isLastPage={pagination.isLastPage}
+                showPageNumbers={pagination.settings.showPageNumbers}
+                showRecordCount={pagination.settings.showRecordCount}
+                showJumpToPage={pagination.settings.showJumpToPage}
+                paginationStyle={pagination.settings.paginationStyle as 'professional' | 'simple' | 'compact'}
+                onPageChange={pagination.setCurrentPage}
+                onPageSizeChange={pagination.setRecordsPerPage}
+                onGoToPage={pagination.goToPage}
+                onRefresh={() => {
+                  const savedPatients = localStorage.getItem("gonstead_patients")
+                  if (savedPatients) {
+                    setPatients(JSON.parse(savedPatients))
+                  }
+                  toast({
+                    title: "Data Refreshed",
+                    description: "Patient records have been refreshed",
+                  })
+                }}
+                onExport={exportFilteredResults}
+                className="border-t-0 rounded-b-lg"
+              />
+            )}
           </CardContent>
         </Card>
+        
+        {/* Pagination Status Card */}
+        {pagination.settings.enablePagination && (
+          <Card className="mt-4 border-[#0d5c75]/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#0d5c75] rounded-full"></div>
+                    <span>Page {pagination.currentPage} of {pagination.totalPages}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#2a9d8f] rounded-full"></div>
+                    <span>Showing {pagination.currentData.length} patients</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#f3a800] rounded-full"></div>
+                    <span>{pagination.totalRecords} total (filtered)</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span>🔧 Press ← → for navigation</span>
+                  {pagination.settings.autoRefresh && (
+                    <span className="flex items-center gap-1">
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                      Auto-refresh enabled
+                    </span>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
 
       {/* Edit Patient Dialog */}

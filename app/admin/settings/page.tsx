@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft } from "lucide-react"
+import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft, Users, List, BarChart3 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser } from "@/lib/supabase"
 import Image from "next/image"
@@ -50,6 +50,18 @@ export default function AdminSettings() {
     accentColor: "#f3a800",
   })
 
+  const [paginationSettings, setPaginationSettings] = useState({
+    recordsPerPage: 150,
+    enablePagination: true,
+    showPageNumbers: true,
+    showRecordCount: true,
+    showJumpToPage: true,
+    maxVisiblePages: 5,
+    paginationStyle: "professional", // professional, simple, compact
+    autoRefresh: false,
+    virtualScrolling: false, // for very large datasets
+  })
+
   const router = useRouter()
   const { toast } = useToast()
 
@@ -88,6 +100,7 @@ export default function AdminSettings() {
     const savedOperatingHours = localStorage.getItem("operating_hours")
     const savedNotifications = localStorage.getItem("notification_settings")
     const savedAppearance = localStorage.getItem("appearance_settings")
+    const savedPaginationSettings = localStorage.getItem("pagination_settings")
 
     if (savedClinicSettings) {
       setClinicSettings(JSON.parse(savedClinicSettings))
@@ -101,6 +114,9 @@ export default function AdminSettings() {
     if (savedAppearance) {
       setAppearance(JSON.parse(savedAppearance))
     }
+    if (savedPaginationSettings) {
+      setPaginationSettings(JSON.parse(savedPaginationSettings))
+    }
   }
 
   const saveSettings = () => {
@@ -109,6 +125,7 @@ export default function AdminSettings() {
       localStorage.setItem("operating_hours", JSON.stringify(operatingHours))
       localStorage.setItem("notification_settings", JSON.stringify(notifications))
       localStorage.setItem("appearance_settings", JSON.stringify(appearance))
+      localStorage.setItem("pagination_settings", JSON.stringify(paginationSettings))
 
       toast({
         title: "Settings Saved",
@@ -468,6 +485,143 @@ export default function AdminSettings() {
                         Accent Color
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Patient Records Pagination Settings */}
+          <Card className="border-[#0d5c75]/20 lg:col-span-2">
+            <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
+              <CardTitle className="flex items-center gap-2">
+                <List className="h-5 w-5" />
+                Patient Records Management & Pagination
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="recordsPerPage" className="text-sm font-semibold text-[#0d5c75]">Records Per Page</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="recordsPerPage"
+                        type="number"
+                        min="10"
+                        max="1000"
+                        value={paginationSettings.recordsPerPage}
+                        onChange={(e) => setPaginationSettings((prev) => ({ ...prev, recordsPerPage: parseInt(e.target.value) || 150 }))}
+                        className="w-24"
+                      />
+                      <span className="text-sm text-gray-600">patients per page</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Set to 150 for your preferred limit, or adjust as needed</p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-semibold text-[#0d5c75]">Enable Pagination</Label>
+                      <p className="text-xs text-gray-500">Turn off for unlimited scrolling (not recommended for large datasets)</p>
+                    </div>
+                    <Switch
+                      checked={paginationSettings.enablePagination}
+                      onCheckedChange={(checked) => setPaginationSettings((prev) => ({ ...prev, enablePagination: checked }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-semibold text-[#0d5c75]">Show Page Numbers</Label>
+                      <p className="text-xs text-gray-500">Display clickable page numbers in navigation</p>
+                    </div>
+                    <Switch
+                      checked={paginationSettings.showPageNumbers}
+                      onCheckedChange={(checked) => setPaginationSettings((prev) => ({ ...prev, showPageNumbers: checked }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-semibold text-[#0d5c75]">Show Record Count</Label>
+                      <p className="text-xs text-gray-500">Display "Showing X of Y records" information</p>
+                    </div>
+                    <Switch
+                      checked={paginationSettings.showRecordCount}
+                      onCheckedChange={(checked) => setPaginationSettings((prev) => ({ ...prev, showRecordCount: checked }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-semibold text-[#0d5c75]">Jump to Page</Label>
+                      <p className="text-xs text-gray-500">Allow direct navigation to specific page numbers</p>
+                    </div>
+                    <Switch
+                      checked={paginationSettings.showJumpToPage}
+                      onCheckedChange={(checked) => setPaginationSettings((prev) => ({ ...prev, showJumpToPage: checked }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="maxVisiblePages" className="text-sm font-semibold text-[#0d5c75]">Max Visible Page Numbers</Label>
+                    <Select
+                      value={paginationSettings.maxVisiblePages.toString()}
+                      onValueChange={(value) => setPaginationSettings((prev) => ({ ...prev, maxVisiblePages: parseInt(value) }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="3">3 pages</SelectItem>
+                        <SelectItem value="5">5 pages</SelectItem>
+                        <SelectItem value="7">7 pages</SelectItem>
+                        <SelectItem value="10">10 pages</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">Number of page buttons to show at once</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="paginationStyle" className="text-sm font-semibold text-[#0d5c75]">Pagination Style</Label>
+                    <Select
+                      value={paginationSettings.paginationStyle}
+                      onValueChange={(value) => setPaginationSettings((prev) => ({ ...prev, paginationStyle: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="simple">Simple</SelectItem>
+                        <SelectItem value="compact">Compact</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">Choose the pagination UI style</p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-semibold text-[#0d5c75]">Auto Refresh</Label>
+                      <p className="text-xs text-gray-500">Automatically refresh data every 30 seconds</p>
+                    </div>
+                    <Switch
+                      checked={paginationSettings.autoRefresh}
+                      onCheckedChange={(checked) => setPaginationSettings((prev) => ({ ...prev, autoRefresh: checked }))}
+                    />
+                  </div>
+
+                  <div className="bg-gradient-to-r from-[#0d5c75]/10 to-[#2a9d8f]/10 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Smart Pagination Features</h4>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      <li>• Automatic page generation when limit is exceeded</li>
+                      <li>• Intelligent memory management for large datasets</li>
+                      <li>• Quick navigation with keyboard shortcuts</li>
+                      <li>• Export functionality for filtered results</li>
+                      <li>• Real-time search across all pages</li>
+                    </ul>
                   </div>
                 </div>
               </div>
