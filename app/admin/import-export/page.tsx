@@ -49,7 +49,7 @@ import {
   type Patient,
 } from "@/lib/supabase"
 import Image from "next/image"
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 interface ImportedPatient extends Patient {
   importStatus?: 'success' | 'error' | 'pending'
@@ -232,12 +232,45 @@ export default function ImportExportPage() {
         patient.last_visit || ""
       ])
 
-      const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data])
-      const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Patients")
+      // Create ExcelJS workbook and worksheet
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Patients')
+      
+      // Add headers
+      worksheet.addRow(headers)
+      
+      // Add data rows
+      data.forEach(row => {
+        worksheet.addRow(row)
+      })
+      
+      // Style the header row
+      const headerRow = worksheet.getRow(1)
+      headerRow.font = { bold: true }
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF0D5C75' }
+      }
+      
+      // Auto-size columns
+      worksheet.columns.forEach(column => {
+        column.width = 15
+      })
+      
+      // Generate buffer and download
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
       
       const filename = `gonstead_patients_${new Date().toISOString().split('T')[0]}.xlsx`
-      XLSX.writeFile(workbook, filename)
+      link.setAttribute('href', url)
+      link.setAttribute('download', filename)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
       
       // Add to history
       const newRecord: ImportExportRecord = {
@@ -382,12 +415,32 @@ export default function ImportExportPage() {
     }
   }
 
-  const parseExcelData = (arrayBuffer: ArrayBuffer) => {
+  const parseExcelData = async (arrayBuffer: ArrayBuffer) => {
     try {
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' })
-      const sheetName = workbook.SheetNames[0]
-      const sheet = workbook.Sheets[sheetName]
-      const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][]
+      // Create ExcelJS workbook from buffer
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.load(arrayBuffer)
+      
+      // Get first worksheet
+      const worksheet = workbook.getWorksheet(1)
+      if (!worksheet) {
+        toast({
+          title: "Empty File",
+          description: "The Excel file appears to be empty",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      // Convert worksheet to array format
+      const jsonData: any[][] = []
+      worksheet.eachRow((row, rowNumber) => {
+        const rowData: any[] = []
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          rowData[colNumber - 1] = cell.value
+        })
+        jsonData.push(rowData)
+      })
       
       if (jsonData.length === 0) {
         toast({

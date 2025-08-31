@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Progress } from "@/components/ui/progress"
 import { 
   Eye, 
   Users, 
@@ -27,9 +28,17 @@ import {
   BarChart3,
   PieChart,
   LineChart,
-  FileText
+  FileText,
+  Zap,
+  MapPin,
+  Flag,
+  Timer,
+  Gauge,
+  Wifi,
+  Database,
+  TrendingUp as Trending
 } from "lucide-react"
-import { LineChart as RechartsLineChart, BarChart as RechartsBarChart, PieChart as RechartsPieChart, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, Bar, Pie } from 'recharts'
+import { LineChart as RechartsLineChart, BarChart as RechartsBarChart, PieChart as RechartsPieChart, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, Bar, Pie, AreaChart, Area } from 'recharts'
 
 interface AnalyticsData {
   activeVisitors: number
@@ -38,11 +47,57 @@ interface AnalyticsData {
   avgSessionDuration: number
   bounceRate: number
   topPages: Array<{ page: string; views: number }>
+  enhancedPageStats: Array<{ 
+    page: string; 
+    views: number; 
+    avgTimeOnPage: number; 
+    bounceRate: number; 
+    avgLoadTime: number;
+    totalTimeSpent: number;
+  }>
   trafficSources: Array<{ source: string; visitors: number }>
-  deviceStats: Array<{ type: string; count: number; percentage: number }>
+  deviceStats: Array<{ 
+    type: string; 
+    count: number; 
+    percentage: number;
+    browsers: Array<{ browser: string; count: number }>;
+    operatingSystems: Array<{ os: string; count: number }>;
+  }>
   browserStats: Array<{ browser: string; count: number; percentage: number }>
+  countryStats: Array<{ 
+    country: string; 
+    visitors: number; 
+    percentage: number;
+    cities: Array<{ city: string; visitors: number }>;
+  }>
+  locationStats: Array<{ 
+    country: string; 
+    visitors: number; 
+    percentage: number;
+    cities: Array<{ city: string; visitors: number }>;
+  }>
+  performanceInsights: {
+    avgPageLoadTime: number;
+    slowestPages: Array<{ page: string; loadTime: number }>;
+    webVitals: {
+      lcp: number;
+      fid: number;
+      cls: number;
+      ttfb: number;
+      fcp: number;
+    } | null;
+  }
   hourlyData: Array<{ hour: number; time: string; pageViews: number; uniqueVisitors: number }>
-  recentActivity: Array<{ timestamp: string; page: string; title: string; referrer: string; device: any; visitorId: string }>
+  recentActivity: Array<{ 
+    timestamp: string; 
+    page: string; 
+    title: string; 
+    referrer: string; 
+    device: any; 
+    visitorId: string;
+    location?: any;
+    performance?: any;
+  }>
   totalSessions: number
   newVisitors: number
   returningVisitors: number
@@ -83,14 +138,15 @@ export default function WebsiteAnalyticsPage() {
   const chartColors = ['#0d5c75', '#2a9d8f', '#e76f51', '#f4a261', '#e9c46a', '#264653']
 
   // Export functionality
-  const exportData = async (format: 'csv' | 'pdf') => {
+  const exportData = async (format: 'csv' | 'excel' | 'pdf') => {
     try {
       const response = await fetch(`/api/analytics/export?format=${format}&timeframe=${timeframe}`)
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `website-analytics-${timeframe}.${format}`
+      const extension = format === 'excel' ? 'xlsx' : format === 'pdf' ? 'html' : format
+      a.download = `website-analytics-${timeframe}.${extension}`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -98,6 +154,44 @@ export default function WebsiteAnalyticsPage() {
     } catch (error) {
       console.error('Export failed:', error)
     }
+  }
+
+  // Get country flag emoji
+  const getCountryFlag = (countryCode: string) => {
+    const flagMap: Record<string, string> = {
+      'US': '🇺🇸', 'CA': '🇨🇦', 'GB': '🇬🇧', 'DE': '🇩🇪', 'FR': '🇫🇷',
+      'IT': '🇮🇹', 'ES': '🇪🇸', 'NL': '🇳🇱', 'AU': '🇦🇺', 'JP': '🇯🇵',
+      'CN': '🇨🇳', 'IN': '🇮🇳', 'BR': '🇧🇷', 'MX': '🇲🇽', 'RU': '🇷🇺',
+      'KR': '🇰🇷', 'SG': '🇸🇬', 'HK': '🇭🇰', 'TW': '🇹🇼', 'TH': '🇹🇭',
+      'Unknown': '🌍'
+    }
+    
+    return flagMap[countryCode] || '🌍'
+  }
+
+  // Performance score calculation
+  const getPerformanceScore = (webVitals: any) => {
+    if (!webVitals) return 0
+    
+    let score = 100
+    
+    // LCP (Largest Contentful Paint) - Good: <2.5s, Poor: >4s
+    if (webVitals.lcp > 4000) score -= 25
+    else if (webVitals.lcp > 2500) score -= 10
+    
+    // FID (First Input Delay) - Good: <100ms, Poor: >300ms
+    if (webVitals.fid > 300) score -= 25
+    else if (webVitals.fid > 100) score -= 10
+    
+    // CLS (Cumulative Layout Shift) - Good: <0.1, Poor: >0.25
+    if (webVitals.cls > 0.25) score -= 25
+    else if (webVitals.cls > 0.1) score -= 10
+    
+    // TTFB (Time to First Byte) - Good: <800ms, Poor: >1800ms
+    if (webVitals.ttfb > 1800) score -= 15
+    else if (webVitals.ttfb > 800) score -= 8
+    
+    return Math.max(0, score)
   }
 
   if (loading && !analyticsData) {
@@ -305,10 +399,18 @@ export default function WebsiteAnalyticsPage() {
 
       {/* Charts and Detailed Analytics */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:grid-cols-7">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Overview
+          </TabsTrigger>
+          <TabsTrigger value="countries" className="flex items-center gap-2">
+            <Flag className="h-4 w-4" />
+            Countries
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Performance
           </TabsTrigger>
           <TabsTrigger value="traffic" className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
@@ -421,6 +523,202 @@ export default function WebsiteAnalyticsPage() {
                       <Legend />
                     </RechartsPieChart>
                   </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Countries Tab */}
+        <TabsContent value="countries" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Countries Distribution */}
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Flag className="h-5 w-5" />
+                  Visitor Countries
+                </CardTitle>
+                <CardDescription>Geographic distribution of your visitors</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {(analyticsData?.countryStats || []).slice(0, 10).map((country, index) => (
+                    <div key={country.country} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">
+                          {getCountryFlag(country.country)}
+                        </span>
+                        <div>
+                          <span className="font-medium">{country.country}</span>
+                          <p className="text-xs text-gray-500">
+                            {country.cities.length > 0 && `Top city: ${country.cities[0].city}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <span className="text-sm font-semibold">{country.visitors}</span>
+                          <p className="text-xs text-gray-500">visitors</p>
+                        </div>
+                        <Badge variant="outline" className="font-semibold">
+                          {country.percentage}%
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                  {(!analyticsData?.countryStats || analyticsData.countryStats.length === 0) && (
+                    <div className="text-center py-8 text-gray-500">
+                      <MapPin className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No location data available yet</p>
+                      <p className="text-sm">Location data will appear as visitors browse your website</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* World Map Visualization */}
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  Global Reach
+                </CardTitle>
+                <CardDescription>Your website's worldwide audience</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80 flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 rounded-lg">
+                  <div className="text-center">
+                    <Globe className="h-16 w-16 mx-auto mb-4 text-[#0d5c75] opacity-60" />
+                    <h3 className="text-lg font-semibold text-[#0d5c75] mb-2">Global Analytics</h3>
+                    <p className="text-gray-600 mb-4">Tracking visitors from around the world</p>
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold text-[#0d5c75]">
+                          {analyticsData?.countryStats?.length || 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Countries</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-[#0d5c75]">
+                          {analyticsData?.countryStats?.reduce((sum, country) => 
+                            sum + country.cities.length, 0) || 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Cities</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Performance Score */}
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Gauge className="h-5 w-5" />
+                  Performance Score
+                </CardTitle>
+                <CardDescription>Overall website performance based on Core Web Vitals</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {analyticsData?.performanceInsights?.webVitals ? (
+                    <>
+                      <div className="text-center">
+                        <div className="text-4xl font-bold text-[#0d5c75] mb-2">
+                          {getPerformanceScore(analyticsData.performanceInsights.webVitals)}
+                        </div>
+                        <div className="text-gray-600">Performance Score</div>
+                        <Progress 
+                          value={getPerformanceScore(analyticsData.performanceInsights.webVitals)} 
+                          className="w-full mt-3" 
+                        />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">LCP (Largest Contentful Paint)</span>
+                          <span className="font-semibold">
+                            {(analyticsData.performanceInsights.webVitals.lcp / 1000).toFixed(2)}s
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">FID (First Input Delay)</span>
+                          <span className="font-semibold">
+                            {analyticsData.performanceInsights.webVitals.fid.toFixed(0)}ms
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">CLS (Cumulative Layout Shift)</span>
+                          <span className="font-semibold">
+                            {analyticsData.performanceInsights.webVitals.cls.toFixed(3)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">TTFB (Time to First Byte)</span>
+                          <span className="font-semibold">
+                            {(analyticsData.performanceInsights.webVitals.ttfb / 1000).toFixed(2)}s
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Zap className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No performance data available yet</p>
+                      <p className="text-sm">Performance metrics will appear as users interact with your website</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Slowest Pages */}
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Timer className="h-5 w-5" />
+                  Page Load Times
+                </CardTitle>
+                <CardDescription>Pages that need optimization</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {(analyticsData?.performanceInsights?.slowestPages || []).slice(0, 8).map((page, index) => (
+                    <div key={page.page} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-white bg-red-500 rounded-full w-6 h-6 flex items-center justify-center">
+                          {index + 1}
+                        </span>
+                        <span className="font-medium text-sm truncate max-w-40">{page.page}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-red-600">
+                          {(page.loadTime / 1000).toFixed(2)}s
+                        </span>
+                        <span className="text-xs text-gray-500">load time</span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {analyticsData?.performanceInsights && (
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Database className="h-5 w-5 text-blue-600" />
+                        <span className="font-semibold text-blue-900">Average Load Time</span>
+                      </div>
+                      <div className="text-2xl font-bold text-blue-700">
+                        {(analyticsData.performanceInsights.avgPageLoadTime / 1000).toFixed(2)}s
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -580,7 +878,7 @@ export default function WebsiteAnalyticsPage() {
           <Card className="bg-white shadow-lg border-0">
             <CardHeader>
               <CardTitle>Page Performance Analytics</CardTitle>
-              <CardDescription>Detailed breakdown of page visits and engagement</CardDescription>
+              <CardDescription>Detailed breakdown of page visits, engagement, and time spent</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -589,39 +887,60 @@ export default function WebsiteAnalyticsPage() {
                     <tr className="border-b border-gray-200">
                       <th className="text-left p-3 text-sm font-semibold text-gray-600">Page</th>
                       <th className="text-right p-3 text-sm font-semibold text-gray-600">Views</th>
-                      <th className="text-right p-3 text-sm font-semibold text-gray-600">% of Total</th>
-                      <th className="text-right p-3 text-sm font-semibold text-gray-600">Trend</th>
+                      <th className="text-right p-3 text-sm font-semibold text-gray-600">Avg. Time</th>
+                      <th className="text-right p-3 text-sm font-semibold text-gray-600">Bounce Rate</th>
+                      <th className="text-right p-3 text-sm font-semibold text-gray-600">Load Time</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(analyticsData?.topPages || []).map((page, index) => (
+                    {(analyticsData?.enhancedPageStats || []).map((page, index) => (
                       <tr key={page.page} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="p-3">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-white bg-[#0d5c75] rounded-full w-5 h-5 flex items-center justify-center">
                               {index + 1}
                             </span>
-                            <span className="font-medium">{page.page}</span>
+                            <span className="font-medium text-sm">{page.page}</span>
                           </div>
                         </td>
-                        <td className="p-3 text-right font-semibold">{page.views.toLocaleString()}</td>
                         <td className="p-3 text-right">
-                          <Badge variant="outline">
+                          <div className="font-semibold">{page.views.toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">
                             {analyticsData && analyticsData.totalPageViews > 0 
                               ? ((page.views / analyticsData.totalPageViews) * 100).toFixed(1)
                               : 0}%
+                          </div>
+                        </td>
+                        <td className="p-3 text-right">
+                          <div className="font-semibold text-[#0d5c75]">
+                            {Math.floor(page.avgTimeOnPage / 60)}:{(page.avgTimeOnPage % 60).toString().padStart(2, '0')}
+                          </div>
+                          <div className="text-xs text-gray-500">mm:ss</div>
+                        </td>
+                        <td className="p-3 text-right">
+                          <Badge variant={page.bounceRate > 70 ? "destructive" : page.bounceRate > 40 ? "secondary" : "outline"} className="text-xs">
+                            {page.bounceRate}%
                           </Badge>
                         </td>
                         <td className="p-3 text-right">
-                          <TrendingUp className="h-4 w-4 text-green-500 inline" />
+                          <div className="font-semibold text-sm">
+                            {(page.avgLoadTime / 1000).toFixed(2)}s
+                          </div>
+                          <div className={`text-xs ${
+                            page.avgLoadTime < 2000 ? 'text-green-600' : 
+                            page.avgLoadTime < 4000 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {page.avgLoadTime < 2000 ? 'Fast' : page.avgLoadTime < 4000 ? 'Average' : 'Slow'}
+                          </div>
                         </td>
                       </tr>
                     ))}
-                    {(!analyticsData?.topPages || analyticsData.topPages.length === 0) && (
+                    {(!analyticsData?.enhancedPageStats || analyticsData.enhancedPageStats.length === 0) && (
                       <tr>
-                        <td colSpan={4} className="p-8 text-center text-gray-500">
+                        <td colSpan={5} className="p-8 text-center text-gray-500">
                           <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                           <p>No page data available yet</p>
+                          <p className="text-sm mt-2">Enhanced page metrics will appear as visitors browse your website</p>
                         </td>
                       </tr>
                     )}
@@ -742,6 +1061,10 @@ export default function WebsiteAnalyticsPage() {
             <Button onClick={() => exportData('csv')} className="bg-[#0d5c75] hover:bg-[#0d5c75]/90">
               <Download className="h-4 w-4 mr-2" />
               Export CSV Report
+            </Button>
+            <Button onClick={() => exportData('excel')} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export Excel Report
             </Button>
             <Button onClick={() => exportData('pdf')} variant="outline">
               <Download className="h-4 w-4 mr-2" />

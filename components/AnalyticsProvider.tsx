@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals'
 
 interface AnalyticsProviderProps {
   children: React.ReactNode
@@ -11,6 +12,8 @@ export default function AnalyticsProvider({ children }: AnalyticsProviderProps) 
   const pathname = usePathname()
   const [isClient, setIsClient] = useState(false)
   const [analyticsTracker, setAnalyticsTracker] = useState<any>(null)
+  const [pageStartTime, setPageStartTime] = useState<Date>(new Date())
+  const [webVitalsTracked, setWebVitalsTracked] = useState<Set<string>>(new Set())
 
   // Ensure we're on the client side
   useEffect(() => {
@@ -30,11 +33,104 @@ export default function AnalyticsProvider({ children }: AnalyticsProviderProps) 
 
     try {
       const title = document?.title || 'Unknown Page'
+      setPageStartTime(new Date())
       analyticsTracker.trackPageView(pathname, title)
+      
+      // Track performance metrics for new page
+      setTimeout(() => {
+        trackPagePerformance(pathname)
+      }, 1000) // Wait for page to load
+      
     } catch (error) {
       console.error('Error tracking page view:', error)
     }
   }, [pathname, isClient, analyticsTracker])
+
+  // Web Vitals tracking
+  useEffect(() => {
+    if (!isClient || !analyticsTracker) return
+
+    const trackWebVital = (metric: any) => {
+      try {
+        const vitalsKey = `${pathname}-${metric.name}`
+        if (webVitalsTracked.has(vitalsKey)) return
+        
+        setWebVitalsTracked(prev => new Set([...prev, vitalsKey]))
+        
+        // Send web vitals data
+        fetch('/api/analytics/track', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'web_vitals',
+            data: {
+              page: pathname,
+              vitals: {
+                [metric.name.toLowerCase()]: metric.value
+              }
+            }
+          })
+        }).catch(error => {
+          console.error('Web vitals tracking error:', error)
+        })
+      } catch (error) {
+        console.error('Error tracking web vital:', error)
+      }
+    }
+
+    // Set up Web Vitals tracking
+    onCLS(trackWebVital)
+    onINP(trackWebVital)
+    onFCP(trackWebVital)
+    onLCP(trackWebVital)
+    onTTFB(trackWebVital)
+    
+  }, [pathname, isClient, analyticsTracker, webVitalsTracked])
+
+  // Track page performance
+  const trackPagePerformance = (page: string) => {
+    if (!isClient || typeof window === 'undefined') return
+    
+    try {
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
+      if (navigation) {
+        const loadTime = navigation.loadEventEnd - navigation.fetchStart
+        const renderTime = navigation.domContentLoadedEventEnd - navigation.fetchStart
+        
+        // Get connection info if available
+        const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection
+        const networkSpeed = connection ? connection.effectiveType || 'unknown' : 'unknown'
+        
+        // Send performance data
+        fetch('/api/analytics/track', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'performance',
+            data: {
+              page,
+              loadTime,
+              renderTime,
+              networkSpeed,
+              performance: {
+                loadTime,
+                renderTime,
+                networkSpeed
+              }
+            }
+          })
+        }).catch(error => {
+          console.error('Performance tracking error:', error)
+        })
+      }
+    } catch (error) {
+      console.error('Error tracking page performance:', error)
+    }
+  }
 
   // Initialize tracking
   useEffect(() => {

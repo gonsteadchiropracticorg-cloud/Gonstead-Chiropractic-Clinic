@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/components/language-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next"
 import AnalyticsProvider from "@/components/AnalyticsProvider"
 
 const poppins = Poppins({
@@ -93,6 +94,7 @@ export default function RootLayout({
             </AnalyticsProvider>
             <Toaster />
             <SpeedInsights />
+            <Analytics />
           </ThemeProvider>
         </ErrorBoundary>
       </body>

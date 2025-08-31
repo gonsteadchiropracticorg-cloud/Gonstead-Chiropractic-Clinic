@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
+import geoip from 'geoip-lite'
 
 // In-memory storage for demo (in production, use a database)
 interface AnalyticsEvent {
@@ -8,11 +9,31 @@ interface AnalyticsEvent {
   data: any
   timestamp: Date
   ipAddress?: string
+  location?: {
+    country: string
+    region: string
+    city: string
+    timezone: string
+    ll?: number[]
+  }
+  performance?: {
+    loadTime?: number
+    renderTime?: number
+    networkSpeed?: string
+    webVitals?: {
+      lcp?: number
+      fid?: number
+      cls?: number
+      ttfb?: number
+      fcp?: number
+    }
+  }
 }
 
 // Global storage for analytics data
 const analyticsData: AnalyticsEvent[] = []
 const activeSessions = new Map<string, any>()
+const pagePerformance = new Map<string, any>()
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +45,27 @@ export async function POST(request: NextRequest) {
     const clientIP = headersList.get('x-forwarded-for') || 
                     headersList.get('x-real-ip') || 
                     request.ip || 
-                    'unknown'
+                    '127.0.0.1' // fallback for development
+
+    // Get geolocation data
+    let location = undefined
+    try {
+      const geo = geoip.lookup(clientIP === '127.0.0.1' ? '8.8.8.8' : clientIP) // Use Google DNS for demo
+      if (geo) {
+        location = {
+          country: geo.country || 'Unknown',
+          region: geo.region || 'Unknown', 
+          city: geo.city || 'Unknown',
+          timezone: geo.timezone || 'Unknown',
+          ll: geo.ll
+        }
+      }
+    } catch (geoError) {
+      console.warn('Geolocation lookup failed:', geoError)
+    }
+
+    // Extract performance data if available
+    const performance = data.performance || {}
 
     // Create analytics event
     const event: AnalyticsEvent = {
@@ -35,7 +76,9 @@ export async function POST(request: NextRequest) {
         ipAddress: clientIP
       },
       timestamp: new Date(),
-      ipAddress: clientIP
+      ipAddress: clientIP,
+      location,
+      performance
     }
 
     // Store the event
@@ -51,6 +94,12 @@ export async function POST(request: NextRequest) {
         break
       case 'heartbeat':
         handleHeartbeat(event)
+        break
+      case 'performance':
+        handlePerformanceMetrics(event)
+        break
+      case 'web_vitals':
+        handleWebVitals(event)
         break
       case 'event':
         handleCustomEvent(event)
@@ -96,6 +145,7 @@ function handlePageView(event: AnalyticsEvent) {
       referrer: event.data.referrer || '',
       userAgent: event.data.userAgent || '',
       device: event.data.device || {},
+      location: event.location,
       isActive: true
     })
   }
@@ -103,17 +153,43 @@ function handlePageView(event: AnalyticsEvent) {
   const session = activeSessions.get(sessionId)
   session.lastActivity = event.timestamp
   session.pageViews += 1
+  session.location = event.location || session.location
   if (!session.pages.includes(page)) {
     session.pages.push(page)
   }
+
+  // Initialize page performance tracking
+  if (!pagePerformance.has(page)) {
+    pagePerformance.set(page, {
+      totalViews: 0,
+      totalTimeSpent: 0,
+      bounces: 0,
+      avgLoadTime: 0,
+      webVitals: []
+    })
+  }
+  
+  const pageStats = pagePerformance.get(page)
+  pageStats.totalViews += 1
 }
 
 function handlePageExit(event: AnalyticsEvent) {
-  const { sessionId, timeOnPage } = event.data
+  const { sessionId, timeOnPage, page } = event.data
   
   if (activeSessions.has(sessionId)) {
     const session = activeSessions.get(sessionId)
     session.lastActivity = event.timestamp
+  }
+
+  // Update page performance stats
+  if (timeOnPage && page && pagePerformance.has(page)) {
+    const pageStats = pagePerformance.get(page)
+    pageStats.totalTimeSpent += timeOnPage
+    
+    // Track bounce if time on page is less than 30 seconds
+    if (timeOnPage < 30000) {
+      pageStats.bounces += 1
+    }
   }
 }
 
@@ -127,10 +203,36 @@ function handleHeartbeat(event: AnalyticsEvent) {
   }
 }
 
+function handlePerformanceMetrics(event: AnalyticsEvent) {
+  const { page, loadTime, renderTime, networkSpeed } = event.data
+  
+  if (page && pagePerformance.has(page)) {
+    const pageStats = pagePerformance.get(page)
+    
+    if (loadTime) {
+      pageStats.avgLoadTime = pageStats.avgLoadTime 
+        ? (pageStats.avgLoadTime + loadTime) / 2 
+        : loadTime
+    }
+  }
+}
+
+function handleWebVitals(event: AnalyticsEvent) {
+  const { page, vitals } = event.data
+  
+  if (page && vitals && pagePerformance.has(page)) {
+    const pageStats = pagePerformance.get(page)
+    pageStats.webVitals.push({
+      ...vitals,
+      timestamp: event.timestamp
+    })
+  }
+}
+
 function handleCustomEvent(event: AnalyticsEvent) {
   // Store custom events for analysis
   console.log('Custom event tracked:', event.data.eventType, event.data.data)
 }
 
 // Export analytics data for use by other API endpoints
-export { analyticsData, activeSessions }
+export { analyticsData, activeSessions, pagePerformance }

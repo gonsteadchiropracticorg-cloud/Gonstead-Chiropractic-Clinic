@@ -3,12 +3,14 @@ import { NextRequest, NextResponse } from 'next/server'
 // Import in-memory storage from tracking endpoint
 let analyticsData: any[] = []
 let activeSessions = new Map<string, any>()
+let pagePerformance = new Map<string, any>()
 
 // Try to import from track route, fallback to empty arrays
 try {
   const trackModule = require('../track/route')
   analyticsData = trackModule.analyticsData || []
   activeSessions = trackModule.activeSessions || new Map()
+  pagePerformance = trackModule.pagePerformance || new Map()
 } catch (error) {
   console.log('Using fallback analytics data')
 }
@@ -104,17 +106,55 @@ function calculateStats(events: any[], sessions: any[]) {
     ? (sessions.filter(session => session.pageViews === 1).length / sessions.length) * 100
     : 0
 
-  // Top pages
-  const pageCounts = pageViews.reduce((acc: any, event) => {
-    const page = event.data.page || 'Unknown'
-    acc[page] = (acc[page] || 0) + 1
+  // Country/Location statistics
+  const locationCounts = sessions.reduce((acc: any, session) => {
+    const country = session.location?.country || 'Unknown'
+    const city = session.location?.city || 'Unknown'
+    const locationKey = `${country}|${city}`
+    
+    if (!acc[country]) {
+      acc[country] = { country, cities: {}, totalVisitors: 0 }
+    }
+    acc[country].totalVisitors += 1
+    acc[country].cities[city] = (acc[country].cities[city] || 0) + 1
+    
     return acc
   }, {})
 
-  const topPages = Object.entries(pageCounts)
-    .map(([page, views]) => ({ page, views }))
-    .sort((a: any, b: any) => b.views - a.views)
-    .slice(0, 10)
+  const countryStats = Object.values(locationCounts)
+    .map((country: any) => ({
+      country: country.country,
+      visitors: country.totalVisitors,
+      percentage: totalSessions > 0 ? Math.round((country.totalVisitors / totalSessions) * 100) : 0,
+      cities: Object.entries(country.cities)
+        .map(([city, count]) => ({ city, visitors: count }))
+        .sort((a: any, b: any) => b.visitors - a.visitors)
+        .slice(0, 5)
+    }))
+    .sort((a: any, b: any) => b.visitors - a.visitors)
+
+  // Top pages with enhanced metrics
+  const pageStats = Array.from(pagePerformance.entries()).map(([page, stats]) => {
+    const pageViewsForPage = pageViews.filter(view => view.data.page === page).length
+    const avgTimeOnPage = stats.totalTimeSpent > 0 && stats.totalViews > 0 
+      ? Math.round(stats.totalTimeSpent / stats.totalViews / 1000) // Convert to seconds
+      : 0
+    const bounceRateForPage = stats.totalViews > 0 
+      ? Math.round((stats.bounces / stats.totalViews) * 100)
+      : 0
+    
+    return {
+      page,
+      views: pageViewsForPage,
+      avgTimeOnPage,
+      bounceRate: bounceRateForPage,
+      avgLoadTime: Math.round(stats.avgLoadTime || 0),
+      totalTimeSpent: Math.round(stats.totalTimeSpent / 1000) // Convert to seconds
+    }
+  }).sort((a, b) => b.views - a.views).slice(0, 10)
+
+  // Legacy top pages for backward compatibility
+  const topPages = pageStats.map(page => ({ page: page.page, views: page.views }))
 
   // Traffic sources
   const sourceCounts = sessions.reduce((acc: any, session) => {
@@ -127,20 +167,36 @@ function calculateStats(events: any[], sessions: any[]) {
     .map(([source, visitors]) => ({ source, visitors }))
     .sort((a: any, b: any) => b.visitors - a.visitors)
 
-  // Device statistics
+  // Enhanced device statistics
   const deviceCounts = sessions.reduce((acc: any, session) => {
     const deviceType = session.device?.type || 'Unknown'
-    acc[deviceType] = (acc[deviceType] || 0) + 1
+    const os = session.device?.os || 'Unknown'
+    const browser = session.device?.browser || 'Unknown'
+    
+    if (!acc[deviceType]) {
+      acc[deviceType] = { browsers: {}, os: {}, count: 0 }
+    }
+    
+    acc[deviceType].count += 1
+    acc[deviceType].browsers[browser] = (acc[deviceType].browsers[browser] || 0) + 1
+    acc[deviceType].os[os] = (acc[deviceType].os[os] || 0) + 1
+    
     return acc
   }, {})
 
-  const totalSessions = sessions.length
   const deviceStats = Object.entries(deviceCounts)
-    .map(([type, count]) => ({
+    .map(([type, data]: [string, any]) => ({
       type,
-      count: count as number,
-      percentage: totalSessions > 0 ? Math.round(((count as number) / totalSessions) * 100) : 0
+      count: data.count,
+      percentage: totalSessions > 0 ? Math.round((data.count / totalSessions) * 100) : 0,
+      browsers: Object.entries(data.browsers)
+        .map(([browser, count]) => ({ browser, count }))
+        .sort((a: any, b: any) => b.count - a.count),
+      operatingSystems: Object.entries(data.os)
+        .map(([os, count]) => ({ os, count }))
+        .sort((a: any, b: any) => b.count - a.count)
     }))
+    .sort((a, b) => b.count - a.count)
 
   // Browser statistics
   const browserCounts = sessions.reduce((acc: any, session) => {
@@ -156,10 +212,31 @@ function calculateStats(events: any[], sessions: any[]) {
       percentage: totalSessions > 0 ? Math.round(((count as number) / totalSessions) * 100) : 0
     }))
 
+  // Performance metrics from Web Vitals
+  const webVitalsData = events.filter(event => event.type === 'web_vitals')
+  const avgWebVitals = webVitalsData.length > 0 ? {
+    lcp: webVitalsData.reduce((sum, event) => sum + (event.data.vitals?.lcp || 0), 0) / webVitalsData.length,
+    fid: webVitalsData.reduce((sum, event) => sum + (event.data.vitals?.fid || 0), 0) / webVitalsData.length,
+    cls: webVitalsData.reduce((sum, event) => sum + (event.data.vitals?.cls || 0), 0) / webVitalsData.length,
+    ttfb: webVitalsData.reduce((sum, event) => sum + (event.data.vitals?.ttfb || 0), 0) / webVitalsData.length,
+    fcp: webVitalsData.reduce((sum, event) => sum + (event.data.vitals?.fcp || 0), 0) / webVitalsData.length
+  } : null
+
+  // Real-time performance insights
+  const performanceInsights = {
+    avgPageLoadTime: Array.from(pagePerformance.values())
+      .reduce((sum: number, page: any) => sum + (page.avgLoadTime || 0), 0) / Math.max(pagePerformance.size, 1),
+    slowestPages: Array.from(pagePerformance.entries())
+      .map(([page, stats]: [string, any]) => ({ page, loadTime: stats.avgLoadTime || 0 }))
+      .sort((a, b) => b.loadTime - a.loadTime)
+      .slice(0, 5),
+    webVitals: avgWebVitals
+  }
+
   // Hourly data for charts
   const hourlyData = generateHourlyData(pageViews)
 
-  // Recent activity
+  // Enhanced recent activity with location
   const recentActivity = events
     .filter(event => event.type === 'pageview')
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
@@ -170,7 +247,9 @@ function calculateStats(events: any[], sessions: any[]) {
       title: event.data.title,
       referrer: event.data.referrer,
       device: event.data.device,
-      visitorId: event.data.visitorId
+      visitorId: event.data.visitorId,
+      location: event.location,
+      performance: event.performance
     }))
 
   return {
@@ -180,9 +259,13 @@ function calculateStats(events: any[], sessions: any[]) {
     avgSessionDuration: Math.round(avgSessionDuration),
     bounceRate: Math.round(bounceRate),
     topPages,
+    enhancedPageStats: pageStats,
     trafficSources,
     deviceStats,
     browserStats,
+    countryStats,
+    locationStats: countryStats, // alias for backward compatibility
+    performanceInsights,
     hourlyData,
     recentActivity,
     totalSessions: sessions.length,
