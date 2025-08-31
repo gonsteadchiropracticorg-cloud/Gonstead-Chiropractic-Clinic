@@ -23,7 +23,7 @@ import {
   Eye,
   Users
 } from 'lucide-react'
-import { getCurrentUser, signOut } from '@/lib/supabase'
+import { getCurrentUser, signOutAdmin } from '@/lib/supabase'
 
 interface Appointment {
   id: string
@@ -209,7 +209,7 @@ export default function StaffDashboard() {
 
   const handleSignOut = async () => {
     try {
-      await signOut()
+      await signOutAdmin()
       localStorage.removeItem('staff_authenticated')
       localStorage.removeItem('staff_email')
       localStorage.removeItem('staff_user_id')
