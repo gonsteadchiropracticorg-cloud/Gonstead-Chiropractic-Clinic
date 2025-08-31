@@ -22,6 +22,7 @@ import { TrendingUp, Users, DollarSign, Download, ArrowLeft, Activity, Target, A
 import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser, getPatients } from "@/lib/supabase"
 import Image from "next/image"
+import VisitorAnalytics from "@/components/visitor-analytics"
 
 export default function AdminAnalytics() {
   const [isLoading, setIsLoading] = useState(true)
@@ -309,7 +310,7 @@ export default function AdminAnalytics() {
         </div>
 
         {/* Pie Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Session Types */}
           <Card className="border-[#0d5c75]/20">
             <CardHeader>
@@ -365,6 +366,15 @@ export default function AdminAnalytics() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Visitor Analytics Section */}
+        <div className="mb-8">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-[#0d5c75] font-poppins mb-2">Website Visitor Analytics</h2>
+            <p className="text-gray-600">Track website performance and visitor engagement metrics</p>
+          </div>
+          <VisitorAnalytics />
         </div>
       </main>
     </div>

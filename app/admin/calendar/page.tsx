@@ -24,6 +24,7 @@ import {
   type Patient 
 } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import Image from 'next/image'
 
 export default function CalendarPage() {
   const [patients, setPatients] = useState<Patient[]>([])
@@ -191,7 +192,7 @@ export default function CalendarPage() {
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
-                onClick={() => router.push('/admin')}
+                onClick={() => router.push('/admin/dashboard')}
                 className="text-white hover:bg-white/10 flex items-center gap-2"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -201,18 +202,31 @@ export default function CalendarPage() {
               
               <div className="h-8 w-px bg-white/30"></div>
               
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-white/20 rounded-full blur-lg animate-pulse"></div>
-                  <CalendarIcon className="h-8 w-8 relative z-10" />
+              {/* Professional Logo Section */}
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-lg">
+                  <Image
+                    src="/images/gonstead-chiropractic-logo-new.png"
+                    alt="Gonstead Chiropractic Logo"
+                    width={36}
+                    height={36}
+                    className="object-contain"
+                    priority
+                  />
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold font-poppins">
-                    Gonstead Appointment Calendar
-                  </h1>
-                  <p className="text-white/80 text-sm">
-                    Professional Chiropractic Scheduling System
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-white/20 rounded-full blur-lg animate-pulse"></div>
+                    <CalendarIcon className="h-8 w-8 relative z-10" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold font-poppins">
+                      Gonstead Appointment Calendar
+                    </h1>
+                    <p className="text-white/80 text-sm">
+                      Dr. Bashir Khan - Professional Chiropractic Scheduling
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
