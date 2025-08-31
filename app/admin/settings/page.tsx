@@ -12,9 +12,11 @@ import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft, Users, List, B
 import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser } from "@/lib/supabase"
 import Image from "next/image"
+import { useSeamlessData } from "@/hooks/use-silent-sync"
+import { SeamlessDotIndicator } from "@/components/ui/seamless-update-indicator"
 
 export default function AdminSettings() {
-  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [clinicSettings, setClinicSettings] = useState({
     clinicName: "Gonstead Chiropractic Clinic",
     address: "Near Peshawar Model School, Tehsil Road, Nowshera",
@@ -65,6 +67,23 @@ export default function AdminSettings() {
   const router = useRouter()
   const { toast } = useToast()
 
+  // Seamless settings loading
+  const loadSettingsData = async () => {
+    const settings = {
+      clinic: JSON.parse(localStorage.getItem("clinic_settings") || 'null'),
+      hours: JSON.parse(localStorage.getItem("operating_hours") || 'null'),
+      notifications: JSON.parse(localStorage.getItem("notification_settings") || 'null'),
+      appearance: JSON.parse(localStorage.getItem("appearance_settings") || 'null'),
+      pagination: JSON.parse(localStorage.getItem("pagination_settings") || 'null')
+    }
+    return settings
+  }
+
+  const { syncState } = useSeamlessData({}, loadSettingsData, {
+    syncInterval: 30000,
+    enableRealTimeSync: false // Settings don't need frequent sync
+  })
+
   useEffect(() => {
     checkAuthAndLoadSettings()
   }, [])
@@ -86,11 +105,10 @@ export default function AdminSettings() {
 
       // Load settings from localStorage or API
       loadSettings()
+      setIsAuthenticated(true)
     } catch (error) {
       console.error("Auth check failed:", error)
       router.push("/admin/auth")
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -151,19 +169,22 @@ export default function AdminSettings() {
     }))
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#0d5c75] border-t-transparent mx-auto mb-4"></div>
-          <p className="text-[#0d5c75] font-semibold">Loading Settings...</p>
-        </div>
-      </div>
-    )
+  if (!isAuthenticated) {
+    // Immediate redirect without loading screen
+    router.push("/admin/auth")
+    return null
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white">
+      {/* Seamless Update Indicator */}
+      <SeamlessDotIndicator
+        isUpdating={syncState.isUpdating}
+        isOnline={syncState.isOnline}
+        errorCount={syncState.errorCount}
+        position="top-right"
+        className="mt-6"
+      />
       {/* Header */}
       <header className="bg-white shadow-sm border-b-2 border-[#0d5c75] p-4">
         <div className="container mx-auto flex justify-between items-center">

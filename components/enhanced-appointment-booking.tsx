@@ -293,6 +293,7 @@ export function EnhancedAppointmentBooking() {
         updated_at: new Date().toISOString(),
         last_visit: null,
         medical_history: null,
+        booking_source: "main_page" as const, // Mark as online booking
         demographics: {
           age: null,
           gender: null,
@@ -310,6 +311,37 @@ export function EnhancedAppointmentBooking() {
           follow_up_date: null,
         },
       }
+
+      // Sync with admin dashboard localStorage
+      const existingPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+      const updatedPatients = [patientForLocalStorage, ...existingPatients]
+      localStorage.setItem("gonstead_patients", JSON.stringify(updatedPatients))
+      
+      // Also sync with medical history records
+      const medicalRecords = JSON.parse(localStorage.getItem("medical_records") || "[]")
+      const newMedicalRecord = {
+        id: `MR${String(medicalRecords.length + 1).padStart(3, '0')}`,
+        patientName: formData.name,
+        age: 0, // Will be updated during consultation
+        gender: "Not specified",
+        phone: formData.phone,
+        email: formData.email || "Not provided",
+        lastVisit: new Date().toISOString().split('T')[0],
+        diagnosis: "Initial consultation pending",
+        treatmentType: formData.sessionType === "in_clinic" ? "Gonstead Adjustment" : "Video Consultation",
+        status: "Ongoing",
+        sessionsCompleted: 0,
+        totalSessions: 8, // Default total sessions
+        nextAppointment: `${formData.selectedDate}T${formData.selectedTime}`,
+        chiefComplaint: formData.notes || "Online appointment booking",
+        medicalHistory: "Medical history to be collected during consultation",
+        currentMedications: "To be determined during consultation",
+        treatmentPlan: "Gonstead chiropractic assessment and treatment plan",
+        progress: "Initial assessment pending",
+        doctorNotes: "Patient booked online. Initial consultation scheduled.",
+      }
+      const updatedMedicalRecords = [newMedicalRecord, ...medicalRecords]
+      localStorage.setItem("medical_records", JSON.stringify(updatedMedicalRecords))
 
       // Trigger real-time admin notification
       try {

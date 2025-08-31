@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
 import {
   Search,
   Filter,
@@ -25,86 +27,389 @@ import {
   CheckCircle,
   TrendingUp,
   ClipboardList,
+  RefreshCw,
+  Trash2,
+  Save,
+  X,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
-// Mock medical records data
-const mockMedicalRecords = [
-  {
-    id: "MR001",
-    patientName: "Ahmed Hassan",
-    age: 35,
-    gender: "Male",
-    phone: "+92 300 1234567",
-    email: "ahmed.hassan@email.com",
-    lastVisit: "2024-01-15",
-    diagnosis: "Lower Back Pain - L4-L5 Disc Herniation",
-    treatmentType: "Gonstead Adjustment",
-    status: "Ongoing",
-    sessionsCompleted: 8,
-    totalSessions: 12,
-    nextAppointment: "2024-01-22",
-    chiefComplaint: "Severe lower back pain radiating to left leg",
-    medicalHistory: "No previous spinal surgeries. History of desk work for 10+ years.",
-    currentMedications: "Ibuprofen 400mg as needed",
-    treatmentPlan: "Gonstead adjustments, postural exercises, ergonomic education",
-    progress: "70% improvement in pain levels, increased mobility",
-    doctorNotes: "Patient responding well to treatment. Continue current protocol.",
-  },
-  {
-    id: "MR002",
-    patientName: "Fatima Khan",
-    age: 28,
-    gender: "Female",
-    phone: "+92 301 2345678",
-    email: "fatima.khan@email.com",
-    lastVisit: "2024-01-10",
-    diagnosis: "Cervical Spine Misalignment",
-    treatmentType: "Gonstead Technique",
-    status: "Completed",
-    sessionsCompleted: 6,
-    totalSessions: 6,
-    nextAppointment: "Follow-up in 3 months",
-    chiefComplaint: "Neck pain and headaches",
-    medicalHistory: "Recent car accident 3 months ago",
-    currentMedications: "None",
-    treatmentPlan: "Cervical adjustments, neck strengthening exercises",
-    progress: "Complete resolution of symptoms",
-    doctorNotes: "Treatment completed successfully. Patient educated on prevention.",
-  },
-  {
-    id: "MR003",
-    patientName: "Muhammad Ali",
-    age: 42,
-    gender: "Male",
-    phone: "+92 302 3456789",
-    email: "m.ali@email.com",
-    lastVisit: "2024-01-18",
-    diagnosis: "Thoracic Kyphosis",
-    treatmentType: "Postural Correction",
-    status: "Follow-up",
-    sessionsCompleted: 10,
-    totalSessions: 10,
-    nextAppointment: "2024-02-15",
-    chiefComplaint: "Upper back pain and poor posture",
-    medicalHistory: "Long-term computer work, no previous treatment",
-    currentMedications: "Vitamin D supplements",
-    treatmentPlan: "Spinal adjustments, postural exercises, workplace ergonomics",
-    progress: "Significant improvement in posture and pain reduction",
-    doctorNotes: "Excellent progress. Schedule follow-up to monitor long-term results.",
-  },
-]
+// Interface for medical records
+interface MedicalRecord {
+  id: string
+  patientName: string
+  age: number
+  gender: string
+  phone: string
+  email: string
+  lastVisit: string
+  diagnosis: string
+  treatmentType: string
+  status: string
+  sessionsCompleted: number
+  totalSessions: number
+  nextAppointment: string
+  chiefComplaint: string
+  medicalHistory: string
+  currentMedications: string
+  treatmentPlan: string
+  progress: string
+  doctorNotes: string
+}
 
 export default function MedicalHistoryPage() {
-  const [records, setRecords] = useState(mockMedicalRecords)
-  const [filteredRecords, setFilteredRecords] = useState(mockMedicalRecords)
+  const [records, setRecords] = useState<MedicalRecord[]>([])
+  const [filteredRecords, setFilteredRecords] = useState<MedicalRecord[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [treatmentFilter, setTreatmentFilter] = useState("all")
-  const [selectedRecord, setSelectedRecord] = useState<any>(null)
+  const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // New Record Dialog State
+  const [isNewRecordDialogOpen, setIsNewRecordDialogOpen] = useState(false)
+  const [newRecord, setNewRecord] = useState<Partial<MedicalRecord>>({
+    patientName: '',
+    age: 0,
+    gender: '',
+    phone: '',
+    email: '',
+    diagnosis: '',
+    treatmentType: 'Gonstead Adjustment',
+    status: 'Ongoing',
+    sessionsCompleted: 0,
+    totalSessions: 8,
+    chiefComplaint: '',
+    medicalHistory: '',
+    currentMedications: '',
+    treatmentPlan: '',
+    progress: '',
+    doctorNotes: ''
+  })
+  
+  // Edit Record State
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null)
 
+  // Toast hook
+  const { toast } = useToast()
+
+  // New Record Handler
+  const handleNewRecord = () => {
+    setNewRecord({
+      patientName: '',
+      age: 0,
+      gender: '',
+      phone: '',
+      email: '',
+      diagnosis: '',
+      treatmentType: 'Gonstead Adjustment',
+      status: 'Ongoing',
+      sessionsCompleted: 0,
+      totalSessions: 8,
+      chiefComplaint: '',
+      medicalHistory: '',
+      currentMedications: '',
+      treatmentPlan: '',
+      progress: '',
+      doctorNotes: ''
+    })
+    setIsNewRecordDialogOpen(true)
+  }
+
+  // Save New Record
+  const handleSaveNewRecord = () => {
+    try {
+      // Validate required fields
+      if (!newRecord.patientName || !newRecord.phone) {
+        toast({
+          title: "Validation Error",
+          description: "Patient name and phone are required fields.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Create complete record
+      const completeRecord: MedicalRecord = {
+        id: `MR${String(records.length + 1).padStart(3, '0')}`,
+        patientName: newRecord.patientName || '',
+        age: newRecord.age || 0,
+        gender: newRecord.gender || 'Not specified',
+        phone: newRecord.phone || '',
+        email: newRecord.email || 'Not provided',
+        lastVisit: new Date().toISOString().split('T')[0],
+        diagnosis: newRecord.diagnosis || 'Pending evaluation',
+        treatmentType: newRecord.treatmentType || 'Gonstead Adjustment',
+        status: newRecord.status || 'Ongoing',
+        sessionsCompleted: newRecord.sessionsCompleted || 0,
+        totalSessions: newRecord.totalSessions || 8,
+        nextAppointment: 'To be scheduled',
+        chiefComplaint: newRecord.chiefComplaint || 'To be assessed',
+        medicalHistory: newRecord.medicalHistory || 'Medical history to be collected',
+        currentMedications: newRecord.currentMedications || 'To be determined',
+        treatmentPlan: newRecord.treatmentPlan || 'Treatment plan to be developed',
+        progress: newRecord.progress || 'Initial assessment',
+        doctorNotes: newRecord.doctorNotes || 'New medical record created'
+      }
+
+      // Add to records
+      const updatedRecords = [completeRecord, ...records]
+      setRecords(updatedRecords)
+      setFilteredRecords(updatedRecords)
+
+      // Save to localStorage
+      localStorage.setItem("medical_records", JSON.stringify(updatedRecords))
+
+      // Close dialog and show success message
+      setIsNewRecordDialogOpen(false)
+      toast({
+        title: "✅ Medical Record Created",
+        description: `New medical record for ${completeRecord.patientName} has been successfully created.`,
+      })
+    } catch (error) {
+      console.error('Error creating medical record:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create medical record. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Edit Record Handler
+  const handleEditRecord = (record: MedicalRecord) => {
+    setEditingRecord({ ...record })
+    setIsEditDialogOpen(true)
+  }
+
+  // Save Edited Record
+  const handleSaveEditedRecord = () => {
+    try {
+      if (!editingRecord) return
+
+      // Validate required fields
+      if (!editingRecord.patientName || !editingRecord.phone) {
+        toast({
+          title: "Validation Error",
+          description: "Patient name and phone are required fields.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Update records
+      const updatedRecords = records.map(record => 
+        record.id === editingRecord.id ? editingRecord : record
+      )
+      setRecords(updatedRecords)
+      setFilteredRecords(updatedRecords)
+
+      // Save to localStorage
+      localStorage.setItem("medical_records", JSON.stringify(updatedRecords))
+
+      // Close dialog and show success message
+      setIsEditDialogOpen(false)
+      setEditingRecord(null)
+      toast({
+        title: "✅ Medical Record Updated",
+        description: `Medical record for ${editingRecord.patientName} has been successfully updated.`,
+      })
+    } catch (error) {
+      console.error('Error updating medical record:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update medical record. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Remove Record Handler
+  const handleRemoveRecord = (recordId: string) => {
+    try {
+      const recordToRemove = records.find(r => r.id === recordId)
+      if (!recordToRemove) return
+
+      // Confirm deletion
+      if (window.confirm(`Are you sure you want to permanently delete the medical record for ${recordToRemove.patientName}?`)) {
+        // Remove from records
+        const updatedRecords = records.filter(record => record.id !== recordId)
+        setRecords(updatedRecords)
+        setFilteredRecords(updatedRecords)
+
+        // Save to localStorage
+        localStorage.setItem("medical_records", JSON.stringify(updatedRecords))
+
+        // Show success message
+        toast({
+          title: "🗑️ Medical Record Deleted",
+          description: `Medical record for ${recordToRemove.patientName} has been permanently removed.`,
+        })
+      }
+    } catch (error) {
+      console.error('Error removing medical record:', error)
+      toast({
+        title: "Error",
+        description: "Failed to remove medical record. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Check for auto-edit functionality when redirected from admin
+  useEffect(() => {
+    const editRecordId = localStorage.getItem('editMedicalRecordId')
+    if (editRecordId) {
+      // Clear the flag
+      localStorage.removeItem('editMedicalRecordId')
+      
+      // Find and open the record for editing after records are loaded
+      setTimeout(() => {
+        const recordToEdit = records.find(record => record.id === editRecordId)
+        if (recordToEdit) {
+          handleEditRecord(recordToEdit)
+          toast({
+            title: "📝 Medical Record Ready for Edit",
+            description: `You can now edit the medical record for ${recordToEdit.patientName} and print it when ready.`,
+          })
+        }
+      }, 500) // Small delay to ensure records are loaded
+    }
+  }, [records]) // Depend on records to trigger when they're loaded
+
+  // Load real medical records from localStorage
+  useEffect(() => {
+    const loadMedicalRecords = () => {
+      try {
+        setIsLoading(true)
+        // Load medical records from localStorage (synchronized with admin and booking)
+        const storedRecords = localStorage.getItem("medical_records")
+        
+        if (storedRecords) {
+          const parsedRecords: MedicalRecord[] = JSON.parse(storedRecords)
+          setRecords(parsedRecords)
+          setFilteredRecords(parsedRecords)
+        } else {
+          // If no records exist, check if there are patient records to convert
+          const patientRecords = localStorage.getItem("gonstead_patients")
+          if (patientRecords) {
+            const patients = JSON.parse(patientRecords)
+            const convertedRecords = patients.map((patient: any, index: number) => ({
+              id: `MR${String(index + 1).padStart(3, '0')}`,
+              patientName: patient.name || 'Unknown Patient',
+              age: patient.demographics?.age || 0,
+              gender: patient.demographics?.gender || 'Not specified',
+              phone: patient.phone || 'Not provided',
+              email: patient.email || 'Not provided',
+              lastVisit: patient.last_visit || patient.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+              diagnosis: patient.treatment_plan?.diagnosis || 'Initial consultation pending',
+              treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
+              status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
+              sessionsCompleted: patient.sessions_completed || 0,
+              totalSessions: 8, // Default total sessions
+              nextAppointment: patient.appointment_date || 'To be scheduled',
+              chiefComplaint: patient.notes || 'General consultation',
+              medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
+              currentMedications: 'To be determined during consultation',
+              treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
+              progress: patient.treatment_plan?.progress || 'Initial assessment pending',
+              doctorNotes: patient.booking_source === 'main_page' 
+                ? 'Patient booked online. Initial consultation scheduled.'
+                : 'Patient added via admin dashboard. Assessment in progress.'
+            }))
+            
+            setRecords(convertedRecords)
+            setFilteredRecords(convertedRecords)
+            
+            // Save converted records to localStorage
+            localStorage.setItem("medical_records", JSON.stringify(convertedRecords))
+          }
+        }
+      } catch (error) {
+        console.error('Error loading medical records:', error)
+        setRecords([])
+        setFilteredRecords([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadMedicalRecords()
+
+    // Listen for real-time updates from admin dashboard or booking system
+    const handleStorageChange = () => {
+      loadMedicalRecords()
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Listen for custom events from admin or booking components
+    const handleMedicalRecordsUpdate = () => {
+      loadMedicalRecords()
+    }
+    
+    window.addEventListener('medicalRecordsUpdated', handleMedicalRecordsUpdate)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('medicalRecordsUpdated', handleMedicalRecordsUpdate)
+    }
+  }, [])
+
+  // Manual refresh function
+  const handleRefresh = () => {
+    setIsLoading(true)
+    
+    // Force reload from localStorage
+    const storedRecords = localStorage.getItem("medical_records")
+    const patientRecords = localStorage.getItem("gonstead_patients")
+    
+    if (storedRecords) {
+      const parsedRecords = JSON.parse(storedRecords)
+      setRecords(parsedRecords)
+      setFilteredRecords(parsedRecords)
+    } else if (patientRecords) {
+      // Re-convert patient records if medical records don't exist
+      const patients = JSON.parse(patientRecords)
+      const convertedRecords = patients.map((patient: any, index: number) => ({
+        id: `MR${String(index + 1).padStart(3, '0')}`,
+        patientName: patient.name || 'Unknown Patient',
+        age: patient.demographics?.age || 0,
+        gender: patient.demographics?.gender || 'Not specified',
+        phone: patient.phone || 'Not provided',
+        email: patient.email || 'Not provided',
+        lastVisit: patient.last_visit || patient.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+        diagnosis: patient.treatment_plan?.diagnosis || 'Initial consultation pending',
+        treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
+        status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
+        sessionsCompleted: patient.sessions_completed || 0,
+        totalSessions: 8,
+        nextAppointment: patient.appointment_date || 'To be scheduled',
+        chiefComplaint: patient.notes || 'General consultation',
+        medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
+        currentMedications: 'To be determined during consultation',
+        treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
+        progress: patient.treatment_plan?.progress || 'Initial assessment pending',
+        doctorNotes: patient.booking_source === 'main_page' 
+          ? 'Patient booked online. Initial consultation scheduled.'
+          : 'Patient added via admin dashboard. Assessment in progress.'
+      }))
+      
+      setRecords(convertedRecords)
+      setFilteredRecords(convertedRecords)
+      localStorage.setItem("medical_records", JSON.stringify(convertedRecords))
+    } else {
+      setRecords([])
+      setFilteredRecords([])
+    }
+    
+    setIsLoading(false)
+  }
+
+  // Filter records based on search and filter criteria
   useEffect(() => {
     let filtered = records
 
@@ -145,101 +450,14 @@ export default function MedicalHistoryPage() {
     }
   }
 
-  const handleViewDetails = (record: any) => {
+  const handleViewDetails = (record: MedicalRecord) => {
     setSelectedRecord(record)
     setIsDetailModalOpen(true)
   }
 
-  const handlePrintRecord = (record: any) => {
-    const printWindow = window.open("", "_blank")
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Medical Record - ${record.patientName}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-            .header { text-align: center; border-bottom: 2px solid #0d5c75; padding-bottom: 20px; margin-bottom: 30px; }
-            .logo { width: 60px; height: 60px; margin: 0 auto 10px; }
-            .clinic-name { color: #0d5c75; font-size: 24px; font-weight: bold; margin: 0; }
-            .doctor-name { color: #666; font-size: 14px; margin: 5px 0; }
-            .record-id { background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 20px 0; }
-            .section { margin: 20px 0; }
-            .section-title { color: #0d5c75; font-size: 18px; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0; }
-            .info-item { margin: 10px 0; }
-            .label { font-weight: bold; color: #333; }
-            .value { color: #666; }
-            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="clinic-name">Gonstead Chiropractic Clinic</div>
-            <div class="doctor-name">Dr. Bashir Khan - Gonstead Specialist</div>
-            <div style="font-size: 12px; color: #666; margin-top: 10px;">
-              Near Police Station, Tehsil Road, Nowshera | +92 304 699 6267
-            </div>
-          </div>
-          
-          <div class="record-id">
-            <strong>Medical Record ID:</strong> ${record.id} | <strong>Date:</strong> ${new Date().toLocaleDateString()}
-          </div>
-
-          <div class="section">
-            <div class="section-title">Patient Information</div>
-            <div class="info-grid">
-              <div class="info-item"><span class="label">Name:</span> <span class="value">${record.patientName}</span></div>
-              <div class="info-item"><span class="label">Age:</span> <span class="value">${record.age} years</span></div>
-              <div class="info-item"><span class="label">Gender:</span> <span class="value">${record.gender}</span></div>
-              <div class="info-item"><span class="label">Phone:</span> <span class="value">${record.phone}</span></div>
-              <div class="info-item"><span class="label">Email:</span> <span class="value">${record.email}</span></div>
-              <div class="info-item"><span class="label">Last Visit:</span> <span class="value">${record.lastVisit}</span></div>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Clinical Information</div>
-            <div class="info-item"><span class="label">Chief Complaint:</span> <span class="value">${record.chiefComplaint}</span></div>
-            <div class="info-item"><span class="label">Diagnosis:</span> <span class="value">${record.diagnosis}</span></div>
-            <div class="info-item"><span class="label">Treatment Type:</span> <span class="value">${record.treatmentType}</span></div>
-            <div class="info-item"><span class="label">Status:</span> <span class="value">${record.status}</span></div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Treatment Progress</div>
-            <div class="info-item"><span class="label">Sessions Completed:</span> <span class="value">${record.sessionsCompleted} of ${record.totalSessions}</span></div>
-            <div class="info-item"><span class="label">Progress:</span> <span class="value">${record.progress}</span></div>
-            <div class="info-item"><span class="label">Next Appointment:</span> <span class="value">${record.nextAppointment}</span></div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Medical History</div>
-            <div class="info-item"><span class="label">Medical History:</span> <span class="value">${record.medicalHistory}</span></div>
-            <div class="info-item"><span class="label">Current Medications:</span> <span class="value">${record.currentMedications}</span></div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Treatment Plan</div>
-            <div class="info-item"><span class="value">${record.treatmentPlan}</span></div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Doctor's Notes</div>
-            <div class="info-item"><span class="value">${record.doctorNotes}</span></div>
-          </div>
-
-          <div class="footer">
-            <p>This is a confidential medical record. Unauthorized disclosure is prohibited.</p>
-            <p>© 2024 Gonstead Chiropractic Clinic - Dr. Bashir Khan</p>
-          </div>
-        </body>
-        </html>
-      `)
-      printWindow.document.close()
-      printWindow.print()
-    }
+  const handlePrintRecord = (record: MedicalRecord) => {
+    // Navigate to professional print page
+    window.open(`/medical-record-print/${record.id}`, '_blank')
   }
 
   // Statistics
@@ -281,7 +499,19 @@ export default function MedicalHistoryPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white">
+              <Button 
+                onClick={handleRefresh}
+                variant="outline"
+                className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                {isLoading ? 'Loading...' : 'Refresh Data'}
+              </Button>
+              <Button 
+                onClick={handleNewRecord}
+                className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 New Record
               </Button>
@@ -412,97 +642,129 @@ export default function MedicalHistoryPage() {
 
         {/* Records List */}
         <div className="space-y-4">
-          {filteredRecords.map((record) => (
-            <Card key={record.id} className="border-[#0d5c75]/20 hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                  {/* Patient Info */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-[#0d5c75] dark:text-blue-400" />
-                      <h3 className="font-semibold text-[#0d5c75] dark:text-white">{record.patientName}</h3>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <RefreshCw className="h-8 w-8 animate-spin text-[#0d5c75] mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-300">Loading medical records...</p>
+              </div>
+            </div>
+          ) : (
+            filteredRecords.map((record) => (
+              <Card key={record.id} className="border-[#0d5c75]/20 hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    {/* Patient Info */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-[#0d5c75] dark:text-blue-400" />
+                        <h3 className="font-semibold text-[#0d5c75] dark:text-white">{record.patientName}</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {record.age} years • {record.gender}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {record.phone}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">ID: {record.id}</p>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {record.age} years • {record.gender}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {record.phone}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">ID: {record.id}</p>
-                  </div>
 
-                  {/* Medical Info */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Stethoscope className="h-4 w-4 text-[#2a9d8f] dark:text-green-400" />
-                      <h4 className="font-medium text-[#0d5c75] dark:text-white">Diagnosis</h4>
+                    {/* Medical Info */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Stethoscope className="h-4 w-4 text-[#2a9d8f] dark:text-green-400" />
+                        <h4 className="font-medium text-[#0d5c75] dark:text-white">Diagnosis</h4>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{record.diagnosis}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{record.treatmentType}</p>
+                      <Badge className={getStatusColor(record.status)}>{record.status}</Badge>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">{record.diagnosis}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{record.treatmentType}</p>
-                    <Badge className={getStatusColor(record.status)}>{record.status}</Badge>
-                  </div>
 
-                  {/* Progress Info */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-[#2a9d8f] dark:text-green-400" />
-                      <h4 className="font-medium text-[#0d5c75] dark:text-white">Progress</h4>
+                    {/* Progress Info */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-[#2a9d8f] dark:text-green-400" />
+                        <h4 className="font-medium text-[#0d5c75] dark:text-white">Progress</h4>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {record.sessionsCompleted} of {record.totalSessions} sessions
+                      </p>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-[#2a9d8f] h-2 rounded-full"
+                          style={{ width: `${(record.sessionsCompleted / record.totalSessions) * 100}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Last visit: {record.lastVisit}</p>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {record.sessionsCompleted} of {record.totalSessions} sessions
-                    </p>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-[#2a9d8f] h-2 rounded-full"
-                        style={{ width: `${(record.sessionsCompleted / record.totalSessions) * 100}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Last visit: {record.lastVisit}</p>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      onClick={() => handleViewDetails(record)}
-                      className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white"
-                      size="sm"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Details
-                    </Button>
-                    <Button
-                      onClick={() => handlePrintRecord(record)}
-                      variant="outline"
-                      className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
-                      size="sm"
-                    >
-                      <Printer className="h-4 w-4 mr-2" />
-                      Print
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white bg-transparent"
-                      size="sm"
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
+                    {/* Actions */}
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={() => handleViewDetails(record)}
+                        className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white"
+                        size="sm"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Details
+                      </Button>
+                      <Button
+                        onClick={() => handlePrintRecord(record)}
+                        variant="outline"
+                        className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+                        size="sm"
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                      <Button
+                        onClick={() => handleEditRecord(record)}
+                        variant="outline"
+                        className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white bg-transparent"
+                        size="sm"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button
+                        onClick={() => handleRemoveRecord(record.id)}
+                        variant="destructive"
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                        size="sm"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
 
-        {filteredRecords.length === 0 && (
+        {!isLoading && filteredRecords.length === 0 && (
           <Card className="border-[#0d5c75]/20">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-2">No Records Found</h3>
+              <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-2">
+                {records.length === 0 ? 'No Medical Records Available' : 'No Records Found'}
+              </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                No medical records match your current search criteria. Try adjusting your filters.
+                {records.length === 0 
+                  ? 'No patient data found. Add patients through the admin dashboard or online booking to see medical records here.'
+                  : 'No medical records match your current search criteria. Try adjusting your filters.'}
               </p>
+              {records.length === 0 && (
+                <Button 
+                  onClick={handleRefresh}
+                  className="mt-4 bg-[#0d5c75] hover:bg-[#0a4a5c] text-white"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Data
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
@@ -672,6 +934,448 @@ export default function MedicalHistoryPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* New Record Dialog */}
+      <Dialog open={isNewRecordDialogOpen} onOpenChange={setIsNewRecordDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-[#0d5c75] dark:text-white font-poppins flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Create New Medical Record
+            </DialogTitle>
+            <DialogDescription>Create a comprehensive medical record for a new patient</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Patient Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#0d5c75] dark:text-white">Patient Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="new-name">Patient Name *</Label>
+                    <Input
+                      id="new-name"
+                      value={newRecord.patientName || ''}
+                      onChange={(e) => setNewRecord(prev => ({ ...prev, patientName: e.target.value }))}
+                      placeholder="Enter patient full name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new-phone">Phone Number *</Label>
+                    <Input
+                      id="new-phone"
+                      value={newRecord.phone || ''}
+                      onChange={(e) => setNewRecord(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="Enter phone number"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="new-age">Age</Label>
+                    <Input
+                      id="new-age"
+                      type="number"
+                      value={newRecord.age || 0}
+                      onChange={(e) => setNewRecord(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
+                      placeholder="Age"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new-gender">Gender</Label>
+                    <Select value={newRecord.gender || ''} onValueChange={(value) => setNewRecord(prev => ({ ...prev, gender: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                        <SelectItem value="Not specified">Prefer not to say</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="new-email">Email</Label>
+                    <Input
+                      id="new-email"
+                      type="email"
+                      value={newRecord.email || ''}
+                      onChange={(e) => setNewRecord(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="Email address (optional)"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Medical Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#0d5c75] dark:text-white">Medical Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="new-diagnosis">Diagnosis</Label>
+                    <Input
+                      id="new-diagnosis"
+                      value={newRecord.diagnosis || ''}
+                      onChange={(e) => setNewRecord(prev => ({ ...prev, diagnosis: e.target.value }))}
+                      placeholder="Primary diagnosis"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new-treatment-type">Treatment Type</Label>
+                    <Select value={newRecord.treatmentType || 'Gonstead Adjustment'} onValueChange={(value) => setNewRecord(prev => ({ ...prev, treatmentType: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Gonstead Adjustment">Gonstead Adjustment</SelectItem>
+                        <SelectItem value="Video Consultation">Video Consultation</SelectItem>
+                        <SelectItem value="Postural Correction">Postural Correction</SelectItem>
+                        <SelectItem value="Manual Therapy">Manual Therapy</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="new-complaint">Chief Complaint</Label>
+                  <Textarea
+                    id="new-complaint"
+                    value={newRecord.chiefComplaint || ''}
+                    onChange={(e) => setNewRecord(prev => ({ ...prev, chiefComplaint: e.target.value }))}
+                    placeholder="Patient's primary complaint or reason for visit"
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-medical-history">Medical History</Label>
+                  <Textarea
+                    id="new-medical-history"
+                    value={newRecord.medicalHistory || ''}
+                    onChange={(e) => setNewRecord(prev => ({ ...prev, medicalHistory: e.target.value }))}
+                    placeholder="Previous medical conditions, surgeries, treatments"
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-medications">Current Medications</Label>
+                  <Textarea
+                    id="new-medications"
+                    value={newRecord.currentMedications || ''}
+                    onChange={(e) => setNewRecord(prev => ({ ...prev, currentMedications: e.target.value }))}
+                    placeholder="Current medications, supplements, allergies"
+                    rows={2}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Treatment Plan */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#0d5c75] dark:text-white">Treatment Plan</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="new-status">Status</Label>
+                    <Select value={newRecord.status || 'Ongoing'} onValueChange={(value) => setNewRecord(prev => ({ ...prev, status: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Ongoing">Ongoing</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Follow-up">Follow-up</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="new-total-sessions">Total Sessions</Label>
+                    <Input
+                      id="new-total-sessions"
+                      type="number"
+                      value={newRecord.totalSessions || 8}
+                      onChange={(e) => setNewRecord(prev => ({ ...prev, totalSessions: parseInt(e.target.value) || 8 }))}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="new-treatment-plan">Treatment Plan</Label>
+                  <Textarea
+                    id="new-treatment-plan"
+                    value={newRecord.treatmentPlan || ''}
+                    onChange={(e) => setNewRecord(prev => ({ ...prev, treatmentPlan: e.target.value }))}
+                    placeholder="Detailed treatment plan and goals"
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-doctor-notes">Doctor's Notes</Label>
+                  <Textarea
+                    id="new-doctor-notes"
+                    value={newRecord.doctorNotes || ''}
+                    onChange={(e) => setNewRecord(prev => ({ ...prev, doctorNotes: e.target.value }))}
+                    placeholder="Clinical observations and notes"
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setIsNewRecordDialogOpen(false)}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveNewRecord}
+              className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Create Record
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Record Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-[#0d5c75] dark:text-white font-poppins flex items-center gap-2">
+              <Edit className="h-5 w-5" />
+              Edit Medical Record - {editingRecord?.patientName}
+            </DialogTitle>
+            <DialogDescription>Update medical record information for patient ID: {editingRecord?.id}</DialogDescription>
+          </DialogHeader>
+          
+          {editingRecord && (
+            <div className="space-y-6">
+              {/* Patient Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#0d5c75] dark:text-white">Patient Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-name">Patient Name *</Label>
+                      <Input
+                        id="edit-name"
+                        value={editingRecord.patientName}
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, patientName: e.target.value } : null)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-phone">Phone Number *</Label>
+                      <Input
+                        id="edit-phone"
+                        value={editingRecord.phone}
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="edit-age">Age</Label>
+                      <Input
+                        id="edit-age"
+                        type="number"
+                        value={editingRecord.age}
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, age: parseInt(e.target.value) || 0 } : null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-gender">Gender</Label>
+                      <Select value={editingRecord.gender} onValueChange={(value) => setEditingRecord(prev => prev ? { ...prev, gender: value } : null)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                          <SelectItem value="Not specified">Not specified</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={editingRecord.email}
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, email: e.target.value } : null)}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Medical Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#0d5c75] dark:text-white">Medical Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-diagnosis">Diagnosis</Label>
+                      <Input
+                        id="edit-diagnosis"
+                        value={editingRecord.diagnosis}
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, diagnosis: e.target.value } : null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-treatment-type">Treatment Type</Label>
+                      <Select value={editingRecord.treatmentType} onValueChange={(value) => setEditingRecord(prev => prev ? { ...prev, treatmentType: value } : null)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Gonstead Adjustment">Gonstead Adjustment</SelectItem>
+                          <SelectItem value="Video Consultation">Video Consultation</SelectItem>
+                          <SelectItem value="Postural Correction">Postural Correction</SelectItem>
+                          <SelectItem value="Manual Therapy">Manual Therapy</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-complaint">Chief Complaint</Label>
+                    <Textarea
+                      id="edit-complaint"
+                      value={editingRecord.chiefComplaint}
+                      onChange={(e) => setEditingRecord(prev => prev ? { ...prev, chiefComplaint: e.target.value } : null)}
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-medical-history">Medical History</Label>
+                    <Textarea
+                      id="edit-medical-history"
+                      value={editingRecord.medicalHistory}
+                      onChange={(e) => setEditingRecord(prev => prev ? { ...prev, medicalHistory: e.target.value } : null)}
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-medications">Current Medications</Label>
+                    <Textarea
+                      id="edit-medications"
+                      value={editingRecord.currentMedications}
+                      onChange={(e) => setEditingRecord(prev => prev ? { ...prev, currentMedications: e.target.value } : null)}
+                      rows={2}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Treatment Plan */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#0d5c75] dark:text-white">Treatment Plan</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="edit-status">Status</Label>
+                      <Select value={editingRecord.status} onValueChange={(value) => setEditingRecord(prev => prev ? { ...prev, status: value } : null)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Ongoing">Ongoing</SelectItem>
+                          <SelectItem value="Completed">Completed</SelectItem>
+                          <SelectItem value="Follow-up">Follow-up</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-sessions-completed">Sessions Completed</Label>
+                      <Input
+                        id="edit-sessions-completed"
+                        type="number"
+                        value={editingRecord.sessionsCompleted}
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, sessionsCompleted: parseInt(e.target.value) || 0 } : null)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-total-sessions">Total Sessions</Label>
+                      <Input
+                        id="edit-total-sessions"
+                        type="number"
+                        value={editingRecord.totalSessions}
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, totalSessions: parseInt(e.target.value) || 8 } : null)}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-treatment-plan">Treatment Plan</Label>
+                    <Textarea
+                      id="edit-treatment-plan"
+                      value={editingRecord.treatmentPlan}
+                      onChange={(e) => setEditingRecord(prev => prev ? { ...prev, treatmentPlan: e.target.value } : null)}
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-progress">Progress Summary</Label>
+                    <Textarea
+                      id="edit-progress"
+                      value={editingRecord.progress}
+                      onChange={(e) => setEditingRecord(prev => prev ? { ...prev, progress: e.target.value } : null)}
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-doctor-notes">Doctor's Notes</Label>
+                    <Textarea
+                      id="edit-doctor-notes"
+                      value={editingRecord.doctorNotes}
+                      onChange={(e) => setEditingRecord(prev => prev ? { ...prev, doctorNotes: e.target.value } : null)}
+                      rows={3}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEditedRecord}
+              className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Update Record
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

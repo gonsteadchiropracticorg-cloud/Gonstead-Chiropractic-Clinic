@@ -63,6 +63,8 @@ import VoiceSettingsComponent from "@/components/voice-settings"
 import { updatePatient } from "@/lib/supabase"
 import { usePagination, usePaginationKeyboard } from "@/hooks/use-pagination"
 import { PaginationNavigation } from "@/components/ui/pagination-navigation"
+import { useSeamlessData } from "@/hooks/use-silent-sync"
+import { SeamlessUpdateIndicator } from "@/components/ui/seamless-update-indicator"
 
 interface PatientRecord {
   id: string
@@ -114,26 +116,56 @@ export default function AdminDashboard() {
   const { toast } = useToast()
   const router = useRouter()
 
+  // Seamless data loading without loading states
+  const loadPatientsData = async () => {
+    const savedPatients = localStorage.getItem("gonstead_patients")
+    return savedPatients ? JSON.parse(savedPatients) : []
+  }
+
+  const { data: seamlessPatients, setData: setSeamlessPatients, syncState } = useSeamlessData<PatientRecord[]>(
+    [],
+    loadPatientsData,
+    {
+      syncInterval: 15000, // 15 seconds
+      enableRealTimeSync: true,
+      enableVisibilitySync: true,
+      enableNetworkSync: true
+    }
+  )
+
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace("/admin/auth")
     }
   }, [isAuthenticated, router])
 
-  // Load patients from localStorage on component mount
+  // Sync seamless data with local state
+  useEffect(() => {
+    if (seamlessPatients.length > 0) {
+      setPatients(seamlessPatients)
+    }
+  }, [seamlessPatients])
+
+  // Initial load without loading state - data loads seamlessly in background
   useEffect(() => {
     const savedPatients = localStorage.getItem("gonstead_patients")
     if (savedPatients) {
-      setPatients(JSON.parse(savedPatients))
+      const initialData = JSON.parse(savedPatients)
+      setPatients(initialData)
+      setSeamlessPatients(initialData) // Initialize seamless data
     }
   }, [])
 
-  // Save patients to localStorage whenever patients state changes
+  // Save patients to localStorage and sync with seamless data
   useEffect(() => {
     if (patients.length > 0) {
       localStorage.setItem("gonstead_patients", JSON.stringify(patients))
+      // Update seamless data without triggering re-sync
+      if (JSON.stringify(patients) !== JSON.stringify(seamlessPatients)) {
+        setSeamlessPatients(patients)
+      }
     }
-  }, [patients])
+  }, [patients, seamlessPatients, setSeamlessPatients])
 
   // Listen for new appointments in real-time
   useEffect(() => {
@@ -440,18 +472,24 @@ Phone: +92 304 699 6267
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] via-[#1a7a8a] to-[#2a9d8f] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
-          <p className="text-white text-lg">Redirecting to Admin Portal...</p>
-        </div>
-      </div>
-    )
+    // Immediate redirect without loading screen
+    router.replace("/admin/auth")
+    return null
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[rgb(190,205,203)] to-[rgb(190,205,203)]">
+      {/* Seamless Update Indicator */}
+      <SeamlessUpdateIndicator
+        isUpdating={syncState.isUpdating}
+        lastSyncTime={syncState.lastSyncTime}
+        errorCount={syncState.errorCount}
+        isOnline={syncState.isOnline}
+        updateAvailable={syncState.updateAvailable}
+        isHealthy={syncState.isHealthy}
+        position="top-right"
+        className="mt-20" // Below the header
+      />
       {/* Professional Left Sidebar */}
       <div className={`fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-80 bg-gradient-to-b from-[#0d5c75] via-[#1a6b7a] to-[#2a9d8f] transition-transform duration-300 ease-in-out z-[100] shadow-2xl`}>
         {/* Sidebar Header */}

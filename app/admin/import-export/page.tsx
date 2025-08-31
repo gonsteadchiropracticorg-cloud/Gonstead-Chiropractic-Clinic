@@ -50,6 +50,8 @@ import {
 } from "@/lib/supabase"
 import Image from "next/image"
 import ExcelJS from 'exceljs'
+import { useSeamlessData } from "@/hooks/use-silent-sync"
+import { SeamlessDotIndicator } from "@/components/ui/seamless-update-indicator"
 
 interface ImportedPatient extends Patient {
   importStatus?: 'success' | 'error' | 'pending'
@@ -73,8 +75,7 @@ export default function ImportExportPage() {
   const [importExportHistory, setImportExportHistory] = useState<ImportExportRecord[]>([])
   const [selectedRecord, setSelectedRecord] = useState<ImportExportRecord | null>(null)
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [authChecked, setAuthChecked] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterType, setFilterType] = useState<string>("all")
   const [isImporting, setIsImporting] = useState(false)
@@ -135,6 +136,27 @@ export default function ImportExportPage() {
   const router = useRouter()
   const { toast } = useToast()
 
+  // Seamless patient data loading
+  const loadPatientsData = async () => {
+    const savedPatients = localStorage.getItem("gonstead_patients")
+    return savedPatients ? JSON.parse(savedPatients) : []
+  }
+
+  const { data: seamlessPatients, syncState } = useSeamlessData<Patient[]>(
+    [],
+    loadPatientsData,
+    {
+      syncInterval: 25000,
+      enableRealTimeSync: false
+    }
+  )
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/admin/auth")
+    }
+  }, [isAuthenticated, router])
+
   useEffect(() => {
     checkAuthAndLoadData()
   }, [])
@@ -145,8 +167,8 @@ export default function ImportExportPage() {
       const storedEmail = localStorage.getItem("admin_email")
 
       if (isAuthenticated === "true" && storedEmail) {
-        setAuthChecked(true)
-        await loadPatients()
+        setIsAuthenticated(true)
+        await loadInitialData()
         return
       }
 
@@ -160,8 +182,8 @@ export default function ImportExportPage() {
       localStorage.setItem("admin_authenticated", "true")
       localStorage.setItem("admin_email", user.email || "")
 
-      setAuthChecked(true)
-      await loadPatients()
+      setIsAuthenticated(true)
+      await loadInitialData()
     } catch (error) {
       console.error("Auth check failed:", error)
       localStorage.removeItem("admin_authenticated")
@@ -170,30 +192,14 @@ export default function ImportExportPage() {
     }
   }
 
-  const loadPatients = async () => {
+  const loadInitialData = async () => {
     try {
-      setIsLoading(true)
-      const { data, error } = await getPatients()
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load patient data",
-          variant: "destructive",
-        })
-        return
+      const savedPatients = localStorage.getItem("gonstead_patients")
+      if (savedPatients) {
+        setPatients(JSON.parse(savedPatients))
       }
-
-      setPatients(data || [])
     } catch (error) {
       console.error("Error loading patients:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load patient data",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -645,7 +651,7 @@ export default function ImportExportPage() {
       })
 
       if (successCount > 0) {
-        await loadPatients()
+        await loadInitialData()
         setImportedData([])
         setImportStats({ total: 0, success: 0, errors: 0, pending: 0 })
       }
@@ -683,19 +689,21 @@ export default function ImportExportPage() {
            patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
   })
 
-  if (!authChecked || isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[rgb(190,205,203)] to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#0d5c75] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[#0d5c75] text-lg font-semibold">Loading Import/Export Panel...</p>
-        </div>
-      </div>
-    )
+  if (!isAuthenticated) {
+    router.replace("/admin/auth")
+    return null
   }
 
   return (
     <div className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-gradient-to-br from-[rgb(190,205,203)] to-white"} relative`}>
+      {/* Seamless Update Indicator */}
+      <SeamlessDotIndicator
+        isUpdating={syncState.isUpdating}
+        isOnline={syncState.isOnline}
+        errorCount={syncState.errorCount}
+        position="top-right"
+        className="mt-6"
+      />
       {/* Professional Header */}
       <header className="bg-gradient-to-r from-[#0d5c75] via-[#2a9d8f] to-[#0d5c75] text-white p-6 shadow-2xl relative overflow-hidden">
         {/* Animated Background Elements */}

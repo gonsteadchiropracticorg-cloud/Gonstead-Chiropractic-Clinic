@@ -23,9 +23,11 @@ import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser, getPatients } from "@/lib/supabase"
 import Image from "next/image"
 import VisitorAnalytics from "@/components/visitor-analytics"
+import { useSeamlessData } from "@/hooks/use-silent-sync"
+import { SeamlessDotIndicator } from "@/components/ui/seamless-update-indicator"
 
 export default function AdminAnalytics() {
-  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [patients, setPatients] = useState<any[]>([])
   const [timeRange, setTimeRange] = useState("30")
   const [analytics, setAnalytics] = useState({
@@ -39,6 +41,31 @@ export default function AdminAnalytics() {
 
   const router = useRouter()
   const { toast } = useToast()
+
+  // Seamless analytics data loading
+  const loadAnalyticsData = async () => {
+    const savedPatients = localStorage.getItem("gonstead_patients")
+    const patientsData = savedPatients ? JSON.parse(savedPatients) : []
+    return {
+      patients: patientsData,
+      analytics: calculateAnalytics(patientsData)
+    }
+  }
+
+  const { data: seamlessData, syncState } = useSeamlessData(
+    { patients: [], analytics: null },
+    loadAnalyticsData,
+    {
+      syncInterval: 30000,
+      enableRealTimeSync: false
+    }
+  )
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/admin/auth")
+    }
+  }, [isAuthenticated, router])
 
   useEffect(() => {
     checkAuthAndLoadData()
@@ -55,48 +82,44 @@ export default function AdminAnalytics() {
       ]
 
       if (!user || !adminEmails.includes(user.email?.toLowerCase() || "")) {
-        router.push("/admin/auth")
+        router.replace("/admin/auth")
         return
       }
 
-      await loadAnalyticsData()
+      setIsAuthenticated(true)
+      await loadInitialData()
     } catch (error) {
       console.error("Auth check failed:", error)
-      router.push("/admin/auth")
-    } finally {
-      setIsLoading(false)
+      router.replace("/admin/auth")
     }
   }
 
-  const loadAnalyticsData = async () => {
+  const calculateAnalytics = (patientsData: any[]) => {
+    const totalPatients = patientsData.length
+    const totalSessions = patientsData.reduce((sum, p) => sum + (p.sessions || 0), 0)
+    const completedPatients = patientsData.filter((p) => p.status === "completed").length
+    const emergencyPatients = patientsData.filter((p) => p.urgency === "emergency").length
+
+    return {
+      totalPatients,
+      totalRevenue: totalSessions * 2000,
+      averageSessionsPerPatient: totalPatients > 0 ? totalSessions / totalPatients : 0,
+      completionRate: totalPatients > 0 ? (completedPatients / totalPatients) * 100 : 0,
+      monthlyGrowth: 15.2,
+      emergencyRate: totalPatients > 0 ? (emergencyPatients / totalPatients) * 100 : 0,
+    }
+  }
+
+  const loadInitialData = async () => {
     try {
-      const { data, error } = await getPatients()
-      if (error) throw error
-
-      const patientsData = data || []
-      setPatients(patientsData)
-
-      // Calculate analytics
-      const totalPatients = patientsData.length
-      const totalSessions = patientsData.reduce((sum, p) => sum + (p.sessions_completed || 0), 0)
-      const completedPatients = patientsData.filter((p) => p.status === "completed").length
-      const emergencyPatients = patientsData.filter((p) => p.urgency === "emergency").length
-
-      setAnalytics({
-        totalPatients,
-        totalRevenue: totalSessions * 2000, // Assuming 2000 PKR per session
-        averageSessionsPerPatient: totalPatients > 0 ? totalSessions / totalPatients : 0,
-        completionRate: totalPatients > 0 ? (completedPatients / totalPatients) * 100 : 0,
-        monthlyGrowth: 15.2, // Mock data
-        emergencyRate: totalPatients > 0 ? (emergencyPatients / totalPatients) * 100 : 0,
-      })
+      const savedPatients = localStorage.getItem("gonstead_patients")
+      if (savedPatients) {
+        const patientsData = JSON.parse(savedPatients)
+        setPatients(patientsData)
+        setAnalytics(calculateAnalytics(patientsData))
+      }
     } catch (error) {
       console.error("Error loading analytics:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load analytics data",
-        variant: "destructive",
-      })
     }
   }
 
@@ -142,19 +165,21 @@ export default function AdminAnalytics() {
     URL.revokeObjectURL(url)
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#0d5c75] border-t-transparent mx-auto mb-4"></div>
-          <p className="text-[#0d5c75] font-semibold">Loading Analytics...</p>
-        </div>
-      </div>
-    )
+  if (!isAuthenticated) {
+    router.replace("/admin/auth")
+    return null
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white">
+      {/* Seamless Update Indicator */}
+      <SeamlessDotIndicator
+        isUpdating={syncState.isUpdating}
+        isOnline={syncState.isOnline}
+        errorCount={syncState.errorCount}
+        position="top-right"
+        className="mt-6"
+      />
       {/* Header */}
       <header className="bg-white shadow-sm border-b-2 border-[#0d5c75] p-4">
         <div className="container mx-auto flex justify-between items-center">

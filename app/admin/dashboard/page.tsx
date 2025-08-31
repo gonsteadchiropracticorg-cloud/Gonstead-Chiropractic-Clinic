@@ -360,7 +360,7 @@ export default function AdminDashboard() {
     try {
       const patientData = {
         ...newPatient,
-        status: "pending",
+        status: "pending" as const,
         sessions_completed: 0,
         booking_source: "admin_dashboard", // Mark as admin-created
       }
@@ -369,6 +369,14 @@ export default function AdminDashboard() {
       // Mark admin-created patients as viewed immediately (no red dot needed)
       if (newPatientRecord?.id) {
         setViewedPatients(prev => new Set([...prev, newPatientRecord.id]))
+        
+        // Sync with localStorage for consistency across all components
+        const existingPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+        const updatedPatients = [newPatientRecord, ...existingPatients]
+        localStorage.setItem("gonstead_patients", JSON.stringify(updatedPatients))
+        
+        // DO NOT automatically create medical records - only patient records
+        // Medical records should be created separately via Medical History page
       }
       
       await loadPatients()
@@ -385,7 +393,7 @@ export default function AdminDashboard() {
       })
       toast({
         title: "✅ Patient Successfully Added",
-        description: `${newPatient.name} has been registered and added to the system`,
+        description: `${newPatient.name} has been registered to patient records. Create medical record separately if needed.`,
       })
     } catch (error) {
       console.error("Error adding patient:", error)
@@ -1481,6 +1489,65 @@ Phone: +92 304 699 6267
                                 )}
                               </DialogContent>
                             </Dialog>
+
+                            {/* Medical Record Management Button */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                // Check if medical record already exists
+                                const medicalRecords = JSON.parse(localStorage.getItem("medical_records") || "[]")
+                                let medicalRecord = medicalRecords.find((record: any) => 
+                                  record.patientName === patient.name && record.phone === patient.phone
+                                )
+                                
+                                if (!medicalRecord) {
+                                  // Create a new medical record from patient data
+                                  medicalRecord = {
+                                    id: `MR${String(medicalRecords.length + 1).padStart(3, '0')}`,
+                                    patientName: patient.name,
+                                    age: patient.demographics?.age || 0,
+                                    gender: patient.demographics?.gender || 'Not specified',
+                                    phone: patient.phone,
+                                    email: patient.email || 'Not provided',
+                                    lastVisit: patient.last_visit || new Date().toISOString().split('T')[0],
+                                    diagnosis: 'Initial consultation pending',
+                                    treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
+                                    status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
+                                    sessionsCompleted: patient.sessions_completed || 0,
+                                    totalSessions: 8,
+                                    nextAppointment: patient.appointment_date ? new Date(patient.appointment_date).toLocaleDateString() : 'To be scheduled',
+                                    chiefComplaint: patient.notes || 'General consultation',
+                                    medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
+                                    currentMedications: 'To be determined during consultation',
+                                    treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
+                                    progress: patient.treatment_plan?.progress || 'Initial assessment pending',
+                                    doctorNotes: patient.booking_source === 'admin_dashboard' 
+                                      ? 'Patient added via admin dashboard. Assessment in progress.'
+                                      : 'Patient booked online. Initial consultation scheduled.'
+                                  }
+                                  
+                                  // Add to medical records
+                                  medicalRecords.push(medicalRecord)
+                                  localStorage.setItem("medical_records", JSON.stringify(medicalRecords))
+                                  
+                                  toast({
+                                    title: "✅ Medical Record Created",
+                                    description: `Medical record for ${patient.name} has been created and you'll be redirected to edit it.`,
+                                  })
+                                }
+                                
+                                // Store the medical record ID for the medical history page
+                                localStorage.setItem('editMedicalRecordId', medicalRecord.id)
+                                
+                                // Redirect to medical history page
+                                router.push('/medical-history')
+                              }}
+                              className="border-[#6366f1] text-[#6366f1] hover:bg-[#6366f1] hover:text-white"
+                              title="Create/Edit Medical Record"
+                            >
+                              <FileText className="h-3 w-3" />
+                            </Button>
 
                             {/* Prescription Button */}
                             <Button

@@ -25,15 +25,36 @@ import {
 } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import Image from 'next/image'
+import { useSeamlessData } from '@/hooks/use-silent-sync'
+import { SeamlessDotIndicator } from '@/components/ui/seamless-update-indicator'
 
 export default function CalendarPage() {
   const [patients, setPatients] = useState<Patient[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [authChecked, setAuthChecked] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
-  // Check authentication
+  // Seamless patient data loading
+  const loadPatientsData = async () => {
+    const savedPatients = localStorage.getItem("gonstead_patients")
+    return savedPatients ? JSON.parse(savedPatients) : []
+  }
+
+  const { data: seamlessPatients, syncState } = useSeamlessData<Patient[]>(
+    [],
+    loadPatientsData,
+    {
+      syncInterval: 20000,
+      enableRealTimeSync: true
+    }
+  )
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/admin/auth")
+    }
+  }, [isAuthenticated, router])
+
   useEffect(() => {
     checkAuthAndLoadData()
   }, [])
@@ -45,8 +66,8 @@ export default function CalendarPage() {
       const storedEmail = localStorage.getItem("admin_email")
 
       if (isAuthenticated === "true" && storedEmail) {
-        setAuthChecked(true)
-        await loadPatients()
+        setIsAuthenticated(true)
+        await loadInitialData()
         return
       }
 
@@ -61,8 +82,8 @@ export default function CalendarPage() {
       localStorage.setItem("admin_authenticated", "true")
       localStorage.setItem("admin_email", user.email || "")
       
-      setAuthChecked(true)
-      await loadPatients()
+      setIsAuthenticated(true)
+      await loadInitialData()
     } catch (error) {
       console.error("Auth check failed:", error)
       localStorage.removeItem("admin_authenticated")
@@ -71,30 +92,14 @@ export default function CalendarPage() {
     }
   }
 
-  const loadPatients = async () => {
+  const loadInitialData = async () => {
     try {
-      setIsLoading(true)
-      const { data, error } = await getPatients()
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load patient data",
-          variant: "destructive",
-        })
-        return
+      const savedPatients = localStorage.getItem("gonstead_patients")
+      if (savedPatients) {
+        setPatients(JSON.parse(savedPatients))
       }
-
-      setPatients(data || [])
     } catch (error) {
       console.error("Error loading patients:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load patient data",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -108,7 +113,7 @@ export default function CalendarPage() {
       const patient = patients.find(p => p.id === appointment.id)
       if (patient) {
         await updatePatient(appointment.id, { status: appointment.status })
-        await loadPatients()
+        await loadInitialData()
         toast({
           title: "Success",
           description: "Appointment updated successfully",
@@ -127,7 +132,7 @@ export default function CalendarPage() {
   const handleAppointmentDelete = async (id: string) => {
     try {
       await deletePatient(id)
-      await loadPatients()
+      await loadInitialData()
       toast({
         title: "Success",
         description: "Appointment deleted successfully",
@@ -167,24 +172,21 @@ export default function CalendarPage() {
 
   const sundayNotice = getSundayNotice()
 
-  // Loading screen
-  if (!authChecked || isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[rgb(190,205,203)] to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 relative">
-            <div className="absolute inset-0 border-4 border-[#0d5c75]/20 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-transparent border-t-[#0d5c75] border-r-[#2a9d8f] rounded-full animate-spin"></div>
-          </div>
-          <h2 className="text-xl font-bold text-[#0d5c75] mb-2">Loading Calendar</h2>
-          <p className="text-gray-600">Please wait while we load your appointment data...</p>
-        </div>
-      </div>
-    )
+  if (!isAuthenticated) {
+    router.replace("/admin/auth")
+    return null
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[rgb(190,205,203)] to-white">
+      {/* Seamless Update Indicator */}
+      <SeamlessDotIndicator
+        isUpdating={syncState.isUpdating}
+        isOnline={syncState.isOnline}
+        errorCount={syncState.errorCount}
+        position="top-right"
+        className="mt-6"
+      />
       {/* Header */}
       <header className="bg-gradient-to-r from-[#0d5c75] via-[#1a6b7a] to-[#2a9d8f] text-white shadow-2xl">
         <div className="container mx-auto px-4 py-6">
