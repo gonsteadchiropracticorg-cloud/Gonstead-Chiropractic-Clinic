@@ -785,20 +785,30 @@ Phone: +92 304 699 6267
         <div className="relative z-10 container mx-auto flex justify-between items-center">
           {/* Left Section - Logo and Title */}
           <div className="flex items-center gap-4">
-            {/* Compact Logo - Clickable for Sidebar */}
+            {/* Enhanced Clinical Logo - Clickable for Sidebar */}
             <div className="relative group cursor-pointer" onClick={() => setIsSidebarOpen(true)}>
-              <div className="w-14 h-14 relative transition-transform duration-300 hover:scale-110">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/10 to-[#2a9d8f]/10 rounded-full blur-lg group-hover:blur-md transition-all duration-300"></div>
-                <Image
-                  src="/images/gonstead-chiropractic-logo-new.png"
-                  alt="Gonstead Chiropractic Logo"
-                  fill
-                  className="object-contain relative z-10 drop-shadow-lg"
-                />
+              <div className="w-16 h-16 relative transition-transform duration-300 hover:scale-110">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/15 to-[#2a9d8f]/15 rounded-2xl blur-xl group-hover:blur-lg transition-all duration-300"></div>
+                {/* Enhanced Clinical Logo with Professional Frame */}
+                <div className="relative w-16 h-16 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-xl rounded-2xl border-2 border-white/30 shadow-2xl flex items-center justify-center">
+                  <Image
+                    src="/images/gonstead-chiropractic-logo-new.png"
+                    alt="Gonstead Chiropractic Clinical Logo"
+                    width={44}
+                    height={44}
+                    className="object-contain relative z-10 drop-shadow-2xl"
+                  />
+                  {/* Clinical Badge */}
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full flex items-center justify-center shadow-xl border-2 border-white">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                  </div>
+                  {/* Professional Ring */}
+                  <div className="absolute inset-0 rounded-2xl border border-[#0d5c75]/30 animate-pulse" style={{ animationDuration: '3s' }}></div>
+                </div>
               </div>
-              {/* Professional Badge */}
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-[rgb(227,252,236)] to-green-400 rounded-full flex items-center justify-center shadow-lg">
-                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+              {/* Professional Clinical Badge */}
+              <div className="absolute -bottom-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white text-xs font-bold rounded-full shadow-lg border border-white/50">
+                CLINIC
               </div>
             </div>
             

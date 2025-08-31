@@ -19,7 +19,9 @@ import {
   LogOut,
   User,
   HelpCircle,
-  Clock
+  Clock,
+  TrendingUp,
+  Eye
 } from "lucide-react"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
@@ -92,6 +94,15 @@ const sidebarItems: MenuItem[] = [
     href: "/admin/analytics",
     icon: BarChart3,
     description: "Performance data",
+    category: "insights"
+  },
+  {
+    id: "website-analytics",
+    title: "Website Visitor Analytics",
+    href: "/admin/website-analytics",
+    icon: TrendingUp,
+    description: "Real-time website tracking",
+    badge: "Live",
     category: "insights"
   },
   {
