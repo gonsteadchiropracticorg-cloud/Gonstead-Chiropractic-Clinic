@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     )
 
     // Calculate statistics
-    const stats = calculateStats(filteredEvents, Array.from(activeSessions.values()))
+    const stats = calculateStats(filteredEvents, Array.from(activeSessions.values()), filteredEvents)
 
     // Add real-time data
     const realTimeStats = {
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function calculateStats(events: any[], sessions: any[]) {
+function calculateStats(events: any[], sessions: any[], filteredEvents: any[]) {
   const now = new Date()
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
@@ -91,6 +91,7 @@ function calculateStats(events: any[], sessions: any[]) {
   const uniqueVisitors = new Set(pageViews.map(event => event.data.visitorId)).size
 
   // Session duration calculation
+  const totalSessions = sessions.length
   const completedSessions = sessions.filter(session => 
     new Date(session.lastActivity) < oneHourAgo
   )
@@ -213,7 +214,7 @@ function calculateStats(events: any[], sessions: any[]) {
     }))
 
   // Performance metrics from Web Vitals
-  const webVitalsData = events.filter(event => event.type === 'web_vitals')
+  const webVitalsData = filteredEvents.filter(event => event.type === 'web_vitals')
   const avgWebVitals = webVitalsData.length > 0 ? {
     lcp: webVitalsData.reduce((sum, event) => sum + (event.data.vitals?.lcp || 0), 0) / webVitalsData.length,
     fid: webVitalsData.reduce((sum, event) => sum + (event.data.vitals?.fid || 0), 0) / webVitalsData.length,
@@ -268,9 +269,9 @@ function calculateStats(events: any[], sessions: any[]) {
     performanceInsights,
     hourlyData,
     recentActivity,
-    totalSessions: sessions.length,
+    totalSessions,
     newVisitors: uniqueVisitors, // Simplified - in production, track returning vs new
-    returningVisitors: sessions.length - uniqueVisitors
+    returningVisitors: Math.max(0, totalSessions - uniqueVisitors)
   }
 }
 

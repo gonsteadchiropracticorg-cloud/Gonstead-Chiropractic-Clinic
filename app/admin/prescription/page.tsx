@@ -1295,14 +1295,19 @@ function PrescriptionPageContent() {
           <div className="prescription-container" ref={prescriptionRef}>
             <div className="header">
               <div className="logo-container">
-                <img
+                <Image
                   src="/images/gonstead-chiropractic-logo-new.png"
                   alt="Gonstead Chiropractic Clinic Logo"
                   width={90}
                   height={90}
                   className="clinic-logo"
-                  crossOrigin="anonymous"
                   style={{ maxWidth: '100%', height: 'auto' }}
+                  onError={(e) => {
+                    console.warn('Primary logo failed to load, using fallback');
+                    const img = e.target as HTMLImageElement;
+                    img.src = '/images/logo-placeholder.png';
+                    img.onerror = null; // Prevent infinite loop
+                  }}
                 />
               </div>
               <div className="clinic-name">GONSTEAD CHIROPRACTIC CLINIC</div>

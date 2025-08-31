@@ -161,7 +161,7 @@ export default function AdminSettings() {
             </Button>
             <div className="w-12 h-12 relative">
               <Image
-                src="/images/gonstead-chiropractic-logo.png"
+              src="/images/gonstead-chiropractic-logo-new.png"
                 alt="Gonstead Chiropractic Logo"
                 fill
                 className="object-contain"

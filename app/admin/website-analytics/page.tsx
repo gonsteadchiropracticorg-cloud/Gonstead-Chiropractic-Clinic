@@ -39,6 +39,7 @@ import {
   TrendingUp as Trending
 } from "lucide-react"
 import { LineChart as RechartsLineChart, BarChart as RechartsBarChart, PieChart as RechartsPieChart, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, Bar, Pie, AreaChart, Area } from 'recharts'
+import Image from "next/image"
 
 interface AnalyticsData {
   activeVisitors: number
@@ -212,21 +213,35 @@ export default function WebsiteAnalyticsPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-[#0d5c75] font-poppins flex items-center gap-3">
-              <TrendingUp className="h-8 w-8" />
-              Website Visitor Analytics
-              <Badge variant="secondary" className="bg-green-100 text-green-700 px-2 py-1">
-                <Activity className="h-3 w-3 mr-1" />
-                Live
-              </Badge>
-            </h1>
-            <p className="text-gray-600 mt-2 font-open-sans">
-              Real-time website performance and visitor tracking dashboard
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              Last updated: {lastUpdated.toLocaleString()}
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 relative flex-shrink-0">
+            <Image
+              src="/images/gonstead-chiropractic-logo-new.png"
+                alt="Gonstead Chiropractic Logo"
+                fill
+                className="object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/images/gonstead-logo-new.png";
+                }}
+              />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-[#0d5c75] font-poppins flex items-center gap-3">
+                <TrendingUp className="h-8 w-8" />
+                Website Visitor Analytics
+                <Badge variant="secondary" className="bg-green-100 text-green-700 px-2 py-1">
+                  <Activity className="h-3 w-3 mr-1" />
+                  Live
+                </Badge>
+              </h1>
+              <p className="text-gray-600 mt-2 font-open-sans">
+                Real-time website performance and visitor tracking dashboard
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Last updated: {lastUpdated.toLocaleString()}
+              </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-3">

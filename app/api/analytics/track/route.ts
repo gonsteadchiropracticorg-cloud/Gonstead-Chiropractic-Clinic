@@ -35,6 +35,116 @@ const analyticsData: AnalyticsEvent[] = []
 const activeSessions = new Map<string, any>()
 const pagePerformance = new Map<string, any>()
 
+// Initialize with some demo data for development
+if (analyticsData.length === 0) {
+  // Add some demo analytics events
+  const demoEvents = [
+    {
+      id: crypto.randomUUID(),
+      type: 'pageview',
+      data: {
+        page: '/',
+        title: 'Home - Gonstead Chiropractic',
+        visitorId: 'visitor-1',
+        sessionId: 'session-1',
+        referrer: 'https://google.com'
+      },
+      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+      location: { country: 'Pakistan', city: 'Nowshera', region: 'KPK' }
+    },
+    {
+      id: crypto.randomUUID(),
+      type: 'pageview', 
+      data: {
+        page: '/appointment-booking',
+        title: 'Book Appointment - Gonstead Chiropractic',
+        visitorId: 'visitor-2',
+        sessionId: 'session-2',
+        referrer: 'direct'
+      },
+      timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
+      location: { country: 'Pakistan', city: 'Peshawar', region: 'KPK' }
+    },
+    {
+      id: crypto.randomUUID(),
+      type: 'pageview',
+      data: {
+        page: '/doctor-profile',
+        title: 'Dr. Bashir - Gonstead Specialist',
+        visitorId: 'visitor-3', 
+        sessionId: 'session-3',
+        referrer: 'https://facebook.com'
+      },
+      timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
+      location: { country: 'Pakistan', city: 'Islamabad', region: 'ICT' }
+    }
+  ]
+  
+  analyticsData.push(...demoEvents)
+  
+  // Add demo sessions
+  activeSessions.set('session-1', {
+    id: 'session-1',
+    visitorId: 'visitor-1',
+    startTime: new Date(Date.now() - 1000 * 60 * 30),
+    lastActivity: new Date(Date.now() - 1000 * 60 * 25),
+    pageViews: 2,
+    pages: ['/', '/services'],
+    device: { type: 'desktop', browser: 'Chrome', os: 'Windows' },
+    location: { country: 'Pakistan', city: 'Nowshera' },
+    referrer: 'https://google.com',
+    isActive: false
+  })
+  
+  activeSessions.set('session-2', {
+    id: 'session-2', 
+    visitorId: 'visitor-2',
+    startTime: new Date(Date.now() - 1000 * 60 * 15),
+    lastActivity: new Date(Date.now() - 1000 * 60 * 2),
+    pageViews: 3,
+    pages: ['/appointment-booking', '/doctor-profile', '/services'],
+    device: { type: 'mobile', browser: 'Safari', os: 'iOS' },
+    location: { country: 'Pakistan', city: 'Peshawar' },
+    referrer: 'direct',
+    isActive: true
+  })
+  
+  activeSessions.set('session-3', {
+    id: 'session-3',
+    visitorId: 'visitor-3',
+    startTime: new Date(Date.now() - 1000 * 60 * 5),
+    lastActivity: new Date(Date.now() - 1000 * 60 * 1),
+    pageViews: 1,
+    pages: ['/doctor-profile'],
+    device: { type: 'tablet', browser: 'Chrome', os: 'Android' },
+    location: { country: 'Pakistan', city: 'Islamabad' },
+    referrer: 'https://facebook.com',
+    isActive: true
+  })
+  
+  // Add demo page performance
+  pagePerformance.set('/', {
+    totalViews: 25,
+    totalTimeSpent: 45000,
+    bounces: 8,
+    avgLoadTime: 1200
+  })
+  
+  pagePerformance.set('/appointment-booking', {
+    totalViews: 18,
+    totalTimeSpent: 72000,
+    bounces: 3,
+    avgLoadTime: 1800
+  })
+  
+  pagePerformance.set('/doctor-profile', {
+    totalViews: 15,
+    totalTimeSpent: 38000,
+    bounces: 5,
+    avgLoadTime: 950
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -220,12 +330,25 @@ function handlePerformanceMetrics(event: AnalyticsEvent) {
 function handleWebVitals(event: AnalyticsEvent) {
   const { page, vitals } = event.data
   
-  if (page && vitals && pagePerformance.has(page)) {
+  if (page && vitals) {
+    // Initialize page performance tracking if it doesn't exist
+    if (!pagePerformance.has(page)) {
+      pagePerformance.set(page, {
+        totalViews: 0,
+        totalTimeSpent: 0,
+        bounces: 0,
+        avgLoadTime: 0,
+        webVitals: []
+      })
+    }
+    
     const pageStats = pagePerformance.get(page)
-    pageStats.webVitals.push({
-      ...vitals,
-      timestamp: event.timestamp
-    })
+    if (pageStats && pageStats.webVitals) {
+      pageStats.webVitals.push({
+        ...vitals,
+        timestamp: event.timestamp
+      })
+    }
   }
 }
 
