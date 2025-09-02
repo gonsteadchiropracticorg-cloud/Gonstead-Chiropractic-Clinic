@@ -9,7 +9,13 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "build:electron": "cross-env BUILD_ELECTRON=true npm run build && npm run electron:build",
+    "electron": "cross-env BUILD_ELECTRON=true npm run build && electron .",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "electron-builder",
+    "dist": "npm run build && electron-builder --publish=never",
+    "pack": "electron-builder --dir"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.19",
@@ -102,8 +108,45 @@
     "@types/node": "22.16.0",
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^37.4.0",
+    "electron-builder": "^24.9.1",
     "postcss": "8.5.6",
     "tailwindcss": "3.4.17",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "wait-on": "^7.2.0"
+  },
+  "main": "electron/main.js",
+  "homepage": "./",
+  "build": {
+    "appId": "com.gonstead.chiropractic",
+    "productName": "Gonstead Chiropractic Clinic Manager",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/images/gonstead-logo.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/images/gonstead-logo.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "public/images/gonstead-logo.png"
+    }
   }
 }
