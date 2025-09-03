@@ -255,6 +255,440 @@
                 min-width: unset;
             }
         }
+        
+        /* Assessment Modal Styles */
+        .assessment-modal, .results-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-content, .results-content {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.4s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-header {
+            padding: 30px 30px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            position: relative;
+        }
+        
+        .modal-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0d5c75;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .progress-container {
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2a9d8f 0%, #20b2aa 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 10%;
+        }
+        
+        .progress-text {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .close-modal, .close-results {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .close-modal:hover, .close-results:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .question-container {
+            margin-bottom: 30px;
+        }
+        
+        .question-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .question-subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #2a9d8f;
+            box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.1);
+        }
+        
+        .radio-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .radio-option {
+            position: relative;
+        }
+        
+        .radio-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .radio-option label {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .radio-option input[type="radio"]:checked + label {
+            border-color: #2a9d8f;
+            background: rgba(42, 157, 143, 0.05);
+        }
+        
+        .radio-option label::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            margin-right: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .radio-option input[type="radio"]:checked + label::before {
+            border-color: #2a9d8f;
+            background: #2a9d8f;
+            box-shadow: inset 0 0 0 3px white;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .checkbox-option {
+            position: relative;
+        }
+        
+        .checkbox-option input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .checkbox-option label {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .checkbox-option input[type="checkbox"]:checked + label {
+            border-color: #2a9d8f;
+            background: rgba(42, 157, 143, 0.05);
+        }
+        
+        .checkbox-option label::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            margin-right: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .checkbox-option input[type="checkbox"]:checked + label::before {
+            border-color: #2a9d8f;
+            background: #2a9d8f;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>');
+            background-size: 12px;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px 30px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        .btn-primary, .btn-secondary, .btn-tertiary {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 16px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2a9d8f 0%, #20b2aa 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(42, 157, 143, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(42, 157, 143, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-tertiary {
+            background: transparent;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-tertiary:hover {
+            background: #f9fafb;
+        }
+        
+        /* Results Styles */
+        .results-header {
+            background: linear-gradient(135deg, #0d5c75 0%, #2a9d8f 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .results-header h3 {
+            font-size: 1.5rem;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .results-body {
+            padding: 30px;
+        }
+        
+        .risk-score-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .risk-score {
+            display: inline-block;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .risk-low {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        }
+        
+        .risk-moderate {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+        }
+        
+        .risk-high {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+        }
+        
+        .results-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #2a9d8f;
+        }
+        
+        .results-section h4 {
+            color: #0d5c75;
+            font-size: 1.25rem;
+            margin-bottom: 15px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .condition-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .condition-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .condition-description {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .recommendation-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .recommendation-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+            position: relative;
+            padding-left: 25px;
+        }
+        
+        .recommendation-list li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #2a9d8f;
+            font-weight: 700;
+        }
+        
+        .recommendation-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .results-footer {
+            padding: 30px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .modal-content, .results-content {
+                margin: 10px;
+                max-width: calc(100% - 20px);
+            }
+            
+            .modal-header, .modal-body, .results-body {
+                padding: 20px;
+            }
+            
+            .radio-group, .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-footer {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -313,39 +747,600 @@
                 </div>
             </div>
 
-            <!-- Coming Soon Notice -->
-            <div class="coming-soon">
-                <h3><i class="fas fa-tools"></i> Assessment System Coming Soon!</h3>
-                <p>We're currently developing an advanced spinal health assessment system that will provide you with personalized insights and recommendations. This comprehensive tool will be available very soon!</p>
-                
-                <div class="notification-form">
-                    <input type="email" placeholder="Enter your email for updates" id="emailNotification">
-                    <button onclick="subscribeNotification()">Notify Me</button>
+            <!-- Start Assessment Button -->
+            <button class="start-button" onclick="startAssessment()">
+                <i class="fas fa-play"></i>
+                Begin Spinal Health Assessment
+            </button>
+            
+            <!-- Assessment Modal -->
+            <div id="assessmentModal" class="assessment-modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="modalTitle">Spinal Health Assessment</h3>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span class="progress-text" id="progressText">Question 1 of 10</span>
+                        </div>
+                        <button class="close-modal" onclick="closeAssessment()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body" id="modalBody">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn-secondary" id="prevBtn" onclick="previousQuestion()" style="display: none;">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button class="btn-primary" id="nextBtn" onclick="nextQuestion()">
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
                 </div>
-                
-                <p style="margin-top: 20px; font-size: 0.9rem;">
-                    <strong>In the meantime:</strong> Contact us directly for a consultation or browse our educational resources to learn more about Gonstead chiropractic care.
-                </p>
             </div>
-
-            <!-- Temporary Contact Information -->
-            <div style="background: #f8f9fa; border-radius: 12px; padding: 25px; margin-top: 30px; text-align: center;">
-                <h3 style="color: #0d5c75; margin-bottom: 15px; font-family: 'Poppins', sans-serif;">Ready to Start Your Healing Journey?</h3>
-                <p style="margin-bottom: 20px; color: #666;">Contact us directly to schedule your Gonstead chiropractic evaluation:</p>
-                
-                <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-                    <a href="tel:+923046996267" style="display: inline-flex; align-items: center; gap: 8px; color: #0d5c75; text-decoration: none; font-weight: 600;">
-                        <i class="fas fa-phone"></i> +92 304 6996267
-                    </a>
-                    <a href="mailto:info@gonsteadchiropractic.com" style="display: inline-flex; align-items: center; gap: 8px; color: #0d5c75; text-decoration: none; font-weight: 600;">
-                        <i class="fas fa-envelope"></i> info@gonsteadchiropractic.com
-                    </a>
+            
+            <!-- Results Modal -->
+            <div id="resultsModal" class="results-modal" style="display: none;">
+                <div class="results-content">
+                    <div class="results-header">
+                        <h3>Your Spinal Health Assessment Results</h3>
+                        <button class="close-results" onclick="closeResults()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="results-body" id="resultsBody">
+                        <!-- Results will be displayed here -->
+                    </div>
+                    <div class="results-footer">
+                        <button class="btn-primary" onclick="downloadResults()">
+                            <i class="fas fa-download"></i> Download Report
+                        </button>
+                        <button class="btn-secondary" onclick="bookConsultation()">
+                            <i class="fas fa-calendar"></i> Book Consultation
+                        </button>
+                        <button class="btn-tertiary" onclick="retakeAssessment()">
+                            <i class="fas fa-redo"></i> Retake Assessment
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Global variables
+        let currentQuestion = 0;
+        let assessmentData = {};
+        const totalQuestions = 10;
+        
+        // Assessment Questions Database
+        const questions = [
+            {
+                id: 'personal_info',
+                title: 'Personal Information',
+                subtitle: 'Tell us about yourself',
+                type: 'form',
+                fields: [
+                    { name: 'name', type: 'text', label: 'Full Name', required: true },
+                    { name: 'age', type: 'number', label: 'Age', required: true, min: 18, max: 100 },
+                    { name: 'gender', type: 'radio', label: 'Gender', required: true, 
+                      options: [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }] }
+                ]
+            },
+            {
+                id: 'current_pain',
+                title: 'Current Pain Level',
+                subtitle: 'Rate your current pain on a scale of 0-10',
+                type: 'radio',
+                options: [
+                    { value: '0', label: '0 - No pain at all' },
+                    { value: '1-2', label: '1-2 - Very mild pain' },
+                    { value: '3-4', label: '3-4 - Mild pain' },
+                    { value: '5-6', label: '5-6 - Moderate pain' },
+                    { value: '7-8', label: '7-8 - Severe pain' },
+                    { value: '9-10', label: '9-10 - Excruciating pain' }
+                ]
+            },
+            {
+                id: 'pain_location',
+                title: 'Pain Location',
+                subtitle: 'Where do you experience pain? (Select all that apply)',
+                type: 'checkbox',
+                options: [
+                    { value: 'neck', label: 'Neck/Cervical spine' },
+                    { value: 'upper_back', label: 'Upper back/Shoulders' },
+                    { value: 'mid_back', label: 'Mid back/Thoracic spine' },
+                    { value: 'lower_back', label: 'Lower back/Lumbar spine' },
+                    { value: 'hips', label: 'Hips/Pelvis' },
+                    { value: 'legs', label: 'Legs/Sciatica' },
+                    { value: 'headaches', label: 'Headaches/Migraines' },
+                    { value: 'arms', label: 'Arms/Hands' }
+                ]
+            },
+            {
+                id: 'pain_duration',
+                title: 'Pain Duration',
+                subtitle: 'How long have you been experiencing these symptoms?',
+                type: 'radio',
+                options: [
+                    { value: 'recent', label: 'Less than 1 week' },
+                    { value: 'short', label: '1 week to 1 month' },
+                    { value: 'medium', label: '1 to 6 months' },
+                    { value: 'chronic', label: 'More than 6 months' },
+                    { value: 'years', label: 'Several years' }
+                ]
+            },
+            {
+                id: 'daily_activities',
+                title: 'Daily Activities',
+                subtitle: 'How does your pain affect your daily activities?',
+                type: 'radio',
+                options: [
+                    { value: 'none', label: 'No impact on daily activities' },
+                    { value: 'mild', label: 'Slight impact, can do most activities' },
+                    { value: 'moderate', label: 'Moderate impact, some activities difficult' },
+                    { value: 'severe', label: 'Severe impact, many activities impossible' },
+                    { value: 'disabled', label: 'Unable to perform most daily activities' }
+                ]
+            },
+            {
+                id: 'work_lifestyle',
+                title: 'Work & Lifestyle',
+                subtitle: 'What best describes your work and lifestyle?',
+                type: 'checkbox',
+                options: [
+                    { value: 'desk_job', label: 'Desk/Computer work' },
+                    { value: 'physical_job', label: 'Physical/Manual labor' },
+                    { value: 'standing', label: 'Prolonged standing' },
+                    { value: 'driving', label: 'Long periods of driving' },
+                    { value: 'lifting', label: 'Regular heavy lifting' },
+                    { value: 'sports', label: 'Regular sports/exercise' },
+                    { value: 'sedentary', label: 'Sedentary lifestyle' }
+                ]
+            },
+            {
+                id: 'sleep_quality',
+                title: 'Sleep Quality',
+                subtitle: 'How would you rate your sleep quality?',
+                type: 'radio',
+                options: [
+                    { value: 'excellent', label: 'Excellent - Sleep soundly, wake refreshed' },
+                    { value: 'good', label: 'Good - Generally sleep well' },
+                    { value: 'fair', label: 'Fair - Some nights better than others' },
+                    { value: 'poor', label: 'Poor - Frequent sleep disruptions' },
+                    { value: 'terrible', label: 'Terrible - Chronic sleep problems' }
+                ]
+            },
+            {
+                id: 'previous_treatment',
+                title: 'Previous Treatment',
+                subtitle: 'Have you tried any treatments for your condition?',
+                type: 'checkbox',
+                options: [
+                    { value: 'chiropractic', label: 'Chiropractic care' },
+                    { value: 'physical_therapy', label: 'Physical therapy' },
+                    { value: 'massage', label: 'Massage therapy' },
+                    { value: 'medication', label: 'Pain medication' },
+                    { value: 'injections', label: 'Injections/Shots' },
+                    { value: 'surgery', label: 'Surgery' },
+                    { value: 'none', label: 'No previous treatment' }
+                ]
+            },
+            {
+                id: 'stress_level',
+                title: 'Stress Level',
+                subtitle: 'How would you rate your current stress level?',
+                type: 'radio',
+                options: [
+                    { value: 'low', label: 'Low stress - Life is manageable' },
+                    { value: 'moderate', label: 'Moderate stress - Some challenging periods' },
+                    { value: 'high', label: 'High stress - Frequently overwhelmed' },
+                    { value: 'extreme', label: 'Extreme stress - Constant pressure' }
+                ]
+            },
+            {
+                id: 'health_goals',
+                title: 'Health Goals',
+                subtitle: 'What are your primary goals for chiropractic care?',
+                type: 'checkbox',
+                options: [
+                    { value: 'pain_relief', label: 'Pain relief and symptom management' },
+                    { value: 'mobility', label: 'Improved mobility and flexibility' },
+                    { value: 'prevention', label: 'Prevention and wellness maintenance' },
+                    { value: 'performance', label: 'Enhanced athletic/work performance' },
+                    { value: 'quality_life', label: 'Overall better quality of life' },
+                    { value: 'posture', label: 'Better posture and spinal alignment' }
+                ]
+            }
+        ];
+        
+        // Start Assessment Function
+        function startAssessment() {
+            currentQuestion = 0;
+            assessmentData = {};
+            
+            const modal = document.getElementById('assessmentModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            showQuestion(0);
+        }
+        
+        // Show Question Function
+        function showQuestion(questionIndex) {
+            const question = questions[questionIndex];
+            const modalBody = document.getElementById('modalBody');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            // Update progress
+            const progress = ((questionIndex + 1) / totalQuestions) * 100;
+            progressFill.style.width = progress + '%';
+            progressText.textContent = `Question ${questionIndex + 1} of ${totalQuestions}`;
+            
+            // Show/hide navigation buttons
+            prevBtn.style.display = questionIndex > 0 ? 'inline-flex' : 'none';
+            
+            // Generate question HTML
+            let html = `
+                <div class="question-container">
+                    <h4 class="question-title">${question.title}</h4>
+                    <p class="question-subtitle">${question.subtitle}</p>
+            `;
+            
+            if (question.type === 'form') {
+                question.fields.forEach(field => {
+                    html += `<div class="input-group">`;
+                    html += `<label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>`;
+                    
+                    if (field.type === 'text' || field.type === 'number') {
+                        html += `<input type="${field.type}" id="${field.name}" name="${field.name}" 
+                               ${field.required ? 'required' : ''} 
+                               ${field.min ? `min="${field.min}"` : ''}
+                               ${field.max ? `max="${field.max}"` : ''}
+                               value="${assessmentData[field.name] || ''}">`;
+                    } else if (field.type === 'radio') {
+                        html += '<div class="radio-group">';
+                        field.options.forEach(option => {
+                            const checked = assessmentData[field.name] === option.value ? 'checked' : '';
+                            html += `
+                                <div class="radio-option">
+                                    <input type="radio" id="${field.name}_${option.value}" 
+                                           name="${field.name}" value="${option.value}" ${checked}>
+                                    <label for="${field.name}_${option.value}">${option.label}</label>
+                                </div>`;
+                        });
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                });
+            } else if (question.type === 'radio') {
+                html += '<div class="radio-group">';
+                question.options.forEach(option => {
+                    const checked = assessmentData[question.id] === option.value ? 'checked' : '';
+                    html += `
+                        <div class="radio-option">
+                            <input type="radio" id="${question.id}_${option.value}" 
+                                   name="${question.id}" value="${option.value}" ${checked}>
+                            <label for="${question.id}_${option.value}">${option.label}</label>
+                        </div>`;
+                });
+                html += '</div>';
+            } else if (question.type === 'checkbox') {
+                html += '<div class="checkbox-group">';
+                question.options.forEach(option => {
+                    const checked = assessmentData[question.id] && assessmentData[question.id].includes(option.value) ? 'checked' : '';
+                    html += `
+                        <div class="checkbox-option">
+                            <input type="checkbox" id="${question.id}_${option.value}" 
+                                   name="${question.id}" value="${option.value}" ${checked}>
+                            <label for="${question.id}_${option.value}">${option.label}</label>
+                        </div>`;
+                });
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            modalBody.innerHTML = html;
+            
+            // Update next button text
+            if (questionIndex === totalQuestions - 1) {
+                nextBtn.innerHTML = 'Get Results <i class="fas fa-chart-line"></i>';
+            } else {
+                nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
+            }
+        }
+        
+        // Collect Current Question Data
+        function collectCurrentQuestionData() {
+            const question = questions[currentQuestion];
+            
+            if (question.type === 'form') {
+                question.fields.forEach(field => {
+                    if (field.type === 'radio') {
+                        const checkedRadio = document.querySelector(`input[name="${field.name}"]:checked`);
+                        if (checkedRadio) {
+                            assessmentData[field.name] = checkedRadio.value;
+                        }
+                    } else {
+                        const input = document.getElementById(field.name);
+                        if (input) {
+                            assessmentData[field.name] = input.value;
+                        }
+                    }
+                });
+            } else if (question.type === 'radio') {
+                const checkedRadio = document.querySelector(`input[name="${question.id}"]:checked`);
+                if (checkedRadio) {
+                    assessmentData[question.id] = checkedRadio.value;
+                }
+            } else if (question.type === 'checkbox') {
+                const checkedBoxes = document.querySelectorAll(`input[name="${question.id}"]:checked`);
+                const values = Array.from(checkedBoxes).map(cb => cb.value);
+                if (values.length > 0) {
+                    assessmentData[question.id] = values;
+                }
+            }
+        }
+        
+        // Validate Current Question
+        function validateCurrentQuestion() {
+            const question = questions[currentQuestion];
+            
+            if (question.type === 'form') {
+                for (let field of question.fields) {
+                    if (field.required) {
+                        if (field.type === 'radio') {
+                            const checkedRadio = document.querySelector(`input[name="${field.name}"]:checked`);
+                            if (!checkedRadio) {
+                                alert(`Please select ${field.label.toLowerCase()}`);
+                                return false;
+                            }
+                        } else {
+                            const input = document.getElementById(field.name);
+                            if (!input.value.trim()) {
+                                alert(`Please enter ${field.label.toLowerCase()}`);
+                                return false;
+                            }
+                        }
+                    }
+                }
+            } else if (question.type === 'radio') {
+                const checkedRadio = document.querySelector(`input[name="${question.id}"]:checked`);
+                if (!checkedRadio) {
+                    alert('Please select an option before continuing');
+                    return false;
+                }
+            } else if (question.type === 'checkbox') {
+                const checkedBoxes = document.querySelectorAll(`input[name="${question.id}"]:checked`);
+                if (checkedBoxes.length === 0) {
+                    alert('Please select at least one option');
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        // Next Question Function
+        function nextQuestion() {
+            if (!validateCurrentQuestion()) {
+                return;
+            }
+            
+            collectCurrentQuestionData();
+            
+            if (currentQuestion < totalQuestions - 1) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+            } else {
+                // Show results
+                analyzeAndShowResults();
+            }
+        }
+        
+        // Previous Question Function
+        function previousQuestion() {
+            collectCurrentQuestionData();
+            
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
+        }
+        
+        // Analyze and Show Results
+        function analyzeAndShowResults() {
+            // Calculate risk score
+            let riskScore = 0;
+            let conditions = [];
+            let recommendations = [];
+            
+            // Pain level scoring
+            const painLevel = assessmentData.current_pain;
+            if (painLevel === '9-10') riskScore += 30;
+            else if (painLevel === '7-8') riskScore += 25;
+            else if (painLevel === '5-6') riskScore += 15;
+            else if (painLevel === '3-4') riskScore += 8;
+            else if (painLevel === '1-2') riskScore += 3;
+            
+            // Duration scoring
+            const duration = assessmentData.pain_duration;
+            if (duration === 'years') riskScore += 20;
+            else if (duration === 'chronic') riskScore += 15;
+            else if (duration === 'medium') riskScore += 10;
+            else if (duration === 'short') riskScore += 5;
+            
+            // Activity impact scoring
+            const activityImpact = assessmentData.daily_activities;
+            if (activityImpact === 'disabled') riskScore += 25;
+            else if (activityImpact === 'severe') riskScore += 20;
+            else if (activityImpact === 'moderate') riskScore += 10;
+            else if (activityImpact === 'mild') riskScore += 5;
+            
+            // Sleep quality scoring
+            const sleepQuality = assessmentData.sleep_quality;
+            if (sleepQuality === 'terrible') riskScore += 15;
+            else if (sleepQuality === 'poor') riskScore += 10;
+            else if (sleepQuality === 'fair') riskScore += 5;
+            
+            // Stress level scoring
+            const stressLevel = assessmentData.stress_level;
+            if (stressLevel === 'extreme') riskScore += 10;
+            else if (stressLevel === 'high') riskScore += 7;
+            else if (stressLevel === 'moderate') riskScore += 3;
+            
+            // Generate specific conditions based on pain locations
+            const painLocations = assessmentData.pain_location || [];
+            if (painLocations.includes('lower_back')) {
+                conditions.push({
+                    name: 'Lower Back Dysfunction',
+                    description: 'Symptoms suggest potential lumbar spine subluxations that may benefit from Gonstead chiropractic care.'
+                });
+            }
+            if (painLocations.includes('neck')) {
+                conditions.push({
+                    name: 'Cervical Spine Issues',
+                    description: 'Neck pain patterns indicate possible cervical subluxations affecting nerve function.'
+                });
+            }
+            if (painLocations.includes('headaches')) {
+                conditions.push({
+                    name: 'Cervicogenic Headaches',
+                    description: 'Headache patterns may be related to upper cervical spine dysfunction.'
+                });
+            }
+            
+            // Generate recommendations
+            recommendations = [
+                'Schedule a comprehensive Gonstead chiropractic evaluation',
+                'Begin gentle spinal mobility exercises',
+                'Improve workplace ergonomics and posture',
+                'Consider stress management techniques',
+                'Maintain regular physical activity appropriate for your condition'
+            ];
+            
+            if (riskScore > 50) {
+                recommendations.unshift('Seek immediate professional chiropractic care');
+                recommendations.push('Consider X-ray analysis for precise spinal assessment');
+            }
+            
+            // Determine risk level
+            let riskLevel, riskColor, riskMessage;
+            if (riskScore <= 25) {
+                riskLevel = 'Low';
+                riskColor = 'risk-low';
+                riskMessage = 'Your spinal health appears to be in relatively good condition. Preventive care is recommended.';
+            } else if (riskScore <= 50) {
+                riskLevel = 'Moderate';
+                riskColor = 'risk-moderate';
+                riskMessage = 'You have some risk factors that could benefit from professional chiropractic evaluation.';
+            } else {
+                riskLevel = 'High';
+                riskColor = 'risk-high';
+                riskMessage = 'Multiple factors suggest you could significantly benefit from Gonstead chiropractic care.';
+            }
+            
+            showResults({
+                riskScore,
+                riskLevel,
+                riskColor,
+                riskMessage,
+                conditions,
+                recommendations
+            });
+        }
+        
+        // Show Results Function
+        function showResults(results) {
+            document.getElementById('assessmentModal').style.display = 'none';
+            const resultsModal = document.getElementById('resultsModal');
+            const resultsBody = document.getElementById('resultsBody');
+            
+            let html = `
+                <div class="risk-score-container">
+                    <div class="risk-score ${results.riskColor}">
+                        ${results.riskScore}/100
+                    </div>
+                    <h3>${results.riskLevel} Risk Level</h3>
+                    <p>${results.riskMessage}</p>
+                </div>
+            `;
+            
+            if (results.conditions.length > 0) {
+                html += `
+                    <div class="results-section">
+                        <h4><i class="fas fa-clipboard-list"></i> Potential Areas of Concern</h4>
+                        ${results.conditions.map(condition => `
+                            <div class="condition-item">
+                                <div class="condition-name">${condition.name}</div>
+                                <div class="condition-description">${condition.description}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="results-section">
+                    <h4><i class="fas fa-lightbulb"></i> Professional Recommendations</h4>
+                    <ul class="recommendation-list">
+                        ${results.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="results-section">
+                    <h4><i class="fas fa-user-md"></i> Why Choose Gonstead Chiropractic?</h4>
+                    <ul class="recommendation-list">
+                        <li>Precise diagnostic analysis using advanced techniques</li>
+                        <li>Specific adjustments targeting only problem areas</li>
+                        <li>X-ray analysis for comprehensive spinal assessment</li>
+                        <li>Personalized treatment plans based on your specific needs</li>
+                        <li>Focus on correcting the root cause, not just symptoms</li>
+                    </ul>
+                </div>
+            `;
+            
+            resultsBody.innerHTML = html;
+            resultsModal.style.display = 'flex';
+        }
+        
+        // Close Assessment
+        function closeAssessment() {
+            document.getElementById('assessmentModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Close Results
+        function closeResults() {
+            document.getElementById('resultsModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Download Results
+        function downloadResults() {
+            alert('Download feature would generate a PDF report with your assessment results and recommendations.');
+        }
+        
+        // Book Consultation
+        function bookConsultation() {
+            alert('Consultation booking would integrate with your appointment system. For now, please call +92 304 6996267.');
+        }
+        
+        // Retake Assessment
+        function retakeAssessment() {
+            closeResults();
+            startAssessment();
+        }
+        
+        // Email notification functions (existing)
         function subscribeNotification() {
             const email = document.getElementById('emailNotification').value;
             
@@ -359,9 +1354,7 @@
                 return;
             }
             
-            // Here you would typically send the email to your server
-            // For now, we'll just show a success message
-            alert('Thank you! We\'ll notify you as soon as the assessment system is ready.');
+            alert('Thank you! We\'ll notify you as soon as new features are available.');
             document.getElementById('emailNotification').value = '';
         }
         
@@ -370,10 +1363,11 @@
             return emailRegex.test(email);
         }
         
-        // Allow Enter key to submit notification
-        document.getElementById('emailNotification').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                subscribeNotification();
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAssessment();
+                closeResults();
             }
         });
     </script>
