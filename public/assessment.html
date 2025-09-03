@@ -1496,11 +1496,11 @@
             };
         }
         
-        // Generate PDF Report
+        // Generate PDF Report - Optimized for Single Page
         function generatePDF(resultsData) {
             const t = translations[currentLanguage];
             
-            // Create PDF content
+            // Create PDF content optimized for single page
             const pdfContent = `
                 <!DOCTYPE html>
                 <html ${currentLanguage === 'urdu' ? 'dir="rtl" lang="ur"' : 'dir="ltr" lang="en"'}>
@@ -1509,128 +1509,149 @@
                     <title>Spinal Health Assessment Report</title>
                     <style>
                         * { margin: 0; padding: 0; box-sizing: border-box; }
+                        @page { size: A4; margin: 0.5in; }
                         body {
                             font-family: ${currentLanguage === 'urdu' ? "'Noto Sans Arabic', Arial, sans-serif" : "'Arial', sans-serif"};
-                            line-height: 1.6;
+                            line-height: 1.3;
                             color: #333;
-                            padding: 20px;
-                            max-width: 800px;
-                            margin: 0 auto;
+                            font-size: 12px;
                         }
                         .header {
                             text-align: center;
-                            margin-bottom: 30px;
-                            padding: 20px;
+                            margin-bottom: 15px;
+                            padding: 15px;
                             background: linear-gradient(135deg, #0d5c75, #2a9d8f);
                             color: white;
-                            border-radius: 10px;
+                            border-radius: 8px;
                         }
-                        .clinic-info {
+                        .header h1 { font-size: 18px; margin-bottom: 5px; }
+                        .header h2 { font-size: 14px; margin-bottom: 3px; }
+                        .header p { font-size: 11px; }
+                        .content-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 15px;
                             margin-bottom: 15px;
                         }
                         .section {
-                            margin: 20px 0;
-                            padding: 15px;
-                            border-left: 4px solid #2a9d8f;
+                            padding: 10px;
+                            border-left: 3px solid #2a9d8f;
                             background: #f8fafc;
+                            border-radius: 5px;
+                            margin-bottom: 10px;
                         }
                         .section h3 {
                             color: #0d5c75;
-                            margin-bottom: 10px;
-                        }
-                        .risk-score {
-                            font-size: 2rem;
-                            font-weight: bold;
-                            text-align: center;
-                            margin: 20px 0;
-                        }
-                        .recommendation-item {
-                            margin: 5px 0;
-                            padding: 5px 0;
-                            border-bottom: 1px solid #eee;
-                        }
-                        .footer {
-                            margin-top: 40px;
-                            padding: 20px;
-                            background: #f1f5f9;
-                            border-radius: 8px;
-                            text-align: center;
-                            font-size: 0.9rem;
+                            font-size: 13px;
+                            margin-bottom: 8px;
                         }
                         .patient-info {
                             display: grid;
-                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                            gap: 15px;
-                            margin-bottom: 20px;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 8px;
+                            font-size: 11px;
                         }
                         .patient-info div {
-                            padding: 10px;
+                            padding: 5px;
                             background: white;
+                            border-radius: 3px;
+                        }
+                        .risk-container {
+                            text-align: center;
+                            padding: 10px;
+                        }
+                        .risk-score {
+                            font-size: 24px;
+                            font-weight: bold;
+                            margin-bottom: 5px;
+                        }
+                        .compact-list {
+                            font-size: 11px;
+                            line-height: 1.4;
+                        }
+                        .compact-list li {
+                            margin-bottom: 3px;
+                            padding-left: 15px;
+                            position: relative;
+                        }
+                        .compact-list li:before {
+                            content: '•';
+                            position: absolute;
+                            left: 0;
+                            color: #2a9d8f;
+                            font-weight: bold;
+                        }
+                        .footer {
+                            margin-top: 15px;
+                            padding: 10px;
+                            background: #f1f5f9;
                             border-radius: 5px;
+                            text-align: center;
+                            font-size: 10px;
+                        }
+                        .single-column {
+                            grid-column: 1 / -1;
                         }
                     </style>
                 </head>
                 <body>
                     <div class="header">
-                        <div class="clinic-info">
-                            <h2>Dr. Bashir Khan</h2>
-                            <p>Certified Gonstead Specialist</p>
-                        </div>
-                        <h1>${t.headerTitle}</h1>
-                        <p>Assessment Report</p>
+                        <h2>Dr. Bashir Khan - Certified Gonstead Specialist</h2>
+                        <h1>Spinal Health Assessment Report</h1>
+                        <p>Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
                     </div>
                     
-                    <div class="section">
-                        <h3>Patient Information</h3>
-                        <div class="patient-info">
-                            <div><strong>Name:</strong> ${resultsData.patientName}</div>
-                            <div><strong>Age:</strong> ${resultsData.patientAge}</div>
-                            <div><strong>Gender:</strong> ${resultsData.patientGender}</div>
-                            <div><strong>Date:</strong> ${resultsData.assessmentDate}</div>
-                            <div><strong>Time:</strong> ${resultsData.assessmentTime}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="section">
-                        <h3>${t.riskLevel}</h3>
-                        <div class="risk-score">${resultsData.riskScore}</div>
-                        <p><strong>${resultsData.riskLevel}</strong></p>
-                        <p>${resultsData.riskMessage}</p>
-                    </div>
-                    
-                    ${resultsData.conditions.length > 0 ? `
-                    <div class="section">
-                        <h3>${t.potentialConcerns}</h3>
-                        ${resultsData.conditions.map(condition => `
-                            <div class="recommendation-item">
-                                <strong>${condition.name}</strong><br>
-                                ${condition.description}
+                    <div class="content-grid">
+                        <div class="section">
+                            <h3>Patient Information</h3>
+                            <div class="patient-info">
+                                <div><strong>Name:</strong> ${resultsData.patientName}</div>
+                                <div><strong>Age:</strong> ${resultsData.patientAge}</div>
+                                <div><strong>Gender:</strong> ${resultsData.patientGender}</div>
+                                <div><strong>Date:</strong> ${resultsData.assessmentDate}</div>
                             </div>
-                        `).join('')}
-                    </div>
-                    ` : ''}
-                    
-                    <div class="section">
-                        <h3>${t.recommendations}</h3>
-                        ${resultsData.recommendations.map(rec => `
-                            <div class="recommendation-item">✓ ${rec}</div>
-                        `).join('')}
-                    </div>
-                    
-                    <div class="section">
-                        <h3>${t.whyGonstead}</h3>
-                        <div class="recommendation-item">✓ Precise diagnostic analysis using advanced techniques</div>
-                        <div class="recommendation-item">✓ Specific adjustments targeting only problem areas</div>
-                        <div class="recommendation-item">✓ X-ray analysis for comprehensive spinal assessment</div>
-                        <div class="recommendation-item">✓ Personalized treatment plans based on your specific needs</div>
-                        <div class="recommendation-item">✓ Focus on correcting the root cause, not just symptoms</div>
+                        </div>
+                        
+                        <div class="section">
+                            <h3>Risk Assessment</h3>
+                            <div class="risk-container">
+                                <div class="risk-score">${resultsData.riskScore}</div>
+                                <p><strong>${resultsData.riskLevel} Risk Level</strong></p>
+                            </div>
+                        </div>
+                        
+                        ${resultsData.conditions.length > 0 ? `
+                        <div class="section">
+                            <h3>Areas of Concern</h3>
+                            <ul class="compact-list">
+                                ${resultsData.conditions.map(condition => `<li><strong>${condition.name}:</strong> ${condition.description.substring(0, 60)}...</li>`).join('')}
+                            </ul>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="section">
+                            <h3>Recommendations</h3>
+                            <ul class="compact-list">
+                                ${resultsData.recommendations.slice(0, 4).map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div class="section single-column">
+                            <h3>Why Choose Gonstead Chiropractic?</h3>
+                            <ul class="compact-list" style="columns: 2; column-gap: 20px;">
+                                <li>Precise diagnostic analysis</li>
+                                <li>Specific targeted adjustments</li>
+                                <li>X-ray analysis for accuracy</li>
+                                <li>Personalized treatment plans</li>
+                                <li>Root cause correction focus</li>
+                                <li>Evidence-based approach</li>
+                            </ul>
+                        </div>
                     </div>
                     
                     <div class="footer">
-                        <p><strong>Contact Information</strong></p>
-                        <p>Phone: +92 304 6996267</p>
-                        <p>Generated on: ${new Date().toLocaleString()}</p>
-                        <p style="margin-top: 10px; font-style: italic;">This assessment is for informational purposes only and does not replace professional medical diagnosis.</p>
+                        <p><strong>Contact:</strong> +92 304 6996267 | <strong>Next Step:</strong> Book your consultation today</p>
+                        <p style="font-style: italic;">This assessment is for informational purposes only. Professional medical consultation recommended.</p>
                     </div>
                 </body>
                 </html>

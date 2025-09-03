@@ -147,7 +147,15 @@ if (analyticsData.length === 0) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch (error) {
+      if (error instanceof SyntaxError && error.message.includes('Unexpected end of JSON input')) {
+        return NextResponse.json({ error: 'Empty or malformed JSON body' }, { status: 400 })
+      }
+      throw error // Re-throw other parsing errors
+    }
     const { type, data } = body
     
     // Get client IP address
