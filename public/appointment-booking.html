@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Gonstead Chiropractic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .booking-header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #0d5c75 0%, #2a9d8f 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .booking-header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .booking-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #2a9d8f;
+            text-decoration: none;
+        }
+
+        .back-link i {
+            margin-right: 8px;
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .contact-method {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .contact-method:hover {
+            border-color: #2a9d8f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42, 157, 143, 0.1);
+        }
+
+        .contact-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #2a9d8f, #0d5c75);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .contact-method h3 {
+            font-family: 'Poppins', sans-serif;
+            color: #0d5c75;
+            margin-bottom: 15px;
+        }
+
+        .contact-method p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2a9d8f 0%, #20b2aa 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(42, 157, 143, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(42, 157, 143, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+
+        .clinic-hours {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .clinic-hours h3 {
+            font-family: 'Poppins', sans-serif;
+            color: #0d5c75;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .hours-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .hours-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .hours-item:last-child {
+            border-bottom: none;
+        }
+
+        .day {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .time {
+            color: #666;
+        }
+
+        .emergency-notice {
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            border: 2px solid #f59e0b;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .emergency-notice h3 {
+            color: #d97706;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 15px;
+        }
+
+        .emergency-notice p {
+            color: #92400e;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .booking-header {
+                padding: 30px 15px;
+            }
+            
+            .booking-header h1 {
+                font-size: 2rem;
+            }
+            
+            .booking-card {
+                padding: 25px;
+            }
+            
+            .contact-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back Link -->
+        <a href="/assessment.html" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            Back to Assessment
+        </a>
+
+        <!-- Header -->
+        <div class="booking-header">
+            <h1>Book Your Consultation</h1>
+            <p>Schedule your appointment with Dr. Bashir Khan, Certified Gonstead Specialist</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="booking-card">
+            <div class="welcome-message" style="text-align: center; margin-bottom: 40px;">
+                <h2 style="font-family: 'Poppins', sans-serif; color: #0d5c75; margin-bottom: 20px;">
+                    Ready to Start Your Healing Journey?
+                </h2>
+                <p style="color: #666; font-size: 1.1rem;">
+                    Take the next step towards optimal spinal health with our specialized Gonstead chiropractic care.
+                </p>
+            </div>
+
+            <!-- Contact Methods -->
+            <div class="contact-info">
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <h3>Call to Book</h3>
+                    <p>Speak directly with our team to schedule your appointment</p>
+                    <a href="tel:+923046996267" class="btn-primary">
+                        <i class="fas fa-phone"></i> +92 304 6996267
+                    </a>
+                </div>
+
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <h3>WhatsApp Booking</h3>
+                    <p>Quick and convenient appointment scheduling via WhatsApp</p>
+                    <a href="https://wa.me/923046996267?text=Hello, I would like to book an appointment for a Gonstead chiropractic consultation." class="btn-primary" target="_blank">
+                        <i class="fab fa-whatsapp"></i> WhatsApp Us
+                    </a>
+                </div>
+
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3>Email Inquiry</h3>
+                    <p>Send us your details and preferred appointment times</p>
+                    <a href="mailto:info@gonsteadchiropractic.com?subject=Appointment Request&body=Hello, I would like to schedule a consultation. Please let me know your available times." class="btn-primary">
+                        <i class="fas fa-envelope"></i> Email Us
+                    </a>
+                </div>
+            </div>
+
+            <!-- Clinic Hours -->
+            <div class="clinic-hours">
+                <h3><i class="fas fa-clock"></i> Clinic Hours</h3>
+                <div class="hours-grid">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="hours-item">
+                            <span class="day">Monday</span>
+                            <span class="time">9:00 AM - 6:00 PM</span>
+                        </div>
+                        <div class="hours-item">
+                            <span class="day">Tuesday</span>
+                            <span class="time">9:00 AM - 6:00 PM</span>
+                        </div>
+                        <div class="hours-item">
+                            <span class="day">Wednesday</span>
+                            <span class="time">9:00 AM - 6:00 PM</span>
+                        </div>
+                        <div class="hours-item">
+                            <span class="day">Thursday</span>
+                            <span class="time">9:00 AM - 6:00 PM</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="hours-item">
+                            <span class="day">Friday</span>
+                            <span class="time">9:00 AM - 2:00 PM</span>
+                        </div>
+                        <div class="hours-item">
+                            <span class="day">Saturday</span>
+                            <span class="time">10:00 AM - 4:00 PM</span>
+                        </div>
+                        <div class="hours-item">
+                            <span class="day">Sunday</span>
+                            <span class="time">Closed</span>
+                        </div>
+                        <div class="hours-item" style="border: none;">
+                            <span class="day">Emergency</span>
+                            <span class="time">By Appointment</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Notice -->
+            <div class="emergency-notice">
+                <h3><i class="fas fa-exclamation-triangle"></i> Emergency Cases</h3>
+                <p>
+                    For urgent spinal health concerns or severe pain, please call immediately. 
+                    We provide emergency consultations when needed.
+                </p>
+            </div>
+
+            <!-- What to Expect -->
+            <div style="margin-top: 40px;">
+                <h3 style="font-family: 'Poppins', sans-serif; color: #0d5c75; text-align: center; margin-bottom: 30px;">
+                    What to Expect During Your Visit
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2a9d8f, #0d5c75); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 20px;">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <h4 style="color: #0d5c75; margin-bottom: 10px;">Comprehensive Evaluation</h4>
+                        <p style="color: #666; font-size: 0.9rem;">Detailed assessment of your spinal health and medical history</p>
+                    </div>
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2a9d8f, #0d5c75); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 20px;">
+                            <i class="fas fa-x-ray"></i>
+                        </div>
+                        <h4 style="color: #0d5c75; margin-bottom: 10px;">X-Ray Analysis</h4>
+                        <p style="color: #666; font-size: 0.9rem;">Precise diagnostic imaging using Gonstead methodology</p>
+                    </div>
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #2a9d8f, #0d5c75); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 20px;">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <h4 style="color: #0d5c75; margin-bottom: 10px;">Personalized Treatment</h4>
+                        <p style="color: #666; font-size: 0.9rem;">Customized care plan based on your specific needs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

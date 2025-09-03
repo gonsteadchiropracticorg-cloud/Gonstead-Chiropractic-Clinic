@@ -1449,14 +1449,208 @@
             document.body.style.overflow = 'auto';
         }
         
-        // Download Results
+        // Download Results as PDF
         function downloadResults() {
-            alert('Download feature would generate a PDF report with your assessment results and recommendations.');
+            const resultsData = getCurrentResults();
+            generatePDF(resultsData);
         }
         
-        // Book Consultation
+        // Book Consultation - Navigate to appointment booking page
         function bookConsultation() {
-            alert('Consultation booking would integrate with your appointment system. For now, please call +92 304 6996267.');
+            window.location.href = '/appointment-booking.html';
+        }
+        
+        // Get current assessment results for PDF generation
+        function getCurrentResults() {
+            const resultsModal = document.getElementById('resultsModal');
+            const riskScore = document.querySelector('.risk-score')?.textContent || 'N/A';
+            const riskLevel = document.querySelector('.risk-score-container h3')?.textContent || 'N/A';
+            const riskMessage = document.querySelector('.risk-score-container p')?.textContent || 'N/A';
+            
+            // Get conditions
+            const conditions = [];
+            document.querySelectorAll('.condition-item').forEach(item => {
+                const name = item.querySelector('.condition-name')?.textContent || '';
+                const description = item.querySelector('.condition-description')?.textContent || '';
+                if (name) conditions.push({ name, description });
+            });
+            
+            // Get recommendations
+            const recommendations = [];
+            document.querySelectorAll('.recommendation-list li').forEach(item => {
+                const text = item.textContent?.trim();
+                if (text) recommendations.push(text);
+            });
+            
+            return {
+                patientName: assessmentData.name || 'Patient',
+                patientAge: assessmentData.age || 'N/A',
+                patientGender: assessmentData.gender || 'N/A',
+                riskScore,
+                riskLevel,
+                riskMessage,
+                conditions,
+                recommendations,
+                assessmentDate: new Date().toLocaleDateString(),
+                assessmentTime: new Date().toLocaleTimeString()
+            };
+        }
+        
+        // Generate PDF Report
+        function generatePDF(resultsData) {
+            const t = translations[currentLanguage];
+            
+            // Create PDF content
+            const pdfContent = `
+                <!DOCTYPE html>
+                <html ${currentLanguage === 'urdu' ? 'dir="rtl" lang="ur"' : 'dir="ltr" lang="en"'}>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Spinal Health Assessment Report</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body {
+                            font-family: ${currentLanguage === 'urdu' ? "'Noto Sans Arabic', Arial, sans-serif" : "'Arial', sans-serif"};
+                            line-height: 1.6;
+                            color: #333;
+                            padding: 20px;
+                            max-width: 800px;
+                            margin: 0 auto;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            padding: 20px;
+                            background: linear-gradient(135deg, #0d5c75, #2a9d8f);
+                            color: white;
+                            border-radius: 10px;
+                        }
+                        .clinic-info {
+                            margin-bottom: 15px;
+                        }
+                        .section {
+                            margin: 20px 0;
+                            padding: 15px;
+                            border-left: 4px solid #2a9d8f;
+                            background: #f8fafc;
+                        }
+                        .section h3 {
+                            color: #0d5c75;
+                            margin-bottom: 10px;
+                        }
+                        .risk-score {
+                            font-size: 2rem;
+                            font-weight: bold;
+                            text-align: center;
+                            margin: 20px 0;
+                        }
+                        .recommendation-item {
+                            margin: 5px 0;
+                            padding: 5px 0;
+                            border-bottom: 1px solid #eee;
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            padding: 20px;
+                            background: #f1f5f9;
+                            border-radius: 8px;
+                            text-align: center;
+                            font-size: 0.9rem;
+                        }
+                        .patient-info {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                            gap: 15px;
+                            margin-bottom: 20px;
+                        }
+                        .patient-info div {
+                            padding: 10px;
+                            background: white;
+                            border-radius: 5px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="clinic-info">
+                            <h2>Dr. Bashir Khan</h2>
+                            <p>Certified Gonstead Specialist</p>
+                        </div>
+                        <h1>${t.headerTitle}</h1>
+                        <p>Assessment Report</p>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>Patient Information</h3>
+                        <div class="patient-info">
+                            <div><strong>Name:</strong> ${resultsData.patientName}</div>
+                            <div><strong>Age:</strong> ${resultsData.patientAge}</div>
+                            <div><strong>Gender:</strong> ${resultsData.patientGender}</div>
+                            <div><strong>Date:</strong> ${resultsData.assessmentDate}</div>
+                            <div><strong>Time:</strong> ${resultsData.assessmentTime}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>${t.riskLevel}</h3>
+                        <div class="risk-score">${resultsData.riskScore}</div>
+                        <p><strong>${resultsData.riskLevel}</strong></p>
+                        <p>${resultsData.riskMessage}</p>
+                    </div>
+                    
+                    ${resultsData.conditions.length > 0 ? `
+                    <div class="section">
+                        <h3>${t.potentialConcerns}</h3>
+                        ${resultsData.conditions.map(condition => `
+                            <div class="recommendation-item">
+                                <strong>${condition.name}</strong><br>
+                                ${condition.description}
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    <div class="section">
+                        <h3>${t.recommendations}</h3>
+                        ${resultsData.recommendations.map(rec => `
+                            <div class="recommendation-item">✓ ${rec}</div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="section">
+                        <h3>${t.whyGonstead}</h3>
+                        <div class="recommendation-item">✓ Precise diagnostic analysis using advanced techniques</div>
+                        <div class="recommendation-item">✓ Specific adjustments targeting only problem areas</div>
+                        <div class="recommendation-item">✓ X-ray analysis for comprehensive spinal assessment</div>
+                        <div class="recommendation-item">✓ Personalized treatment plans based on your specific needs</div>
+                        <div class="recommendation-item">✓ Focus on correcting the root cause, not just symptoms</div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p><strong>Contact Information</strong></p>
+                        <p>Phone: +92 304 6996267</p>
+                        <p>Generated on: ${new Date().toLocaleString()}</p>
+                        <p style="margin-top: 10px; font-style: italic;">This assessment is for informational purposes only and does not replace professional medical diagnosis.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // Create a new window with the PDF content
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(pdfContent);
+            printWindow.document.close();
+            
+            // Wait for content to load, then trigger print
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    printWindow.print();
+                    // Close the window after printing (optional)
+                    printWindow.onafterprint = function() {
+                        printWindow.close();
+                    };
+                }, 500);
+            };
         }
         
         // Retake Assessment
