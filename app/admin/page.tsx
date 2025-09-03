@@ -57,6 +57,7 @@ import {
   Briefcase,
   MapPin,
   DollarSign,
+  ChevronUp,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
@@ -114,6 +115,7 @@ export default function AdminDashboard() {
   const [editingPatient, setEditingPatient] = useState<PatientRecord | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
+  const [showScrollToTop, setShowScrollToTop] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -316,23 +318,53 @@ export default function AdminDashboard() {
   }
 
   const createPaymentRecord = (patient: PatientRecord) => {
-    // Create a simplified patient object for the money management page
-    const patientData = {
-      name: patient.name,
+    // Determine default amount based on session type
+    const defaultAmount = patient.sessionType === "in_clinic" ? 1500 : 800;
+    
+    // Create payment record object
+    const paymentRecord = {
+      id: `MR-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      patientName: patient.name,
       phone: patient.phone,
       sessionType: patient.sessionType,
-      email: patient.email || '',
+      amount: defaultAmount,
+      paymentMethod: patient.paymentMethod || "cash",
+      description: `${patient.sessionType === 'in_clinic' ? 'In-Clinic Gonstead Adjustment' : 'Video Consultation'} for ${patient.name}`,
+      category: "consultation",
+      status: "pending",
+      createdBy: "Dr. Bashir Khan"
     }
     
-    // Encode the patient data as a URL parameter
-    const encodedPatientData = encodeURIComponent(JSON.stringify(patientData))
+    // Get existing money records from localStorage
+    const existingRecords = JSON.parse(localStorage.getItem("money_records") || "[]")
     
-    // Navigate to money management page with pre-filled patient data
-    router.push(`/admin/money-management?patient=${encodedPatientData}`)
+    // Check if record already exists for this patient (to avoid duplicates)
+    const existingRecord = existingRecords.find((record: any) => 
+      record.patientName === patient.name && 
+      record.phone === patient.phone &&
+      record.date === paymentRecord.date
+    )
+    
+    if (existingRecord) {
+      toast({
+        title: "⚠️ Record Already Exists",
+        description: `Payment record for ${patient.name} already exists for today`,
+        variant: "destructive",
+      })
+      return
+    }
+    
+    // Add the new record to the beginning of the array
+    const updatedRecords = [paymentRecord, ...existingRecords]
+    
+    // Save back to localStorage
+    localStorage.setItem("money_records", JSON.stringify(updatedRecords))
     
     toast({
-      title: "💰 Transferring to Payment System",
-      description: `Redirecting to create payment record for ${patient.name}`,
+      title: "💰 Payment Record Added",
+      description: `Payment record for ${patient.name} (PKR ${defaultAmount}) added successfully. Records can be viewed in Money Management.`,
+      duration: 5000,
     })
   }
 
@@ -439,6 +471,24 @@ Phone: +92 304 699 6267
       return () => clearInterval(interval)
     }
   }, [pagination.settings.autoRefresh])
+
+  // Scroll-to-top button functionality
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 300
+      setShowScrollToTop(scrolled)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+  }
 
   const stats = {
     totalPatients: patients.length,
@@ -1572,6 +1622,50 @@ Phone: +92 304 699 6267
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Scroll to Top Navigation Button */}
+      {showScrollToTop && (
+        <div 
+          onClick={scrollToTop}
+          className={`fixed bottom-6 right-6 z-50 cursor-pointer transition-all duration-500 transform ${
+            showScrollToTop ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-0'
+          }`}
+          style={{
+            background: 'rgba(40, 147, 135, 0.9)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '50%',
+            width: '60px',
+            height: '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(40, 147, 135, 1)'
+            e.currentTarget.style.transform = 'scale(1.1)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(40, 147, 135, 0.9)'
+            e.currentTarget.style.transform = 'scale(1)'
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'scale(0.95)'
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1)'
+          }}
+        >
+          <ChevronUp 
+            size={24} 
+            style={{ 
+              color: 'white',
+              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }

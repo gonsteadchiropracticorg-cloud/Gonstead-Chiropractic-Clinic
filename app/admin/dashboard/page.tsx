@@ -54,6 +54,7 @@ import Image from "next/image"
 import { WeatherWidget } from "@/components/weather-widget"
 import { EnhancedLoadingPage } from "@/components/loading-spinner"
 import AdminSidebar from "@/components/AdminSidebar"
+import ScrollToTopButton from "@/components/ScrollToTopButton"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 import {
@@ -1656,6 +1657,9 @@ Phone: +92 304 699 6267
         onClose={() => setIsSidebarOpen(false)}
         currentPath={pathname}
       />
+      
+      {/* Scroll to Top Navigation Button */}
+      <ScrollToTopButton showAfter={300} />
 
       <Dialog open={isPrescriptionDialogOpen} onOpenChange={setIsPrescriptionDialogOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
