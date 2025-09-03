@@ -1183,105 +1183,68 @@ function HomePageContent() {
             <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#00b67a]/20 to-transparent"></div>
           </section>
 
-          {/* Professional Patient Education Resources Section - Enhanced & Separated */}
-          <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-blue-900/20">
-            {/* Background Enhancement */}
-            <div className="absolute inset-0">
-              <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-500/5 rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-500/3 rounded-full blur-3xl animate-pulse animation-delay-2000"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-emerald-500/8 rounded-full blur-2xl animate-pulse animation-delay-1000"></div>
-            </div>
-            
-            {/* Professional Container with Rounded Borders */}
-            <div className="relative max-w-6xl mx-auto">
-              <div className="bg-gradient-to-br from-emerald-900 via-slate-800 to-teal-900 dark:from-emerald-950 dark:via-slate-900 dark:to-teal-950 rounded-3xl shadow-2xl border border-emerald-500/20 backdrop-blur-xl overflow-hidden">
-                {/* Sophisticated Background Elements */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
-                  <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                </div>
-                
-                {/* Subtle grid pattern */}
-                <div className="absolute inset-0 opacity-5" style={{
-                  backgroundImage: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><defs><pattern id='grid' width='60' height='60' patternUnits='userSpaceOnUse'><path d='M 60 0 L 0 0 0 60' fill='none' stroke='white' stroke-width='1'/></pattern></defs><rect width='100%' height='100%' fill='url(%23grid)'/></svg>")`
-                }}></div>
-                
-                {/* Decorative Top Border */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent"></div>
-                
-                {/* Main Content */}
-                <div className="relative p-8 sm:p-12 lg:p-16 text-white">
-                  <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
-                    {/* Left Content */}
-                    <div className="flex-1 text-center lg:text-left">
-                      {/* Enhanced Header */}
-                      <div className="flex items-center justify-center lg:justify-start mb-6">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl mr-6 shadow-xl">
-                          <BookOpen className="w-8 h-8 text-white" />
-                        </div>
-                        <div>
-                          <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-200 to-teal-200 bg-clip-text text-transparent leading-tight">
-                            Advanced Patient
-                          </h2>
-                          <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-teal-200 to-emerald-200 bg-clip-text text-transparent">
-                            Education Resources
-                          </h2>
-                        </div>
+          {/* Compact Patient Education Resources Section */}
+          <section className="relative py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-[#0d5c75]/5 via-white to-[#2a9d8f]/5 dark:from-gray-900/50 dark:to-gray-800/50">
+            <div className="max-w-5xl mx-auto">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-[#0d5c75]/10 dark:border-gray-700 overflow-hidden">
+                <div className="flex flex-col md:flex-row items-center">
+                  {/* Left Content - Compact */}
+                  <div className="flex-1 p-8 md:p-10">
+                    <div className="flex items-center mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] rounded-xl flex items-center justify-center mr-4 shadow-md">
+                        <BookOpen className="w-6 h-6 text-white" />
                       </div>
-                      
-                      {/* Enhanced Description */}
-                      <div className="relative mb-8">
-                        <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/10 via-transparent to-teal-500/10 rounded-2xl blur-xl"></div>
-                        <p className="relative text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-                          Discover valuable insights into chiropractic care and enhance your healing journey with our meticulously curated guides and educational materials.
-                        </p>
-                      </div>
-                      
-                      {/* Enhanced Benefits Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-                        <div className="flex items-center justify-center lg:justify-start space-x-3 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 backdrop-blur-sm border border-emerald-500/30 rounded-2xl px-6 py-4 hover:from-emerald-600/30 hover:to-teal-600/30 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
-                          <Award className="w-6 h-6 text-emerald-300" />
-                          <span className="text-sm font-semibold text-emerald-200">Expert-Approved</span>
-                        </div>
-                        <div className="flex items-center justify-center lg:justify-start space-x-3 bg-gradient-to-r from-teal-600/20 to-cyan-600/20 backdrop-blur-sm border border-teal-500/30 rounded-2xl px-6 py-4 hover:from-teal-600/30 hover:to-cyan-600/30 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
-                          <Clock className="w-6 h-6 text-teal-300" />
-                          <span className="text-sm font-semibold text-teal-200">Always Updated</span>
-                        </div>
-                        <div className="flex items-center justify-center lg:justify-start space-x-3 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 backdrop-blur-sm border border-cyan-500/30 rounded-2xl px-6 py-4 hover:from-cyan-600/30 hover:to-blue-600/30 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
-                          <Users className="w-6 h-6 text-cyan-300" />
-                          <span className="text-sm font-semibold text-cyan-200">Easy to Follow</span>
-                        </div>
+                      <div>
+                        <h2 className="text-2xl md:text-3xl font-bold text-[#0d5c75] dark:text-white font-poppins">
+                          Patient Education Hub
+                        </h2>
+                        <p className="text-[#2a9d8f] font-medium text-sm">Comprehensive Learning Resources</p>
                       </div>
                     </div>
                     
-                    {/* Enhanced Right CTA */}
-                    <div className="flex-shrink-0">
-                      <div className="relative">
-                        {/* Glowing Background Effect */}
-                        <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/30 to-teal-500/30 rounded-3xl blur-2xl animate-pulse"></div>
-                        <a
-                          href="/educational-guide.html"
-                          className="group relative inline-flex items-center px-12 py-6 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-2xl 
-                                   hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-2xl hover:shadow-emerald-500/25
-                                   transform hover:-translate-y-2 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-400/50
-                                   border-2 border-emerald-400/30 backdrop-blur-sm text-lg"
-                          aria-label="View comprehensive educational guide for chiropractic patients"
-                        >
-                          <BookOpen className="w-8 h-8 mr-4 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" />
-                          <div>
-                            <span className="block font-bold text-xl">View Guide</span>
-                            <span className="block text-sm text-emerald-100 font-normal">Comprehensive Resources</span>
-                          </div>
-                          {/* Animated shine effect */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000 ease-out"></div>
-                        </a>
+                    <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-6">
+                      Access our curated collection of educational materials, guides, and resources to enhance your understanding of chiropractic care and optimize your healing journey.
+                    </p>
+                    
+                    {/* Compact Benefits */}
+                    <div className="flex flex-wrap gap-3 mb-6">
+                      <div className="flex items-center bg-[#0d5c75]/5 dark:bg-gray-700 px-3 py-2 rounded-full border border-[#0d5c75]/10">
+                        <Award className="w-4 h-4 text-[#2a9d8f] mr-2" />
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Expert-Approved</span>
+                      </div>
+                      <div className="flex items-center bg-[#2a9d8f]/5 dark:bg-gray-700 px-3 py-2 rounded-full border border-[#2a9d8f]/10">
+                        <Clock className="w-4 h-4 text-[#0d5c75] mr-2" />
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Always Updated</span>
+                      </div>
+                      <div className="flex items-center bg-[#0d5c75]/5 dark:bg-gray-700 px-3 py-2 rounded-full border border-[#0d5c75]/10">
+                        <Users className="w-4 h-4 text-[#2a9d8f] mr-2" />
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Easy to Follow</span>
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Right CTA - Compact */}
+                  <div className="flex-shrink-0 p-8 md:p-10 bg-gradient-to-br from-[#0d5c75]/5 to-[#2a9d8f]/5 dark:from-gray-700 dark:to-gray-600">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <BookOpen className="w-8 h-8 text-white" />
+                      </div>
+                      <a
+                        href="/educational-guide.html"
+                        className="group inline-flex flex-col items-center px-8 py-4 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white font-semibold rounded-xl 
+                                 hover:from-[#20b2aa] hover:to-[#155e63] transition-all duration-300 shadow-lg hover:shadow-xl
+                                 transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#2a9d8f]/30"
+                        aria-label="Access comprehensive patient education resources"
+                      >
+                        <span className="text-lg font-bold mb-1">Explore Resources</span>
+                        <span className="text-sm text-[#2a9d8f]/80 dark:text-blue-200">Start Learning Today</span>
+                        <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <ArrowRight className="w-4 h-4" />
+                        </div>
+                      </a>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Decorative Bottom Border */}
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-teal-400/60 to-transparent"></div>
               </div>
             </div>
           </section>
