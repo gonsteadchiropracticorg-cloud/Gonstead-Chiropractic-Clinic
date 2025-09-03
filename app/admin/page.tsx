@@ -56,6 +56,7 @@ import {
   Award,
   Briefcase,
   MapPin,
+  DollarSign,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
@@ -312,6 +313,27 @@ export default function AdminDashboard() {
     // Navigate to new prescription page with patient data
     localStorage.setItem('prescriptionPatient', JSON.stringify(patient))
     router.push('/admin/prescription')
+  }
+
+  const createPaymentRecord = (patient: PatientRecord) => {
+    // Create a simplified patient object for the money management page
+    const patientData = {
+      name: patient.name,
+      phone: patient.phone,
+      sessionType: patient.sessionType,
+      email: patient.email || '',
+    }
+    
+    // Encode the patient data as a URL parameter
+    const encodedPatientData = encodeURIComponent(JSON.stringify(patientData))
+    
+    // Navigate to money management page with pre-filled patient data
+    router.push(`/admin/money-management?patient=${encodedPatientData}`)
+    
+    toast({
+      title: "💰 Transferring to Payment System",
+      description: `Redirecting to create payment record for ${patient.name}`,
+    })
   }
 
   const generateDetailedReport = (patient: PatientRecord) => {
@@ -598,6 +620,21 @@ Phone: +92 304 699 6267
               <div className="flex-1">
                 <p className="text-white font-semibold">Data Management</p>
                 <p className="text-white/70 text-xs">Import & export</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-white/60" />
+            </div>
+          </div>
+
+          {/* Money Management */}
+          <div className={`p-3 rounded-xl transition-all duration-200 cursor-pointer group ${activeMenu === 'money' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'}`}
+               onClick={() => { setActiveMenu('money'); router.push('/admin/money-management'); }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                <DollarSign className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-semibold">Money Management</p>
+                <p className="text-white/70 text-xs">Payment tracking</p>
               </div>
               <ChevronRight className="h-4 w-4 text-white/60" />
             </div>
@@ -1300,6 +1337,15 @@ Phone: +92 304 699 6267
                               title="Generate Prescription"
                             >
                               <FileText className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => createPaymentRecord(patient)}
+                              className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+                              title="Create Payment Record"
+                            >
+                              <DollarSign className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"

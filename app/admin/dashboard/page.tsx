@@ -38,6 +38,7 @@ import {
   Plus,
   Minus,
   Cloud,
+  DollarSign,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -1577,6 +1578,46 @@ Phone: +92 304 699 6267
                                 <Video className="h-3 w-3" />
                               </Button>
                             )}
+
+                            {/* Money Management Button */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                // Prepare patient data for money management
+                                const patientData = {
+                                  patientName: patient.name,
+                                  phone: patient.phone,
+                                  email: patient.email || '',
+                                  sessionType: patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation',
+                                  amount: patient.session_type === 'in_clinic' ? 1500 : 1000, // Default amounts
+                                  paymentMethod: patient.payment_method || 'cash',
+                                  description: `Payment for ${patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation'} - ${new Date().toLocaleDateString()}`,
+                                  date: new Date().toISOString().split('T')[0],
+                                  patientId: patient.id
+                                }
+                                
+                                // Add to money management records in localStorage
+                                const existingRecords = JSON.parse(localStorage.getItem('payment_records') || '[]')
+                                const newRecord = {
+                                  id: `PM${String(existingRecords.length + 1).padStart(3, '0')}`,
+                                  ...patientData,
+                                  createdAt: new Date().toISOString()
+                                }
+                                
+                                existingRecords.push(newRecord)
+                                localStorage.setItem('payment_records', JSON.stringify(existingRecords))
+                                
+                                toast({
+                                  title: "✅ Payment Record Added",
+                                  description: `Payment record for ${patient.name} has been added to money management. You can manually navigate to the money management page to view and edit it.`,
+                                })
+                              }}
+                              className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
+                              title="Add Patient to Money Management"
+                            >
+                              <DollarSign className="h-3 w-3" />
+                            </Button>
 
                             <Button
                               size="sm"

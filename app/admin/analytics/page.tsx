@@ -62,7 +62,7 @@ export default function AdminAnalytics() {
   )
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (typeof window !== "undefined" && !isAuthenticated) {
       router.replace("/admin/auth")
     }
   }, [isAuthenticated, router])
@@ -73,6 +73,8 @@ export default function AdminAnalytics() {
 
   const checkAuthAndLoadData = async () => {
     try {
+      if (typeof window === "undefined") return
+      
       const { user } = await getCurrentUser()
       const adminEmails = [
         "bashirahmad123.org@gmail.com",
@@ -90,7 +92,9 @@ export default function AdminAnalytics() {
       await loadInitialData()
     } catch (error) {
       console.error("Auth check failed:", error)
-      router.replace("/admin/auth")
+      if (typeof window !== "undefined") {
+        router.replace("/admin/auth")
+      }
     }
   }
 
@@ -166,7 +170,9 @@ export default function AdminAnalytics() {
   }
 
   if (!isAuthenticated) {
-    router.replace("/admin/auth")
+    if (typeof window !== "undefined") {
+      router.replace("/admin/auth")
+    }
     return null
   }
 

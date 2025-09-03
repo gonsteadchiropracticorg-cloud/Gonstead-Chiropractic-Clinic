@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { supabase } from "@/lib/supabase"
 
 // Business hours constants
 const BUSINESS_HOURS_START = 9 // 9:00 AM
@@ -21,6 +22,36 @@ const mockAppointments: Array<{
   { id: "3", datetime: "2025-07-23T10:00:00", duration: 30, patientName: "Muhammad Khan", phone: "03451234567" },
   { id: "4", datetime: "2025-07-23T15:30:00", duration: 60, patientName: "Aisha Malik", phone: "03335678901" },
 ]
+
+// Function to get all appointments from Supabase
+async function getAllAppointments() {
+  try {
+    const { data, error } = await supabase
+      .from('patients')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching appointments from Supabase:', error)
+      return mockAppointments
+    }
+    
+    // Convert Supabase patient data to appointment format
+    const supabaseAppointments = (data || []).map(patient => ({
+      id: patient.id,
+      datetime: patient.appointment_date,
+      duration: 60, // Default duration
+      patientName: patient.name,
+      phone: patient.phone
+    }))
+    
+    // Combine with mock appointments
+    return [...supabaseAppointments, ...mockAppointments]
+  } catch (error) {
+    console.error('Error in getAllAppointments:', error)
+    return mockAppointments
+  }
+}
 
 // Validation functions
 function isBusinessHours(datetime: string): boolean {
@@ -263,14 +294,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
     
+    // Get all appointments (Supabase + mock)
+    const allAppointments = await getAllAppointments()
+    
     // If date is provided, return available slots for that date
     if (date) {
-      const availableSlots = getAvailableSlots(date)
+      const availableSlots = await getAvailableSlotsAsync(date)
+      const bookedSlots = await getBookedSlotsAsync(date)
       return NextResponse.json({
         success: true,
         date: date,
         availableSlots: availableSlots,
-        bookedSlots: getBookedSlots(date),
+        bookedSlots: bookedSlots,
         businessHours: {
           start: BUSINESS_HOURS_START,
           end: BUSINESS_HOURS_END,
@@ -283,7 +318,7 @@ export async function GET(request: NextRequest) {
     // Return all appointments
     return NextResponse.json({
       success: true,
-      appointments: mockAppointments,
+      appointments: allAppointments,
       businessHours: {
         start: BUSINESS_HOURS_START,
         end: BUSINESS_HOURS_END,
@@ -358,6 +393,63 @@ function formatTimeDisplay(hour: number, minute: number): string {
   const period = hour >= 12 ? 'PM' : 'AM'
   const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
   return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`
+}
+
+// Async helper function to get available slots for a specific date
+async function getAvailableSlotsAsync(dateStr: string): Promise<Array<{ time: string; datetime: string; available: boolean }>> {
+  const date = new Date(dateStr)
+  const slots: Array<{ time: string; datetime: string; available: boolean }> = []
+  
+  // Skip Sundays
+  if (date.getDay() === 0) {
+    return slots
+  }
+  
+  // Get all appointments to check conflicts
+  const allAppointments = await getAllAppointments()
+  const dateString = date.toISOString().split('T')[0]
+  
+  for (let hour = BUSINESS_HOURS_START; hour < BUSINESS_HOURS_END; hour++) {
+    // Skip lunch break
+    if (hour >= LUNCH_BREAK_START && hour < LUNCH_BREAK_END) {
+      continue
+    }
+    
+    for (let minute = 0; minute < 60; minute += SLOT_DURATION_MINUTES) {
+      const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+      const datetime = `${dateString}T${timeStr}:00`
+      
+      const isAvailable = hasMinimumGap(datetime, allAppointments)
+      const displayTime = formatTimeDisplay(hour, minute)
+      
+      slots.push({
+        time: displayTime,
+        datetime: datetime,
+        available: isAvailable
+      })
+    }
+  }
+  
+  return slots
+}
+
+// Async helper function to get booked slots for a specific date
+async function getBookedSlotsAsync(dateStr: string): Promise<Array<{ time: string; datetime: string; patientName: string }>> {
+  const date = new Date(dateStr)
+  const dateString = date.toISOString().split('T')[0]
+  
+  const allAppointments = await getAllAppointments()
+  
+  return allAppointments
+    .filter(appointment => appointment.datetime.startsWith(dateString))
+    .map(appointment => {
+      const time = new Date(appointment.datetime)
+      return {
+        time: formatTimeDisplay(time.getHours(), time.getMinutes()),
+        datetime: appointment.datetime,
+        patientName: appointment.patientName
+      }
+    })
 }
 
 // Helper function to format date for display

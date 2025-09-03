@@ -50,7 +50,7 @@ export default function CalendarPage() {
   )
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (typeof window !== "undefined" && !isAuthenticated) {
       router.replace("/admin/auth")
     }
   }, [isAuthenticated, router])
@@ -61,6 +61,9 @@ export default function CalendarPage() {
 
   const checkAuthAndLoadData = async () => {
     try {
+      // Only run on client side
+      if (typeof window === "undefined") return
+      
       // Check localStorage first
       const isAuthenticated = localStorage.getItem("admin_authenticated")
       const storedEmail = localStorage.getItem("admin_email")
@@ -86,9 +89,11 @@ export default function CalendarPage() {
       await loadInitialData()
     } catch (error) {
       console.error("Auth check failed:", error)
-      localStorage.removeItem("admin_authenticated")
-      localStorage.removeItem("admin_email")
-      router.replace("/admin/auth")
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("admin_authenticated")
+        localStorage.removeItem("admin_email")
+        router.replace("/admin/auth")
+      }
     }
   }
 
@@ -173,7 +178,9 @@ export default function CalendarPage() {
   const sundayNotice = getSundayNotice()
 
   if (!isAuthenticated) {
-    router.replace("/admin/auth")
+    if (typeof window !== "undefined") {
+      router.replace("/admin/auth")
+    }
     return null
   }
 

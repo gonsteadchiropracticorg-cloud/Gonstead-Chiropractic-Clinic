@@ -21,7 +21,8 @@ import {
   HelpCircle,
   Clock,
   TrendingUp,
-  Eye
+  Eye,
+  DollarSign
 } from "lucide-react"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
@@ -87,6 +88,15 @@ const sidebarItems: MenuItem[] = [
     icon: Prescription,
     description: "Digital prescriptions",
     category: "core"
+  },
+  {
+    id: "money-management",
+    title: "Money Management",
+    href: "/admin/money-management",
+    icon: DollarSign,
+    description: "Financial records & payments",
+    category: "core",
+    badge: "Secure"
   },
   {
     id: "analytics",
