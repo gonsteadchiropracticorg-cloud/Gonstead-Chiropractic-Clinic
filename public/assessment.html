@@ -4,13 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spinal Health Assessment - Gonstead Chiropractic</title>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&family=Noto+Sans+Arabic:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        /* Language Toggle Styles */
+        .lang-btn {
+            background: linear-gradient(135deg, #2a9d8f, #0d5c75);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(42, 157, 143, 0.2);
+        }
+
+        .lang-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(42, 157, 143, 0.3);
+        }
+
+        /* Clinical Branding Styles */
+        .clinic-branding {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .clinic-info h3 {
+            font-size: 1.3rem;
+            margin: 0;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .clinic-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .trust-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .trust-item i {
+            font-size: 1.1rem;
+            color: #ffd700;
+        }
+
+        /* RTL Support for Urdu */
+        .rtl {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Noto Sans Arabic', 'Source Sans Pro', sans-serif !important;
+        }
+
+        .rtl .assessment-header {
+            text-align: center;
+        }
+
+        .rtl .clinic-branding {
+            flex-direction: row-reverse;
+        }
+
+        .rtl .trust-indicators {
+            direction: ltr;
+        }
+
+        .rtl .modal-header h3,
+        .rtl .question-title,
+        .rtl .feature-title {
+            font-family: 'Noto Sans Arabic', 'Poppins', sans-serif !important;
         }
 
         body {
@@ -699,10 +796,38 @@
             Back to Educational Guide
         </a>
 
-        <!-- Header -->
-        <div class="assessment-header">
-            <h1>Spinal Health Assessment</h1>
-            <p>Take our comprehensive 5-minute assessment to receive personalized insights about your spinal health and discover how Gonstead chiropractic care can help you.</p>
+        <!-- Language Toggle -->
+        <div class="language-toggle" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="toggleLanguage()" class="lang-btn">
+                <i class="fas fa-globe"></i> <span id="langText">اردو میں دیکھیں</span>
+            </button>
+        </div>
+
+        <!-- Header with Clinical Logo -->
+        <div class="assessment-header animate__animated animate__fadeInDown">
+            <div class="clinic-branding">
+                <img src="/images/gonstead-chiropractic-logo-new.png" alt="Gonstead Chiropractic Logo" class="header-logo">
+                <div class="clinic-info">
+                    <h3>Dr. Bashir Khan</h3>
+                    <p>Certified Gonstead Specialist</p>
+                </div>
+            </div>
+            <h1 id="headerTitle">Advanced Spinal Health Assessment</h1>
+            <p id="headerSubtitle">Take our comprehensive clinical-grade assessment to receive personalized insights about your spinal health and discover how our specialized Gonstead chiropractic care can optimize your healing journey.</p>
+            <div class="trust-indicators">
+                <div class="trust-item">
+                    <i class="fas fa-certificate"></i>
+                    <span>Professional Grade</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Confidential</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fas fa-award"></i>
+                    <span>Evidence-Based</span>
+                </div>
+            </div>
         </div>
 
         <!-- Main Content -->
@@ -1370,6 +1495,230 @@
                 closeResults();
             }
         });
+        
+        // Language support
+        let currentLanguage = 'english';
+        
+        const translations = {
+            english: {
+                langText: 'اردو میں دیکھیں',
+                headerTitle: 'Advanced Spinal Health Assessment',
+                headerSubtitle: 'Take our comprehensive clinical-grade assessment to receive personalized insights about your spinal health and discover how our specialized Gonstead chiropractic care can optimize your healing journey.',
+                welcomeTitle: 'Welcome to Your Personalized Spinal Health Journey',
+                welcomeText: 'Our advanced assessment system will evaluate your current spinal health status and provide you with personalized recommendations based on the Gonstead chiropractic principles.',
+                startButton: 'Begin Spinal Health Assessment',
+                modalTitle: 'Spinal Health Assessment',
+                progressText: 'Question',
+                of: 'of',
+                previous: 'Previous',
+                next: 'Next',
+                getResults: 'Get Results',
+                resultsTitle: 'Your Spinal Health Assessment Results',
+                downloadReport: 'Download Report',
+                bookConsultation: 'Book Consultation',
+                retakeAssessment: 'Retake Assessment',
+                selectOption: 'Please select an option before continuing',
+                selectAtLeastOne: 'Please select at least one option',
+                pleaseEnter: 'Please enter',
+                pleaseSelect: 'Please select',
+                riskLevel: 'Risk Level',
+                potentialConcerns: 'Potential Areas of Concern',
+                recommendations: 'Professional Recommendations',
+                whyGonstead: 'Why Choose Gonstead Chiropractic?',
+                trustItems: ['Professional Grade', 'Confidential', 'Evidence-Based'],
+                featureTitles: ['Professional Analysis', 'Quick & Easy', 'Personalized Report', 'Expert Guidance'],
+                featureDescriptions: [
+                    'Based on Gonstead chiropractic principles and diagnostic methods',
+                    'Takes only 5 minutes to complete with instant results',
+                    'Detailed insights and recommendations tailored to your needs',
+                    'Professional recommendations for your spinal health journey'
+                ]
+            },
+            urdu: {
+                langText: 'View in English',
+                headerTitle: 'ایڈوانسڈ اسپائنل ہیلتھ اسیسمنٹ',
+                headerSubtitle: 'اپنی اسپائنل ہیلتھ کے بارے میں ذاتی بصیرت حاصل کرنے کے لیے ہمارا جامع کلینکل گریڈ اسیسمنٹ لیں اور دیکھیں کہ ہماری خصوصی گونسٹڈ کائروپریکٹک کیئر آپ کے شفا یابی کے سفر کو کیسے بہتر بنا سکتی ہے۔',
+                welcomeTitle: 'آپ کے ذاتی اسپائنل ہیلتھ جرنی میں خوش آمدید',
+                welcomeText: 'ہمارا ایڈوانسڈ اسیسمنٹ سسٹم آپ کی موجودہ اسپائنل ہیلتھ کی صورتحال کا جائزہ لے گا اور گونسٹڈ کائروپریکٹک اصولوں کی بنیاد پر آپ کو ذاتی سفارشات فراہم کرے گا۔',
+                startButton: 'اسپائنل ہیلتھ اسیسمنٹ شروع کریں',
+                modalTitle: 'اسپائنل ہیلتھ اسیسمنٹ',
+                progressText: 'سوال',
+                of: 'میں سے',
+                previous: 'پچھلا',
+                next: 'اگلا',
+                getResults: 'نتائج دیکھیں',
+                resultsTitle: 'آپ کے اسپائنل ہیلتھ اسیسمنٹ کے نتائج',
+                downloadReport: 'رپورٹ ڈاؤن لوڈ کریں',
+                bookConsultation: 'مشاورت بک کریں',
+                retakeAssessment: 'دوبارہ اسیسمنٹ لیں',
+                selectOption: 'برائے کرم آگے بڑھنے سے پہلے ایک آپشن منتخب کریں',
+                selectAtLeastOne: 'برائے کرم کم از کم ایک آپشن منتخب کریں',
+                pleaseEnter: 'برائے کرم داخل کریں',
+                pleaseSelect: 'برائے کرم منتخب کریں',
+                riskLevel: 'رسک لیول',
+                potentialConcerns: 'ممکنہ تشویش کے علاقے',
+                recommendations: 'پیشہ ورانہ سفارشات',
+                whyGonstead: 'گونسٹڈ کائروپریکٹک کیوں منتخب کریں؟',
+                trustItems: ['پیشہ ورانہ درجہ', 'خفیہ', 'ثبوت پر مبنی'],
+                featureTitles: ['پیشہ ورانہ تجزیہ', 'تیز اور آسان', 'ذاتی رپورٹ', 'ماہر رہنمائی'],
+                featureDescriptions: [
+                    'گونسٹڈ کائروپریکٹک اصولوں اور تشخیصی طریقوں پر مبنی',
+                    'مکمل کرنے میں صرف 5 منٹ لگتے ہیں اور فوری نتائج',
+                    'آپ کی ضروریات کے مطابق تفصیلی بصیرت اور سفارشات',
+                    'آپ کے اسپائنل ہیلتھ جرنی کے لیے پیشہ ورانہ سفارشات'
+                ]
+            }
+        };
+        
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'english' ? 'urdu' : 'english';
+            const t = translations[currentLanguage];
+            
+            // Update language button text
+            document.getElementById('langText').textContent = t.langText;
+            
+            // Update main content
+            document.getElementById('headerTitle').textContent = t.headerTitle;
+            document.getElementById('headerSubtitle').textContent = t.headerSubtitle;
+            
+            // Update welcome section if visible
+            const welcomeTitle = document.querySelector('.welcome-message h2');
+            const welcomeText = document.querySelector('.welcome-message p');
+            if (welcomeTitle) welcomeTitle.textContent = t.welcomeTitle;
+            if (welcomeText) welcomeText.textContent = t.welcomeText;
+            
+            // Update start button
+            const startButton = document.querySelector('.start-button');
+            if (startButton) {
+                startButton.innerHTML = `<i class="fas fa-play"></i> ${t.startButton}`;
+            }
+            
+            // Update modal elements if open
+            const modalTitle = document.getElementById('modalTitle');
+            if (modalTitle) modalTitle.textContent = t.modalTitle;
+            
+            // Update feature cards
+            const featureTitles = document.querySelectorAll('.feature-title');
+            const featureDescriptions = document.querySelectorAll('.feature-description');
+            const trustSpans = document.querySelectorAll('.trust-item span');
+            
+            featureTitles.forEach((title, index) => {
+                if (t.featureTitles[index]) {
+                    title.textContent = t.featureTitles[index];
+                }
+            });
+            
+            featureDescriptions.forEach((desc, index) => {
+                if (t.featureDescriptions[index]) {
+                    desc.textContent = t.featureDescriptions[index];
+                }
+            });
+            
+            trustSpans.forEach((span, index) => {
+                if (t.trustItems[index]) {
+                    span.textContent = t.trustItems[index];
+                }
+            });
+            
+            // Apply RTL styling for Urdu
+            if (currentLanguage === 'urdu') {
+                document.body.classList.add('rtl');
+                document.documentElement.setAttribute('dir', 'rtl');
+                document.documentElement.setAttribute('lang', 'ur');
+            } else {
+                document.body.classList.remove('rtl');
+                document.documentElement.setAttribute('dir', 'ltr');
+                document.documentElement.setAttribute('lang', 'en');
+            }
+            
+            // Update progress text if assessment is running
+            updateProgressText();
+            
+            // Update button texts
+            updateButtonTexts();
+        }
+        
+        function updateProgressText() {
+            const progressText = document.getElementById('progressText');
+            if (progressText && currentQuestion >= 0) {
+                const t = translations[currentLanguage];
+                if (currentLanguage === 'urdu') {
+                    progressText.textContent = `${t.progressText} ${currentQuestion + 1} ${totalQuestions} ${t.of}`;
+                } else {
+                    progressText.textContent = `${t.progressText} ${currentQuestion + 1} ${t.of} ${totalQuestions}`;
+                }
+            }
+        }
+        
+        function updateButtonTexts() {
+            const t = translations[currentLanguage];
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (prevBtn) {
+                if (currentLanguage === 'urdu') {
+                    prevBtn.innerHTML = `<i class="fas fa-arrow-right"></i> ${t.previous}`;
+                } else {
+                    prevBtn.innerHTML = `<i class="fas fa-arrow-left"></i> ${t.previous}`;
+                }
+            }
+            
+            if (nextBtn) {
+                if (currentQuestion === totalQuestions - 1) {
+                    if (currentLanguage === 'urdu') {
+                        nextBtn.innerHTML = `${t.getResults} <i class="fas fa-chart-line"></i>`;
+                    } else {
+                        nextBtn.innerHTML = `${t.getResults} <i class="fas fa-chart-line"></i>`;
+                    }
+                } else {
+                    if (currentLanguage === 'urdu') {
+                        nextBtn.innerHTML = `${t.next} <i class="fas fa-arrow-left"></i>`;
+                    } else {
+                        nextBtn.innerHTML = `${t.next} <i class="fas fa-arrow-right"></i>`;
+                    }
+                }
+            }
+        }
+        
+        // Override validation messages for multilingual support
+        function validateCurrentQuestion() {
+            const question = questions[currentQuestion];
+            const t = translations[currentLanguage];
+            
+            if (question.type === 'form') {
+                for (let field of question.fields) {
+                    if (field.required) {
+                        if (field.type === 'radio') {
+                            const checkedRadio = document.querySelector(`input[name="${field.name}"]:checked`);
+                            if (!checkedRadio) {
+                                alert(`${t.pleaseSelect} ${field.label.toLowerCase()}`);
+                                return false;
+                            }
+                        } else {
+                            const input = document.getElementById(field.name);
+                            if (!input.value.trim()) {
+                                alert(`${t.pleaseEnter} ${field.label.toLowerCase()}`);
+                                return false;
+                            }
+                        }
+                    }
+                }
+            } else if (question.type === 'radio') {
+                const checkedRadio = document.querySelector(`input[name="${question.id}"]:checked`);
+                if (!checkedRadio) {
+                    alert(t.selectOption);
+                    return false;
+                }
+            } else if (question.type === 'checkbox') {
+                const checkedBoxes = document.querySelectorAll(`input[name="${question.id}"]:checked`);
+                if (checkedBoxes.length === 0) {
+                    alert(t.selectAtLeastOne);
+                    return false;
+                }
+            }
+            
+            return true;
+        }
     </script>
 </body>
 </html>
