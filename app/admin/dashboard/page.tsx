@@ -39,6 +39,9 @@ import {
   Minus,
   Cloud,
   DollarSign,
+  MoreVertical,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -119,7 +122,10 @@ export default function AdminDashboard() {
   ])
   const [newSuggestion, setNewSuggestion] = useState("")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDateAppointments, setSelectedDateAppointments] = useState<Patient[]>([])
+  const [expandedActions, setExpandedActions] = useState<Set<string>>(new Set())
 
   const router = useRouter()
   const pathname = usePathname()
@@ -272,6 +278,8 @@ export default function AdminDashboard() {
     try {
       setIsLoading(true)
       console.log("Dashboard: Loading patients...")
+      
+      // Load from Supabase
       const { data, error } = await getPatients()
 
       if (error) {
@@ -284,18 +292,35 @@ export default function AdminDashboard() {
         return
       }
 
-      const patientsData = data || []
-      console.log("Dashboard: Loaded patients:", patientsData.length)
-      setPatients(patientsData)
+      const supabasePatients = data || []
+      console.log("Dashboard: Loaded Supabase patients:", supabasePatients.length)
+      
+      // Load from localStorage (for appointment bookings from the form)
+      const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+      console.log("Dashboard: Loaded localStorage patients:", localStoragePatients.length)
+      
+      // Merge patients - prioritize Supabase data, but include localStorage patients not in Supabase
+      const mergedPatients = [...supabasePatients]
+      
+      // Add localStorage patients that aren't already in Supabase (by ID)
+      localStoragePatients.forEach((localPatient: Patient) => {
+        const existsInSupabase = supabasePatients.find((p) => p.id === localPatient.id)
+        if (!existsInSupabase) {
+          mergedPatients.push(localPatient)
+        }
+      })
+      
+      console.log("Dashboard: Total merged patients:", mergedPatients.length)
+      setPatients(mergedPatients)
 
-      // Calculate stats
+      // Calculate stats from merged data
       const today = new Date().toDateString()
       const newStats = {
-        totalPatients: patientsData.length,
-        todayAppointments: patientsData.filter((p) => new Date(p.appointment_date).toDateString() === today).length,
-        pendingAppointments: patientsData.filter((p) => p.status === "pending").length,
-        completedSessions: patientsData.reduce((sum, p) => sum + (p.sessions_completed || 0), 0),
-        emergencyPatients: patientsData.filter((p) => p.urgency === "emergency").length,
+        totalPatients: mergedPatients.length,
+        todayAppointments: mergedPatients.filter((p) => new Date(p.appointment_date).toDateString() === today).length,
+        pendingAppointments: mergedPatients.filter((p) => p.status === "pending").length,
+        completedSessions: mergedPatients.reduce((sum, p) => sum + (p.sessions_completed || 0), 0),
+        emergencyPatients: mergedPatients.filter((p) => p.urgency === "emergency").length,
       }
       setStats(newStats)
     } catch (error) {
@@ -605,49 +630,112 @@ export default function AdminDashboard() {
   }
 
   const generateDetailedReport = (patient: Patient) => {
+    const currentDate = new Date().toLocaleDateString('en-GB')
+    const reportTime = new Date().toLocaleTimeString('en-US', { hour12: true })
+    
     const report = `
-GONSTEAD CHIROPRACTIC CLINIC
-COMPREHENSIVE PATIENT REPORT
-═══════════════════════════════════════════════════════════
+╔══════════════════════════════════════════════════════════════════╗
+║                    GONSTEAD CHIROPRACTIC CLINIC                     ║
+║                   SPINAL HEALTH ASSESSMENT REPORT                   ║
+║                    Dr. Bashir Khan - DCP, Gonstead Certified        ║
+║              Near Police Station, Tehsil Road, Nowshera, KPK        ║
+║                         Pakistan | +92 304 699 6267                 ║
+╚══════════════════════════════════════════════════════════════════╝
 
-PATIENT INFORMATION
-──────────────────────────────────────────────────────────
-Name: ${patient.name}
-Phone: ${patient.phone}
-Email: ${patient.email || "Not provided"}
-Age: ${patient.demographics?.age || "Not specified"}
-Gender: ${patient.demographics?.gender || "Not specified"}
-Occupation: ${patient.demographics?.occupation || "Not specified"}
-Emergency Contact: ${patient.demographics?.emergency_contact || "Not provided"}
+📋 PATIENT INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Patient Name      : ${patient.name}
+Contact Number    : ${patient.phone}
+Email Address     : ${patient.email || "Not provided"}
+Age / Gender      : ${patient.demographics?.age || "--"} years / ${patient.demographics?.gender || "Not specified"}
+Profession        : ${patient.profession ? patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Not specified"}
+Occupation        : ${patient.demographics?.occupation || "Not specified"}
+Report Date       : ${currentDate} at ${reportTime}
 
-APPOINTMENT DETAILS
-──────────────────────────────────────────────────────────
-Appointment Date: ${new Date(patient.appointment_date).toLocaleString()}
-Session Type: ${patient.session_type === "in_clinic" ? "In-Clinic Gonstead Adjustment" : "Video Consultation"}
-Status: ${patient.status.toUpperCase()}
-Urgency Level: ${patient.urgency.toUpperCase()}
-Payment Method: ${patient.payment_method.toUpperCase()}
-Sessions Completed: ${patient.sessions_completed}
-Last Visit: ${patient.last_visit ? new Date(patient.last_visit).toLocaleDateString() : "N/A"}
+🏥 CLINICAL ASSESSMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Appointment Date  : ${new Date(patient.appointment_date).toLocaleDateString('en-GB')} at ${new Date(patient.appointment_date).toLocaleTimeString('en-US', { hour12: true })}
+Session Type      : ${patient.session_type === "in_clinic" ? "In-Clinic Gonstead Analysis & Adjustment" : "Video Consultation & Assessment"}
+Treatment Status  : ${patient.status.charAt(0).toUpperCase() + patient.status.slice(1)}
+Priority Level    : ${patient.urgency.charAt(0).toUpperCase() + patient.urgency.slice(1)}
+Sessions Count    : ${patient.sessions_completed || 0} completed
+Last Visit        : ${patient.last_visit ? new Date(patient.last_visit).toLocaleDateString('en-GB') : "First consultation"}
 
-CLINICAL NOTES
-──────────────────────────────────────────────────────────
-Chief Complaint: ${patient.notes || "No specific complaints noted"}
+📝 CHIEF COMPLAINT & CLINICAL FINDINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${patient.notes || "Patient reports general spinal discomfort. Detailed assessment pending."}
 
-Medical History: ${patient.medical_history || "No significant medical history recorded"}
+🔬 GONSTEAD ANALYSIS SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Diagnosis         : ${patient.treatment_plan?.diagnosis || "Initial spinal assessment pending"}
+Treatment Plan    : ${patient.treatment_plan?.goals?.join(", ") || "Comprehensive Gonstead chiropractic care plan"}
+Progress Status   : ${patient.treatment_plan?.progress || "Patient scheduled for detailed spinal analysis"}
+Medical History   : ${patient.medical_history || "Medical history to be obtained during consultation"}
 
-TREATMENT PLAN
-──────────────────────────────────────────────────────────
-Diagnosis: ${patient.treatment_plan?.diagnosis || "Pending evaluation"}
-Treatment Goals: ${patient.treatment_plan?.goals?.join(", ") || "To be determined"}
-Progress Notes: ${patient.treatment_plan?.progress || "Initial assessment pending"}
+💊 PAYMENT & BILLING INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Payment Method    : ${patient.payment_method ? patient.payment_method.charAt(0).toUpperCase() + patient.payment_method.slice(1) : "Cash"}
+Session Fee       : ${patient.session_type === "in_clinic" ? "PKR 1,500 (In-Clinic)" : "PKR 1,000 (Video)"}
+Treatment Package : Available upon request
 
-═══════════════════════════════════════════════════════════
-Report Generated: ${new Date().toLocaleString()}
-Generated by: Dr. Bashir Khan - Gonstead Chiropractic Specialist
-Clinic: Gonstead Chiropractic Clinic, ${clinicLocation.address}
+
+═══════════════════════════════════════════════════════════════════
+                              PAGE 1 OF 2
+═══════════════════════════════════════════════════════════════════
+
+
+╔══════════════════════════════════════════════════════════════════╗
+║                    GONSTEAD CHIROPRACTIC CLINIC                     ║
+║                  TREATMENT RECOMMENDATIONS & PLAN                   ║
+║                         Continued from Page 1                       ║
+╚══════════════════════════════════════════════════════════════════╝
+
+🎯 GONSTEAD TECHNIQUE APPROACH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Comprehensive spinal analysis using Gonstead methodology
+✓ Precise adjustment techniques for optimal spinal alignment
+✓ Focus on root cause identification and correction
+✓ Patient education on spinal health and posture
+
+📊 RECOMMENDED TREATMENT SCHEDULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Phase 1 (Relief)  : 2-3 sessions per week (Weeks 1-4)
+Phase 2 (Correct) : 1-2 sessions per week (Weeks 5-8)
+Phase 3 (Maintain): 1 session per week (Weeks 9-12)
+Follow-up Care    : Monthly maintenance (as needed)
+
+🏠 HOME CARE INSTRUCTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Apply ice for 15-20 minutes, 2-3 times daily (acute phase)
+• Maintain proper posture during sitting and standing
+• Perform gentle stretching exercises as demonstrated
+• Sleep with proper spinal alignment (suitable pillow/mattress)
+• Avoid prolonged static positions
+• Stay adequately hydrated
+
+⚠️  IMPORTANT NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Follow prescribed treatment schedule for optimal results
+• Report any unusual symptoms or concerns immediately
+• Attend all scheduled appointments for best outcomes
+• Emergency contact available 24/7 for urgent spinal issues
+
+📞 CLINIC CONTACT INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Dr. Bashir Khan, DCP (Gonstead Certified)
+Gonstead Chiropractic Clinic
+Near Police Station, Tehsil Road
+Nowshera, Khyber Pakhtunkhwa, Pakistan
 Phone: +92 304 699 6267
-═══════════════════════════════════════════════════════════
+Email: Available upon request
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Report Generated: ${currentDate} at ${reportTime}
+Doctor Signature: Dr. Bashir Khan, DCP
+"Excellence in Gonstead Chiropractic Care - Your Spine, Our Priority"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                              PAGE 2 OF 2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     `
 
     const blob = new Blob([report], { type: "text/plain" })
@@ -695,12 +783,101 @@ Phone: +92 304 699 6267
     }
   }
 
-  const filteredPatients = patients.filter((patient) => {
+  // Helper function to get appointments for a specific date
+  const getAppointmentsForDate = (date: string) => {
+    const targetDate = new Date(date).toDateString()
+    return patients.filter((p) => new Date(p.appointment_date).toDateString() === targetDate)
+  }
+
+  // Handle date selection from date picker
+  const handleDateSelection = (date: string) => {
+    setSelectedDate(date)
+    const appointmentsForDate = getAppointmentsForDate(date)
+    setSelectedDateAppointments(appointmentsForDate)
+    
+    // Apply filter to main patient list - use custom date filter
+    setFilterStatus("custom_date")
+    setFilterUrgency("all")
+    setSearchTerm("")
+    
+    const formattedDate = new Date(date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+    
+    toast({
+      title: "📅 Date Filter Applied",
+      description: `Showing appointments for ${formattedDate} (${appointmentsForDate.length} found)`,
+    })
+  }
+
+  // Generate quick date options (Today, Tomorrow, etc.)
+  const getQuickDateOptions = () => {
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const dayAfterTomorrow = new Date(today)
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2)
+    const nextWeek = new Date(today)
+    nextWeek.setDate(nextWeek.getDate() + 7)
+    
+    return [
+      { label: "Today", date: today.toISOString().split('T')[0], count: getAppointmentsForDate(today.toISOString().split('T')[0]).length },
+      { label: "Tomorrow", date: tomorrow.toISOString().split('T')[0], count: getAppointmentsForDate(tomorrow.toISOString().split('T')[0]).length },
+      { label: "Day After Tomorrow", date: dayAfterTomorrow.toISOString().split('T')[0], count: getAppointmentsForDate(dayAfterTomorrow.toISOString().split('T')[0]).length },
+      { label: "Next Week", date: nextWeek.toISOString().split('T')[0], count: getAppointmentsForDate(nextWeek.toISOString().split('T')[0]).length },
+    ]
+  }
+
+  // Toggle function for expanding/collapsing action buttons
+  const toggleActionsExpanded = (patientId: string) => {
+    setExpandedActions(prev => {
+      const newExpanded = new Set(prev)
+      if (newExpanded.has(patientId)) {
+        newExpanded.delete(patientId)
+      } else {
+        newExpanded.add(patientId)
+      }
+      return newExpanded
+    })
+  }
+
+  // Sort patients to show ALL new appointments at the top (both admin and website bookings)
+  const sortedPatients = [...patients].sort((a, b) => {
+    // First, prioritize ALL new appointments (those not viewed, regardless of booking source)
+    const aIsNew = !viewedPatients.has(a.id)
+    const bIsNew = !viewedPatients.has(b.id)
+    
+    if (aIsNew && !bIsNew) return -1
+    if (!aIsNew && bIsNew) return 1
+    
+    // If both are new or both are viewed, sort by appointment date (newest first)
+    return new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime()
+  })
+
+  const filteredPatients = sortedPatients.filter((patient) => {
     const matchesSearch =
       patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.phone.includes(searchTerm) ||
       patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = filterStatus === "all" || patient.status === filterStatus
+    
+    // Handle status filters
+    let matchesStatus = true
+    if (filterStatus === "today") {
+      const today = new Date().toDateString()
+      matchesStatus = new Date(patient.appointment_date).toDateString() === today
+    } else if (filterStatus === "custom_date") {
+      // Handle custom date filtering from date picker
+      const targetDate = new Date(selectedDate).toDateString()
+      matchesStatus = new Date(patient.appointment_date).toDateString() === targetDate
+    } else if (filterStatus === "completed_sessions") {
+      matchesStatus = (patient.sessions_completed || 0) > 0
+    } else if (filterStatus !== "all") {
+      matchesStatus = patient.status === filterStatus
+    }
+    
     const matchesUrgency = filterUrgency === "all" || patient.urgency === filterUrgency
     return matchesSearch && matchesStatus && matchesUrgency
   })
@@ -1101,7 +1278,16 @@ Phone: +92 304 699 6267
         {/* Stats Dashboard */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <Card
-            className={`border-[#0d5c75]/20 ${isDarkMode ? "bg-gray-800 text-white" : "bg-gradient-to-br from-blue-50 to-blue-100"}`}
+            className={`border-[#0d5c75]/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-150"}`}
+            onClick={() => {
+              setFilterStatus("all")
+              setFilterUrgency("all")
+              setSearchTerm("")
+              toast({
+                title: "📊 Filter Applied",
+                description: "Showing all registered patients",
+              })
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
@@ -1114,30 +1300,134 @@ Phone: +92 304 699 6267
                 {stats.totalPatients}
               </div>
               <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-blue-600"} mt-1`}>
-                All registered patients
+                All registered patients • Click to view
               </p>
             </CardContent>
           </Card>
 
           <Card
-            className={`border-green-400/20 ${isDarkMode ? "bg-gray-800 text-white" : "bg-gradient-to-br from-green-50 to-green-100"}`}
+            className={`border-green-400/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 relative ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150"}`}
+            onClick={() => {
+              setFilterStatus("today")
+              setFilterUrgency("all")
+              setSearchTerm("")
+              toast({
+                title: "📅 Today's Filter Applied",
+                description: "Showing today's appointments only",
+              })
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-green-600"}`}>
                 Today's Appointments
               </CardTitle>
-              <Calendar className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-green-600"}`} />
+              <div className="flex items-center gap-2">
+                <Calendar className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-green-600"}`} />
+                {/* Date Picker Toggle Button */}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent card click
+                    setIsDatePickerOpen(!isDatePickerOpen)
+                  }}
+                  className={`h-6 w-6 p-0 rounded-full hover:bg-green-200/50 ${isDarkMode ? "hover:bg-gray-600" : ""}`}
+                  title="Select different date"
+                >
+                  <Timer className={`h-3 w-3 ${isDarkMode ? "text-white" : "text-green-600"}`} />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-green-600"}`}>
                 {stats.todayAppointments}
               </div>
-              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-green-500"} mt-1`}>Scheduled for today</p>
+              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-green-500"} mt-1`}>Scheduled for today • Click to view</p>
             </CardContent>
+            
+            {/* Date Picker Section */}
+            {isDatePickerOpen && (
+              <div 
+                className={`absolute top-full left-0 right-0 z-50 mt-2 p-4 rounded-lg shadow-2xl border border-green-200 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white"}`}
+                onClick={(e) => e.stopPropagation()} // Prevent card click when interacting with date picker
+              >
+                <div className="space-y-3">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <h3 className={`font-semibold text-sm ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+                      📅 Select Appointment Date
+                    </h3>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setIsDatePickerOpen(false)}
+                      className="h-6 w-6 p-0"
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                  
+                  {/* Date Input */}
+                  <div className="space-y-2">
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => handleDateSelection(e.target.value)}
+                      className={`text-sm ${isDarkMode ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+                    />
+                  </div>
+                  
+                  {/* Quick Date Options */}
+                  <div className="space-y-1">
+                    <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Quick Options:</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      {getQuickDateOptions().map((option) => (
+                        <Button
+                          key={option.label}
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            handleDateSelection(option.date)
+                            setIsDatePickerOpen(false)
+                          }}
+                          className={`text-xs h-8 ${isDarkMode ? "border-gray-600 text-gray-300 hover:bg-gray-700" : ""}`}
+                        >
+                          {option.label} ({option.count})
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Selected Date Info */}
+                  {selectedDate !== new Date().toISOString().split('T')[0] && (
+                    <div className={`p-2 rounded text-xs ${isDarkMode ? "bg-gray-700 text-gray-300" : "bg-green-50 text-green-800"}`}>
+                      <p className="font-medium">
+                        Selected: {new Date(selectedDate).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      <p>Appointments found: {selectedDateAppointments.length}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </Card>
 
           <Card
-            className={`border-orange-500/20 ${isDarkMode ? "bg-gray-800 text-white" : "bg-gradient-to-br from-orange-50 to-orange-100"}`}
+            className={`border-orange-500/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-150"}`}
+            onClick={() => {
+              setFilterStatus("pending")
+              setFilterUrgency("all")
+              setSearchTerm("")
+              toast({
+                title: "⏳ Pending Filter Applied",
+                description: "Showing pending appointments only",
+              })
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-orange-600"}`}>
@@ -1150,13 +1440,22 @@ Phone: +92 304 699 6267
                 {stats.pendingAppointments}
               </div>
               <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-orange-500"} mt-1`}>
-                Awaiting confirmation
+                Awaiting confirmation • Click to view
               </p>
             </CardContent>
           </Card>
 
           <Card
-            className={`border-green-500/20 ${isDarkMode ? "bg-gray-800 text-white" : "bg-gradient-to-br from-green-50 to-green-100"}`}
+            className={`border-green-500/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150"}`}
+            onClick={() => {
+              setFilterStatus("completed_sessions")
+              setFilterUrgency("all")
+              setSearchTerm("")
+              toast({
+                title: "✅ Completed Sessions Filter Applied",
+                description: "Showing patients with completed sessions",
+              })
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-green-600"}`}>
@@ -1168,12 +1467,21 @@ Phone: +92 304 699 6267
               <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-green-600"}`}>
                 {stats.completedSessions}
               </div>
-              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-green-500"} mt-1`}>Total treatments</p>
+              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-green-500"} mt-1`}>Total treatments • Click to view</p>
             </CardContent>
           </Card>
 
           <Card
-            className={`border-red-500/20 ${isDarkMode ? "bg-gray-800 text-white" : "bg-gradient-to-br from-red-50 to-red-100"}`}
+            className={`border-red-500/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-red-50 to-red-100 hover:from-red-100 hover:to-red-150"}`}
+            onClick={() => {
+              setFilterStatus("all")
+              setFilterUrgency("emergency")
+              setSearchTerm("")
+              toast({
+                title: "🚨 Emergency Filter Applied",
+                description: "Showing emergency cases only",
+              })
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-red-600"}`}>
@@ -1185,7 +1493,7 @@ Phone: +92 304 699 6267
               <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-red-600"}`}>
                 {stats.emergencyPatients}
               </div>
-              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-red-500"} mt-1`}>Urgent cases</p>
+              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-red-500"} mt-1`}>Urgent cases • Click to view</p>
             </CardContent>
           </Card>
         </div>
@@ -1257,6 +1565,9 @@ Phone: +92 304 699 6267
                         Contact
                       </TableHead>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                        Profession
+                      </TableHead>
+                      <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
                         Appointment
                       </TableHead>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
@@ -1284,13 +1595,18 @@ Phone: +92 304 699 6267
                             <div>
                               <div className={`font-semibold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex items-center gap-2`}>
                                 {patient.name}
-                                {!viewedPatients.has(patient.id) && patient.booking_source !== 'admin_dashboard' && (
-                                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New patient booking from website" />
+                                {!viewedPatients.has(patient.id) && (
+                                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New appointment - not yet viewed" />
                                 )}
                               </div>
                               <div className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
                                 ID: {patient.id.slice(0, 8)}...
                               </div>
+                              {patient.profession && (
+                                <div className={`text-xs ${isDarkMode ? "text-blue-300" : "text-blue-600"} bg-blue-50 px-2 py-1 rounded-full`}>
+                                  {patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </TableCell>
@@ -1311,6 +1627,18 @@ Phone: +92 304 699 6267
                                 <Mail className="h-3 w-3" />
                                 {patient.email}
                               </a>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className={`font-medium text-sm ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                              {patient.profession ? patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Not specified"}
+                            </div>
+                            {patient.demographics?.occupation && (
+                              <div className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                {patient.demographics.occupation}
+                              </div>
                             )}
                           </div>
                         </TableCell>
@@ -1394,250 +1722,322 @@ Phone: +92 304 699 6267
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-1 flex-wrap">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSelectedPatient(patient)
-                                    // Mark patient as viewed
-                                    setViewedPatients(prev => new Set([...prev, patient.id]))
-                                  }}
-                                  className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
-                                  title="View Details"
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle className="text-[#0d5c75] font-poppins">
-                                    Patient Record - {patient.name}
-                                  </DialogTitle>
-                                </DialogHeader>
-                                {selectedPatient && (
-                                  <div className="space-y-6">
-                                    {/* Patient Information Cards */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      <Card>
-                                        <CardHeader className="bg-[#0d5c75] text-white py-3">
-                                        <CardTitle className="text-lg text-white">Contact Information</CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="p-4 space-y-2">
-                                          <div>
-                                            <Label className="text-sm font-semibold">Name</Label>
-                                            <p className="text-sm">{selectedPatient.name}</p>
-                                          </div>
-                                          <div>
-                                            <Label className="text-sm font-semibold">Phone</Label>
-                                            <p className="text-sm">{selectedPatient.phone}</p>
-                                          </div>
-                                          <div>
-                                            <Label className="text-sm font-semibold">Email</Label>
-                                            <p className="text-sm">{selectedPatient.email || "Not provided"}</p>
-                                          </div>
-                                        </CardContent>
-                                      </Card>
+                          <div className="relative">
+                            {/* Smart Parent Action Button */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleActionsExpanded(patient.id)}
+                              className={`${expandedActions.has(patient.id) 
+                                ? "bg-[#0d5c75] text-white border-[#0d5c75]" 
+                                : "border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+                              } font-medium shadow-sm transition-all duration-200`}
+                              title={expandedActions.has(patient.id) ? "Hide actions" : "Show all actions"}
+                            >
+                              <MoreVertical className="h-3 w-3 mr-1" />
+                              Actions
+                              {expandedActions.has(patient.id) ? (
+                                <ChevronUp className="h-3 w-3 ml-1" />
+                              ) : (
+                                <ChevronDown className="h-3 w-3 ml-1" />
+                              )}
+                            </Button>
 
-                                      <Card>
-                                        <CardHeader className="bg-[#f3a800] text-white py-3">
-                                        <CardTitle className="text-lg text-white">Appointment Details</CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="p-4 space-y-2">
-                                          <div>
-                                            <Label className="text-sm font-semibold">Appointment ID</Label>
-                                            <p className="text-sm font-mono bg-gray-50 px-2 py-1 rounded border">
-                                              {selectedPatient.id}
-                                            </p>
-                                          </div>
-                                          <div>
-                                            <Label className="text-sm font-semibold">Date & Time</Label>
-                                            <p className="text-sm">
-                                              {new Date(selectedPatient.appointment_date).toLocaleString()}
-                                            </p>
-                                          </div>
-                                          <div>
-                                            <Label className="text-sm font-semibold">Type</Label>
-                                            <p className="text-sm">
-                                              {selectedPatient.session_type === "in_clinic"
-                                                ? "In-Clinic Treatment"
-                                                : "Video Consultation"}
-                                            </p>
-                                          </div>
-                                          <div>
-                                            <Label className="text-sm font-semibold">Status</Label>
-                                            <p className="text-sm capitalize">{selectedPatient.status}</p>
-                                          </div>
-                                        </CardContent>
-                                      </Card>
-                                    </div>
+                            {/* Collapsible Action Buttons */}
+                            {expandedActions.has(patient.id) && (
+                              <div className="absolute top-full left-1/3 transform -translate-x-2/3 mt-2 z-50 w-80 bg-white shadow-2xl border border-gray-200 rounded-lg p-3 space-y-2 transition-all duration-300 ease-in-out">
+                                {/* Professional Action Grid */}
+                                <div className="grid grid-cols-2 gap-2">
+                                  {/* View Details Button */}
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setSelectedPatient(patient)
+                                          // Mark patient as viewed
+                                          setViewedPatients(prev => new Set([...prev, patient.id]))
+                                        }}
+                                        className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white text-xs w-full"
+                                        title="View Details"
+                                      >
+                                        <Eye className="h-3 w-3 mr-1" />
+                                        View
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                      <DialogHeader>
+                                        <DialogTitle className="text-[#0d5c75] font-poppins">
+                                          Patient Record - {patient.name}
+                                        </DialogTitle>
+                                      </DialogHeader>
+                                      {selectedPatient && (
+                                        <div className="space-y-6">
+                                          {/* Patient Information Cards */}
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Card>
+                                              <CardHeader className="bg-[#0d5c75] text-white py-3">
+                                              <CardTitle className="text-lg text-white">Contact Information</CardTitle>
+                                              </CardHeader>
+                                              <CardContent className="p-4 space-y-2">
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Name</Label>
+                                                  <p className="text-sm">{selectedPatient.name}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Phone</Label>
+                                                  <p className="text-sm">{selectedPatient.phone}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Email</Label>
+                                                  <p className="text-sm">{selectedPatient.email || "Not provided"}</p>
+                                                </div>
+                                                {selectedPatient.profession && (
+                                                  <div>
+                                                    <Label className="text-sm font-semibold">Profession</Label>
+                                                    <p className="text-sm">
+                                                      {selectedPatient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                    </p>
+                                                  </div>
+                                                )}
+                                                {selectedPatient.demographics?.occupation && (
+                                                  <div>
+                                                    <Label className="text-sm font-semibold">Occupation</Label>
+                                                    <p className="text-sm">{selectedPatient.demographics.occupation}</p>
+                                                  </div>
+                                                )}
+                                              </CardContent>
+                                            </Card>
 
-                                    <Card>
-                                      <CardHeader className="bg-green-600 text-white py-3">
-                                        <CardTitle className="text-lg text-white">Clinical Notes</CardTitle>
-                                      </CardHeader>
-                                      <CardContent className="p-4">
-                                        <div>
-                                          <Label className="text-sm font-semibold">Chief Complaint</Label>
-                                          <p className="text-sm bg-gray-50 p-3 rounded mt-1">
-                                            {selectedPatient.notes || "No complaints noted"}
-                                          </p>
+                                            <Card>
+                                              <CardHeader className="bg-[#f3a800] text-white py-3">
+                                              <CardTitle className="text-lg text-white">Appointment Details</CardTitle>
+                                              </CardHeader>
+                                              <CardContent className="p-4 space-y-2">
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Appointment ID</Label>
+                                                  <p className="text-sm font-mono bg-gray-50 px-2 py-1 rounded border">
+                                                    {selectedPatient.id}
+                                                  </p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Date & Time</Label>
+                                                  <p className="text-sm">
+                                                    {new Date(selectedPatient.appointment_date).toLocaleString()}
+                                                  </p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Type</Label>
+                                                  <p className="text-sm">
+                                                    {selectedPatient.session_type === "in_clinic"
+                                                      ? "In-Clinic Treatment"
+                                                      : "Video Consultation"}
+                                                  </p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm font-semibold">Status</Label>
+                                                  <p className="text-sm capitalize">{selectedPatient.status}</p>
+                                                </div>
+                                              </CardContent>
+                                            </Card>
+                                          </div>
+
+                                          <Card>
+                                            <CardHeader className="bg-green-600 text-white py-3">
+                                              <CardTitle className="text-lg text-white">Clinical Notes</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="p-4">
+                                              <div>
+                                                <Label className="text-sm font-semibold">Chief Complaint</Label>
+                                                <p className="text-sm bg-gray-50 p-3 rounded mt-1">
+                                                  {selectedPatient.notes || "No complaints noted"}
+                                                </p>
+                                              </div>
+                                            </CardContent>
+                                          </Card>
                                         </div>
-                                      </CardContent>
-                                    </Card>
-                                  </div>
-                                )}
-                              </DialogContent>
-                            </Dialog>
+                                      )}
+                                    </DialogContent>
+                                  </Dialog>
 
-                            {/* Medical Record Management Button */}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                // Check if medical record already exists
-                                const medicalRecords = JSON.parse(localStorage.getItem("medical_records") || "[]")
-                                let medicalRecord = medicalRecords.find((record: any) => 
-                                  record.patientName === patient.name && record.phone === patient.phone
-                                )
-                                
-                                if (!medicalRecord) {
-                                  // Create a new medical record from patient data
-                                  medicalRecord = {
-                                    id: `MR${String(medicalRecords.length + 1).padStart(3, '0')}`,
-                                    patientName: patient.name,
-                                    age: patient.demographics?.age || 0,
-                                    gender: patient.demographics?.gender || 'Not specified',
-                                    phone: patient.phone,
-                                    email: patient.email || 'Not provided',
-                                    lastVisit: patient.last_visit || new Date().toISOString().split('T')[0],
-                                    diagnosis: 'Initial consultation pending',
-                                    treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
-                                    status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
-                                    sessionsCompleted: patient.sessions_completed || 0,
-                                    totalSessions: 8,
-                                    nextAppointment: patient.appointment_date ? new Date(patient.appointment_date).toLocaleDateString() : 'To be scheduled',
-                                    chiefComplaint: patient.notes || 'General consultation',
-                                    medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
-                                    currentMedications: 'To be determined during consultation',
-                                    treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
-                                    progress: patient.treatment_plan?.progress || 'Initial assessment pending',
-                                    doctorNotes: patient.booking_source === 'admin_dashboard' 
-                                      ? 'Patient added via admin dashboard. Assessment in progress.'
-                                      : 'Patient booked online. Initial consultation scheduled.'
-                                  }
-                                  
-                                  // Add to medical records
-                                  medicalRecords.push(medicalRecord)
-                                  localStorage.setItem("medical_records", JSON.stringify(medicalRecords))
-                                  
-                                  toast({
-                                    title: "✅ Medical Record Created",
-                                    description: `Medical record for ${patient.name} has been created and you'll be redirected to edit it.`,
-                                  })
-                                }
-                                
-                                // Store the medical record ID for the medical history page
-                                localStorage.setItem('editMedicalRecordId', medicalRecord.id)
-                                
-                                // Redirect to medical history page
-                                router.push('/medical-history')
-                              }}
-                              className="border-[#6366f1] text-[#6366f1] hover:bg-[#6366f1] hover:text-white"
-                              title="Create/Edit Medical Record"
-                            >
-                              <FileText className="h-3 w-3" />
-                            </Button>
+                                  {/* Medical Record Management Button */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Check if medical record already exists
+                                      const medicalRecords = JSON.parse(localStorage.getItem("medical_records") || "[]")
+                                      let medicalRecord = medicalRecords.find((record: any) => 
+                                        record.patientName === patient.name && record.phone === patient.phone
+                                      )
+                                      
+                                      if (!medicalRecord) {
+                                        // Create a new medical record from patient data
+                                        medicalRecord = {
+                                          id: `MR${String(medicalRecords.length + 1).padStart(3, '0')}`,
+                                          patientName: patient.name,
+                                          age: patient.demographics?.age || 0,
+                                          gender: patient.demographics?.gender || 'Not specified',
+                                          phone: patient.phone,
+                                          email: patient.email || 'Not provided',
+                                          lastVisit: patient.last_visit || new Date().toISOString().split('T')[0],
+                                          diagnosis: 'Initial consultation pending',
+                                          treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
+                                          status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
+                                          sessionsCompleted: patient.sessions_completed || 0,
+                                          totalSessions: 8,
+                                          nextAppointment: patient.appointment_date ? new Date(patient.appointment_date).toLocaleDateString() : 'To be scheduled',
+                                          chiefComplaint: patient.notes || 'General consultation',
+                                          medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
+                                          currentMedications: 'To be determined during consultation',
+                                          treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
+                                          progress: patient.treatment_plan?.progress || 'Initial assessment pending',
+                                          doctorNotes: patient.booking_source === 'admin_dashboard' 
+                                            ? 'Patient added via admin dashboard. Assessment in progress.'
+                                            : 'Patient booked online. Initial consultation scheduled.'
+                                        }
+                                        
+                                        // Add to medical records
+                                        medicalRecords.push(medicalRecord)
+                                        localStorage.setItem("medical_records", JSON.stringify(medicalRecords))
+                                        
+                                        toast({
+                                          title: "✅ Medical Record Created",
+                                          description: `Medical record for ${patient.name} has been created and you'll be redirected to edit it.`,
+                                        })
+                                      }
+                                      
+                                      // Store the medical record ID for the medical history page
+                                      localStorage.setItem('editMedicalRecordId', medicalRecord.id)
+                                      
+                                      // Redirect to medical history page
+                                      router.push('/medical-history')
+                                    }}
+                                    className="border-[#6366f1] text-[#6366f1] hover:bg-[#6366f1] hover:text-white text-xs w-full"
+                                    title="Create/Edit Medical Record"
+                                  >
+                                    <FileText className="h-3 w-3 mr-1" />
+                                    Medical
+                                  </Button>
 
-                            {/* Prescription Button */}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                // Store patient data for prescription page
-                                localStorage.setItem('prescriptionPatient', JSON.stringify(patient))
-                                // Navigate to prescription page
-                                router.push('/admin/prescription')
-                              }}
-                              className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
-                              title="Generate Prescription"
-                            >
-                              <Prescription className="h-3 w-3" />
-                            </Button>
+                                  {/* Prescription Button */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Store patient data for prescription page
+                                      localStorage.setItem('prescriptionPatient', JSON.stringify(patient))
+                                      // Navigate to prescription page
+                                      router.push('/admin/prescription')
+                                    }}
+                                    className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs w-full"
+                                    title="Generate Prescription"
+                                  >
+                                    <Prescription className="h-3 w-3 mr-1" />
+                                    Rx
+                                  </Button>
 
-                            {/* Video Call Button */}
-                            {patient.session_type === "video" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => startVideoCall(patient)}
-                                className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
-                                title="Start Video Call"
-                              >
-                                <Video className="h-3 w-3" />
-                              </Button>
+                                  {/* Video Call Button */}
+                                  {patient.session_type === "video" && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => startVideoCall(patient)}
+                                      className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white text-xs w-full"
+                                      title="Start Video Call"
+                                    >
+                                      <Video className="h-3 w-3 mr-1" />
+                                      Call
+                                    </Button>
+                                  )}
+
+                                  {/* Money Management Button */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Prepare patient data for money management
+                                      const patientData = {
+                                        patientName: patient.name,
+                                        phone: patient.phone,
+                                        email: patient.email || '',
+                                        sessionType: patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation',
+                                        amount: patient.session_type === 'in_clinic' ? 1500 : 1000, // Default amounts
+                                        paymentMethod: patient.payment_method || 'cash',
+                                        description: `Payment for ${patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation'} - ${new Date().toLocaleDateString()}`,
+                                        date: new Date().toISOString().split('T')[0],
+                                        patientId: patient.id
+                                      }
+                                      
+                                      // Add to money management records in localStorage
+                                      const existingRecords = JSON.parse(localStorage.getItem('payment_records') || '[]')
+                                      const newRecord = {
+                                        id: `PM${String(existingRecords.length + 1).padStart(3, '0')}`,
+                                        ...patientData,
+                                        createdAt: new Date().toISOString()
+                                      }
+                                      
+                                      existingRecords.push(newRecord)
+                                      localStorage.setItem('payment_records', JSON.stringify(existingRecords))
+                                      
+                                      toast({
+                                        title: "✅ Payment Record Added",
+                                        description: `Payment record for ${patient.name} has been added to money management. You can manually navigate to the money management page to view and edit it.`,
+                                      })
+                                    }}
+                                    className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs w-full"
+                                    title="Add Patient to Money Management"
+                                  >
+                                    <DollarSign className="h-3 w-3 mr-1" />
+                                    Payment
+                                  </Button>
+
+                                  {/* Spinal Health Assessment Report Button */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => generateDetailedReport(patient)}
+                                    className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full"
+                                    title="Generate Spinal Health Assessment Report"
+                                  >
+                                    <Download className="h-3 w-3 mr-1" />
+                                    Report
+                                  </Button>
+
+                                  {/* Edit Patient Button */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEditPatient(patient)}
+                                    className="border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800] hover:text-white text-xs w-full"
+                                    title="Edit Patient"
+                                  >
+                                    <Edit3 className="h-3 w-3 mr-1" />
+                                    Edit
+                                  </Button>
+
+                                  {/* Delete Patient Button */}
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDeletePatient(patient.id)}
+                                    className="bg-red-600 hover:bg-red-700 text-xs w-full"
+                                    title="Delete Patient"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
+
+                                {/* Professional Footer */}
+                                <div className="border-t pt-2 mt-3">
+                                  <p className="text-xs text-gray-500 text-center font-medium">
+                                    {expandedActions.has(patient.id) ? "Patient Management Tools" : ""}
+                                  </p>
+                                </div>
+                              </div>
                             )}
-
-                            {/* Money Management Button */}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                // Prepare patient data for money management
-                                const patientData = {
-                                  patientName: patient.name,
-                                  phone: patient.phone,
-                                  email: patient.email || '',
-                                  sessionType: patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation',
-                                  amount: patient.session_type === 'in_clinic' ? 1500 : 1000, // Default amounts
-                                  paymentMethod: patient.payment_method || 'cash',
-                                  description: `Payment for ${patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation'} - ${new Date().toLocaleDateString()}`,
-                                  date: new Date().toISOString().split('T')[0],
-                                  patientId: patient.id
-                                }
-                                
-                                // Add to money management records in localStorage
-                                const existingRecords = JSON.parse(localStorage.getItem('payment_records') || '[]')
-                                const newRecord = {
-                                  id: `PM${String(existingRecords.length + 1).padStart(3, '0')}`,
-                                  ...patientData,
-                                  createdAt: new Date().toISOString()
-                                }
-                                
-                                existingRecords.push(newRecord)
-                                localStorage.setItem('payment_records', JSON.stringify(existingRecords))
-                                
-                                toast({
-                                  title: "✅ Payment Record Added",
-                                  description: `Payment record for ${patient.name} has been added to money management. You can manually navigate to the money management page to view and edit it.`,
-                                })
-                              }}
-                              className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
-                              title="Add Patient to Money Management"
-                            >
-                              <DollarSign className="h-3 w-3" />
-                            </Button>
-
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditPatient(patient)}
-                              className="border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800] hover:text-white"
-                              title="Edit Patient"
-                            >
-                              <Edit3 className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeletePatient(patient.id)}
-                              className="bg-red-600 hover:bg-red-700"
-                              title="Delete Patient"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
