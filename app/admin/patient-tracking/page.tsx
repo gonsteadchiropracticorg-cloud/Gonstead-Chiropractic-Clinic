@@ -114,12 +114,14 @@ export default function PatientTrackingPage() {
       const supabasePatients = data || []
       const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
       
-      // Merge patients
+      // Merge patients with proper deduplication
       const mergedPatients = [...supabasePatients]
+      const existingIds = new Set(supabasePatients.map(p => p.id))
+      
       localStoragePatients.forEach((localPatient: Patient) => {
-        const existsInSupabase = supabasePatients.find((p) => p.id === localPatient.id)
-        if (!existsInSupabase) {
+        if (!existingIds.has(localPatient.id)) {
           mergedPatients.push(localPatient)
+          existingIds.add(localPatient.id)
         }
       })
     } catch (error) {
@@ -153,7 +155,17 @@ export default function PatientTrackingPage() {
 
         const supabasePatients = data || []
         const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-        const allPatients = [...supabasePatients, ...localStoragePatients]
+        
+        // Merge with deduplication
+        const allPatients = [...supabasePatients]
+        const existingIds = new Set(supabasePatients.map(p => p.id))
+        
+        localStoragePatients.forEach((localPatient: Patient) => {
+          if (!existingIds.has(localPatient.id)) {
+            allPatients.push(localPatient)
+            existingIds.add(localPatient.id)
+          }
+        })
 
         const matchedPatients = allPatients.filter(patient => 
           patient.name.toLowerCase() === prescriptionMatch.patientName.toLowerCase() ||
@@ -182,7 +194,17 @@ export default function PatientTrackingPage() {
 
         const supabasePatients = data || []
         const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-        const allPatients = [...supabasePatients, ...localStoragePatients]
+        
+        // Merge with deduplication
+        const allPatients = [...supabasePatients]
+        const existingIds = new Set(supabasePatients.map(p => p.id))
+        
+        localStoragePatients.forEach((localPatient: Patient) => {
+          if (!existingIds.has(localPatient.id)) {
+            allPatients.push(localPatient)
+            existingIds.add(localPatient.id)
+          }
+        })
 
         const directMatches = allPatients.filter(patient => 
           patient.id.toLowerCase().includes(searchQuery.toLowerCase()) ||

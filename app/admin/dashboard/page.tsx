@@ -129,10 +129,6 @@ export default function AdminDashboard() {
   const [selectedPatientHistory, setSelectedPatientHistory] = useState<Patient | null>(null)
   const [isPatientHistoryDialogOpen, setIsPatientHistoryDialogOpen] = useState(false)
   const [currentPrescriptionId, setCurrentPrescriptionId] = useState<string>('')
-  const [duplicatePatients, setDuplicatePatients] = useState<Record<string, Patient[]>>({})
-  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
-  const [selectedDuplicateGroup, setSelectedDuplicateGroup] = useState<Patient[] | null>(null)
-  const [isDuplicateHistoryDialogOpen, setIsDuplicateHistoryDialogOpen] = useState(false)
 
   const router = useRouter()
   const pathname = usePathname()
@@ -169,180 +165,10 @@ export default function AdminDashboard() {
     })
   }
 
-  // Update patient count and detect duplicates
+  // Update patient count
   useEffect(() => {
     setPatientCount(patients.length)
-    detectDuplicatePatients()
   }, [patients])
-
-  // Smart duplicate detection system
-  const detectDuplicatePatients = () => {
-    const duplicateGroups: Record<string, Patient[]> = {}
-    const processedKeys = new Set<string>()
-    
-    patients.forEach(patient => {
-      // Create multiple matching keys for comprehensive detection
-      const matchingKeys = generateMatchingKeys(patient)
-      
-      matchingKeys.forEach(key => {
-        if (processedKeys.has(key)) return
-        
-        // Find all patients that match this key
-        const matches = patients.filter(p => {
-          const pKeys = generateMatchingKeys(p)
-          return pKeys.some(pKey => pKey === key)
-        })
-        
-        // Only consider as duplicates if more than one match
-        if (matches.length > 1) {
-          // Sort by appointment date (oldest first) for better history organization
-          matches.sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime())
-          duplicateGroups[key] = matches
-          processedKeys.add(key)
-        }
-      })
-    })
-    
-    setDuplicatePatients(duplicateGroups)
-    
-    // Show warning if duplicates found
-    // Duplicate detection completed silently - no toast notifications
-  }
-  
-  // Generate multiple matching keys for comprehensive duplicate detection
-  const generateMatchingKeys = (patient: Patient): string[] => {
-    const keys: string[] = []
-    const name = patient.name.toLowerCase().trim()
-    const phone = patient.phone.replace(/\D/g, '') // Remove non-digits
-    const email = patient.email?.toLowerCase().trim() || ''
-    
-    // Primary key: exact name + phone
-    keys.push(`${name}|${phone}`)
-    
-    // Secondary key: name + email (if email exists)
-    if (email) {
-      keys.push(`${name}|${email}`)
-    }
-    
-    // Tertiary key: phone + email (if both exist)
-    if (email) {
-      keys.push(`${phone}|${email}`)
-    }
-    
-    // Fuzzy matching for common name variations
-    const nameVariations = generateNameVariations(name)
-    nameVariations.forEach(variation => {
-      keys.push(`${variation}|${phone}`)
-      if (email) {
-        keys.push(`${variation}|${email}`)
-      }
-    })
-    
-    return keys
-  }
-  
-  // Generate name variations for fuzzy matching
-  const generateNameVariations = (name: string): string[] => {
-    const variations = [name]
-    
-    // Remove common prefixes/suffixes
-    const cleaned = name
-      .replace(/\b(mr|mrs|ms|dr|prof)\b\.?\s*/gi, '')
-      .replace(/\b(jr|sr|ii|iii|iv)\b\.?\s*$/gi, '')
-      .trim()
-    
-    if (cleaned !== name) {
-      variations.push(cleaned)
-    }
-    
-    // Handle initials vs full names
-    const parts = cleaned.split(/\s+/)
-    if (parts.length > 1) {
-      // First name + last name only
-      variations.push(`${parts[0]} ${parts[parts.length - 1]}`)
-      
-      // Initials + last name
-      variations.push(`${parts[0][0]} ${parts[parts.length - 1]}`)
-    }
-    
-    return variations.filter(v => v.length > 0)
-  }
-  
-  // Find duplicates for a specific patient in real-time
-  const findDuplicatesForPatient = (targetPatient: Patient): Patient[] => {
-    const matchingKeys = generateMatchingKeys(targetPatient)
-    const duplicates = new Set<Patient>()
-    
-    // Add the target patient itself
-    duplicates.add(targetPatient)
-    
-    // Find all patients that match any of the target patient's keys
-    patients.forEach(patient => {
-      if (patient.id === targetPatient.id) return // Skip self
-      
-      const patientKeys = generateMatchingKeys(patient)
-      const hasMatch = matchingKeys.some(targetKey => 
-        patientKeys.some(patientKey => patientKey === targetKey)
-      )
-      
-      if (hasMatch) {
-        duplicates.add(patient)
-      }
-    })
-    
-    // Convert to array and sort by date
-    const duplicateArray = Array.from(duplicates).sort(
-      (a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime()
-    )
-    
-    return duplicateArray
-  }
-  
-  // Get consolidated history for duplicate patients
-  const getConsolidatedHistory = (duplicateGroup: Patient[]) => {
-    // Sort by appointment date for chronological history
-    const sortedPatients = [...duplicateGroup].sort(
-      (a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime()
-    )
-    
-    // Primary patient (first chronologically)
-    const primaryPatient = sortedPatients[0]
-    
-    // Consolidated statistics
-    const totalSessions = sortedPatients.reduce((sum, p) => sum + (p.sessions_completed || 0), 0)
-    const totalPrescriptions = sortedPatients.filter(p => p.prescription_generated).length
-    const allStatuses = sortedPatients.map(p => p.status)
-    const latestStatus = sortedPatients[sortedPatients.length - 1].status
-    
-    // All session types used
-    const sessionTypes = [...new Set(sortedPatients.map(p => p.session_type))]
-    
-    // All notes combined
-    const allNotes = sortedPatients
-      .map(p => p.notes)
-      .filter(note => note && note.trim())
-      .join(' | ')
-    
-    // Find most recent appointment
-    const mostRecentAppointment = sortedPatients[sortedPatients.length - 1]
-    
-    return {
-      primaryPatient,
-      duplicateGroup: sortedPatients,
-      consolidatedData: {
-        totalSessions,
-        totalPrescriptions,
-        allStatuses,
-        latestStatus,
-        sessionTypes,
-        allNotes,
-        mostRecentAppointment,
-        firstVisit: primaryPatient.appointment_date,
-        lastVisit: mostRecentAppointment.last_visit || mostRecentAppointment.appointment_date,
-        duplicateCount: sortedPatients.length
-      }
-    }
-  }
 
   // Load viewed patients from localStorage on component mount
   useEffect(() => {
@@ -476,14 +302,15 @@ export default function AdminDashboard() {
       const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
       console.log("Dashboard: Loaded localStorage patients:", localStoragePatients.length)
       
-      // Merge patients - prioritize Supabase data, but include localStorage patients not in Supabase
+      // Merge patients with proper deduplication - prioritize Supabase data
       const mergedPatients = [...supabasePatients]
+      const existingIds = new Set(supabasePatients.map(p => p.id))
       
       // Add localStorage patients that aren't already in Supabase (by ID)
       localStoragePatients.forEach((localPatient: Patient) => {
-        const existsInSupabase = supabasePatients.find((p) => p.id === localPatient.id)
-        if (!existsInSupabase) {
+        if (!existingIds.has(localPatient.id)) {
           mergedPatients.push(localPatient)
+          existingIds.add(localPatient.id)
         }
       })
       
@@ -1879,35 +1706,6 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                 {!viewedPatients.has(patient.id) && (
                                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New appointment - not yet viewed" />
                                 )}
-                                        {/* Real-time Duplicate Patient Indicator */}
-                                        {(() => {
-                                          const duplicateGroup = findDuplicatesForPatient(patient)
-                                          const isDuplicate = duplicateGroup.length > 1
-                                          
-                                          if (isDuplicate) {
-                                            return (
-                                              <div 
-                                                className="flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full cursor-pointer hover:bg-orange-200 transition-colors"
-                                                onClick={() => {
-                                                  setSelectedDuplicateGroup(duplicateGroup)
-                                                  const consolidated = getConsolidatedHistory(duplicateGroup)
-                                                  setSelectedPatientHistory(consolidated.primaryPatient)
-                                                  setIsPatientHistoryDialogOpen(true)
-                                                  
-                                                  toast({
-                                                    title: "🔍 Real-time Duplicate Detection",
-                                                    description: `Found ${duplicateGroup.length} related records for ${patient.name}`,
-                                                  })
-                                                }}
-                                                title={`This patient has ${duplicateGroup.length} related entries. Click to view consolidated history.`}
-                                              >
-                                                <AlertTriangle className="h-3 w-3" />
-                                                <span>Related ({duplicateGroup.length})</span>
-                                              </div>
-                                            )
-                                          }
-                                          return null
-                                        })()}
                               </div>
                               <div className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
                                 ID: {patient.id.slice(0, 8)}...
@@ -2065,33 +1863,9 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                         size="sm"
                                         variant="outline"
                                         onClick={() => {
-                                          // Get fresh patient data and check for duplicates in real-time
+                                          // Get fresh patient data
                                           const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                          
-                                          // Auto-detect duplicates for this patient
-                                          const duplicateGroup = findDuplicatesForPatient(currentPatientData)
-                                          
-                                          if (duplicateGroup.length > 1) {
-                                            // Show consolidated view with duplicate information
-                                            setSelectedDuplicateGroup(duplicateGroup)
-                                            const consolidated = getConsolidatedHistory(duplicateGroup)
-                                            setSelectedPatient(consolidated.primaryPatient)
-                                            
-                                            // Add consolidated data to selected patient for display
-                                            const enhancedPatient = {
-                                              ...consolidated.primaryPatient,
-                                              _duplicateInfo: {
-                                                isDuplicate: true,
-                                                totalRecords: duplicateGroup.length,
-                                                consolidatedData: consolidated.consolidatedData,
-                                                allRecords: duplicateGroup
-                                              }
-                                            }
-                                            setSelectedPatient(enhancedPatient)
-                                          } else {
-                                            setSelectedPatient(currentPatientData)
-                                            setSelectedDuplicateGroup(null)
-                                          }
+                                          setSelectedPatient(currentPatientData)
                                           
                                           // Mark patient as viewed
                                           setViewedPatients(prev => new Set([...prev, patient.id]))
@@ -2114,25 +1888,6 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                       </DialogHeader>
                                       {selectedPatient && (
                                         <div className="space-y-6">
-                                          {/* Real-time Duplicate Detection Alert */}
-                                          {selectedPatient._duplicateInfo?.isDuplicate && (
-                                            <Card className="border-l-4 border-l-orange-500 bg-orange-50 shadow-lg">
-                                              <CardContent className="p-4">
-                                                <div className="flex items-center gap-3">
-                                                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                                                    <AlertTriangle className="h-4 w-4 text-white" />
-                                                  </div>
-                                                  <div>
-                                                    <h4 className="font-semibold text-orange-800">Related Records Detected</h4>
-                                                    <p className="text-orange-700 text-sm">
-                                                      Found {selectedPatient._duplicateInfo.totalRecords} related patient records. 
-                                                      Showing consolidated information below.
-                                                    </p>
-                                                  </div>
-                                                </div>
-                                              </CardContent>
-                                            </Card>
-                                          )}
                                           
                                           {/* Patient Information Cards */}
                                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2140,11 +1895,6 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                               <CardHeader className="bg-[#0d5c75] text-white py-3">
                                               <CardTitle className="text-lg text-white">
                                                 Contact Information
-                                                {selectedPatient._duplicateInfo?.isDuplicate && (
-                                                  <Badge variant="secondary" className="bg-orange-500 text-white ml-2 text-xs">
-                                                    {selectedPatient._duplicateInfo.totalRecords} Records
-                                                  </Badge>
-                                                )}
                                               </CardTitle>
                                               </CardHeader>
                                               <CardContent className="p-4 space-y-2">
@@ -2236,45 +1986,18 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                       // Get fresh patient data to ensure accuracy
                                       const currentPatientData = patients.find(p => p.id === patient.id) || patient
                                       
-                                      // Real-time duplicate detection for this specific patient
-                                      const duplicateGroup = findDuplicatesForPatient(currentPatientData)
-                                      
-                                      if (duplicateGroup.length > 1) {
-                                        // Show consolidated history for duplicate patients
-                                        setSelectedDuplicateGroup(duplicateGroup)
-                                        const consolidated = getConsolidatedHistory(duplicateGroup)
-                                        setSelectedPatientHistory(consolidated.primaryPatient)
-                                        
-                                        toast({
-                                          title: "📋 Smart History Active",
-                                          description: `Showing consolidated history from ${duplicateGroup.length} related records for ${currentPatientData.name}`,
-                                        })
-                                      } else {
-                                        // Show normal history for single patient
-                                        setSelectedPatientHistory(currentPatientData)
-                                        setSelectedDuplicateGroup(null)
-                                      }
-                                      
+                                      // Show patient history
+                                      setSelectedPatientHistory(currentPatientData)
                                       setIsPatientHistoryDialogOpen(true)
                                       
                                       // Close the action menu after selection
                                       setExpandedActions(new Set())
                                     }}
-                                    className={`border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full ${
-                                      findDuplicatesForPatient(patient).length > 1
-                                        ? 'ring-2 ring-orange-300 bg-orange-50'
-                                        : ''
-                                    }`}
-                                    title={findDuplicatesForPatient(patient).length > 1
-                                      ? `Smart History: Found ${findDuplicatesForPatient(patient).length} related records`
-                                      : "View Complete Patient History & Sessions"
-                                    }
+                                    className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full"
+                                    title="View Complete Patient History & Sessions"
                                   >
                                     <Clock className="h-3 w-3 mr-1" />
-                                    {findDuplicatesForPatient(patient).length > 1
-                                      ? `Smart (${findDuplicatesForPatient(patient).length})`
-                                      : 'History'
-                                    }
+                                    History
                                   </Button>
 
                                   {/* Medical Record Management Button */}
@@ -2993,112 +2716,27 @@ Doctor Signature: Dr. Bashir Khan, DCP
         </DialogContent>
       </Dialog>
 
-      {/* Enhanced Patient History Dialog with Duplicate Detection */}
+      {/* Patient History Dialog */}
       <Dialog open={isPatientHistoryDialogOpen} onOpenChange={setIsPatientHistoryDialogOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-3">
-              <div className={`w-12 h-12 bg-gradient-to-br ${selectedDuplicateGroup ? 'from-orange-500 to-red-500' : 'from-[#8b5cf6] to-[#6366f1]'} rounded-full flex items-center justify-center`}>
-                {selectedDuplicateGroup ? (
-                  <AlertTriangle className="h-6 w-6 text-white" />
-                ) : (
-                  <Clock className="h-6 w-6 text-white" />
-                )}
+              <div className="w-12 h-12 bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] rounded-full flex items-center justify-center">
+                <Clock className="h-6 w-6 text-white" />
               </div>
-              {selectedDuplicateGroup ? (
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span>Consolidated Patient History - {selectedPatientHistory?.name}</span>
-                    <Badge variant="secondary" className="bg-orange-500 text-white">
-                      {selectedDuplicateGroup.length} Records Merged
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">Showing combined data from multiple patient entries</p>
-                </div>
-              ) : (
-                <span>Complete Patient History - {selectedPatientHistory?.name}</span>
-              )}
+              <span>Complete Patient History - {selectedPatientHistory?.name}</span>
             </DialogTitle>
           </DialogHeader>
           
           {selectedPatientHistory && (
             <div className="space-y-8">
-              {/* Duplicate Detection Alert */}
-              {selectedDuplicateGroup && (
-                <Card className="border-l-4 border-l-orange-500 bg-orange-50 shadow-lg">
-                  <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5" />
-                      Duplicate Patient Records Detected
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <h4 className="font-medium text-orange-800 mb-2">Duplicate Summary</h4>
-                        <div className="text-sm space-y-1">
-                          <p><span className="font-medium">Total Records Found:</span> {selectedDuplicateGroup.length}</p>
-                          <p><span className="font-medium">Date Range:</span> 
-                            {new Date(Math.min(...selectedDuplicateGroup.map(p => new Date(p.appointment_date).getTime()))).toLocaleDateString()} - 
-                            {new Date(Math.max(...selectedDuplicateGroup.map(p => new Date(p.appointment_date).getTime()))).toLocaleDateString()}
-                          </p>
-                          <p><span className="font-medium">Combined Sessions:</span> {selectedDuplicateGroup.reduce((sum, p) => sum + (p.sessions_completed || 0), 0)}</p>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium text-orange-800 mb-2">Record Sources</h4>
-                        <div className="space-y-1">
-                          {selectedDuplicateGroup.map((patient, index) => (
-                            <div key={patient.id} className="text-xs bg-white/60 p-2 rounded border">
-                              <p className="font-medium">Record #{index + 1}</p>
-                              <p>ID: {patient.id.slice(0, 8)}...</p>
-                              <p>Date: {new Date(patient.appointment_date).toLocaleDateString()}</p>
-                              <p>Source: {patient.booking_source === 'admin_dashboard' ? '📞 Admin' : '🌐 Online'}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium text-orange-800 mb-2">Recommended Action</h4>
-                        <div className="text-sm space-y-2">
-                          <p>These records appear to be for the same patient. Consider:</p>
-                          <ul className="list-disc list-inside text-xs space-y-1 ml-2">
-                            <li>Merge duplicate records</li>
-                            <li>Update contact information</li>
-                            <li>Consolidate treatment history</li>
-                          </ul>
-                          <Button
-                            size="sm"
-                            className="bg-orange-600 hover:bg-orange-700 text-white mt-2"
-                            onClick={() => {
-                              toast({
-                                title: "🔄 Merge Feature",
-                                description: "Patient record merging feature can be implemented here",
-                              })
-                            }}
-                          >
-                            Merge Records
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Enhanced Patient Overview Card */}
-              <Card className={`border-l-4 ${selectedDuplicateGroup ? 'border-l-orange-500' : 'border-l-[#8b5cf6]'} shadow-lg`}>
-                <CardHeader className={`bg-gradient-to-r ${selectedDuplicateGroup ? 'from-orange-500 to-red-500' : 'from-[#8b5cf6] to-[#6366f1]'} text-white`}>
+              <Card className="border-l-4 border-l-[#8b5cf6] shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white">
                   <CardTitle className="text-xl flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    {selectedDuplicateGroup ? 'Consolidated Patient Overview' : 'Patient Overview'}
-                    {selectedDuplicateGroup && (
-                      <Badge variant="secondary" className="bg-white/20 text-white ml-2">
-                        {selectedDuplicateGroup.length} Records
-                      </Badge>
-                    )}
+                    Patient Overview
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
@@ -3124,11 +2762,7 @@ Doctor Signature: Dr. Bashir Khan, DCP
                       <div className="space-y-2 text-sm">
                         <p><span className="font-medium">Total Sessions:</span> 
                           <Badge variant="secondary" className="ml-2">
-                            {selectedDuplicateGroup 
-                              ? selectedDuplicateGroup.reduce((sum, p) => sum + (p.sessions_completed || 0), 0)
-                              : selectedPatientHistory.sessions_completed || 0
-                            }
-                            {selectedDuplicateGroup && <span className="text-xs ml-1">({selectedDuplicateGroup.length} records)</span>}
+                            {selectedPatientHistory.sessions_completed || 0}
                           </Badge>
                         </p>
                         <p><span className="font-medium">First Visit:</span> {new Date(selectedPatientHistory.appointment_date).toLocaleDateString()}</p>
