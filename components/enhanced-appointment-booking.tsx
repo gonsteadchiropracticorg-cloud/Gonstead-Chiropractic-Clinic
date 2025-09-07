@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar as CalendarIcon, Video, CheckCircle, Loader2, Phone, MessageCircle, CreditCard, Clock, MapPin, AlertTriangle, Info, X } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -58,6 +59,7 @@ export function EnhancedAppointmentBooking() {
     name: "",
     phone: "",
     email: "",
+    profession: "",
     sessionType: "in_clinic" as "in_clinic" | "video",
     selectedDate: "",
     selectedTime: "",
@@ -254,6 +256,7 @@ export function EnhancedAppointmentBooking() {
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
+        profession: formData.profession,
         session_type: formData.sessionType,
         appointment_date: `${formData.selectedDate}T${formData.selectedTime}`,
         status: "pending" as const,
@@ -297,7 +300,7 @@ export function EnhancedAppointmentBooking() {
         demographics: {
           age: null,
           gender: null,
-          occupation: null,
+          occupation: formData.profession || null,
           emergency_contact: null,
         },
         treatment_plan: {
@@ -405,6 +408,7 @@ export function EnhancedAppointmentBooking() {
             phone: formData.phone,
             sessionType: formData.sessionType,
             preferredTime: `${formData.selectedDate}T${formData.selectedTime}`,
+            profession: formData.profession,
             appointmentId: appointmentId
           }}
           onBackToHome={() => {
@@ -413,6 +417,7 @@ export function EnhancedAppointmentBooking() {
               name: "",
               phone: "",
               email: "",
+              profession: "",
               sessionType: "in_clinic",
               selectedDate: "",
               selectedTime: "",
@@ -429,6 +434,7 @@ export function EnhancedAppointmentBooking() {
               name: "",
               phone: "",
               email: "",
+              profession: "",
               sessionType: "in_clinic",
               selectedDate: "",
               selectedTime: "",
@@ -558,18 +564,157 @@ export function EnhancedAppointmentBooking() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label htmlFor="email" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                {language === "ur" ? "ای میل (اختیاری)" : "Email (Optional)"}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                placeholder={language === "ur" ? "آپ کا ای میل ایڈریس" : "your.email@example.com"}
-                className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)] h-10 md:h-12 text-sm md:text-base"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="email" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  {language === "ur" ? "ای میل (اختیاری)" : "Email (Optional)"}
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder={language === "ur" ? "آپ کا ای میل ایڈریس" : "your.email@example.com"}
+                  className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)] h-10 md:h-12 text-sm md:text-base"
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <Label htmlFor="profession" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  {language === "ur" ? "پیشہ/کام" : "Profession/Occupation"}
+                </Label>
+                <Select 
+                  value={formData.profession} 
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, profession: value }))}
+                >
+                  <SelectTrigger className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] h-10 md:h-12 text-sm md:text-base">
+                    <SelectValue placeholder={language === "ur" ? "اپنا پیشہ منتخب کریں" : "Select your profession"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Healthcare & Medical */}
+                    <SelectItem value="doctor">{language === "ur" ? "ڈاکٹر/معالج" : "Doctor/Physician"}</SelectItem>
+                    <SelectItem value="nurse">{language === "ur" ? "نرس" : "Nurse"}</SelectItem>
+                    <SelectItem value="dentist">{language === "ur" ? "دانتوں کا ڈاکٹر" : "Dentist"}</SelectItem>
+                    <SelectItem value="pharmacist">{language === "ur" ? "دوا ساز" : "Pharmacist"}</SelectItem>
+                    <SelectItem value="therapist">{language === "ur" ? "معالج/مشیر" : "Therapist/Counselor"}</SelectItem>
+                    <SelectItem value="veterinarian">{language === "ur" ? "جانوروں کا ڈاکٹر" : "Veterinarian"}</SelectItem>
+                    <SelectItem value="medical_tech">{language === "ur" ? "طبی ٹیکنیشن" : "Medical Technician"}</SelectItem>
+                    <SelectItem value="healthcare_other">{language === "ur" ? "دیگر طبی پیشہ" : "Other Healthcare Professional"}</SelectItem>
+                    
+                    {/* Education */}
+                    <SelectItem value="teacher_k12">{language === "ur" ? "اسکول ٹیچر" : "K-12 Teacher"}</SelectItem>
+                    <SelectItem value="professor">{language === "ur" ? "یونیورسٹی پروفیسر" : "University Professor"}</SelectItem>
+                    <SelectItem value="principal">{language === "ur" ? "اسکول منتظم/پرنسپل" : "School Administrator/Principal"}</SelectItem>
+                    <SelectItem value="tutor">{language === "ur" ? "ٹیوٹر/نجی استاد" : "Tutor/Private Instructor"}</SelectItem>
+                    <SelectItem value="coach">{language === "ur" ? "کھیل کوچ/ٹرینر" : "Sports Coach/Trainer"}</SelectItem>
+                    
+                    {/* Technology & Engineering */}
+                    <SelectItem value="software_dev">{language === "ur" ? "سافٹ ویئر ڈیولپر" : "Software Developer/Programmer"}</SelectItem>
+                    <SelectItem value="engineer_civil">{language === "ur" ? "سول انجینئر" : "Civil Engineer"}</SelectItem>
+                    <SelectItem value="engineer_mechanical">{language === "ur" ? "مکینیکل انجینئر" : "Mechanical Engineer"}</SelectItem>
+                    <SelectItem value="engineer_electrical">{language === "ur" ? "الیکٹریکل انجینئر" : "Electrical Engineer"}</SelectItem>
+                    <SelectItem value="it_support">{language === "ur" ? "آئی ٹی سپورٹ" : "IT Support/System Admin"}</SelectItem>
+                    <SelectItem value="data_analyst">{language === "ur" ? "ڈیٹا تجزیہ کار" : "Data Analyst/Scientist"}</SelectItem>
+                    <SelectItem value="cybersecurity">{language === "ur" ? "سائبر سیکیورٹی" : "Cybersecurity Specialist"}</SelectItem>
+                    <SelectItem value="web_designer">{language === "ur" ? "ویب ڈیزائنر" : "Web Designer/UX Designer"}</SelectItem>
+                    
+                    {/* Business & Finance */}
+                    <SelectItem value="accountant">{language === "ur" ? "اکاؤنٹنٹ" : "Accountant/CPA"}</SelectItem>
+                    <SelectItem value="banker">{language === "ur" ? "بینکر/مالی مشیر" : "Banker/Financial Advisor"}</SelectItem>
+                    <SelectItem value="manager">{language === "ur" ? "منیجر/سپروائزر" : "Manager/Supervisor"}</SelectItem>
+                    <SelectItem value="ceo_executive">{language === "ur" ? "سی ای او/ایگزیکٹو" : "CEO/Executive"}</SelectItem>
+                    <SelectItem value="sales_rep">{language === "ur" ? "سیلز نمائندہ" : "Sales Representative"}</SelectItem>
+                    <SelectItem value="marketing">{language === "ur" ? "مارکیٹنگ" : "Marketing Specialist"}</SelectItem>
+                    <SelectItem value="hr">{language === "ur" ? "انسانی وسائل" : "Human Resources"}</SelectItem>
+                    <SelectItem value="consultant">{language === "ur" ? "کاروباری مشیر" : "Business Consultant"}</SelectItem>
+                    <SelectItem value="entrepreneur">{language === "ur" ? "کاروباری/بزنس اونر" : "Entrepreneur/Business Owner"}</SelectItem>
+                    
+                    {/* Office & Administrative */}
+                    <SelectItem value="office_worker">{language === "ur" ? "دفتری کام/کلرک" : "Office Worker/Clerk"}</SelectItem>
+                    <SelectItem value="secretary">{language === "ur" ? "سیکرٹری" : "Secretary/Administrative Assistant"}</SelectItem>
+                    <SelectItem value="receptionist">{language === "ur" ? "ریسپشنسٹ" : "Receptionist"}</SelectItem>
+                    <SelectItem value="data_entry">{language === "ur" ? "ڈیٹا انٹری" : "Data Entry Specialist"}</SelectItem>
+                    
+                    {/* Legal & Government */}
+                    <SelectItem value="lawyer">{language === "ur" ? "وکیل" : "Lawyer/Attorney"}</SelectItem>
+                    <SelectItem value="judge">{language === "ur" ? "جج/مجسٹریٹ" : "Judge/Magistrate"}</SelectItem>
+                    <SelectItem value="paralegal">{language === "ur" ? "پیرا لیگل" : "Paralegal"}</SelectItem>
+                    <SelectItem value="police">{language === "ur" ? "پولیس افسر" : "Police Officer"}</SelectItem>
+                    <SelectItem value="firefighter">{language === "ur" ? "فائر فائٹر" : "Firefighter"}</SelectItem>
+                    <SelectItem value="military">{language === "ur" ? "فوجی اہلکار" : "Military Personnel"}</SelectItem>
+                    <SelectItem value="government">{language === "ur" ? "سرکاری ملازم" : "Government Employee"}</SelectItem>
+                    
+                    {/* Construction & Trades */}
+                    <SelectItem value="construction">{language === "ur" ? "تعمیراتی مزدور" : "Construction Worker"}</SelectItem>
+                    <SelectItem value="electrician">{language === "ur" ? "الیکٹریشن" : "Electrician"}</SelectItem>
+                    <SelectItem value="plumber">{language === "ur" ? "پلمبر" : "Plumber"}</SelectItem>
+                    <SelectItem value="carpenter">{language === "ur" ? "بڑھئی" : "Carpenter"}</SelectItem>
+                    <SelectItem value="mechanic">{language === "ur" ? "مکینک" : "Mechanic/Auto Technician"}</SelectItem>
+                    <SelectItem value="welder">{language === "ur" ? "ویلڈر" : "Welder"}</SelectItem>
+                    <SelectItem value="hvac">{language === "ur" ? "ایچ وی اے سی ٹیکنیشن" : "HVAC Technician"}</SelectItem>
+                    <SelectItem value="painter">{language === "ur" ? "پینٹر" : "Painter/Decorator"}</SelectItem>
+                    
+                    {/* Transportation */}
+                    <SelectItem value="truck_driver">{language === "ur" ? "ٹرک ڈرائیور" : "Truck Driver"}</SelectItem>
+                    <SelectItem value="taxi_uber">{language === "ur" ? "ٹیکسی/اوبر ڈرائیور" : "Taxi/Uber Driver"}</SelectItem>
+                    <SelectItem value="pilot">{language === "ur" ? "پائلٹ" : "Pilot"}</SelectItem>
+                    <SelectItem value="flight_attendant">{language === "ur" ? "فلائٹ اٹینڈنٹ" : "Flight Attendant"}</SelectItem>
+                    <SelectItem value="ship_captain">{language === "ur" ? "جہاز کپتان" : "Ship Captain/Maritime"}</SelectItem>
+                    
+                    {/* Retail & Hospitality */}
+                    <SelectItem value="retail_manager">{language === "ur" ? "ریٹیل منیجر" : "Retail Manager"}</SelectItem>
+                    <SelectItem value="cashier">{language === "ur" ? "کیشیئر" : "Cashier"}</SelectItem>
+                    <SelectItem value="restaurant_manager">{language === "ur" ? "ریسٹورنٹ منیجر" : "Restaurant Manager"}</SelectItem>
+                    <SelectItem value="waiter">{language === "ur" ? "ویٹر" : "Waiter/Waitress"}</SelectItem>
+                    <SelectItem value="chef">{language === "ur" ? "شیف/باورچی" : "Chef/Cook"}</SelectItem>
+                    <SelectItem value="barista">{language === "ur" ? "بارسٹا" : "Barista"}</SelectItem>
+                    <SelectItem value="hotel_staff">{language === "ur" ? "ہوٹل عملہ" : "Hotel Staff"}</SelectItem>
+                    
+                    {/* Creative & Media */}
+                    <SelectItem value="artist">{language === "ur" ? "آرٹسٹ/مصور" : "Artist/Painter"}</SelectItem>
+                    <SelectItem value="musician">{language === "ur" ? "موسیقار" : "Musician/Performer"}</SelectItem>
+                    <SelectItem value="writer">{language === "ur" ? "مصنف/لکھاری" : "Writer/Author"}</SelectItem>
+                    <SelectItem value="journalist">{language === "ur" ? "صحافی" : "Journalist/Reporter"}</SelectItem>
+                    <SelectItem value="photographer">{language === "ur" ? "فوٹوگرافر" : "Photographer"}</SelectItem>
+                    <SelectItem value="graphic_designer">{language === "ur" ? "گرافک ڈیزائنر" : "Graphic Designer"}</SelectItem>
+                    <SelectItem value="actor">{language === "ur" ? "اداکار" : "Actor/Actress"}</SelectItem>
+                    <SelectItem value="filmmaker">{language === "ur" ? "فلم میکر" : "Filmmaker/Director"}</SelectItem>
+                    
+                    {/* Agriculture & Environment */}
+                    <SelectItem value="farmer">{language === "ur" ? "کسان" : "Farmer/Rancher"}</SelectItem>
+                    <SelectItem value="landscaper">{language === "ur" ? "لینڈسکیپر/باغبان" : "Landscaper/Gardener"}</SelectItem>
+                    <SelectItem value="environmental">{language === "ur" ? "ماحولیاتی سائنسدان" : "Environmental Scientist"}</SelectItem>
+                    <SelectItem value="forestry">{language === "ur" ? "جنگلات کا کارکن" : "Forestry Worker"}</SelectItem>
+                    
+                    {/* Sports & Fitness */}
+                    <SelectItem value="athlete">{language === "ur" ? "پیشہ ور کھلاڑی" : "Professional Athlete"}</SelectItem>
+                    <SelectItem value="personal_trainer">{language === "ur" ? "پرسنل ٹرینر" : "Personal Trainer"}</SelectItem>
+                    <SelectItem value="gym_instructor">{language === "ur" ? "جم انسٹرکٹر" : "Gym Instructor"}</SelectItem>
+                    <SelectItem value="sports_coach">{language === "ur" ? "کھیل کوچ" : "Sports Coach"}</SelectItem>
+                    
+                    {/* Science & Research */}
+                    <SelectItem value="scientist">{language === "ur" ? "سائنسدان/محقق" : "Scientist/Researcher"}</SelectItem>
+                    <SelectItem value="lab_technician">{language === "ur" ? "لیب ٹیکنیشن" : "Laboratory Technician"}</SelectItem>
+                    <SelectItem value="chemist">{language === "ur" ? "کیمسٹ" : "Chemist"}</SelectItem>
+                    <SelectItem value="biologist">{language === "ur" ? "حیاتیات دان" : "Biologist"}</SelectItem>
+                    
+                    {/* Personal Care & Services */}
+                    <SelectItem value="hairdresser">{language === "ur" ? "ہیئر ڈریسر" : "Hairdresser/Stylist"}</SelectItem>
+                    <SelectItem value="massage_therapist">{language === "ur" ? "مساج تھراپسٹ" : "Massage Therapist"}</SelectItem>
+                    <SelectItem value="beautician">{language === "ur" ? "بیوٹیشن" : "Beautician/Cosmetologist"}</SelectItem>
+                    <SelectItem value="childcare">{language === "ur" ? "بچوں کی دیکھ بھال" : "Childcare Provider"}</SelectItem>
+                    <SelectItem value="cleaner">{language === "ur" ? "صفائی کار" : "Cleaner/Janitor"}</SelectItem>
+                    
+                    {/* Other Categories */}
+                    <SelectItem value="student">{language === "ur" ? "طالب علم" : "Student"}</SelectItem>
+                    <SelectItem value="retired">{language === "ur" ? "بازنشستہ" : "Retired"}</SelectItem>
+                    <SelectItem value="homemaker">{language === "ur" ? "گھریلو کام" : "Homemaker/Stay-at-home Parent"}</SelectItem>
+                    <SelectItem value="unemployed">{language === "ur" ? "فی الوقت بے روزگار" : "Currently Unemployed"}</SelectItem>
+                    <SelectItem value="volunteer">{language === "ur" ? "رضاکارانہ کام" : "Volunteer Work"}</SelectItem>
+                    <SelectItem value="other">{language === "ur" ? "دیگر پیشہ" : "Other Profession"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

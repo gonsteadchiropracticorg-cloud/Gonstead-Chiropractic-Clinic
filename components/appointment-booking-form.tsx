@@ -20,6 +20,7 @@ export interface AppointmentData {
   email: string
   phone: string
   dateOfBirth: string
+  profession: string
   address: string
   city: string
   state: string
@@ -65,6 +66,7 @@ export default function AppointmentBookingForm({ onSubmit, onClose, prefilledDat
     email: prefilledData?.email || '',
     phone: prefilledData?.phone || '',
     dateOfBirth: prefilledData?.dateOfBirth || '',
+    profession: prefilledData?.profession || '',
     address: prefilledData?.address || '',
     city: prefilledData?.city || '',
     state: prefilledData?.state || '',
@@ -211,14 +213,150 @@ export default function AppointmentBookingForm({ onSubmit, onClose, prefilledDat
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="profession">Profession/Occupation</Label>
+                  <Select 
+                    value={formData.profession} 
+                    onValueChange={(value) => handleInputChange('profession', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your profession" />
+                    </SelectTrigger>
+                  <SelectContent>
+                    {/* Healthcare & Medical */}
+                    <SelectItem value="doctor">Doctor/Physician</SelectItem>
+                    <SelectItem value="nurse">Nurse</SelectItem>
+                    <SelectItem value="dentist">Dentist</SelectItem>
+                    <SelectItem value="pharmacist">Pharmacist</SelectItem>
+                    <SelectItem value="therapist">Therapist/Counselor</SelectItem>
+                    <SelectItem value="veterinarian">Veterinarian</SelectItem>
+                    <SelectItem value="medical_tech">Medical Technician</SelectItem>
+                    <SelectItem value="healthcare_other">Other Healthcare Professional</SelectItem>
+                    
+                    {/* Education */}
+                    <SelectItem value="teacher_k12">K-12 Teacher</SelectItem>
+                    <SelectItem value="professor">University Professor</SelectItem>
+                    <SelectItem value="principal">School Administrator/Principal</SelectItem>
+                    <SelectItem value="tutor">Tutor/Private Instructor</SelectItem>
+                    <SelectItem value="coach">Sports Coach/Trainer</SelectItem>
+                    
+                    {/* Technology & Engineering */}
+                    <SelectItem value="software_dev">Software Developer/Programmer</SelectItem>
+                    <SelectItem value="engineer_civil">Civil Engineer</SelectItem>
+                    <SelectItem value="engineer_mechanical">Mechanical Engineer</SelectItem>
+                    <SelectItem value="engineer_electrical">Electrical Engineer</SelectItem>
+                    <SelectItem value="it_support">IT Support/System Admin</SelectItem>
+                    <SelectItem value="data_analyst">Data Analyst/Scientist</SelectItem>
+                    <SelectItem value="cybersecurity">Cybersecurity Specialist</SelectItem>
+                    <SelectItem value="web_designer">Web Designer/UX Designer</SelectItem>
+                    
+                    {/* Business & Finance */}
+                    <SelectItem value="accountant">Accountant/CPA</SelectItem>
+                    <SelectItem value="banker">Banker/Financial Advisor</SelectItem>
+                    <SelectItem value="manager">Manager/Supervisor</SelectItem>
+                    <SelectItem value="ceo_executive">CEO/Executive</SelectItem>
+                    <SelectItem value="sales_rep">Sales Representative</SelectItem>
+                    <SelectItem value="marketing">Marketing Specialist</SelectItem>
+                    <SelectItem value="hr">Human Resources</SelectItem>
+                    <SelectItem value="consultant">Business Consultant</SelectItem>
+                    <SelectItem value="entrepreneur">Entrepreneur/Business Owner</SelectItem>
+                    
+                    {/* Office & Administrative */}
+                    <SelectItem value="office_worker">Office Worker/Clerk</SelectItem>
+                    <SelectItem value="secretary">Secretary/Administrative Assistant</SelectItem>
+                    <SelectItem value="receptionist">Receptionist</SelectItem>
+                    <SelectItem value="data_entry">Data Entry Specialist</SelectItem>
+                    
+                    {/* Legal & Government */}
+                    <SelectItem value="lawyer">Lawyer/Attorney</SelectItem>
+                    <SelectItem value="judge">Judge/Magistrate</SelectItem>
+                    <SelectItem value="paralegal">Paralegal</SelectItem>
+                    <SelectItem value="police">Police Officer</SelectItem>
+                    <SelectItem value="firefighter">Firefighter</SelectItem>
+                    <SelectItem value="military">Military Personnel</SelectItem>
+                    <SelectItem value="government">Government Employee</SelectItem>
+                    
+                    {/* Construction & Trades */}
+                    <SelectItem value="construction">Construction Worker</SelectItem>
+                    <SelectItem value="electrician">Electrician</SelectItem>
+                    <SelectItem value="plumber">Plumber</SelectItem>
+                    <SelectItem value="carpenter">Carpenter</SelectItem>
+                    <SelectItem value="mechanic">Mechanic/Auto Technician</SelectItem>
+                    <SelectItem value="welder">Welder</SelectItem>
+                    <SelectItem value="hvac">HVAC Technician</SelectItem>
+                    <SelectItem value="painter">Painter/Decorator</SelectItem>
+                    
+                    {/* Transportation */}
+                    <SelectItem value="truck_driver">Truck Driver</SelectItem>
+                    <SelectItem value="taxi_uber">Taxi/Uber Driver</SelectItem>
+                    <SelectItem value="pilot">Pilot</SelectItem>
+                    <SelectItem value="flight_attendant">Flight Attendant</SelectItem>
+                    <SelectItem value="ship_captain">Ship Captain/Maritime</SelectItem>
+                    
+                    {/* Retail & Hospitality */}
+                    <SelectItem value="retail_manager">Retail Manager</SelectItem>
+                    <SelectItem value="cashier">Cashier</SelectItem>
+                    <SelectItem value="restaurant_manager">Restaurant Manager</SelectItem>
+                    <SelectItem value="waiter">Waiter/Waitress</SelectItem>
+                    <SelectItem value="chef">Chef/Cook</SelectItem>
+                    <SelectItem value="barista">Barista</SelectItem>
+                    <SelectItem value="hotel_staff">Hotel Staff</SelectItem>
+                    
+                    {/* Creative & Media */}
+                    <SelectItem value="artist">Artist/Painter</SelectItem>
+                    <SelectItem value="musician">Musician/Performer</SelectItem>
+                    <SelectItem value="writer">Writer/Author</SelectItem>
+                    <SelectItem value="journalist">Journalist/Reporter</SelectItem>
+                    <SelectItem value="photographer">Photographer</SelectItem>
+                    <SelectItem value="graphic_designer">Graphic Designer</SelectItem>
+                    <SelectItem value="actor">Actor/Actress</SelectItem>
+                    <SelectItem value="filmmaker">Filmmaker/Director</SelectItem>
+                    
+                    {/* Agriculture & Environment */}
+                    <SelectItem value="farmer">Farmer/Rancher</SelectItem>
+                    <SelectItem value="landscaper">Landscaper/Gardener</SelectItem>
+                    <SelectItem value="environmental">Environmental Scientist</SelectItem>
+                    <SelectItem value="forestry">Forestry Worker</SelectItem>
+                    
+                    {/* Sports & Fitness */}
+                    <SelectItem value="athlete">Professional Athlete</SelectItem>
+                    <SelectItem value="personal_trainer">Personal Trainer</SelectItem>
+                    <SelectItem value="gym_instructor">Gym Instructor</SelectItem>
+                    <SelectItem value="sports_coach">Sports Coach</SelectItem>
+                    
+                    {/* Science & Research */}
+                    <SelectItem value="scientist">Scientist/Researcher</SelectItem>
+                    <SelectItem value="lab_technician">Laboratory Technician</SelectItem>
+                    <SelectItem value="chemist">Chemist</SelectItem>
+                    <SelectItem value="biologist">Biologist</SelectItem>
+                    
+                    {/* Personal Care & Services */}
+                    <SelectItem value="hairdresser">Hairdresser/Stylist</SelectItem>
+                    <SelectItem value="massage_therapist">Massage Therapist</SelectItem>
+                    <SelectItem value="beautician">Beautician/Cosmetologist</SelectItem>
+                    <SelectItem value="childcare">Childcare Provider</SelectItem>
+                    <SelectItem value="cleaner">Cleaner/Janitor</SelectItem>
+                    
+                    {/* Other Categories */}
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="retired">Retired</SelectItem>
+                    <SelectItem value="homemaker">Homemaker/Stay-at-home Parent</SelectItem>
+                    <SelectItem value="unemployed">Currently Unemployed</SelectItem>
+                    <SelectItem value="volunteer">Volunteer Work</SelectItem>
+                    <SelectItem value="other">Other Profession</SelectItem>
+                  </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>

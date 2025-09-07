@@ -60,7 +60,7 @@ const sidebarItems: MenuItem[] = [
     description: "Manage patients",
     category: "core",
     children: [
-      { id: "patient-tracking", title: "Patient Tracking", href: "/patient-tracking", icon: Activity },
+      { id: "patient-tracking", title: "Patient Tracking", href: "/admin/patient-tracking", icon: Activity },
     ]
   },
   {

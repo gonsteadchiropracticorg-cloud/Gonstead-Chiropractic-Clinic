@@ -32,6 +32,7 @@ interface AppointmentConfirmationProps {
     phone: string
     sessionType: string
     preferredTime: string
+    profession?: string
     appointmentId?: string
   }
   onBackToHome?: () => void
@@ -424,6 +425,15 @@ export function AppointmentConfirmation({
                   </p>
                 </div>
               </div>
+              {appointmentData.profession && (
+                <div className="flex items-center gap-3 p-4 bg-white/30 rounded-lg border border-green-200">
+                  <FileText className="h-5 w-5 text-green-700" />
+                  <div>
+                    <p className="text-sm text-green-600">{isUrdu ? "پیشہ" : "Profession"}</p>
+                    <p className="font-semibold text-green-800">{appointmentData.profession}</p>
+                  </div>
+                </div>
+              )}
               {appointmentData.preferredTime && (
                 <div className="flex items-center gap-3 p-4 bg-white/30 rounded-lg border border-green-200">
                   <Clock className="h-5 w-5 text-green-700" />

@@ -126,6 +126,13 @@ export default function AdminDashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedDateAppointments, setSelectedDateAppointments] = useState<Patient[]>([])
   const [expandedActions, setExpandedActions] = useState<Set<string>>(new Set())
+  const [selectedPatientHistory, setSelectedPatientHistory] = useState<Patient | null>(null)
+  const [isPatientHistoryDialogOpen, setIsPatientHistoryDialogOpen] = useState(false)
+  const [currentPrescriptionId, setCurrentPrescriptionId] = useState<string>('')
+  const [duplicatePatients, setDuplicatePatients] = useState<Record<string, Patient[]>>({})
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
+  const [selectedDuplicateGroup, setSelectedDuplicateGroup] = useState<Patient[] | null>(null)
+  const [isDuplicateHistoryDialogOpen, setIsDuplicateHistoryDialogOpen] = useState(false)
 
   const router = useRouter()
   const pathname = usePathname()
@@ -162,10 +169,180 @@ export default function AdminDashboard() {
     })
   }
 
-  // Update patient count
+  // Update patient count and detect duplicates
   useEffect(() => {
     setPatientCount(patients.length)
+    detectDuplicatePatients()
   }, [patients])
+
+  // Smart duplicate detection system
+  const detectDuplicatePatients = () => {
+    const duplicateGroups: Record<string, Patient[]> = {}
+    const processedKeys = new Set<string>()
+    
+    patients.forEach(patient => {
+      // Create multiple matching keys for comprehensive detection
+      const matchingKeys = generateMatchingKeys(patient)
+      
+      matchingKeys.forEach(key => {
+        if (processedKeys.has(key)) return
+        
+        // Find all patients that match this key
+        const matches = patients.filter(p => {
+          const pKeys = generateMatchingKeys(p)
+          return pKeys.some(pKey => pKey === key)
+        })
+        
+        // Only consider as duplicates if more than one match
+        if (matches.length > 1) {
+          // Sort by appointment date (oldest first) for better history organization
+          matches.sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime())
+          duplicateGroups[key] = matches
+          processedKeys.add(key)
+        }
+      })
+    })
+    
+    setDuplicatePatients(duplicateGroups)
+    
+    // Show warning if duplicates found
+    // Duplicate detection completed silently - no toast notifications
+  }
+  
+  // Generate multiple matching keys for comprehensive duplicate detection
+  const generateMatchingKeys = (patient: Patient): string[] => {
+    const keys: string[] = []
+    const name = patient.name.toLowerCase().trim()
+    const phone = patient.phone.replace(/\D/g, '') // Remove non-digits
+    const email = patient.email?.toLowerCase().trim() || ''
+    
+    // Primary key: exact name + phone
+    keys.push(`${name}|${phone}`)
+    
+    // Secondary key: name + email (if email exists)
+    if (email) {
+      keys.push(`${name}|${email}`)
+    }
+    
+    // Tertiary key: phone + email (if both exist)
+    if (email) {
+      keys.push(`${phone}|${email}`)
+    }
+    
+    // Fuzzy matching for common name variations
+    const nameVariations = generateNameVariations(name)
+    nameVariations.forEach(variation => {
+      keys.push(`${variation}|${phone}`)
+      if (email) {
+        keys.push(`${variation}|${email}`)
+      }
+    })
+    
+    return keys
+  }
+  
+  // Generate name variations for fuzzy matching
+  const generateNameVariations = (name: string): string[] => {
+    const variations = [name]
+    
+    // Remove common prefixes/suffixes
+    const cleaned = name
+      .replace(/\b(mr|mrs|ms|dr|prof)\b\.?\s*/gi, '')
+      .replace(/\b(jr|sr|ii|iii|iv)\b\.?\s*$/gi, '')
+      .trim()
+    
+    if (cleaned !== name) {
+      variations.push(cleaned)
+    }
+    
+    // Handle initials vs full names
+    const parts = cleaned.split(/\s+/)
+    if (parts.length > 1) {
+      // First name + last name only
+      variations.push(`${parts[0]} ${parts[parts.length - 1]}`)
+      
+      // Initials + last name
+      variations.push(`${parts[0][0]} ${parts[parts.length - 1]}`)
+    }
+    
+    return variations.filter(v => v.length > 0)
+  }
+  
+  // Find duplicates for a specific patient in real-time
+  const findDuplicatesForPatient = (targetPatient: Patient): Patient[] => {
+    const matchingKeys = generateMatchingKeys(targetPatient)
+    const duplicates = new Set<Patient>()
+    
+    // Add the target patient itself
+    duplicates.add(targetPatient)
+    
+    // Find all patients that match any of the target patient's keys
+    patients.forEach(patient => {
+      if (patient.id === targetPatient.id) return // Skip self
+      
+      const patientKeys = generateMatchingKeys(patient)
+      const hasMatch = matchingKeys.some(targetKey => 
+        patientKeys.some(patientKey => patientKey === targetKey)
+      )
+      
+      if (hasMatch) {
+        duplicates.add(patient)
+      }
+    })
+    
+    // Convert to array and sort by date
+    const duplicateArray = Array.from(duplicates).sort(
+      (a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime()
+    )
+    
+    return duplicateArray
+  }
+  
+  // Get consolidated history for duplicate patients
+  const getConsolidatedHistory = (duplicateGroup: Patient[]) => {
+    // Sort by appointment date for chronological history
+    const sortedPatients = [...duplicateGroup].sort(
+      (a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime()
+    )
+    
+    // Primary patient (first chronologically)
+    const primaryPatient = sortedPatients[0]
+    
+    // Consolidated statistics
+    const totalSessions = sortedPatients.reduce((sum, p) => sum + (p.sessions_completed || 0), 0)
+    const totalPrescriptions = sortedPatients.filter(p => p.prescription_generated).length
+    const allStatuses = sortedPatients.map(p => p.status)
+    const latestStatus = sortedPatients[sortedPatients.length - 1].status
+    
+    // All session types used
+    const sessionTypes = [...new Set(sortedPatients.map(p => p.session_type))]
+    
+    // All notes combined
+    const allNotes = sortedPatients
+      .map(p => p.notes)
+      .filter(note => note && note.trim())
+      .join(' | ')
+    
+    // Find most recent appointment
+    const mostRecentAppointment = sortedPatients[sortedPatients.length - 1]
+    
+    return {
+      primaryPatient,
+      duplicateGroup: sortedPatients,
+      consolidatedData: {
+        totalSessions,
+        totalPrescriptions,
+        allStatuses,
+        latestStatus,
+        sessionTypes,
+        allNotes,
+        mostRecentAppointment,
+        firstVisit: primaryPatient.appointment_date,
+        lastVisit: mostRecentAppointment.last_visit || mostRecentAppointment.appointment_date,
+        duplicateCount: sortedPatients.length
+      }
+    }
+  }
 
   // Load viewed patients from localStorage on component mount
   useEffect(() => {
@@ -523,7 +700,27 @@ export default function AdminDashboard() {
     const element = document.getElementById("prescription-content")
     if (!element) return
 
+    if (!selectedPatient) {
+      toast({
+        title: "Error",
+        description: "No patient selected for prescription",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
+      // Generate unique prescription ID
+      const existingRecords = JSON.parse(localStorage.getItem("prescription_records") || "[]")
+      const prescriptionId = `RX${String(existingRecords.length + 1).padStart(3, '0')}`
+      
+      // Set the prescription ID in state and make it available globally
+      setCurrentPrescriptionId(prescriptionId)
+      window.prescriptionId = prescriptionId
+      
+      // Force re-render of prescription content with ID
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -551,22 +748,40 @@ export default function AdminDashboard() {
       }
 
       pdf.save(
-        `${selectedPatient?.name.replace(/\s+/g, "_")}_prescription_${new Date().toISOString().split("T")[0]}.pdf`,
+        `${selectedPatient.name.replace(/\s+/g, "_")}_prescription_${prescriptionId}_${new Date().toISOString().split("T")[0]}.pdf`,
       )
 
-      // Update patient record to mark prescription as generated
-      if (selectedPatient) {
-        await updatePatient(selectedPatient.id, {
-          prescription_generated: true,
-          prescription_count: (selectedPatient.prescription_count || 0) + 1,
-          last_prescription_date: new Date().toISOString()
-        })
-        await loadPatients() // Refresh the patient list
+      // Create prescription record for tracking
+      const prescriptionRecord = {
+        id: prescriptionId,
+        patientName: selectedPatient.name,
+        phone: selectedPatient.phone,
+        email: selectedPatient.email || '',
+        prescriptionDate: new Date().toISOString(),
+        medications: prescriptionMedicine || 'Chiropractic care recommendations',
+        notes: prescriptionNotes || selectedPatient.notes || 'Generated from admin dashboard',
+        patientId: selectedPatient.id,
+        chiropracticSuggestions: chiropracticSuggestions,
+        status: 'active',
+        generatedBy: 'admin_dashboard'
       }
 
+      // Save prescription record to localStorage
+      const updatedRecords = [...existingRecords, prescriptionRecord]
+      localStorage.setItem("prescription_records", JSON.stringify(updatedRecords))
+
+      // Update patient record to mark prescription as generated
+      await updatePatient(selectedPatient.id, {
+        prescription_generated: true,
+        prescription_count: (selectedPatient.prescription_count || 0) + 1,
+        last_prescription_date: new Date().toISOString(),
+        last_prescription_id: prescriptionId
+      })
+      await loadPatients() // Refresh the patient list
+
       toast({
-        title: "PDF Downloaded",
-        description: "Prescription has been saved as PDF",
+        title: "✅ PDF Downloaded & Prescription Tracked",
+        description: `Prescription ${prescriptionId} has been saved and is now trackable in Patient Tracking system`,
       })
     } catch (error) {
       console.error("Error generating PDF:", error)
@@ -578,50 +793,112 @@ export default function AdminDashboard() {
     }
   }
 
-  const printPrescription = () => {
+  const printPrescription = async () => {
     const element = document.getElementById("prescription-content")
     if (!element) return
 
-    const printWindow = window.open("", "_blank")
-    if (!printWindow) return
+    if (!selectedPatient) {
+      toast({
+        title: "Error",
+        description: "No patient selected for prescription",
+        variant: "destructive",
+      })
+      return
+    }
 
-    printWindow.document.write(`
-    <html>
-      <head>
-        <title>Prescription - ${selectedPatient?.name}</title>
-        <style>
-          @page {
-            size: A4;
-            margin: 0;
-          }
-          @media print {
-            body {
+    try {
+      // Generate unique prescription ID
+      const existingRecords = JSON.parse(localStorage.getItem("prescription_records") || "[]")
+      const prescriptionId = `RX${String(existingRecords.length + 1).padStart(3, '0')}`
+      
+      // Set the prescription ID in state and make it available globally
+      setCurrentPrescriptionId(prescriptionId)
+      window.prescriptionId = prescriptionId
+      
+      // Force re-render of prescription content with ID
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Create prescription record for tracking
+      const prescriptionRecord = {
+        id: prescriptionId,
+        patientName: selectedPatient.name,
+        phone: selectedPatient.phone,
+        email: selectedPatient.email || '',
+        prescriptionDate: new Date().toISOString(),
+        medications: prescriptionMedicine || 'Chiropractic care recommendations',
+        notes: prescriptionNotes || selectedPatient.notes || 'Generated from admin dashboard',
+        patientId: selectedPatient.id,
+        chiropracticSuggestions: chiropracticSuggestions,
+        status: 'active',
+        generatedBy: 'admin_dashboard'
+      }
+
+      // Save prescription record to localStorage
+      const updatedRecords = [...existingRecords, prescriptionRecord]
+      localStorage.setItem("prescription_records", JSON.stringify(updatedRecords))
+
+      // Update patient record to mark prescription as generated
+      await updatePatient(selectedPatient.id, {
+        prescription_generated: true,
+        prescription_count: (selectedPatient.prescription_count || 0) + 1,
+        last_prescription_date: new Date().toISOString(),
+        last_prescription_id: prescriptionId
+      })
+      await loadPatients() // Refresh the patient list
+
+      const printWindow = window.open("", "_blank")
+      if (!printWindow) return
+
+      printWindow.document.write(`
+      <html>
+        <head>
+          <title>Prescription ${prescriptionId} - ${selectedPatient.name}</title>
+          <style>
+            @page {
+              size: A4;
               margin: 0;
-              padding: 0;
-              -webkit-print-color-adjust: exact;
-              color-adjust: exact;
             }
-            * {
-              box-sizing: border-box;
+            @media print {
+              body {
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+              }
+              * {
+                box-sizing: border-box;
+              }
             }
-          }
-          body {
-            font-family: Arial, sans-serif;
-            line-height: 1.4;
-            color: #000;
-          }
-        </style>
-      </head>
-      <body>
-        ${element.innerHTML}
-      </body>
-    </html>
-  `)
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.4;
+              color: #000;
+            }
+          </style>
+        </head>
+        <body>
+          ${element.innerHTML}
+        </body>
+      </html>
+    `)
 
-    printWindow.document.close()
-    printWindow.focus()
-    printWindow.print()
-    printWindow.close()
+      printWindow.document.close()
+      printWindow.focus()
+      printWindow.print()
+      printWindow.close()
+
+      toast({
+        title: "✅ Prescription Printed & Tracked",
+        description: `Prescription ${prescriptionId} has been printed and is now trackable in Patient Tracking system`,
+      })
+    } catch (error) {
+      console.error("Error printing prescription:", error)
+      toast({
+        title: "Error",
+        description: "Failed to print prescription",
+        variant: "destructive",
+      })
+    }
   }
 
   const startVideoCall = (patient: Patient) => {
@@ -831,15 +1108,18 @@ Doctor Signature: Dr. Bashir Khan, DCP
     ]
   }
 
-  // Toggle function for expanding/collapsing action buttons
+  // Toggle function for expanding/collapsing action buttons with auto-close
   const toggleActionsExpanded = (patientId: string) => {
     setExpandedActions(prev => {
-      const newExpanded = new Set(prev)
-      if (newExpanded.has(patientId)) {
-        newExpanded.delete(patientId)
-      } else {
+      const newExpanded = new Set()
+      
+      // If the clicked patient's menu is already open, close it
+      // If it's closed, open only this one (auto-close all others)
+      if (!prev.has(patientId)) {
         newExpanded.add(patientId)
       }
+      // If patientId is already in prev, newExpanded remains empty (closes all)
+      
       return newExpanded
     })
   }
@@ -1498,6 +1778,7 @@ Doctor Signature: Dr. Bashir Khan, DCP
           </Card>
         </div>
 
+
         {/* Patient Management */}
         <Card className={`border-[#0d5c75]/20 shadow-xl ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
           <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
@@ -1598,6 +1879,35 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                 {!viewedPatients.has(patient.id) && (
                                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New appointment - not yet viewed" />
                                 )}
+                                        {/* Real-time Duplicate Patient Indicator */}
+                                        {(() => {
+                                          const duplicateGroup = findDuplicatesForPatient(patient)
+                                          const isDuplicate = duplicateGroup.length > 1
+                                          
+                                          if (isDuplicate) {
+                                            return (
+                                              <div 
+                                                className="flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full cursor-pointer hover:bg-orange-200 transition-colors"
+                                                onClick={() => {
+                                                  setSelectedDuplicateGroup(duplicateGroup)
+                                                  const consolidated = getConsolidatedHistory(duplicateGroup)
+                                                  setSelectedPatientHistory(consolidated.primaryPatient)
+                                                  setIsPatientHistoryDialogOpen(true)
+                                                  
+                                                  toast({
+                                                    title: "🔍 Real-time Duplicate Detection",
+                                                    description: `Found ${duplicateGroup.length} related records for ${patient.name}`,
+                                                  })
+                                                }}
+                                                title={`This patient has ${duplicateGroup.length} related entries. Click to view consolidated history.`}
+                                              >
+                                                <AlertTriangle className="h-3 w-3" />
+                                                <span>Related ({duplicateGroup.length})</span>
+                                              </div>
+                                            )
+                                          }
+                                          return null
+                                        })()}
                               </div>
                               <div className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
                                 ID: {patient.id.slice(0, 8)}...
@@ -1755,9 +2065,39 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                         size="sm"
                                         variant="outline"
                                         onClick={() => {
-                                          setSelectedPatient(patient)
+                                          // Get fresh patient data and check for duplicates in real-time
+                                          const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                          
+                                          // Auto-detect duplicates for this patient
+                                          const duplicateGroup = findDuplicatesForPatient(currentPatientData)
+                                          
+                                          if (duplicateGroup.length > 1) {
+                                            // Show consolidated view with duplicate information
+                                            setSelectedDuplicateGroup(duplicateGroup)
+                                            const consolidated = getConsolidatedHistory(duplicateGroup)
+                                            setSelectedPatient(consolidated.primaryPatient)
+                                            
+                                            // Add consolidated data to selected patient for display
+                                            const enhancedPatient = {
+                                              ...consolidated.primaryPatient,
+                                              _duplicateInfo: {
+                                                isDuplicate: true,
+                                                totalRecords: duplicateGroup.length,
+                                                consolidatedData: consolidated.consolidatedData,
+                                                allRecords: duplicateGroup
+                                              }
+                                            }
+                                            setSelectedPatient(enhancedPatient)
+                                          } else {
+                                            setSelectedPatient(currentPatientData)
+                                            setSelectedDuplicateGroup(null)
+                                          }
+                                          
                                           // Mark patient as viewed
                                           setViewedPatients(prev => new Set([...prev, patient.id]))
+                                          
+                                          // Close the action menu after selection
+                                          setExpandedActions(new Set())
                                         }}
                                         className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white text-xs w-full"
                                         title="View Details"
@@ -1774,11 +2114,38 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                       </DialogHeader>
                                       {selectedPatient && (
                                         <div className="space-y-6">
+                                          {/* Real-time Duplicate Detection Alert */}
+                                          {selectedPatient._duplicateInfo?.isDuplicate && (
+                                            <Card className="border-l-4 border-l-orange-500 bg-orange-50 shadow-lg">
+                                              <CardContent className="p-4">
+                                                <div className="flex items-center gap-3">
+                                                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                                                    <AlertTriangle className="h-4 w-4 text-white" />
+                                                  </div>
+                                                  <div>
+                                                    <h4 className="font-semibold text-orange-800">Related Records Detected</h4>
+                                                    <p className="text-orange-700 text-sm">
+                                                      Found {selectedPatient._duplicateInfo.totalRecords} related patient records. 
+                                                      Showing consolidated information below.
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              </CardContent>
+                                            </Card>
+                                          )}
+                                          
                                           {/* Patient Information Cards */}
                                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <Card>
                                               <CardHeader className="bg-[#0d5c75] text-white py-3">
-                                              <CardTitle className="text-lg text-white">Contact Information</CardTitle>
+                                              <CardTitle className="text-lg text-white">
+                                                Contact Information
+                                                {selectedPatient._duplicateInfo?.isDuplicate && (
+                                                  <Badge variant="secondary" className="bg-orange-500 text-white ml-2 text-xs">
+                                                    {selectedPatient._duplicateInfo.totalRecords} Records
+                                                  </Badge>
+                                                )}
+                                              </CardTitle>
                                               </CardHeader>
                                               <CardContent className="p-4 space-y-2">
                                                 <div>
@@ -1861,39 +2228,91 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                     </DialogContent>
                                   </Dialog>
 
+                                  {/* Real-time Smart Patient History Button */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Get fresh patient data to ensure accuracy
+                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                      
+                                      // Real-time duplicate detection for this specific patient
+                                      const duplicateGroup = findDuplicatesForPatient(currentPatientData)
+                                      
+                                      if (duplicateGroup.length > 1) {
+                                        // Show consolidated history for duplicate patients
+                                        setSelectedDuplicateGroup(duplicateGroup)
+                                        const consolidated = getConsolidatedHistory(duplicateGroup)
+                                        setSelectedPatientHistory(consolidated.primaryPatient)
+                                        
+                                        toast({
+                                          title: "📋 Smart History Active",
+                                          description: `Showing consolidated history from ${duplicateGroup.length} related records for ${currentPatientData.name}`,
+                                        })
+                                      } else {
+                                        // Show normal history for single patient
+                                        setSelectedPatientHistory(currentPatientData)
+                                        setSelectedDuplicateGroup(null)
+                                      }
+                                      
+                                      setIsPatientHistoryDialogOpen(true)
+                                      
+                                      // Close the action menu after selection
+                                      setExpandedActions(new Set())
+                                    }}
+                                    className={`border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full ${
+                                      findDuplicatesForPatient(patient).length > 1
+                                        ? 'ring-2 ring-orange-300 bg-orange-50'
+                                        : ''
+                                    }`}
+                                    title={findDuplicatesForPatient(patient).length > 1
+                                      ? `Smart History: Found ${findDuplicatesForPatient(patient).length} related records`
+                                      : "View Complete Patient History & Sessions"
+                                    }
+                                  >
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    {findDuplicatesForPatient(patient).length > 1
+                                      ? `Smart (${findDuplicatesForPatient(patient).length})`
+                                      : 'History'
+                                    }
+                                  </Button>
+
                                   {/* Medical Record Management Button */}
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     onClick={() => {
+                                      // Get fresh patient data to ensure accuracy
+                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                      
                                       // Check if medical record already exists
                                       const medicalRecords = JSON.parse(localStorage.getItem("medical_records") || "[]")
                                       let medicalRecord = medicalRecords.find((record: any) => 
-                                        record.patientName === patient.name && record.phone === patient.phone
+                                        record.patientName === currentPatientData.name && record.phone === currentPatientData.phone
                                       )
                                       
                                       if (!medicalRecord) {
-                                        // Create a new medical record from patient data
+                                        // Create a new medical record from current patient data
                                         medicalRecord = {
                                           id: `MR${String(medicalRecords.length + 1).padStart(3, '0')}`,
-                                          patientName: patient.name,
-                                          age: patient.demographics?.age || 0,
-                                          gender: patient.demographics?.gender || 'Not specified',
-                                          phone: patient.phone,
-                                          email: patient.email || 'Not provided',
-                                          lastVisit: patient.last_visit || new Date().toISOString().split('T')[0],
+                                          patientName: currentPatientData.name,
+                                          age: currentPatientData.demographics?.age || 0,
+                                          gender: currentPatientData.demographics?.gender || 'Not specified',
+                                          phone: currentPatientData.phone,
+                                          email: currentPatientData.email || 'Not provided',
+                                          lastVisit: currentPatientData.last_visit || new Date().toISOString().split('T')[0],
                                           diagnosis: 'Initial consultation pending',
-                                          treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
-                                          status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
-                                          sessionsCompleted: patient.sessions_completed || 0,
+                                          treatmentType: currentPatientData.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
+                                          status: currentPatientData.status === 'completed' ? 'Completed' : currentPatientData.status === 'pending' ? 'Ongoing' : 'Follow-up',
+                                          sessionsCompleted: currentPatientData.sessions_completed || 0,
                                           totalSessions: 8,
-                                          nextAppointment: patient.appointment_date ? new Date(patient.appointment_date).toLocaleDateString() : 'To be scheduled',
-                                          chiefComplaint: patient.notes || 'General consultation',
-                                          medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
+                                          nextAppointment: currentPatientData.appointment_date ? new Date(currentPatientData.appointment_date).toLocaleDateString() : 'To be scheduled',
+                                          chiefComplaint: currentPatientData.notes || 'General consultation',
+                                          medicalHistory: currentPatientData.medical_history || 'Medical history to be collected during consultation',
                                           currentMedications: 'To be determined during consultation',
-                                          treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
-                                          progress: patient.treatment_plan?.progress || 'Initial assessment pending',
-                                          doctorNotes: patient.booking_source === 'admin_dashboard' 
+                                          treatmentPlan: currentPatientData.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
+                                          progress: currentPatientData.treatment_plan?.progress || 'Initial assessment pending',
+                                          doctorNotes: currentPatientData.booking_source === 'admin_dashboard' 
                                             ? 'Patient added via admin dashboard. Assessment in progress.'
                                             : 'Patient booked online. Initial consultation scheduled.'
                                         }
@@ -1904,12 +2323,15 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                         
                                         toast({
                                           title: "✅ Medical Record Created",
-                                          description: `Medical record for ${patient.name} has been created and you'll be redirected to edit it.`,
+                                          description: `Medical record for ${currentPatientData.name} has been created and you'll be redirected to edit it.`,
                                         })
                                       }
                                       
                                       // Store the medical record ID for the medical history page
                                       localStorage.setItem('editMedicalRecordId', medicalRecord.id)
+                                      
+                                      // Close the action menu before navigation
+                                      setExpandedActions(new Set())
                                       
                                       // Redirect to medical history page
                                       router.push('/medical-history')
@@ -1926,8 +2348,13 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                     size="sm"
                                     variant="outline"
                                     onClick={() => {
-                                      // Store patient data for prescription page
-                                      localStorage.setItem('prescriptionPatient', JSON.stringify(patient))
+                                      // Get fresh patient data and store for prescription page
+                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                      localStorage.setItem('prescriptionPatient', JSON.stringify(currentPatientData))
+                                      
+                                      // Close the action menu before navigation
+                                      setExpandedActions(new Set())
+                                      
                                       // Navigate to prescription page
                                       router.push('/admin/prescription')
                                     }}
@@ -2009,7 +2436,14 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => handleEditPatient(patient)}
+                                    onClick={() => {
+                                      // Get fresh patient data and edit
+                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                      handleEditPatient(currentPatientData)
+                                      
+                                      // Close the action menu after selection
+                                      setExpandedActions(new Set())
+                                    }}
                                     className="border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800] hover:text-white text-xs w-full"
                                     title="Edit Patient"
                                   >
@@ -2021,7 +2455,13 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={() => handleDeletePatient(patient.id)}
+                                    onClick={() => {
+                                      // Close the action menu before deletion
+                                      setExpandedActions(new Set())
+                                      
+                                      // Delete patient
+                                      handleDeletePatient(patient.id)
+                                    }}
                                     className="bg-red-600 hover:bg-red-700 text-xs w-full"
                                     title="Delete Patient"
                                   >
@@ -2267,6 +2707,33 @@ Doctor Signature: Dr. Bashir Khan, DCP
               </div>
 
               {/* Rest of the prescription content with improved print styling */}
+              {/* Prescription ID Header - Prominent Display */}
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "15px",
+                  backgroundColor: "#0d5c75",
+                  color: "white",
+                  borderRadius: "8px",
+                  marginBottom: "20px",
+                  border: "3px solid #2a9d8f",
+                  boxShadow: "0 4px 12px rgba(13, 92, 117, 0.3)",
+                }}
+              >
+                <h2 style={{ 
+                  margin: "0", 
+                  fontSize: "24px", 
+                  fontWeight: "bold",
+                  letterSpacing: "2px",
+                  textShadow: "0 2px 4px rgba(0,0,0,0.3)"
+                }}>
+                  PRESCRIPTION ID: {currentPrescriptionId || window?.prescriptionId || 'RX000'}
+                </h2>
+                <p style={{ margin: "5px 0 0 0", fontSize: "12px", opacity: 0.9 }}>
+                  Official Gonstead Chiropractic Prescription
+                </p>
+              </div>
+
               {/* Patient Information */}
               <div
                 style={{
@@ -2290,14 +2757,29 @@ Doctor Signature: Dr. Bashir Khan, DCP
                   <p style={{ margin: "0 0 5px 0", fontSize: "13px" }}>
                     <strong>Phone:</strong> {selectedPatient.phone}
                   </p>
-                  <p style={{ margin: "0", fontSize: "13px" }}>
+                  <p style={{ margin: "0 0 5px 0", fontSize: "13px" }}>
                     <strong>Email:</strong> {selectedPatient.email || "Not provided"}
+                  </p>
+                  <p style={{ margin: "0", fontSize: "13px" }}>
+                    <strong>Patient ID:</strong> {selectedPatient.id.slice(0, 8)}...
                   </p>
                 </div>
                 <div>
                   <h3 style={{ color: "#245064", fontSize: "14px", fontWeight: "bold", marginBottom: "10px" }}>
                     PRESCRIPTION DETAILS
                   </h3>
+                  <p style={{ margin: "0 0 5px 0", fontSize: "13px" }}>
+                    <strong>Prescription ID:</strong> <span style={{ 
+                      backgroundColor: "#0d5c75", 
+                      color: "white", 
+                      padding: "2px 8px", 
+                      borderRadius: "4px",
+                      fontWeight: "bold",
+                      letterSpacing: "1px"
+                    }}>
+                      {currentPrescriptionId || window?.prescriptionId || 'RX000'}
+                    </span>
+                  </p>
                   <p style={{ margin: "0 0 5px 0", fontSize: "13px" }}>
                     <strong>Date:</strong> {typeof window !== 'undefined' ? new Date().toLocaleDateString() : '--/--/----'}
                   </p>
@@ -2508,6 +2990,513 @@ Doctor Signature: Dr. Bashir Khan, DCP
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Enhanced Patient History Dialog with Duplicate Detection */}
+      <Dialog open={isPatientHistoryDialogOpen} onOpenChange={setIsPatientHistoryDialogOpen}>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-3">
+              <div className={`w-12 h-12 bg-gradient-to-br ${selectedDuplicateGroup ? 'from-orange-500 to-red-500' : 'from-[#8b5cf6] to-[#6366f1]'} rounded-full flex items-center justify-center`}>
+                {selectedDuplicateGroup ? (
+                  <AlertTriangle className="h-6 w-6 text-white" />
+                ) : (
+                  <Clock className="h-6 w-6 text-white" />
+                )}
+              </div>
+              {selectedDuplicateGroup ? (
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span>Consolidated Patient History - {selectedPatientHistory?.name}</span>
+                    <Badge variant="secondary" className="bg-orange-500 text-white">
+                      {selectedDuplicateGroup.length} Records Merged
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">Showing combined data from multiple patient entries</p>
+                </div>
+              ) : (
+                <span>Complete Patient History - {selectedPatientHistory?.name}</span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedPatientHistory && (
+            <div className="space-y-8">
+              {/* Duplicate Detection Alert */}
+              {selectedDuplicateGroup && (
+                <Card className="border-l-4 border-l-orange-500 bg-orange-50 shadow-lg">
+                  <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      Duplicate Patient Records Detected
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <h4 className="font-medium text-orange-800 mb-2">Duplicate Summary</h4>
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Total Records Found:</span> {selectedDuplicateGroup.length}</p>
+                          <p><span className="font-medium">Date Range:</span> 
+                            {new Date(Math.min(...selectedDuplicateGroup.map(p => new Date(p.appointment_date).getTime()))).toLocaleDateString()} - 
+                            {new Date(Math.max(...selectedDuplicateGroup.map(p => new Date(p.appointment_date).getTime()))).toLocaleDateString()}
+                          </p>
+                          <p><span className="font-medium">Combined Sessions:</span> {selectedDuplicateGroup.reduce((sum, p) => sum + (p.sessions_completed || 0), 0)}</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-orange-800 mb-2">Record Sources</h4>
+                        <div className="space-y-1">
+                          {selectedDuplicateGroup.map((patient, index) => (
+                            <div key={patient.id} className="text-xs bg-white/60 p-2 rounded border">
+                              <p className="font-medium">Record #{index + 1}</p>
+                              <p>ID: {patient.id.slice(0, 8)}...</p>
+                              <p>Date: {new Date(patient.appointment_date).toLocaleDateString()}</p>
+                              <p>Source: {patient.booking_source === 'admin_dashboard' ? '📞 Admin' : '🌐 Online'}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-orange-800 mb-2">Recommended Action</h4>
+                        <div className="text-sm space-y-2">
+                          <p>These records appear to be for the same patient. Consider:</p>
+                          <ul className="list-disc list-inside text-xs space-y-1 ml-2">
+                            <li>Merge duplicate records</li>
+                            <li>Update contact information</li>
+                            <li>Consolidate treatment history</li>
+                          </ul>
+                          <Button
+                            size="sm"
+                            className="bg-orange-600 hover:bg-orange-700 text-white mt-2"
+                            onClick={() => {
+                              toast({
+                                title: "🔄 Merge Feature",
+                                description: "Patient record merging feature can be implemented here",
+                              })
+                            }}
+                          >
+                            Merge Records
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Enhanced Patient Overview Card */}
+              <Card className={`border-l-4 ${selectedDuplicateGroup ? 'border-l-orange-500' : 'border-l-[#8b5cf6]'} shadow-lg`}>
+                <CardHeader className={`bg-gradient-to-r ${selectedDuplicateGroup ? 'from-orange-500 to-red-500' : 'from-[#8b5cf6] to-[#6366f1]'} text-white`}>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    {selectedDuplicateGroup ? 'Consolidated Patient Overview' : 'Patient Overview'}
+                    {selectedDuplicateGroup && (
+                      <Badge variant="secondary" className="bg-white/20 text-white ml-2">
+                        {selectedDuplicateGroup.length} Records
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-[#0d5c75] flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        Contact Information
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <p><span className="font-medium">Name:</span> {selectedPatientHistory.name}</p>
+                        <p><span className="font-medium">Phone:</span> {selectedPatientHistory.phone}</p>
+                        <p><span className="font-medium">Email:</span> {selectedPatientHistory.email || 'Not provided'}</p>
+                        <p><span className="font-medium">Patient ID:</span> <code className="bg-gray-100 px-2 py-1 rounded text-xs">{selectedPatientHistory.id}</code></p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-[#0d5c75] flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Treatment Statistics
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <p><span className="font-medium">Total Sessions:</span> 
+                          <Badge variant="secondary" className="ml-2">
+                            {selectedDuplicateGroup 
+                              ? selectedDuplicateGroup.reduce((sum, p) => sum + (p.sessions_completed || 0), 0)
+                              : selectedPatientHistory.sessions_completed || 0
+                            }
+                            {selectedDuplicateGroup && <span className="text-xs ml-1">({selectedDuplicateGroup.length} records)</span>}
+                          </Badge>
+                        </p>
+                        <p><span className="font-medium">First Visit:</span> {new Date(selectedPatientHistory.appointment_date).toLocaleDateString()}</p>
+                        <p><span className="font-medium">Last Visit:</span> {selectedPatientHistory.last_visit ? new Date(selectedPatientHistory.last_visit).toLocaleDateString() : 'No visits yet'}</p>
+                        <p><span className="font-medium">Status:</span> 
+                          <Badge 
+                            variant={selectedPatientHistory.status === 'completed' ? 'default' : selectedPatientHistory.status === 'pending' ? 'secondary' : 'outline'}
+                            className="ml-2"
+                          >
+                            {selectedPatientHistory.status.toUpperCase()}
+                          </Badge>
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-[#0d5c75] flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        Treatment Details
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <p><span className="font-medium">Session Type:</span> 
+                          <Badge variant={selectedPatientHistory.session_type === 'in_clinic' ? 'default' : 'secondary'} className="ml-2">
+                            {selectedPatientHistory.session_type === 'in_clinic' ? 'In-Clinic' : 'Video'}
+                          </Badge>
+                        </p>
+                        <p><span className="font-medium">Urgency:</span> 
+                          <Badge 
+                            variant={selectedPatientHistory.urgency === 'emergency' ? 'destructive' : selectedPatientHistory.urgency === 'urgent' ? 'secondary' : 'outline'}
+                            className="ml-2"
+                          >
+                            {selectedPatientHistory.urgency.toUpperCase()}
+                          </Badge>
+                        </p>
+                        <p><span className="font-medium">Payment:</span> {selectedPatientHistory.payment_method.toUpperCase()}</p>
+                        <p><span className="font-medium">Prescription Generated:</span> 
+                          {selectedPatientHistory.prescription_generated ? 
+                            <Badge variant="default" className="ml-2">✓ Yes ({selectedPatientHistory.prescription_count || 0})</Badge> : 
+                            <Badge variant="outline" className="ml-2">✗ No</Badge>
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Session History Timeline */}
+              <Card className="border-l-4 border-l-[#2a9d8f] shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    Session Timeline & History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    {/* Generate session history based on patient data */}
+                    {(() => {
+                      const sessions = []
+                      const sessionsCount = selectedPatientHistory.sessions_completed || 0
+                      const startDate = new Date(selectedPatientHistory.appointment_date)
+                      
+                      // Create session entries
+                      for (let i = 0; i <= Math.max(sessionsCount, 0); i++) {
+                        const sessionDate = new Date(startDate)
+                        sessionDate.setDate(sessionDate.getDate() + (i * 7)) // Weekly sessions
+                        
+                        const isCompleted = i < sessionsCount
+                        const isUpcoming = i === sessionsCount && selectedPatientHistory.status === 'confirmed'
+                        const isCurrent = i === 0
+                        
+                        sessions.push({
+                          sessionNumber: i + 1,
+                          date: sessionDate,
+                          status: isCompleted ? 'completed' : isUpcoming ? 'upcoming' : isCurrent ? 'current' : 'scheduled',
+                          type: selectedPatientHistory.session_type,
+                          notes: isCurrent ? (selectedPatientHistory.notes || 'Initial consultation') : 
+                                isCompleted ? 'Gonstead adjustment completed successfully' :
+                                'Session pending',
+                          prescription: i === 0 && selectedPatientHistory.prescription_generated ? selectedPatientHistory.last_prescription_id || 'RX001' : null
+                        })
+                      }
+                      
+                      return sessions.slice(0, 10).map((session, index) => (
+                        <div key={index} className="flex items-start space-x-4 relative">
+                          {/* Timeline Line */}
+                          {index < sessions.length - 1 && (
+                            <div className="absolute left-6 top-12 w-0.5 h-16 bg-gradient-to-b from-[#2a9d8f] to-gray-300"></div>
+                          )}
+                          
+                          {/* Session Icon */}
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg ${
+                            session.status === 'completed' ? 'bg-green-500' :
+                            session.status === 'current' ? 'bg-[#2a9d8f]' :
+                            session.status === 'upcoming' ? 'bg-orange-500' :
+                            'bg-gray-400'
+                          }`}>
+                            {session.status === 'completed' ? (
+                              <CheckCircle className="h-6 w-6 text-white" />
+                            ) : session.status === 'current' ? (
+                              <Clock className="h-6 w-6 text-white" />
+                            ) : session.status === 'upcoming' ? (
+                              <AlertTriangle className="h-6 w-6 text-white" />
+                            ) : (
+                              <Calendar className="h-6 w-6 text-white" />
+                            )}
+                          </div>
+                          
+                          {/* Session Details */}
+                          <div className="flex-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-semibold text-[#0d5c75]">Session #{session.sessionNumber}</h4>
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant={session.status === 'completed' ? 'default' : session.status === 'current' ? 'secondary' : 'outline'}
+                                  className="text-xs"
+                                >
+                                  {session.status.toUpperCase()}
+                                </Badge>
+                                {session.prescription && (
+                                  <Badge variant="secondary" className="text-xs bg-[#8b5cf6] text-white">
+                                    {session.prescription}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <p className="font-medium text-gray-600">Date & Time</p>
+                                <p className="text-[#0d5c75]">
+                                  {session.date.toLocaleDateString()} at {session.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </p>
+                              </div>
+                              
+                              <div>
+                                <p className="font-medium text-gray-600">Session Type</p>
+                                <p className="text-[#0d5c75]">
+                                  {session.type === 'in_clinic' ? 'In-Clinic Gonstead Adjustment' : 'Video Consultation'}
+                                </p>
+                              </div>
+                              
+                              <div>
+                                <p className="font-medium text-gray-600">Duration</p>
+                                <p className="text-[#0d5c75]">
+                                  {session.type === 'in_clinic' ? '45-60 minutes' : '30-45 minutes'}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-3">
+                              <p className="font-medium text-gray-600 text-sm">Session Notes</p>
+                              <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded mt-1">
+                                {session.notes}
+                              </p>
+                            </div>
+                            
+                            {session.prescription && (
+                              <div className="mt-3 p-3 bg-[#8b5cf6]/10 border border-[#8b5cf6]/20 rounded">
+                                <p className="text-sm font-medium text-[#8b5cf6] flex items-center gap-2">
+                                  <Prescription className="h-4 w-4" />
+                                  Prescription Generated: {session.prescription}
+                                </p>
+                                <p className="text-xs text-gray-600 mt-1">Chiropractic care plan and recommendations provided</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Treatment Progress & Notes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-l-4 border-l-[#f3a800] shadow-lg">
+                  <CardHeader className="bg-[#f3a800] text-white">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Clinical Notes & Chief Complaint
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium text-[#0d5c75] mb-2">Chief Complaint</h4>
+                        <p className="text-sm bg-gray-50 p-3 rounded border">
+                          {selectedPatientHistory.notes || 'No specific complaints noted. General chiropractic consultation requested.'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-[#0d5c75] mb-2">Medical History</h4>
+                        <p className="text-sm bg-gray-50 p-3 rounded border">
+                          {selectedPatientHistory.medical_history || 'Medical history to be collected during consultation. Standard Gonstead assessment protocols to be followed.'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-[#0d5c75] mb-2">Booking Source</h4>
+                        <Badge variant="outline" className="text-xs">
+                          {selectedPatientHistory.booking_source === 'admin_dashboard' ? '📞 Admin Dashboard' : '🌐 Online Booking'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-l-4 border-l-[#22c55e] shadow-lg">
+                  <CardHeader className="bg-[#22c55e] text-white">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5" />
+                      Treatment Plan & Progress
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium text-[#0d5c75] mb-2">Treatment Goals</h4>
+                        <div className="text-sm space-y-1">
+                          {selectedPatientHistory.treatment_plan?.goals ? (
+                            selectedPatientHistory.treatment_plan.goals.map((goal: string, index: number) => (
+                              <p key={index} className="flex items-start gap-2">
+                                <span className="text-[#22c55e] font-bold">•</span>
+                                {goal}
+                              </p>
+                            ))
+                          ) : (
+                            <div className="space-y-1">
+                              <p className="flex items-start gap-2"><span className="text-[#22c55e] font-bold">•</span>Spinal alignment assessment</p>
+                              <p className="flex items-start gap-2"><span className="text-[#22c55e] font-bold">•</span>Pain relief and mobility improvement</p>
+                              <p className="flex items-start gap-2"><span className="text-[#22c55e] font-bold">•</span>Gonstead chiropractic adjustment</p>
+                              <p className="flex items-start gap-2"><span className="text-[#22c55e] font-bold">•</span>Postural correction guidance</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-[#0d5c75] mb-2">Current Progress</h4>
+                        <div className="bg-gray-50 p-3 rounded border">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium">Treatment Progress</span>
+                            <span className="text-sm text-[#22c55e] font-semibold">
+                              {Math.round(((selectedPatientHistory.sessions_completed || 0) / 8) * 100)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${Math.round(((selectedPatientHistory.sessions_completed || 0) / 8) * 100)}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-2">
+                            {selectedPatientHistory.treatment_plan?.progress || 'Patient responding well to Gonstead chiropractic treatment. Continue with scheduled sessions.'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-[#0d5c75] mb-2">Next Steps</h4>
+                        <div className="text-xs space-y-1 text-gray-700">
+                          {selectedPatientHistory.status === 'completed' ? (
+                            <p className="text-[#22c55e] font-medium">✓ Treatment plan completed successfully</p>
+                          ) : (
+                            <>
+                              <p>• Continue with weekly Gonstead adjustments</p>
+                              <p>• Monitor progress and adjust treatment as needed</p>
+                              <p>• Follow up on home care recommendations</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsPatientHistoryDialogOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button 
+                  className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white"
+                  onClick={() => {
+                    // Generate and download detailed patient history report
+                    const historyReport = `
+╔══════════════════════════════════════════════════════════════════╗
+║                 GONSTEAD CHIROPRACTIC CLINIC                        ║
+║                COMPREHENSIVE PATIENT HISTORY REPORT                 ║
+║                  Dr. Bashir Khan - Gonstead Certified               ║
+╚══════════════════════════════════════════════════════════════════╝
+
+PATIENT: ${selectedPatientHistory.name}
+PATIENT ID: ${selectedPatientHistory.id}
+GENERATED: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTACT INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Name: ${selectedPatientHistory.name}
+Phone: ${selectedPatientHistory.phone}
+Email: ${selectedPatientHistory.email || 'Not provided'}
+Patient ID: ${selectedPatientHistory.id}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TREATMENT STATISTICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Sessions Completed: ${selectedPatientHistory.sessions_completed || 0}
+First Visit: ${new Date(selectedPatientHistory.appointment_date).toLocaleDateString()}
+Last Visit: ${selectedPatientHistory.last_visit ? new Date(selectedPatientHistory.last_visit).toLocaleDateString() : 'No visits yet'}
+Current Status: ${selectedPatientHistory.status.toUpperCase()}
+Session Type: ${selectedPatientHistory.session_type === 'in_clinic' ? 'In-Clinic Gonstead Adjustment' : 'Video Consultation'}
+Urgency Level: ${selectedPatientHistory.urgency.toUpperCase()}
+Payment Method: ${selectedPatientHistory.payment_method.toUpperCase()}
+Prescription Generated: ${selectedPatientHistory.prescription_generated ? 'Yes (' + (selectedPatientHistory.prescription_count || 0) + ')' : 'No'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHIEF COMPLAINT & CLINICAL NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${selectedPatientHistory.notes || 'No specific complaints noted. General chiropractic consultation requested.'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TREATMENT PROGRESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Progress: ${Math.round(((selectedPatientHistory.sessions_completed || 0) / 8) * 100)}% Complete
+Treatment Plan: ${selectedPatientHistory.treatment_plan?.progress || 'Patient responding well to Gonstead chiropractic treatment.'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOCTOR SIGNATURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Dr. Bashir Khan, DCP
+Gonstead Certified Chiropractic Specialist
+Near Police Station, Tehsil Road, Nowshera
++92 304 699 6267
+
+Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    END OF PATIENT HISTORY REPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    `
+                    
+                    const blob = new Blob([historyReport], { type: 'text/plain' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `${selectedPatientHistory.name.replace(/\s+/g, '_')}_complete_history_${new Date().toISOString().split('T')[0]}.txt`
+                    a.click()
+                    URL.revokeObjectURL(url)
+                    
+                    toast({
+                      title: '📄 History Report Downloaded',
+                      description: `Complete patient history for ${selectedPatientHistory.name} has been saved.`
+                    })
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download History Report
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

@@ -321,6 +321,7 @@ export interface Patient {
   name: string
   phone: string
   email?: string
+  profession?: string // Main profession/occupation field from booking form
   session_type: "in_clinic" | "video"
   appointment_date: string
   status: "pending" | "confirmed" | "completed" | "cancelled"
@@ -339,7 +340,8 @@ export interface Patient {
   demographics?: {
     age?: number
     gender?: string
-    occupation?: string
+    occupation?: string // Detailed occupation info for admin use
+    profession?: string // Synonym for occupation
     emergency_contact?: string
   }
   treatment_plan?: {
