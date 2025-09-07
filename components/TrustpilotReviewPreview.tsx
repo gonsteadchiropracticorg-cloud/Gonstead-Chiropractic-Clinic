@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { getReviews, updateReviewHelpful } from "@/lib/supabase"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -33,7 +34,7 @@ interface Review {
   rating: number
   title: string
   content: string
-  fullContent: string
+  full_content: string // Updated to match database schema
   author: {
     name: string
     initials: string
@@ -44,8 +45,11 @@ interface Review {
   date: string
   helpful: number
   category: string
-  isVerified: boolean
-  isRecommended: boolean
+  is_verified: boolean // Updated to match database schema
+  is_recommended: boolean // Updated to match database schema
+  is_approved?: boolean // New field for moderation
+  created_at?: string // New field from database
+  updated_at?: string // New field from database
 }
 
 interface TrustpilotReviewPreviewProps {
@@ -147,7 +151,7 @@ export function TrustpilotReviewPreview({
       rating: 5,
       title: "Exceptional Gonstead Treatment - Life Changing Results",
       content: "Dr. Bashir Khan's expertise in Gonstead technique is truly remarkable. After suffering from chronic lower back pain for months, I found complete relief after just 3 sessions. His precise diagnosis and gentle adjustments...",
-      fullContent: "Dr. Bashir Khan's expertise in Gonstead technique is truly remarkable. After suffering from chronic lower back pain for months, I found complete relief after just 3 sessions. His precise diagnosis and gentle adjustments have transformed my quality of life. The clinic is state-of-the-art, staff is professional, and the personalized care approach is outstanding. I highly recommend Dr. Bashir to anyone seeking effective chiropractic treatment.",
+      full_content: "Dr. Bashir Khan's expertise in Gonstead technique is truly remarkable. After suffering from chronic lower back pain for months, I found complete relief after just 3 sessions. His precise diagnosis and gentle adjustments have transformed my quality of life. The clinic is state-of-the-art, staff is professional, and the personalized care approach is outstanding. I highly recommend Dr. Bashir to anyone seeking effective chiropractic treatment.",
       author: {
         name: "Sarah Ahmed",
         initials: "SA",
@@ -252,30 +256,49 @@ export function TrustpilotReviewPreview({
     }
   ]
 
-  // Initialize reviews with localStorage persistence
+  // Load reviews from database
   useEffect(() => {
-    try {
-      // Load persisted reviews from localStorage
-      const savedReviews = localStorage.getItem('gonstead_patient_reviews')
-      if (savedReviews) {
-        const parsedReviews = JSON.parse(savedReviews)
-        // Merge saved reviews with sample reviews (avoid duplicates)
+    const loadReviews = async () => {
+      try {
+        console.log('Loading reviews from database...')
+        const { data: dbReviews, error } = await getReviews(false) // Only approved reviews for public view
+        
+        if (error) {
+          console.error('Failed to load reviews from database:', error)
+          // Use fallback sample reviews
+          setReviews(sampleReviews)
+          setFilteredReviews(sampleReviews)
+          return
+        }
+
+        // Transform database reviews to match component interface
+        const transformedReviews = (dbReviews || []).map((review: any) => ({
+          ...review,
+          // Ensure backward compatibility with existing field names
+          fullContent: review.full_content,
+          isVerified: review.is_verified,
+          isRecommended: review.is_recommended
+        }))
+        
+        // Merge database reviews with sample reviews (avoid duplicates)
         const allReviews = [
-          ...parsedReviews.filter((review: Review) => !sampleReviews.find(sr => sr.id === review.id)),
-          ...sampleReviews
+          ...transformedReviews,
+          ...sampleReviews.filter(sr => !transformedReviews.find((tr: any) => tr.id === sr.id))
         ]
+        
         setReviews(allReviews)
         setFilteredReviews(allReviews)
-        console.log('Loaded reviews from localStorage:', parsedReviews.length)
-      } else {
+        console.log('Loaded reviews:', allReviews.length, 'from database:', transformedReviews.length, 'samples:', sampleReviews.length)
+        
+      } catch (error) {
+        console.error('Error loading reviews:', error)
+        // Fallback to sample reviews
         setReviews(sampleReviews)
         setFilteredReviews(sampleReviews)
       }
-    } catch (error) {
-      console.error('Failed to load reviews from localStorage:', error)
-      setReviews(sampleReviews)
-      setFilteredReviews(sampleReviews)
     }
+    
+    loadReviews()
   }, [])
 
   // Filter and sort reviews

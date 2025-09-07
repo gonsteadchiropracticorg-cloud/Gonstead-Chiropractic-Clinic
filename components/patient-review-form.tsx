@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Heart, Star, Send, CheckCircle, User, Mail, Shield } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { createReview } from "@/lib/supabase"
 
 interface PatientReviewFormProps {
   patientName?: string
@@ -61,27 +62,45 @@ export function PatientReviewForm({ patientName, onSubmit, className = "" }: Pat
     setIsSubmitting(true)
 
     try {
+      // Transform data to match PatientReview database schema
       const reviewData = {
         rating,
-        feedback: feedback.trim(),
-        name: name.trim(),
-        email: email.trim(),
-        timestamp: new Date().toISOString(),
-        sessionType: "chiropractic_session"
+        title: feedback.length > 50 ? feedback.substring(0, 50) + "..." : feedback.substring(0, 30) + "...",
+        content: feedback.trim().substring(0, 200) + (feedback.trim().length > 200 ? "..." : ""),
+        full_content: feedback.trim(),
+        author: {
+          name: name.trim() || "Anonymous Patient",
+          initials: (name.trim() || "AP").split(" ").map(n => n.charAt(0)).join("").toUpperCase().substring(0, 2),
+          verified: email.trim() ? true : false,
+          location: "Nowshera, Pakistan"
+        },
+        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+        helpful: 0,
+        category: "Treatment",
+        is_verified: email.trim() ? true : false,
+        is_recommended: rating >= 4 ? true : false
       }
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Save to database
+      const { data: savedReview, error: saveError } = await createReview(reviewData)
+      
+      if (saveError) {
+        console.error('Failed to save review:', saveError)
+        throw new Error('Failed to save review to database')
+      }
 
+      console.log('Review saved successfully:', savedReview)
+
+      // Call parent onSubmit if provided
       if (onSubmit) {
-        onSubmit(reviewData)
+        onSubmit({ ...reviewData, id: savedReview?.id })
       }
 
       setIsSubmitted(true)
       
       toast({
         title: "Review Submitted Successfully!",
-        description: "Thank you for your valuable feedback. Dr. Bashir appreciates your time.",
+        description: "Thank you for your valuable feedback. Your review will be published after approval.",
       })
 
     } catch (error) {
