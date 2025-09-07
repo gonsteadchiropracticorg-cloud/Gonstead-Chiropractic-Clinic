@@ -169,7 +169,7 @@ export function TrustpilotReviewPreview({
       rating: 5,
       title: "Professional Excellence in Spinal Care",
       content: "Outstanding service from Dr. Bashir Khan! His Gonstead approach is methodical and effective. My neck pain completely disappeared after 4 visits. The clinic environment is modern and calming...",
-      fullContent: "Outstanding service from Dr. Bashir Khan! His Gonstead approach is methodical and effective. My neck pain completely disappeared after 4 visits. The clinic environment is modern and calming, and the staff is incredibly supportive. Dr. Bashir takes time to explain each step of the treatment, making me feel confident and comfortable throughout the process. Truly professional healthcare at its finest.",
+      full_content: "Outstanding service from Dr. Bashir Khan! His Gonstead approach is methodical and effective. My neck pain completely disappeared after 4 visits. The clinic environment is modern and calming, and the staff is incredibly supportive. Dr. Bashir takes time to explain each step of the treatment, making me feel confident and comfortable throughout the process. Truly professional healthcare at its finest.",
       author: {
         name: "Muhammad Khan",
         initials: "MK",
@@ -187,7 +187,7 @@ export function TrustpilotReviewPreview({
       rating: 5,
       title: "Remarkable Recovery from Sciatica",
       content: "After years of struggling with sciatica, Dr. Bashir's precise Gonstead adjustments provided immediate relief. His expertise and compassionate care approach made all the difference...",
-      fullContent: "After years of struggling with sciatica, Dr. Bashir's precise Gonstead adjustments provided immediate relief. His expertise and compassionate care approach made all the difference. The clinic uses advanced technology for diagnosis, and the treatment plan was perfectly tailored to my condition. I'm now pain-free and can enjoy daily activities without limitation. Exceptional chiropractic care!",
+      full_content: "After years of struggling with sciatica, Dr. Bashir's precise Gonstead adjustments provided immediate relief. His expertise and compassionate care approach made all the difference. The clinic uses advanced technology for diagnosis, and the treatment plan was perfectly tailored to my condition. I'm now pain-free and can enjoy daily activities without limitation. Exceptional chiropractic care!",
       author: {
         name: "Fatima Ali",
         initials: "FA",
@@ -205,7 +205,7 @@ export function TrustpilotReviewPreview({
       rating: 5,
       title: "Best Chiropractic Experience Ever",
       content: "Dr. Bashir Khan is simply amazing! His Gonstead technique corrected my posture issues that other doctors couldn't fix. The clinic is well-equipped and the staff is friendly...",
-      fullContent: "Dr. Bashir Khan is simply amazing! His Gonstead technique corrected my posture issues that other doctors couldn't fix. The clinic is well-equipped and the staff is friendly and professional. What sets Dr. Bashir apart is his thorough analysis and precise adjustments. He doesn't just treat symptoms but addresses the root cause. I'm grateful for his expertise and highly recommend his services.",
+      full_content: "Dr. Bashir Khan is simply amazing! His Gonstead technique corrected my posture issues that other doctors couldn't fix. The clinic is well-equipped and the staff is friendly and professional. What sets Dr. Bashir apart is his thorough analysis and precise adjustments. He doesn't just treat symptoms but addresses the root cause. I'm grateful for his expertise and highly recommend his services.",
       author: {
         name: "Ahmed Hassan",
         initials: "AH",
@@ -215,15 +215,15 @@ export function TrustpilotReviewPreview({
       date: "2024-01-05",
       helpful: 10,
       category: "Quality",
-      isVerified: true,
-      isRecommended: true
+      is_verified: true,
+      is_recommended: true
     },
     {
       id: "5",
       rating: 5,
       title: "Quick Recovery from Sports Injury",
       content: "As an athlete, I need the best care for my spine. Dr. Bashir's Gonstead approach helped me recover from a sports injury faster than expected. His knowledge is exceptional...",
-      fullContent: "As an athlete, I need the best care for my spine. Dr. Bashir's Gonstead approach helped me recover from a sports injury faster than expected. His knowledge is exceptional and his treatment methodology is scientifically sound. The clinic offers both in-person and video consultations, which is very convenient. I'm back to my training routine and feeling stronger than ever. Outstanding care!",
+      full_content: "As an athlete, I need the best care for my spine. Dr. Bashir's Gonstead approach helped me recover from a sports injury faster than expected. His knowledge is exceptional and his treatment methodology is scientifically sound. The clinic offers both in-person and video consultations, which is very convenient. I'm back to my training routine and feeling stronger than ever. Outstanding care!",
       author: {
         name: "Usman Ali",
         initials: "UA",
@@ -233,15 +233,15 @@ export function TrustpilotReviewPreview({
       date: "2024-01-02",
       helpful: 9,
       category: "Support",
-      isVerified: true,
-      isRecommended: true
+      is_verified: true,
+      is_recommended: true
     },
     {
       id: "6",
       rating: 5,
       title: "Comprehensive and Caring Treatment",
       content: "Dr. Bashir provides comprehensive spinal care with genuine concern for patient wellbeing. His Gonstead technique is precise and effective. The clinic experience exceeded my expectations...",
-      fullContent: "Dr. Bashir provides comprehensive spinal care with genuine concern for patient wellbeing. His Gonstead technique is precise and effective. The clinic experience exceeded my expectations - from the modern facility to the professional staff. Dr. Bashir explained my condition thoroughly and provided a clear treatment plan. My chronic pain is now completely managed, and I feel like a new person.",
+      full_content: "Dr. Bashir provides comprehensive spinal care with genuine concern for patient wellbeing. His Gonstead technique is precise and effective. The clinic experience exceeded my expectations - from the modern facility to the professional staff. Dr. Bashir explained my condition thoroughly and provided a clear treatment plan. My chronic pain is now completely managed, and I feel like a new person.",
       author: {
         name: "Ayesha Malik",
         initials: "AM",
@@ -465,8 +465,11 @@ export function TrustpilotReviewPreview({
     ))
   }
 
-  const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-  const totalReviews = reviews.length
+  // Safety checks to prevent NaN errors
+  const averageRating = reviews && reviews.length > 0 
+    ? reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length 
+    : 5.0
+  const totalReviews = reviews ? reviews.length : 0
 
   return (
     <div className={`bg-white dark:bg-gray-900 py-16 ${className}`}>
@@ -611,11 +614,12 @@ export function TrustpilotReviewPreview({
 
                 {/* Review Content */}
                 <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">
-                  {expandedReviews.has(review.id) ? review.fullContent : review.content}
+                  {expandedReviews.has(review.id) ? (review.full_content || review.fullContent || review.content) : review.content}
                 </p>
 
                 {/* Read More/Less Button */}
-                {review.content.length < review.fullContent.length && (
+                {review.content && (review.full_content || review.fullContent) && 
+                 review.content.length < (review.full_content || review.fullContent || '').length && (
                   <button
                     onClick={() => toggleExpanded(review.id)}
                     className="text-[#00b67a] hover:text-[#00a066] text-sm font-medium flex items-center gap-1 mb-4"
