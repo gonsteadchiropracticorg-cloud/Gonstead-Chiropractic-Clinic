@@ -14,20 +14,42 @@ export const EmailContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Handle form submission logic here
-    setConfirmation('Thank you for reaching out! Our team will contact you within 24 hours.');
-    
-    // Reset form fields
-    setName('');
-    setEmail('');
-    setComment('');
-    setIsSubmitting(false);
-    
-    // Auto-hide confirmation after 5 seconds
-    setTimeout(() => setConfirmation(''), 5000);
+    try {
+      // Call the email API
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          message: comment.trim(),
+          subject: 'Contact Form Submission from Website',
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setConfirmation('Thank you for reaching out! Your message has been sent successfully. Our team will contact you within 24 hours.');
+        
+        // Reset form fields
+        setName('');
+        setEmail('');
+        setComment('');
+      } else {
+        throw new Error(data.error || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      setConfirmation('Sorry, there was an error sending your message. Please try again or contact us directly at +92 304 699 6267.');
+    } finally {
+      setIsSubmitting(false);
+      
+      // Auto-hide confirmation after 8 seconds
+      setTimeout(() => setConfirmation(''), 8000);
+    }
   };
 
   if (confirmation) {

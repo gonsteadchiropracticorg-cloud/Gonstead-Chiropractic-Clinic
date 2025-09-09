@@ -100,36 +100,36 @@ export function EmailJSContactForm() {
     setIsSubmitting(true)
 
     try {
-      // Updated EmailJS configuration with correct template ID
-      const serviceId = "service_nj00ksk"
-      const templateId = "template_gonstead" // Using a generic template ID that you should create in EmailJS
-      const publicKey = "STD49hXa06xbHgXCK"
-
-      const templateParams = {
-        from_name: formData.name,
-        from_email: formData.email,
-        phone: formData.phone,
-        subject: formData.subject,
-        message: formData.message,
-        health_concerns: formData.healthConcerns,
-        to_email: "gonsteadchiropractic.org@gmail.com",
-      }
-
-      // For demo purposes, we'll simulate a successful submission
-      // In production, uncomment this line:
-      // await emailjs.send(serviceId, templateId, templateParams, publicKey)
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      setIsSubmitted(true)
-      toast({
-        title: language === "ur" ? "پیغام بھیج دیا گیا" : "Message Sent Successfully",
-        description:
-          language === "ur" ? "ہماری ٹیم جلد ہی آپ سے رابطہ کرے گی" : "Our team will contact you shortly",
+      // Call the email API
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          subject: formData.subject.trim() || 'Contact Form Submission from Website',
+          message: formData.message.trim(),
+          healthConcerns: formData.healthConcerns.trim(),
+        }),
       })
+      
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        setIsSubmitted(true)
+        toast({
+          title: language === "ur" ? "پیغام بھیج دیا گیا" : "Message Sent Successfully",
+          description:
+            language === "ur" ? "ہماری ٹیم جلد ہی آپ سے رابطہ کرے گی" : "Our team will contact you shortly",
+        })
+      } else {
+        throw new Error(data.error || 'Failed to send message')
+      }
     } catch (error) {
-      console.error("EmailJS Error:", error)
+      console.error("Email sending error:", error)
       toast({
         title: language === "ur" ? "خرابی" : "Error",
         description: language === "ur" ? "پیغام بھیجنے میں مسئلہ ہے" : "Failed to send message. Please try again.",
