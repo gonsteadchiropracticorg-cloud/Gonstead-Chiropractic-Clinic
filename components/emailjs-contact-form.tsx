@@ -102,7 +102,7 @@ export function EmailJSContactForm() {
 
     try {
       // Your EmailJS configuration
-      const serviceId = process.env.NEXT_PUBLIC_EMAIL_SERVICE_ID || "service_nj00ksk"
+      const serviceId = process.env.NEXT_PUBLIC_EMAIL_SERVICE_ID || "service_s8n248l"
       const templateId = process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_ID || "template_cvai1qm"
       const publicKey = process.env.NEXT_PUBLIC_EMAIL_PUBLIC_KEY || "STD49hXa06xbHgXCK"
 
