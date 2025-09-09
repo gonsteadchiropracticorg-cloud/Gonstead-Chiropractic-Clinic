@@ -18,6 +18,7 @@
     "pack": "electron-builder --dir"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
     "@hookform/resolvers": "3.10.0",

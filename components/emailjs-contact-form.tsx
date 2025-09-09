@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState, useRef } from "react"
+import emailjs from '@emailjs/browser'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -100,36 +101,42 @@ export function EmailJSContactForm() {
     setIsSubmitting(true)
 
     try {
-      // Call the email API
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-          subject: formData.subject.trim() || 'Contact Form Submission from Website',
-          message: formData.message.trim(),
-          healthConcerns: formData.healthConcerns.trim(),
-        }),
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok && data.success) {
-        setIsSubmitted(true)
-        toast({
-          title: language === "ur" ? "پیغام بھیج دیا گیا" : "Message Sent Successfully",
-          description:
-            language === "ur" ? "ہماری ٹیم جلد ہی آپ سے رابطہ کرے گی" : "Our team will contact you shortly",
-        })
-      } else {
-        throw new Error(data.error || 'Failed to send message')
+      // Your EmailJS configuration
+      const serviceId = process.env.NEXT_PUBLIC_EMAIL_SERVICE_ID || "service_nj00ksk"
+      const templateId = process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_ID || "template_cvai1qm"
+      const publicKey = process.env.NEXT_PUBLIC_EMAIL_PUBLIC_KEY || "STD49hXa06xbHgXCK"
+
+      const templateParams = {
+        from_name: formData.name.trim(),
+        from_email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        subject: formData.subject.trim() || 'Contact Form Submission from Website',
+        message: formData.message.trim(),
+        health_concerns: formData.healthConcerns.trim(),
+        to_email: "gonsteadchiropractic.org@gmail.com",
       }
+
+      // Send email using EmailJS
+      await emailjs.send(serviceId, templateId, templateParams, publicKey)
+
+      setIsSubmitted(true)
+      toast({
+        title: language === "ur" ? "پیغام بھیج دیا گیا" : "Message Sent Successfully",
+        description:
+          language === "ur" ? "ہماری ٹیم جلد ہی آپ سے رابطہ کرے گی" : "Our team will contact you shortly",
+      })
+
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: "",
+        healthConcerns: "",
+      })
     } catch (error) {
-      console.error("Email sending error:", error)
+      console.error("EmailJS Error:", error)
       toast({
         title: language === "ur" ? "خرابی" : "Error",
         description: language === "ur" ? "پیغام بھیجنے میں مسئلہ ہے" : "Failed to send message. Please try again.",

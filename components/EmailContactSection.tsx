@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
+import emailjs from '@emailjs/browser';
 import { Mail, User, MessageCircle, Send, CheckCircle, Stethoscope, ArrowRight } from 'lucide-react';
 
 export const EmailContactSection = () => {
@@ -15,34 +16,32 @@ export const EmailContactSection = () => {
     setIsSubmitting(true);
     
     try {
-      // Call the email API
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim(),
-          message: comment.trim(),
-          subject: 'Contact Form Submission from Website',
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok && data.success) {
-        setConfirmation('Thank you for reaching out! Your message has been sent successfully. Our team will contact you within 24 hours.');
-        
-        // Reset form fields
-        setName('');
-        setEmail('');
-        setComment('');
-      } else {
-        throw new Error(data.error || 'Failed to send message');
+      // Your EmailJS configuration
+      const serviceId = process.env.NEXT_PUBLIC_EMAIL_SERVICE_ID || "service_nj00ksk"
+      const templateId = process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_ID || "template_cvai1qm"
+      const publicKey = process.env.NEXT_PUBLIC_EMAIL_PUBLIC_KEY || "STD49hXa06xbHgXCK"
+
+      const templateParams = {
+        from_name: name.trim(),
+        from_email: email.trim(),
+        phone: '', // Empty for this form
+        subject: 'Contact Form Submission from Website',
+        message: comment.trim(),
+        health_concerns: '', // Empty for this form
+        to_email: "gonsteadchiropractic.org@gmail.com",
       }
+
+      // Send email using EmailJS
+      await emailjs.send(serviceId, templateId, templateParams, publicKey)
+
+      setConfirmation('Thank you for reaching out! Your message has been sent successfully. Our team will contact you within 24 hours.');
+      
+      // Reset form fields
+      setName('');
+      setEmail('');
+      setComment('');
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error('EmailJS Error:', error);
       setConfirmation('Sorry, there was an error sending your message. Please try again or contact us directly at +92 304 699 6267.');
     } finally {
       setIsSubmitting(false);
