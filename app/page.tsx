@@ -39,7 +39,6 @@ import { LanguageToggle } from "@/components/language-toggle"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AppointmentBookingModal } from "@/components/appointment-booking-modal"
-import { VoiceAssistantButton } from "@/components/voice-assistant-button"
 import { EmailContactSection } from "@/components/EmailContactSection"
 import { FooterWeatherWidget } from "@/components/footer-weather-widget"
 import { TrustpilotReviewPreview } from '@/components/TrustpilotReviewPreview'
@@ -250,11 +249,15 @@ function HomePageContent() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
                 {/* Content Section with 3D Transform */}
                 <div className="space-y-8 lg:pr-8 transform-gpu animate-slide-in-left relative z-10">
-                  {/* Professional Medical Badge with Voice Assistant */}
-                  <div className="flex items-center gap-4">
-                    <div className="w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
-                    <VoiceAssistantButton />
-                    <div className="w-3 h-3 bg-blue-400 rounded-full animate-ping animation-delay-1000"></div>
+                  {/* Board Certified Gonstead Specialist Badge */}
+                  <div className="flex items-center justify-center sm:justify-start mb-4">
+                    <div className="inline-flex items-center bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-sm border border-emerald-400/30 rounded-full px-4 py-2 shadow-lg">
+                      <div className="w-2 h-2 bg-emerald-400 rounded-full mr-3 animate-pulse"></div>
+                      <span className="text-emerald-300 dark:text-emerald-400 font-bold text-sm tracking-wide uppercase">
+                        Board Certified Gonstead Specialist
+                      </span>
+                      <div className="w-2 h-2 bg-cyan-400 rounded-full ml-3 animate-pulse animation-delay-1000"></div>
+                    </div>
                   </div>
 
                   {/* Main Heading */}
@@ -376,7 +379,7 @@ function HomePageContent() {
                         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                           <div className="space-y-2">
                             <h3 className="text-2xl font-bold">Bashir Khan Chiropractic</h3>
-                            <p className="text-blue-300 font-medium">Gonstead Certified Specialist</p>
+                            <p className="text-blue-300 font-medium">Board Certified Gonstead Specialist</p>
                             <div className="flex items-center gap-2 text-sm text-cyan-200">
                               <Award className="h-4 w-4" />
                               <span>15+ Years Excellence</span>
