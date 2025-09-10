@@ -22,7 +22,9 @@ import {
   Clock,
   TrendingUp,
   Eye,
-  DollarSign
+  DollarSign,
+  Star,
+  MapPin
 } from "lucide-react"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
@@ -99,6 +101,15 @@ const sidebarItems: MenuItem[] = [
     badge: "Secure"
   },
   {
+    id: "reviews",
+    title: "Reviews & Ratings",
+    href: "/admin/reviews",
+    icon: Star,
+    description: "Manage patient reviews & feedback",
+    category: "core",
+    badge: "New"
+  },
+  {
     id: "analytics",
     title: "Analytics",
     href: "/admin/analytics",
@@ -123,6 +134,7 @@ const sidebarItems: MenuItem[] = [
     category: "admin",
     children: [
       { id: "settings", title: "System Settings", href: "/admin/settings", icon: Settings },
+      { id: "location-settings", title: "Location & Maps", href: "/admin/location-settings", icon: MapPin },
       { id: "import-export", title: "Import/Export", href: "/admin/import-export", icon: Database },
     ]
   },
