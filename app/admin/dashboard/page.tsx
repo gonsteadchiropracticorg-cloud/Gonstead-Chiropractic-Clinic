@@ -1067,8 +1067,8 @@ Doctor Signature: Dr. Bashir Khan, DCP
     <React.Fragment>
 
       <div className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-[rgb(220,230,229)]"}`}>
-      {/* Compact Professional Header */}
-      <header className="relative bg-white/20 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.10)] border-0 p-3 overflow-hidden mt-1 mx-4 rounded-xl">
+      {/* Mobile-Responsive Professional Header */}
+      <header className="relative bg-white/20 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.10)] border-0 p-2 sm:p-3 overflow-hidden mt-1 mx-2 sm:mx-4 rounded-xl">
         {/* Animated Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/10 to-[#2a9d8f]/5 animate-pulse"></div>
         
@@ -1076,152 +1076,175 @@ Doctor Signature: Dr. Bashir Khan, DCP
         <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
         
         {/* Content */}
-        <div className="relative z-10 container mx-auto flex justify-between items-center">
-          {/* Left Section - Logo and Title */}
-          <div className="flex items-center gap-4">
-            {/* Enhanced Clinical Logo - Clickable for Sidebar */}
-            <div className="relative group cursor-pointer" onClick={() => setIsSidebarOpen(true)}>
-              <div className="w-16 h-16 relative transition-transform duration-300 hover:scale-110">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/15 to-[#2a9d8f]/15 rounded-2xl blur-xl group-hover:blur-lg transition-all duration-300"></div>
-                {/* Enhanced Clinical Logo with Professional Frame */}
-                <div className="relative w-16 h-16 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-xl rounded-2xl border-2 border-white/30 shadow-2xl flex items-center justify-center">
-                  <Image
-                    src="/images/gonstead-chiropractic-logo-new.png"
-                    alt="Gonstead Chiropractic Clinical Logo"
-                    width={44}
-                    height={44}
-                    className="object-contain relative z-10 drop-shadow-2xl"
-                  />
-                  {/* Clinical Badge */}
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full flex items-center justify-center shadow-xl border-2 border-white">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                  </div>
-                  {/* Professional Ring */}
-                  <div className="absolute inset-0 rounded-2xl border border-[#0d5c75]/30 animate-pulse" style={{ animationDuration: '3s' }}></div>
-                </div>
-              </div>
-              {/* Professional Clinical Badge */}
-              <div className="absolute -bottom-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white text-xs font-bold rounded-full shadow-lg border border-white/50">
-                CLINIC
-              </div>
-            </div>
+        <div className="relative z-10 container mx-auto">
+          {/* Mobile Layout - Stack on small screens */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             
-            {/* Compact Title Section */}
-            <div className="space-y-0.5">
-              <h1 className={`text-xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm`}>
-                Dr. Bashir Khan
-              </h1>
-              <p className={`text-base font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm`}>
-                Gonstead Chiropractic Specialist
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full animate-pulse"></div>
-                <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider`}>
-                  PROFESSIONAL MANAGEMENT PORTAL
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Section - Combined Time & Weather */}
-          <div className="flex items-center gap-3">
-            {/* Combined Time and Weather Display */}
-            <div className={`flex items-center gap-3 p-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-              {/* Weather Section */}
-              <div className="flex items-center gap-2 border-r border-white/20 pr-3">
-                <Cloud className="h-4 w-4 text-gray-500" />
-                <div>
-                  <div className={`text-sm font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                    28°C
+            {/* Top Row: Logo and Title - Mobile Optimized */}
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              {/* Enhanced Clinical Logo - Clickable for Sidebar */}
+              <div className="relative group cursor-pointer" onClick={() => setIsSidebarOpen(true)}>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 relative transition-transform duration-300 hover:scale-110">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/15 to-[#2a9d8f]/15 rounded-xl sm:rounded-2xl blur-xl group-hover:blur-lg transition-all duration-300"></div>
+                  {/* Enhanced Clinical Logo with Professional Frame */}
+                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border-2 border-white/30 shadow-2xl flex items-center justify-center">
+                    <Image
+                      src="/images/gonstead-chiropractic-logo-new.png"
+                      alt="Gonstead Chiropractic Clinical Logo"
+                      width={32}
+                      height={32}
+                      className="sm:w-11 sm:h-11 object-contain relative z-10 drop-shadow-2xl"
+                    />
+                    {/* Clinical Badge */}
+                    <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full flex items-center justify-center shadow-xl border-2 border-white">
+                      <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white rounded-full animate-pulse"></div>
+                    </div>
+                    {/* Professional Ring */}
+                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl border border-[#0d5c75]/30 animate-pulse" style={{ animationDuration: '3s' }}></div>
                   </div>
-                  <div className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Nowshera</div>
+                </div>
+                {/* Professional Clinical Badge */}
+                <div className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 px-1.5 py-0.5 sm:px-2 sm:py-0.5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white text-[8px] sm:text-xs font-bold rounded-full shadow-lg border border-white/50">
+                  CLINIC
                 </div>
               </div>
               
-              {/* Time Section */}
-              <div className="text-center">
-                <div className="text-sm font-bold font-mono tracking-wider">
-                  {typeof window !== 'undefined' ? formatTime12Hour(currentTime) : '--:--:-- --'}
-                </div>
-                <div className="text-xs opacity-80 font-medium">
-                  {typeof window !== 'undefined' ? formatDate(currentTime) : '-- -- --'}
+              {/* Compact Title Section - Mobile Optimized */}
+              <div className="space-y-0.5 flex-1">
+                <h1 className={`text-base sm:text-xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm`}>
+                  Dr. Bashir Khan
+                </h1>
+                <p className={`text-sm sm:text-base font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm hidden xs:block`}>
+                  Gonstead Chiropractic Specialist
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full animate-pulse"></div>
+                  <p className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider`}>
+                    ADMIN PORTAL
+                  </p>
                 </div>
               </div>
+              
+              {/* Mobile Menu Button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsSidebarOpen(true)}
+                className="sm:hidden p-2 hover:bg-white/10"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </Button>
             </div>
-            
-            {/* Compact Theme Toggle */}
-            <div className="flex items-center gap-1.5 p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-600" : "bg-[rgb(227,252,236)]"} transition-all duration-300`}>
-                <Sun className={`h-4 w-4 ${isDarkMode ? "text-gray-400" : "text-green-500"}`} />
+
+            {/* Bottom Row: Controls - Mobile Responsive */}
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
+              {/* Combined Time and Weather Display - Mobile Optimized */}
+              <div className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex-1 sm:flex-none`}>
+                {/* Weather Section - Hidden on very small screens */}
+                <div className="hidden xs:flex items-center gap-1 sm:gap-2 border-r border-white/20 pr-2 sm:pr-3">
+                  <Cloud className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
+                  <div>
+                    <div className={`text-xs sm:text-sm font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+                      28°C
+                    </div>
+                    <div className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Nowshera</div>
+                  </div>
+                </div>
+                
+                {/* Time Section - Always visible */}
+                <div className="text-center flex-1">
+                  <div className="text-xs sm:text-sm font-bold font-mono tracking-wider">
+                    {typeof window !== 'undefined' ? formatTime12Hour(currentTime) : '--:--:-- --'}
+                  </div>
+                  <div className="text-[8px] sm:text-xs opacity-80 font-medium">
+                    {typeof window !== 'undefined' ? formatDate(currentTime).split(',')[0] : '-- --'}
+                  </div>
+                </div>
               </div>
-              <Switch
-                checked={isDarkMode}
-                onCheckedChange={setIsDarkMode}
-                className="data-[state=checked]:bg-gray-600 scale-75"
-              />
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-blue-100" : "bg-gray-200"} transition-all duration-300`}>
-                <Moon className={`h-4 w-4 ${isDarkMode ? "text-blue-400" : "text-gray-400"}`} />
+              
+              {/* Compact Theme Toggle - Mobile Optimized */}
+              <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg">
+                <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-600" : "bg-[rgb(227,252,236)]"} transition-all duration-300`}>
+                  <Sun className={`h-3 w-3 sm:h-4 sm:w-4 ${isDarkMode ? "text-gray-400" : "text-green-500"}`} />
+                </div>
+                <Switch
+                  checked={isDarkMode}
+                  onCheckedChange={setIsDarkMode}
+                  className="data-[state=checked]:bg-gray-600 scale-75 sm:scale-100"
+                />
+                <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-blue-100" : "bg-gray-200"} transition-all duration-300`}>
+                  <Moon className={`h-3 w-3 sm:h-4 sm:w-4 ${isDarkMode ? "text-blue-400" : "text-gray-400"}`} />
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-
-            {/* Quick Add Patient */}
+        </div>
+      </header>
+      
+      {/* Mobile Action Bar - Positioned below header */}
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 p-2 mx-2 sm:mx-4 rounded-lg mt-2 mb-4 shadow-sm">
+        <div className="container mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            
+            {/* Quick Add Patient - Mobile Optimized */}
             <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Quick Add
+                <Button className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 h-auto">
+                  <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden xs:inline">Quick Add</span>
+                  <span className="xs:hidden">Add</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
-                    <UserPlus className="h-5 w-5" />
+                  <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2 text-sm sm:text-base">
+                    <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
                     Add New Patient (Phone Call)
                   </DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleAddPatient} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleAddPatient} className="space-y-3 sm:space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label htmlFor="name">Full Name *</Label>
+                      <Label htmlFor="name" className="text-sm">Full Name *</Label>
                       <Input
                         id="name"
                         value={newPatient.name}
                         onChange={(e) => setNewPatient((prev) => ({ ...prev, name: e.target.value }))}
                         required
+                        className="text-sm"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phone">Phone *</Label>
+                      <Label htmlFor="phone" className="text-sm">Phone *</Label>
                       <Input
                         id="phone"
                         value={newPatient.phone}
                         onChange={(e) => setNewPatient((prev) => ({ ...prev, phone: e.target.value }))}
                         required
+                        className="text-sm"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="text-sm">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       value={newPatient.email}
                       onChange={(e) => setNewPatient((prev) => ({ ...prev, email: e.target.value }))}
+                      className="text-sm"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label htmlFor="session_type">Session Type</Label>
+                      <Label htmlFor="session_type" className="text-sm">Session Type</Label>
                       <Select
                         value={newPatient.session_type}
                         onValueChange={(value: "in_clinic" | "video") =>
                           setNewPatient((prev) => ({ ...prev, session_type: value }))
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1231,14 +1254,14 @@ Doctor Signature: Dr. Bashir Khan, DCP
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="urgency">Urgency</Label>
+                      <Label htmlFor="urgency" className="text-sm">Urgency</Label>
                       <Select
                         value={newPatient.urgency}
                         onValueChange={(value: "normal" | "urgent" | "emergency") =>
                           setNewPatient((prev) => ({ ...prev, urgency: value }))
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1250,29 +1273,31 @@ Doctor Signature: Dr. Bashir Khan, DCP
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="appointment_date">Appointment Date & Time *</Label>
+                    <Label htmlFor="appointment_date" className="text-sm">Appointment Date & Time *</Label>
                     <Input
                       id="appointment_date"
                       type="datetime-local"
                       value={newPatient.appointment_date}
                       onChange={(e) => setNewPatient((prev) => ({ ...prev, appointment_date: e.target.value }))}
                       required
+                      className="text-sm"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="notes">Notes</Label>
+                    <Label htmlFor="notes" className="text-sm">Notes</Label>
                     <Textarea
                       id="notes"
                       value={newPatient.notes}
                       onChange={(e) => setNewPatient((prev) => ({ ...prev, notes: e.target.value }))}
                       placeholder="Chief complaint, symptoms, etc."
+                      className="text-sm min-h-[80px]"
                     />
                   </div>
-                  <div className="flex justify-end gap-3">
-                    <Button type="button" variant="outline" onClick={() => setIsAddPatientDialogOpen(false)}>
+                  <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+                    <Button type="button" variant="outline" onClick={() => setIsAddPatientDialogOpen(false)} className="text-sm">
                       Cancel
                     </Button>
-                    <Button type="submit" className="bg-[#0d5c75] hover:bg-[#0a4a5c]">
+                    <Button type="submit" className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-sm">
                       Add Patient
                     </Button>
                   </div>
@@ -1280,15 +1305,16 @@ Doctor Signature: Dr. Bashir Khan, DCP
               </DialogContent>
             </Dialog>
 
-            {/* Location Settings */}
+            {/* Location Settings - Mobile Optimized */}
             <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white bg-transparent"
+                  className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white bg-transparent text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 h-auto"
                 >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Location
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden xs:inline">Location</span>
+                  <span className="xs:hidden">Loc</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
@@ -1365,21 +1391,19 @@ Doctor Signature: Dr. Bashir Khan, DCP
               </DialogContent>
             </Dialog>
 
+            {/* Logout Button - Mobile Optimized */}
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="border-red-500 text-red-600 hover:bg-red-50 bg-transparent shadow-lg hover:shadow-xl transition-shadow duration-300"
+              className="border-red-500 text-red-600 hover:bg-red-50 bg-transparent shadow-lg hover:shadow-xl transition-shadow duration-300 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 h-auto"
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Logout</span>
+              <span className="xs:hidden">Exit</span>
             </Button>
           </div>
         </div>
-        
-        {/* Enhanced Bottom Shadow Effect */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0d5c75]/20 via-[#2a9d8f]/30 to-[#0d5c75]/20 shadow-2xl"></div>
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#0d5c75]/50 to-transparent"></div>
-      </header>
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         {/* Stats Dashboard */}
