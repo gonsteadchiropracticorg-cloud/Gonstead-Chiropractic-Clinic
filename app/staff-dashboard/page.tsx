@@ -21,231 +21,587 @@ import {
   Stethoscope,
   RefreshCw,
   Eye,
-  Users
+  Users,
+  Shield,
+  Lock,
+  EyeOff
 } from 'lucide-react'
-import { getCurrentUser, signOutAdmin } from '@/lib/supabase'
-
-interface Appointment {
-  id: string
-  patient_name: string
-  patient_email: string
-  patient_phone: string
-  appointment_date: string
-  appointment_time: string
-  doctor_name: string
-  appointment_type: string
-  status: 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
-  notes?: string
-  created_at: string
-}
+import { getPatients, type Patient } from '@/lib/supabase'
+import { useToast } from '@/hooks/use-toast'
+import Image from 'next/image'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 
 const statusColors = {
-  scheduled: 'bg-blue-100 text-blue-800',
+  pending: 'bg-orange-100 text-orange-800',
   confirmed: 'bg-green-100 text-green-800',
-  in_progress: 'bg-yellow-100 text-yellow-800',
   completed: 'bg-emerald-100 text-emerald-800',
-  cancelled: 'bg-red-100 text-red-800',
-  no_show: 'bg-gray-100 text-gray-800'
+  cancelled: 'bg-red-100 text-red-800'
 }
 
 const statusIcons = {
-  scheduled: Clock3,
+  pending: Clock3,
   confirmed: CheckCircle,
-  in_progress: Clock,
   completed: CheckCircle,
-  cancelled: XCircle,
-  no_show: AlertCircle
+  cancelled: XCircle
 }
 
 export default function StaffDashboard() {
   const router = useRouter()
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([])
+  const { toast } = useToast()
+  
+  // Authentication states
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [credentials, setCredentials] = useState({ username: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
+  const [authLoading, setAuthLoading] = useState(false)
+  const [currentTime, setCurrentTime] = useState(new Date())
+  
+  // Dashboard states
+  const [patients, setPatients] = useState<Patient[]>([])
+  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const [staffUser, setStaffUser] = useState<any>(null)
+  const [staffUsername, setStaffUsername] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
-  const [dateFilter, setDateFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const [doctorFilter, setDoctorFilter] = useState('')
+  const [urgencyFilter, setUrgencyFilter] = useState('')
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [sessionTimeout, setSessionTimeout] = useState<NodeJS.Timeout | null>(null)
 
-  // Check authentication and load data
+  // Update current time every second
   useEffect(() => {
-    const checkAuthAndLoadData = async () => {
-      try {
-        const { user } = await getCurrentUser()
-        if (!user) {
-          router.push('/staff-login')
-          return
-        }
+    setCurrentTime(new Date())
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
-        setStaffUser(user)
-        await loadAppointments()
-      } catch (error) {
-        console.error('Auth check failed:', error)
-        router.push('/staff-login')
-      } finally {
-        setIsLoading(false)
+  // Check authentication on page load and setup real-time sync
+  useEffect(() => {
+    const checkAuth = () => {
+      const staffAuth = localStorage.getItem('staff_authenticated')
+      const staffUser = localStorage.getItem('staff_username')
+      
+      if (staffAuth === 'true' && staffUser) {
+        setIsAuthenticated(true)
+        setStaffUsername(staffUser)
+        loadPatientData()
+        setupSessionTimeout()
+      } else {
+        setIsAuthenticated(false)
       }
+      setIsLoading(false)
     }
+    checkAuth()
+  }, [])
 
-    checkAuthAndLoadData()
-  }, [router])
-
-  // Mock function to load appointments - replace with actual Supabase query
-  const loadAppointments = async () => {
-    try {
-      // This should be replaced with actual Supabase query respecting RLS
-      const mockAppointments: Appointment[] = [
-        {
-          id: '1',
-          patient_name: 'John Smith',
-          patient_email: 'john.smith@email.com',
-          patient_phone: '(555) 123-4567',
-          appointment_date: '2024-01-15',
-          appointment_time: '09:00',
-          doctor_name: 'Dr. Sarah Johnson',
-          appointment_type: 'Initial Consultation',
-          status: 'confirmed',
-          notes: 'Lower back pain, referred by Dr. Wilson',
-          created_at: '2024-01-10T10:30:00Z'
-        },
-        {
-          id: '2',
-          patient_name: 'Emily Davis',
-          patient_email: 'emily.davis@email.com',
-          patient_phone: '(555) 987-6543',
-          appointment_date: '2024-01-15',
-          appointment_time: '10:30',
-          doctor_name: 'Dr. Michael Chen',
-          appointment_type: 'Follow-up',
-          status: 'scheduled',
-          notes: 'Neck adjustment follow-up',
-          created_at: '2024-01-12T14:15:00Z'
-        },
-        {
-          id: '3',
-          patient_name: 'Robert Wilson',
-          patient_email: 'robert.wilson@email.com',
-          patient_phone: '(555) 456-7890',
-          appointment_date: '2024-01-15',
-          appointment_time: '14:00',
-          doctor_name: 'Dr. Sarah Johnson',
-          appointment_type: 'Treatment',
-          status: 'in_progress',
-          notes: 'Spinal adjustment therapy',
-          created_at: '2024-01-13T09:20:00Z'
-        },
-        {
-          id: '4',
-          patient_name: 'Lisa Anderson',
-          patient_email: 'lisa.anderson@email.com',
-          patient_phone: '(555) 321-0987',
-          appointment_date: '2024-01-14',
-          appointment_time: '11:00',
-          doctor_name: 'Dr. Michael Chen',
-          appointment_type: 'Consultation',
-          status: 'completed',
-          notes: 'Postural assessment completed',
-          created_at: '2024-01-11T16:45:00Z'
-        },
-        {
-          id: '5',
-          patient_name: 'David Brown',
-          patient_email: 'david.brown@email.com',
-          patient_phone: '(555) 654-3210',
-          appointment_date: '2024-01-16',
-          appointment_time: '15:30',
-          doctor_name: 'Dr. Sarah Johnson',
-          appointment_type: 'Treatment',
-          status: 'scheduled',
-          notes: 'Chronic lower back pain treatment',
-          created_at: '2024-01-14T11:30:00Z'
-        }
-      ]
-
-      setAppointments(mockAppointments)
-      setFilteredAppointments(mockAppointments)
-    } catch (error) {
-      console.error('Error loading appointments:', error)
-      setError('Failed to load appointments')
-    }
-  }
-
-  // Filter appointments based on search and filters
+  // Real-time data synchronization with admin dashboard
   useEffect(() => {
-    let filtered = appointments
+    if (!isAuthenticated) return
 
-    if (searchTerm) {
-      filtered = filtered.filter(
-        apt => 
-          apt.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          apt.patient_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          apt.doctor_name.toLowerCase().includes(searchTerm.toLowerCase())
+    // Listen for new appointments from the booking form and admin dashboard
+    const handleNewAppointment = (event: CustomEvent) => {
+      console.log('Staff Dashboard: Received new appointment event:', event.detail)
+      const newPatient = event.detail
+      
+      // Update patient list with new appointment
+      setPatients(prev => {
+        const existingPatient = prev.find(p => p.id === newPatient.id)
+        if (existingPatient) {
+          // Update existing patient
+          return prev.map(p => p.id === newPatient.id ? newPatient : p)
+        } else {
+          // Add new patient
+          return [newPatient, ...prev]
+        }
+      })
+      
+      toast({
+        title: '📋 New Patient Update',
+        description: `${newPatient.name} appointment data has been synchronized`,
+      })
+    }
+
+    const handlePatientUpdate = (event: CustomEvent) => {
+      console.log('Staff Dashboard: Received patient update event:', event.detail)
+      const updatedPatient = event.detail
+      
+      setPatients(prev => 
+        prev.map(p => p.id === updatedPatient.id ? updatedPatient : p)
       )
+      
+      toast({
+        title: '🔄 Patient Updated',
+        description: `${updatedPatient.name} information has been updated`,
+      })
     }
 
-    if (dateFilter) {
-      filtered = filtered.filter(apt => apt.appointment_date === dateFilter)
+    // Add event listeners for real-time updates
+    window.addEventListener('newAppointment', handleNewAppointment as EventListener)
+    window.addEventListener('patientUpdated', handlePatientUpdate as EventListener)
+    
+    // Setup periodic data refresh (every 2 minutes)
+    const refreshInterval = setInterval(async () => {
+      console.log('Staff Dashboard: Performing periodic data refresh...')
+      await loadPatientData()
+    }, 2 * 60 * 1000) // 2 minutes
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('newAppointment', handleNewAppointment as EventListener)
+      window.removeEventListener('patientUpdated', handlePatientUpdate as EventListener)
+      clearInterval(refreshInterval)
     }
+  }, [isAuthenticated])
 
-    if (statusFilter) {
-      filtered = filtered.filter(apt => apt.status === statusFilter)
-    }
-
-    if (doctorFilter) {
-      filtered = filtered.filter(apt => apt.doctor_name === doctorFilter)
-    }
-
-    setFilteredAppointments(filtered)
-  }, [appointments, searchTerm, dateFilter, statusFilter, doctorFilter])
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await loadAppointments()
-    setIsRefreshing(false)
-  }
-
-  const handleSignOut = async () => {
-    try {
-      await signOutAdmin()
-      localStorage.removeItem('staff_authenticated')
-      localStorage.removeItem('staff_email')
-      localStorage.removeItem('staff_user_id')
-      router.push('/staff-login')
-    } catch (error) {
-      console.error('Sign out error:', error)
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+  // Helper functions
+  const formatTime12Hour = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
     })
   }
 
-  const formatTime = (timeString: string) => {
-    const [hours, minutes] = timeString.split(':')
-    const hour = parseInt(hours)
-    const ampm = hour >= 12 ? 'PM' : 'AM'
-    const displayHour = hour % 12 || 12
-    return `${displayHour}:${minutes} ${ampm}`
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
   }
 
-  const getUniqueValues = (key: keyof Appointment) => {
-    return [...new Set(appointments.map(apt => apt[key]))]
+  // Setup session timeout (30 minutes)
+  const setupSessionTimeout = () => {
+    if (sessionTimeout) clearTimeout(sessionTimeout)
+    
+    const timeout = setTimeout(() => {
+      handleStaffLogout()
+      toast({
+        title: '⏰ Session Expired',
+        description: 'Your session has expired. Please log in again.',
+        variant: 'destructive'
+      })
+    }, 30 * 60 * 1000) // 30 minutes
+    
+    setSessionTimeout(timeout)
+  }
+
+  // Load patient data with proper synchronization from admin dashboard
+  const loadPatientData = async () => {
+    try {
+      console.log('Staff Dashboard: Loading patient data...')
+      
+      // Load from Supabase (real data)
+      const { data: supabasePatients, error } = await getPatients()
+      if (error) {
+        console.error('Staff Dashboard: Error loading Supabase patients:', error)
+      }
+      const realPatients = supabasePatients || []
+      console.log('Staff Dashboard: Loaded Supabase patients:', realPatients.length)
+      
+      // Load from localStorage (appointments from booking form and admin dashboard)
+      const localStoragePatients = JSON.parse(localStorage.getItem('gonstead_patients') || '[]')
+      console.log('Staff Dashboard: Loaded localStorage patients:', localStoragePatients.length)
+      
+      // Create dummy patients for demonstration
+      const dummyPatients: Patient[] = [
+        {
+          id: 'staff-p1',
+          name: 'Ahmed Hassan',
+          phone: '+92 301 234 5678',
+          email: 'ahmed.hassan@email.com',
+          session_type: 'in_clinic',
+          appointment_date: new Date().toISOString(),
+          urgency: 'normal',
+          payment_method: 'cash',
+          status: 'confirmed',
+          notes: 'Lower back pain, chronic issue for 3 months',
+          sessions_completed: 2,
+          last_visit: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'staff-p2',
+          name: 'Fatima Khan',
+          phone: '+92 302 345 6789',
+          email: 'fatima.khan@email.com',
+          session_type: 'video',
+          appointment_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          urgency: 'urgent',
+          payment_method: 'jazzcash',
+          status: 'pending',
+          notes: 'Neck stiffness after car accident',
+          sessions_completed: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'staff-p3',
+          name: 'Muhammad Ali',
+          phone: '+92 303 456 7890',
+          email: 'muhammad.ali@email.com',
+          session_type: 'in_clinic',
+          appointment_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+          urgency: 'emergency',
+          payment_method: 'easypaisa',
+          status: 'completed',
+          notes: 'Severe back spasm, requiring immediate attention',
+          sessions_completed: 5,
+          last_visit: new Date().toISOString(),
+          created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'staff-p4',
+          name: 'Aisha Malik',
+          phone: '+92 304 567 8901',
+          email: 'aisha.malik@email.com',
+          session_type: 'in_clinic',
+          appointment_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+          urgency: 'normal',
+          payment_method: 'cash',
+          status: 'confirmed',
+          notes: 'Regular maintenance adjustment, office worker',
+          sessions_completed: 8,
+          last_visit: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'staff-p5',
+          name: 'Omar Sheikh',
+          phone: '+92 305 678 9012',
+          email: 'omar.sheikh@email.com',
+          session_type: 'video',
+          appointment_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+          urgency: 'normal',
+          payment_method: 'jazzcash',
+          status: 'cancelled',
+          notes: 'Shoulder pain from sports injury, rescheduled',
+          sessions_completed: 1,
+          last_visit: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]
+      
+      // Merge patients with proper deduplication - prioritize Supabase data
+      const mergedPatients = [...realPatients]
+      const existingIds = new Set(realPatients.map(p => p.id))
+      
+      // Add localStorage patients that aren't already in Supabase (by ID)
+      localStoragePatients.forEach((localPatient: Patient) => {
+        if (!existingIds.has(localPatient.id)) {
+          mergedPatients.push(localPatient)
+          existingIds.add(localPatient.id)
+        }
+      })
+      
+      // Add dummy patients for demonstration (always include these for staff to see)
+      dummyPatients.forEach((dummyPatient) => {
+        if (!existingIds.has(dummyPatient.id)) {
+          mergedPatients.push(dummyPatient)
+          existingIds.add(dummyPatient.id)
+        }
+      })
+      
+      console.log('Staff Dashboard: Total merged patients:', mergedPatients.length)
+      
+      // Sort by appointment date (most recent first)
+      const sortedPatients = mergedPatients.sort((a, b) => 
+        new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime()
+      )
+      
+      setPatients(sortedPatients)
+      setFilteredPatients(sortedPatients)
+      
+    } catch (error) {
+      console.error('Staff Dashboard: Error loading patient data:', error)
+      setError('Failed to load patient data')
+    }
+  }
+
+  // Staff authentication
+  const handleStaffLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAuthLoading(true)
+    
+    try {
+      // Get staff credentials from localStorage (set by admin)
+      let storedCredentials = localStorage.getItem('staff_credentials')
+      
+      if (!storedCredentials) {
+        // Set default credentials if none exist
+        const defaultCredentials = {
+          username: 'staff',
+          password: 'staff123',
+          lastUpdated: new Date().toISOString(),
+          updatedBy: 'system'
+        }
+        localStorage.setItem('staff_credentials', JSON.stringify(defaultCredentials))
+        storedCredentials = JSON.stringify(defaultCredentials)
+      }
+      
+      const savedCredentials = JSON.parse(storedCredentials)
+      
+      // Validate credentials
+      if (credentials.username === savedCredentials.username && 
+          credentials.password === savedCredentials.password) {
+        
+        // Set authentication
+        localStorage.setItem('staff_authenticated', 'true')
+        localStorage.setItem('staff_login_time', new Date().toISOString())
+        localStorage.setItem('staff_username', credentials.username)
+        
+        setIsAuthenticated(true)
+        setStaffUsername(credentials.username)
+        
+        // Load patient data and setup session timeout
+        await loadPatientData()
+        setupSessionTimeout()
+        
+        toast({
+          title: '✅ Authentication Successful',
+          description: 'Welcome to Staff Dashboard. You have read-only access to patient data.',
+        })
+      } else {
+        toast({
+          title: '❌ Authentication Failed',
+          description: 'Invalid username or password. Please contact the doctor for correct credentials.',
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      console.error('Authentication error:', error)
+      toast({
+        title: 'Error',
+        description: 'Authentication system error. Please try again.',
+        variant: 'destructive'
+      })
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  // Staff logout
+  const handleStaffLogout = () => {
+    localStorage.removeItem('staff_authenticated')
+    localStorage.removeItem('staff_login_time')
+    localStorage.removeItem('staff_username')
+    
+    if (sessionTimeout) clearTimeout(sessionTimeout)
+    
+    setIsAuthenticated(false)
+    setCredentials({ username: '', password: '' })
+    setStaffUsername('')
+    setPatients([])
+    setFilteredPatients([])
+    
+    toast({
+      title: '👋 Logged Out',
+      description: 'You have been successfully logged out.',
+    })
+  }
+
+  // Filter patients based on search and filters
+  useEffect(() => {
+    let filtered = patients
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        patient => 
+          patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          patient.phone.includes(searchTerm) ||
+          (patient.email && patient.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    }
+
+    if (statusFilter) {
+      filtered = filtered.filter(patient => patient.status === statusFilter)
+    }
+
+    if (urgencyFilter) {
+      filtered = filtered.filter(patient => patient.urgency === urgencyFilter)
+    }
+
+    setFilteredPatients(filtered)
+  }, [patients, searchTerm, statusFilter, urgencyFilter])
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    setupSessionTimeout() // Reset session timeout on activity
+    await loadPatientData()
+    setIsRefreshing(false)
+  }
+
+  // Get urgency color for badges
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case 'emergency': return 'bg-red-100 text-red-800'
+      case 'urgent': return 'bg-orange-100 text-orange-800' 
+      case 'normal': return 'bg-blue-100 text-blue-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[rgb(174,193,192)] via-[rgb(220,230,229)] to-[rgb(174,193,192)] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-600 mx-auto mb-4" />
-          <p className="text-emerald-700">Loading staff dashboard...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-[#0d5c75] mx-auto mb-4" />
+          <p className="text-[#0d5c75]">Loading staff dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login form if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[rgb(174,193,192)] via-[rgb(220,230,229)] to-[rgb(174,193,192)] flex items-center justify-center p-4">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-[10%] left-[15%] w-32 h-32 bg-gradient-to-r from-[#0d5c75]/30 to-[#2a9d8f]/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-[60%] right-[10%] w-24 h-24 bg-gradient-to-r from-[rgb(227,252,236)]/30 to-[#0d5c75]/30 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute bottom-[20%] left-[20%] w-20 h-20 bg-gradient-to-r from-[#2a9d8f]/30 to-[rgb(227,252,236)]/30 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        </div>
+
+        {/* Main Authentication Card */}
+        <div className="relative z-10 w-full max-w-md">
+          <Card className="bg-white/95 backdrop-blur-xl shadow-2xl border-0 rounded-2xl overflow-hidden">
+            {/* Header with Logo */}
+            <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white p-8 text-center relative">
+              <div className="relative z-10">
+                {/* Logo */}
+                <div className="w-20 h-20 mx-auto mb-4 relative">
+                  <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
+                    <Image
+                      src="/images/gonstead-chiropractic-logo-new.png"
+                      alt="Gonstead Logo"
+                      width={48}
+                      height={48}
+                      className="object-contain"
+                    />
+                  </div>
+                  {/* Staff Badge */}
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-[rgb(227,252,236)] to-white rounded-full flex items-center justify-center shadow-lg">
+                    <Shield className="h-4 w-4 text-[#0d5c75]" />
+                  </div>
+                </div>
+                
+                <CardTitle className="text-2xl font-bold mb-2">Staff Portal</CardTitle>
+                <p className="text-white/90 text-sm">Gonstead Chiropractic Clinic</p>
+                <p className="text-white/80 text-xs mt-1">Dr. Bashir Khan - Staff Access System</p>
+                
+                {/* Live Time Display */}
+                <div className="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                  <div className="text-sm font-semibold">{formatTime12Hour(currentTime)}</div>
+                  <div className="text-xs opacity-90">{formatDate(currentTime)}</div>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-8">
+              <form onSubmit={handleStaffLogin} className="space-y-6">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-semibold text-[#0d5c75] mb-2">Staff Authentication</h3>
+                  <p className="text-sm text-gray-600">Enter your credentials to access patient data</p>
+                </div>
+
+                {/* Username Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-[#0d5c75] font-medium">Username</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Enter your username"
+                      value={credentials.username}
+                      onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
+                      className="pl-10 border-2 border-gray-200 focus:border-[#0d5c75] rounded-lg"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-[#0d5c75] font-medium">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={credentials.password}
+                      onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+                      className="pl-10 pr-10 border-2 border-gray-200 focus:border-[#0d5c75] rounded-lg"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Login Button */}
+                <Button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#238a7a] text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  {authLoading ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <span>Authenticating...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <Shield className="h-4 w-4" />
+                      <span>Access Staff Dashboard</span>
+                    </div>
+                  )}
+                </Button>
+
+                {/* Info Section */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-start space-x-3">
+                    <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium mb-1">Staff Access Information:</p>
+                      <ul className="text-xs space-y-1 text-blue-700">
+                        <li>• Read-only access to patient data</li>
+                        <li>• Real-time appointment updates</li>
+                        <li>• Contact admin for password changes</li>
+                        <li>• Session expires after inactivity</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-8 py-4 text-center">
+              <p className="text-xs text-gray-600">Gonstead Chiropractic Clinic Staff Portal</p>
+              <p className="text-xs text-gray-500 mt-1">For assistance, contact Dr. Bashir Khan</p>
+              <p className="text-xs text-gray-400 mt-2">Default: Username: staff, Password: staff123</p>
+            </div>
+          </Card>
         </div>
       </div>
     )
@@ -274,20 +630,20 @@ export default function StaffDashboard() {
                 onClick={handleRefresh}
                 disabled={isRefreshing}
                 className="p-2 text-gray-500 hover:text-emerald-600 transition-colors"
-                title="Refresh appointments"
+                title="Refresh patient data"
               >
                 <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
               </button>
               
               <div className="hidden sm:block text-right">
                 <p className="text-sm font-medium text-gray-900">
-                  {staffUser?.email || 'Staff User'}
+                  {staffUsername || 'Staff User'}
                 </p>
-                <p className="text-xs text-gray-500">Staff Portal</p>
+                <p className="text-xs text-gray-500">Staff Portal - Read Only</p>
               </div>
 
               <button
-                onClick={handleSignOut}
+                onClick={handleStaffLogout}
                 className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:text-red-600 transition-colors"
                 title="Sign out"
               >
@@ -310,7 +666,7 @@ export default function StaffDashboard() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search patients, doctors..."
+                  placeholder="Search patients by name, phone, email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
@@ -321,38 +677,26 @@ export default function StaffDashboard() {
             {/* Filters */}
             <div className="flex flex-wrap gap-3">
               <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
-              >
-                <option value="">All dates</option>
-                {getUniqueValues('appointment_date').map(date => (
-                  <option key={date} value={date}>{formatDate(date)}</option>
-                ))}
-              </select>
-
-              <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
               >
-                <option value="">All statuses</option>
-                {getUniqueValues('status').map(status => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-                  </option>
-                ))}
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
               </select>
 
               <select
-                value={doctorFilter}
-                onChange={(e) => setDoctorFilter(e.target.value)}
+                value={urgencyFilter}
+                onChange={(e) => setUrgencyFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
               >
-                <option value="">All doctors</option>
-                {getUniqueValues('doctor_name').map(doctor => (
-                  <option key={doctor} value={doctor}>{doctor}</option>
-                ))}
+                <option value="">All Urgency</option>
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+                <option value="emergency">Emergency</option>
               </select>
             </div>
           </div>
@@ -360,24 +704,24 @@ export default function StaffDashboard() {
           {/* Summary Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
             <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-600">{filteredAppointments.length}</div>
-              <div className="text-sm text-gray-500">Total Appointments</div>
+              <div className="text-2xl font-bold text-emerald-600">{filteredPatients.length}</div>
+              <div className="text-sm text-gray-500">Total Patients</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {filteredAppointments.filter(apt => apt.status === 'scheduled' || apt.status === 'confirmed').length}
+                {filteredPatients.filter(patient => patient.status === 'confirmed' || patient.status === 'pending').length}
               </div>
               <div className="text-sm text-gray-500">Upcoming</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">
-                {filteredAppointments.filter(apt => apt.status === 'in_progress').length}
+              <div className="text-2xl font-bold text-orange-600">
+                {filteredPatients.filter(patient => patient.urgency === 'urgent' || patient.urgency === 'emergency').length}
               </div>
-              <div className="text-sm text-gray-500">In Progress</div>
+              <div className="text-sm text-gray-500">Urgent Cases</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {filteredAppointments.filter(apt => apt.status === 'completed').length}
+                {filteredPatients.filter(patient => patient.status === 'completed').length}
               </div>
               <div className="text-sm text-gray-500">Completed</div>
             </div>
@@ -394,38 +738,45 @@ export default function StaffDashboard() {
           </div>
         )}
 
-        {/* Appointments List */}
+        {/* Patient List - Read Only */}
         <div className="space-y-4">
-          {filteredAppointments.length === 0 ? (
+          {filteredPatients.length === 0 ? (
             <div className="bg-white rounded-xl shadow-lg p-12 text-center">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No patients found</h3>
               <p className="text-gray-500">
-                {searchTerm || dateFilter || statusFilter || doctorFilter
+                {searchTerm || statusFilter || urgencyFilter
                   ? 'Try adjusting your search or filters'
-                  : 'No appointments scheduled'}
+                  : 'No patients available'}
               </p>
             </div>
           ) : (
-            filteredAppointments.map((appointment) => {
-              const StatusIcon = statusIcons[appointment.status]
+            filteredPatients.map((patient) => {
+              const StatusIcon = statusIcons[patient.status] || Clock3
               return (
-                <div key={appointment.id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div key={patient.id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-l-emerald-500">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Patient Info */}
                     <div className="space-y-3">
                       <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                        <User className="h-5 w-5 text-gray-400" />
-                        <span>{appointment.patient_name}</span>
+                        <User className="h-5 w-5 text-emerald-600" />
+                        <span>{patient.name}</span>
+                        <Badge variant="outline" className="text-xs">
+                          READ-only
+                        </Badge>
                       </h3>
                       <div className="space-y-2 text-sm text-gray-600">
                         <div className="flex items-center space-x-2">
-                          <Mail className="h-4 w-4 flex-shrink-0" />
-                          <span>{appointment.patient_email}</span>
+                          <Phone className="h-4 w-4 flex-shrink-0 text-blue-500" />
+                          <span>{patient.phone}</span>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Phone className="h-4 w-4 flex-shrink-0" />
-                          <span>{appointment.patient_phone}</span>
+                          <Mail className="h-4 w-4 flex-shrink-0 text-blue-500" />
+                          <span>{patient.email || 'No email provided'}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4 flex-shrink-0 text-purple-500" />
+                          <span className="text-xs">ID: {patient.id.slice(0, 8)}...</span>
                         </div>
                       </div>
                     </div>
@@ -434,18 +785,36 @@ export default function StaffDashboard() {
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-5 w-5 text-gray-400" />
-                        <span className="font-medium">{formatDate(appointment.appointment_date)}</span>
+                        <span className="font-medium">
+                          {new Date(patient.appointment_date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Clock className="h-5 w-5 text-gray-400" />
-                        <span className="font-medium">{formatTime(appointment.appointment_time)}</span>
+                        <span className="font-medium">
+                          {new Date(patient.appointment_date).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <UserCheck className="h-5 w-5 text-gray-400" />
-                        <span className="font-medium">{appointment.doctor_name}</span>
+                        <Stethoscope className="h-5 w-5 text-gray-400" />
+                        <span className="font-medium">
+                          {patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation'}
+                        </span>
                       </div>
                       <p className="text-sm text-gray-600">
-                        Type: {appointment.appointment_type}
+                        Sessions: {patient.sessions_completed || 0} completed
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Payment: {patient.payment_method.toUpperCase()}
                       </p>
                     </div>
 
@@ -453,16 +822,27 @@ export default function StaffDashboard() {
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <StatusIcon className="h-5 w-5" />
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[appointment.status]}`}>
-                          {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1).replace('_', ' ')}
-                        </span>
+                        <Badge className={statusColors[patient.status]}>
+                          {patient.status.toUpperCase()}
+                        </Badge>
                       </div>
-                      {appointment.notes && (
+                      <div className="flex items-center space-x-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <Badge className={getUrgencyColor(patient.urgency)}>
+                          {patient.urgency.toUpperCase()}
+                        </Badge>
+                      </div>
+                      {patient.notes && (
                         <div className="bg-gray-50 rounded-lg p-3">
                           <p className="text-sm text-gray-700">
                             <span className="font-medium">Notes: </span>
-                            {appointment.notes}
+                            {patient.notes}
                           </p>
+                        </div>
+                      )}
+                      {patient.last_visit && (
+                        <div className="text-xs text-gray-500">
+                          Last visit: {new Date(patient.last_visit).toLocaleDateString()}
                         </div>
                       )}
                     </div>
@@ -479,7 +859,8 @@ export default function StaffDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center text-sm text-gray-500">
             <p>© 2024 Gonstead Chiropractic Clinic. All rights reserved.</p>
-            <p className="mt-1">Staff portal - Read-only appointment access</p>
+            <p className="mt-1">Staff Portal - Read-only Patient Data Access</p>
+            <p className="mt-2 text-xs text-gray-400">Real-time updates • Session expires in 30 minutes of inactivity</p>
           </div>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft, Users, List, BarChart3 } from "lucide-react"
+import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft, Users, List, BarChart3, Shield, Key, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser } from "@/lib/supabase"
 import Image from "next/image"
@@ -17,6 +17,7 @@ import { SeamlessDotIndicator } from "@/components/ui/seamless-update-indicator"
 
 export default function AdminSettings() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
   const [clinicSettings, setClinicSettings] = useState({
     clinicName: "Gonstead Chiropractic Clinic",
     address: "Near Peshawar Model School, Tehsil Road, Nowshera",
@@ -64,6 +65,17 @@ export default function AdminSettings() {
     virtualScrolling: false, // for very large datasets
   })
 
+  // Staff Password Management State
+  const [staffCredentials, setStaffCredentials] = useState({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    lastUpdated: '',
+    updatedBy: ''
+  })
+  const [showStaffPassword, setShowStaffPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
   const router = useRouter()
   const { toast } = useToast()
 
@@ -90,7 +102,37 @@ export default function AdminSettings() {
 
   const checkAuthAndLoadSettings = async () => {
     try {
-      const { user } = await getCurrentUser()
+      console.log("Settings: Checking authentication...")
+
+      // Check localStorage first to prevent loops
+      const isAuthenticated = localStorage.getItem("admin_authenticated")
+      const storedEmail = localStorage.getItem("admin_email")
+
+      if (isAuthenticated === "true" && storedEmail) {
+        console.log("Settings: Found localStorage auth, proceeding...")
+        setAuthChecked(true)
+        setIsAuthenticated(true)
+        loadSettings()
+        return
+      }
+
+      // If no localStorage, check Supabase auth
+      const { user, error } = await getCurrentUser()
+
+      if (error) {
+        console.error("Settings: Auth error:", error)
+        throw error
+      }
+
+      if (!user) {
+        console.log("Settings: No user found, redirecting to auth")
+        setAuthChecked(true)
+        router.replace("/admin/auth")
+        return
+      }
+
+      console.log("Settings: User authenticated:", user.email)
+
       const adminEmails = [
         "bashirahmad123.org@gmail.com",
         "Bashirahmad123.org@gmail.com",
@@ -98,17 +140,27 @@ export default function AdminSettings() {
         "dr.bashir@gonsteadchiropractic.com",
       ]
 
-      if (!user || !adminEmails.includes(user.email?.toLowerCase() || "")) {
-        router.push("/admin/auth")
+      if (!adminEmails.includes(user.email?.toLowerCase() || "")) {
+        console.log("Settings: User not authorized for admin access")
+        setAuthChecked(true)
+        router.replace("/admin/auth")
         return
       }
 
-      // Load settings from localStorage or API
-      loadSettings()
+      // Store auth in localStorage to prevent future loops
+      localStorage.setItem("admin_authenticated", "true")
+      localStorage.setItem("admin_email", user.email || "")
+
+      setAuthChecked(true)
       setIsAuthenticated(true)
+      loadSettings()
     } catch (error) {
-      console.error("Auth check failed:", error)
-      router.push("/admin/auth")
+      console.error("Settings: Auth check failed:", error)
+      // Clear localStorage on auth failure
+      localStorage.removeItem("admin_authenticated")
+      localStorage.removeItem("admin_email")
+      setAuthChecked(true)
+      router.replace("/admin/auth")
     }
   }
 
@@ -134,6 +186,29 @@ export default function AdminSettings() {
     }
     if (savedPaginationSettings) {
       setPaginationSettings(JSON.parse(savedPaginationSettings))
+    }
+
+    // Load staff credentials
+    const savedStaffCredentials = localStorage.getItem('staff_credentials')
+    if (savedStaffCredentials) {
+      const credentials = JSON.parse(savedStaffCredentials)
+      setStaffCredentials({
+        username: credentials.username || '',
+        password: '', // Don't show password for security
+        confirmPassword: '',
+        lastUpdated: credentials.lastUpdated || '',
+        updatedBy: credentials.updatedBy || ''
+      })
+    } else {
+      // Set default credentials if none exist
+      const defaultCredentials = {
+        username: 'staff',
+        password: '',
+        confirmPassword: '',
+        lastUpdated: '',
+        updatedBy: ''
+      }
+      setStaffCredentials(defaultCredentials)
     }
   }
 
@@ -169,9 +244,27 @@ export default function AdminSettings() {
     }))
   }
 
+  if (!authChecked) {
+    // Show loading while checking authentication
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 relative mx-auto mb-4">
+            <Image
+              src="/images/gonstead-chiropractic-logo-new.png"
+              alt="Gonstead Chiropractic Logo"
+              fill
+              className="object-contain animate-pulse"
+            />
+          </div>
+          <p className="text-[#0d5c75] font-medium">Verifying access...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!isAuthenticated) {
-    // Immediate redirect without loading screen
-    router.push("/admin/auth")
+    // This should not normally be reached due to redirects in checkAuthAndLoadSettings
     return null
   }
 
@@ -642,6 +735,164 @@ export default function AdminSettings() {
                       <li>• Quick navigation with keyboard shortcuts</li>
                       <li>• Export functionality for filtered results</li>
                       <li>• Real-time search across all pages</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Staff Password Management */}
+          <Card className="border-[#0d5c75]/20 lg:col-span-2">
+            <CardHeader className="bg-gradient-to-r from-red-600 to-red-700 text-white">
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Staff Portal Access Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Key className="h-4 w-4 text-red-600" />
+                      <h4 className="text-sm font-semibold text-red-800">Security Notice</h4>
+                    </div>
+                    <p className="text-xs text-red-700">
+                      Changing staff credentials will immediately affect all staff portal access. 
+                      Make sure to inform your staff about the new login details.
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="staffUsername" className="text-sm font-semibold text-[#0d5c75]">Staff Username</Label>
+                    <Input
+                      id="staffUsername"
+                      value={staffCredentials.username}
+                      onChange={(e) => setStaffCredentials(prev => ({ ...prev, username: e.target.value }))}
+                      placeholder="Enter staff username"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Username for staff portal login</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="staffPassword" className="text-sm font-semibold text-[#0d5c75]">New Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="staffPassword"
+                        type={showStaffPassword ? "text" : "password"}
+                        value={staffCredentials.password}
+                        onChange={(e) => setStaffCredentials(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Enter new password"
+                        className="mt-1 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowStaffPassword(!showStaffPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Minimum 6 characters recommended</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="confirmStaffPassword" className="text-sm font-semibold text-[#0d5c75]">Confirm Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmStaffPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={staffCredentials.confirmPassword}
+                        onChange={(e) => setStaffCredentials(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        placeholder="Confirm new password"
+                        className="mt-1 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {staffCredentials.password && staffCredentials.confirmPassword && 
+                     staffCredentials.password !== staffCredentials.confirmPassword && (
+                      <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-2">Current Staff Access Info</h4>
+                    <div className="space-y-2 text-xs text-blue-700">
+                      <p><span className="font-medium">Username:</span> {staffCredentials.username || 'staff'}</p>
+                      <p><span className="font-medium">Last Updated:</span> {staffCredentials.lastUpdated ? new Date(staffCredentials.lastUpdated).toLocaleString() : 'Never'}</p>
+                      <p><span className="font-medium">Updated By:</span> {staffCredentials.updatedBy || 'System'}</p>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={async () => {
+                      if (!staffCredentials.username.trim()) {
+                        toast({
+                          title: "Error",
+                          description: "Username cannot be empty",
+                          variant: "destructive"
+                        })
+                        return
+                      }
+                      
+                      if (staffCredentials.password && staffCredentials.password !== staffCredentials.confirmPassword) {
+                        toast({
+                          title: "Error",
+                          description: "Passwords do not match",
+                          variant: "destructive"
+                        })
+                        return
+                      }
+
+                      const currentCredentials = JSON.parse(localStorage.getItem('staff_credentials') || '{}')
+                      const newCredentials = {
+                        username: staffCredentials.username,
+                        password: staffCredentials.password || currentCredentials.password || 'staff123',
+                        lastUpdated: new Date().toISOString(),
+                        updatedBy: 'admin'
+                      }
+                      
+                      localStorage.setItem('staff_credentials', JSON.stringify(newCredentials))
+                      
+                      // Clear password fields for security
+                      setStaffCredentials(prev => ({
+                        ...prev,
+                        password: '',
+                        confirmPassword: '',
+                        lastUpdated: newCredentials.lastUpdated,
+                        updatedBy: newCredentials.updatedBy
+                      }))
+                      
+                      toast({
+                        title: "✅ Staff Credentials Updated",
+                        description: "Staff portal login credentials have been updated successfully. All active staff sessions will need to re-login.",
+                      })
+                    }}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    disabled={!staffCredentials.username.trim()}
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Update Staff Credentials
+                  </Button>
+
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <h4 className="text-sm font-semibold text-yellow-800 mb-2">Staff Portal Features</h4>
+                    <ul className="text-xs text-yellow-700 space-y-1">
+                      <li>• Read-only access to patient data</li>
+                      <li>• Real-time patient information updates</li>
+                      <li>• Secure authentication system</li>
+                      <li>• 30-minute session timeout</li>
+                      <li>• No data modification capabilities</li>
                     </ul>
                   </div>
                 </div>
