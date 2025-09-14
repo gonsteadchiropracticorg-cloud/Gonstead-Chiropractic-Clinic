@@ -245,7 +245,7 @@ class SyncManager {
   }
 
   // Register service worker and setup background sync
-  async registerServiceWorker(): Promise<void> {
+  async registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js')
@@ -253,8 +253,11 @@ class SyncManager {
         
         // Register background sync
         if ('sync' in window.ServiceWorkerRegistration.prototype) {
-          await registration.sync.register('background-sync')
-          console.log('Background sync registered')
+          const syncReg = registration as any // Background Sync API not in TS types
+          if (syncReg.sync && syncReg.sync.register) {
+            await syncReg.sync.register('background-sync')
+            console.log('Background sync registered')
+          }
         }
         
         return registration

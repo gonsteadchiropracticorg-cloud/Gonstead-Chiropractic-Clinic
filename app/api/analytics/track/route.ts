@@ -50,7 +50,7 @@ if (analyticsData.length === 0) {
         referrer: 'https://google.com'
       },
       timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-      location: { country: 'Pakistan', city: 'Nowshera', region: 'KPK' }
+      location: { country: 'Pakistan', city: 'Nowshera', region: 'KPK', timezone: 'Asia/Karachi' }
     },
     {
       id: crypto.randomUUID(),
@@ -63,7 +63,7 @@ if (analyticsData.length === 0) {
         referrer: 'direct'
       },
       timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-      location: { country: 'Pakistan', city: 'Peshawar', region: 'KPK' }
+      location: { country: 'Pakistan', city: 'Peshawar', region: 'KPK', timezone: 'Asia/Karachi' }
     },
     {
       id: crypto.randomUUID(),
@@ -76,7 +76,7 @@ if (analyticsData.length === 0) {
         referrer: 'https://facebook.com'
       },
       timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-      location: { country: 'Pakistan', city: 'Islamabad', region: 'ICT' }
+      location: { country: 'Pakistan', city: 'Islamabad', region: 'ICT', timezone: 'Asia/Karachi' }
     }
   ]
   

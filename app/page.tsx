@@ -41,7 +41,6 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { AppointmentBookingModal } from "@/components/appointment-booking-modal"
 import { EmailContactSection } from "@/components/EmailContactSection"
 import { FooterWeatherWidget } from "@/components/footer-weather-widget"
-import { TrustpilotReviewPreview } from '@/components/TrustpilotReviewPreview'
 import { PreVisitInstructions } from "@/components/pre-visit-instructions"
 
 function HomePageContent() {
@@ -1165,26 +1164,6 @@ function HomePageContent() {
             </div>
           </section>
 
-          {/* Professional Patient Reviews Section */}
-          <section className="relative py-20 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/20 overflow-hidden">
-            {/* Background Enhancement */}
-            <div className="absolute inset-0">
-              <div className="absolute top-0 left-0 w-72 h-72 bg-[#00b67a]/5 rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#00b67a]/3 rounded-full blur-3xl animate-pulse animation-delay-2000"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-[#00b67a]/8 rounded-full blur-2xl animate-pulse animation-delay-1000"></div>
-            </div>
-            
-            {/* Professional Divider */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00b67a]/30 to-transparent"></div>
-            
-            {/* Content */}
-            <div className="relative z-10">
-              <TrustpilotReviewPreview className="" />
-            </div>
-            
-            {/* Professional Bottom Accent */}
-            <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#00b67a]/20 to-transparent"></div>
-          </section>
 
           {/* Compact Patient Education Resources Section */}
           <section className="relative py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-[#0d5c75]/5 via-white to-[#2a9d8f]/5 dark:from-gray-900/50 dark:to-gray-800/50">

@@ -140,7 +140,7 @@ class PrescriptionSaveService {
           emergency_contact: {
             name: "Emergency Contact",
             relationship: "Family",
-            phone: prescription.patient_phone
+            phone: prescription.patient_phone || "N/A"
           },
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -182,7 +182,7 @@ class PrescriptionSaveService {
     return prescriptions.filter(prescription => 
       prescription.patient_name.toLowerCase().includes(lowerSearchTerm) ||
       prescription.id.toLowerCase().includes(lowerSearchTerm) ||
-      prescription.patient_phone.includes(searchTerm)
+      (prescription.patient_phone && prescription.patient_phone.includes(searchTerm))
     )
   }
 

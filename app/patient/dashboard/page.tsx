@@ -23,7 +23,6 @@ import {
 import { SpineTimeline } from "@/components/dashboard/spine-timeline"
 import { SymptomTracker } from "@/components/dashboard/symptom-tracker"
 import { ExerciseLibrary } from "@/components/dashboard/exercise-library"
-import { PatientReviewForm } from "@/components/patient-review-form"
 import EducationHub from "../../../components/EducationHub"
 import type { Patient, Appointment } from "@/lib/dashboard-types"
 
@@ -323,14 +322,6 @@ export default function PatientDashboard() {
             </CardContent>
           </Card>
 
-          {/* Patient Review Form */}
-          <PatientReviewForm 
-            patientName={currentPatient?.name}
-            onSubmit={(reviewData) => {
-              console.log('Review submitted:', reviewData)
-              // Handle review submission here
-            }}
-          />
         </div>
 
         {/* Right Column - Main Content Tabs */}
@@ -370,7 +361,7 @@ export default function PatientDashboard() {
             </TabsContent>
 
             <TabsContent value="education" className="space-y-4">
-              <EducationHub patient={currentPatient} />
+              <EducationHub patient={currentPatient || undefined} />
             </TabsContent>
           </Tabs>
         </div>

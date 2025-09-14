@@ -2867,7 +2867,7 @@ Doctor Signature: Dr. Bashir Khan, DCP
                           notes: isCurrent ? (selectedPatientHistory.notes || 'Initial consultation') : 
                                 isCompleted ? 'Gonstead adjustment completed successfully' :
                                 'Session pending',
-                          prescription: i === 0 && selectedPatientHistory.prescription_generated ? selectedPatientHistory.last_prescription_id || 'RX001' : null
+                          prescription: i === 0 && selectedPatientHistory.prescription_generated ? `RX${String(selectedPatientHistory.prescription_count || 1).padStart(3, '0')}` : null
                         })
                       }
                       

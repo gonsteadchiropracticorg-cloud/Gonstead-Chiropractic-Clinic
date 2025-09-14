@@ -243,7 +243,7 @@ export const knowledgeBaseUtils = {
     const results: any[] = [];
 
     // Check FAQ categories
-    if (knowledgeBaseConfig.categories.faq.includes(category)) {
+    if (knowledgeBaseConfig.categories.faq.includes(category as any)) {
       const categoryFAQs = getFAQsByCategory(category);
       results.push(...categoryFAQs.map((item: any) => ({
         ...item,
@@ -254,7 +254,7 @@ export const knowledgeBaseUtils = {
     }
 
     // Check Service categories
-    if (knowledgeBaseConfig.categories.services.includes(category)) {
+    if (knowledgeBaseConfig.categories.services.includes(category as any)) {
       const categoryServices = getServicesByCategory(category);
       results.push(...categoryServices.map((item: any) => ({
         ...item,
@@ -265,7 +265,7 @@ export const knowledgeBaseUtils = {
     }
 
     // Check Education categories
-    if (knowledgeBaseConfig.categories.education.includes(category)) {
+    if (knowledgeBaseConfig.categories.education.includes(category as any)) {
       const categoryEducation = getEducationByCategory(category);
       results.push(...categoryEducation.map((item: any) => ({
         ...item,

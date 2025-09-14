@@ -45,7 +45,7 @@ interface LocationSettings {
     website: string
   }
   business_hours: {
-    [key: string]: { open: string; close: string; is_open: boolean }
+    [key: string]: { open: string; close: string; is_open: boolean } | { available: boolean; note: string }
     emergency: { available: boolean; note: string }
   }
   website_settings: {
@@ -516,6 +516,9 @@ export default function LocationSettingsPage() {
                 {Object.entries(settings.business_hours).map(([day, hours]) => {
                   if (day === 'emergency') return null
                   
+                  // Type guard to ensure we have regular business hours
+                  const regularHours = hours as { open: string; close: string; is_open: boolean }
+                  
                   return (
                     <div key={day} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
                       <div className="w-20 font-medium capitalize text-gray-900">
@@ -523,26 +526,26 @@ export default function LocationSettingsPage() {
                       </div>
                       
                       <Switch
-                        checked={hours.is_open}
+                        checked={regularHours.is_open}
                         onCheckedChange={(checked) => setSettings(prev => ({
                           ...prev,
                           business_hours: {
                             ...prev.business_hours,
-                            [day]: { ...hours, is_open: checked }
+                            [day]: { ...regularHours, is_open: checked }
                           }
                         }))}
                       />
                       
-                      {hours.is_open ? (
+                      {regularHours.is_open ? (
                         <div className="flex items-center gap-2 flex-1">
                           <Input
                             type="time"
-                            value={hours.open}
+                            value={regularHours.open}
                             onChange={(e) => setSettings(prev => ({
                               ...prev,
                               business_hours: {
                                 ...prev.business_hours,
-                                [day]: { ...hours, open: e.target.value }
+                                [day]: { ...regularHours, open: e.target.value }
                               }
                             }))}
                             className="w-32"
@@ -550,12 +553,12 @@ export default function LocationSettingsPage() {
                           <span className="text-gray-500">to</span>
                           <Input
                             type="time"
-                            value={hours.close}
+                            value={regularHours.close}
                             onChange={(e) => setSettings(prev => ({
                               ...prev,
                               business_hours: {
                                 ...prev.business_hours,
-                                [day]: { ...hours, close: e.target.value }
+                                [day]: { ...regularHours, close: e.target.value }
                               }
                             }))}
                             className="w-32"

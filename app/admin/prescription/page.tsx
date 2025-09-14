@@ -161,7 +161,7 @@ function PrescriptionPageContent() {
   const generateNewPrescriptionId = () => {
     const newId = prescriptionIdGenerator.generatePrescriptionId(patientName)
     setCurrentPrescriptionId(newId)
-    console.log('Generated new prescription ID:', newId.prescriptionId)
+    console.log('Generated new prescription ID:', newId.id)
   }
 
 
@@ -175,7 +175,7 @@ function PrescriptionPageContent() {
     setIsSaving(true)
     try {
       const prescriptionData: SavePrescriptionData = {
-        prescriptionId: currentPrescriptionId.prescriptionId,
+        prescriptionId: currentPrescriptionId.id,
         patientId: currentPrescriptionId.patientId,
         patientName,
         patientAge,
@@ -188,17 +188,15 @@ function PrescriptionPageContent() {
         conditions: selectedConditions,
         treatmentPlan,
         prescribedMedicine,
-        totalSessions: totalSessions ? parseInt(totalSessions) : undefined,
-        sessionFee: sessionFee ? parseFloat(sessionFee) : undefined,
+        totalSessions: totalSessions || '0',
+        sessionFee: sessionFee || '0',
         paymentMethod,
         paymentStatus,
-        customFields,
-        createdAt: new Date().toISOString(),
-        status: 'active'
+        customFields
       }
 
       await prescriptionSaveService.savePrescription(prescriptionData)
-      console.log('Prescription saved successfully:', currentPrescriptionId.prescriptionId)
+      console.log('Prescription saved successfully:', currentPrescriptionId.id)
     } catch (error) {
       console.error('Error saving prescription:', error)
     } finally {
@@ -1872,7 +1870,7 @@ function PrescriptionPageContent() {
                         <option value="">Select Severity</option>
                         <option value="Acute">Acute (Recent onset)</option>
                         <option value="Sub-acute">Sub-acute (2-6 weeks)</option>
-                        <option value="Chronic">Chronic (>6 weeks)</option>
+                        <option value="Chronic">Chronic (&gt;6 weeks)</option>
                         <option value="Recurrent">Recurrent Episodes</option>
                       </select>
                     </div>

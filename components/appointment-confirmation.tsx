@@ -532,7 +532,7 @@ export function AppointmentConfirmation({
 
 
         <Button 
-          onClick={downloadPDF}
+          onClick={() => downloadPDF(false)}
           variant="outline"
           className="border-blue-400 text-blue-600 hover:bg-blue-400 hover:text-white py-3 sm:py-4 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
         >
