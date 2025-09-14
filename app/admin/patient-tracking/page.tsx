@@ -23,7 +23,7 @@ import {
   Download,
   Eye,
   ArrowLeft,
-  Prescription,
+  Pill,
   DollarSign,
   Stethoscope,
   Timer,
@@ -580,7 +580,7 @@ export default function PatientTrackingPage() {
                   <Card className="shadow-xl border-[#0d5c75]/20">
                     <CardHeader className="bg-[#2a9d8f] text-white">
                       <CardTitle className="flex items-center gap-2">
-                        <Prescription className="h-5 w-5" />
+                        <Pill className="h-5 w-5" />
                         Prescription History ({getPatientPrescriptions(selectedPatient).length})
                       </CardTitle>
                     </CardHeader>
@@ -592,7 +592,7 @@ export default function PatientTrackingPage() {
                               <div className="flex justify-between items-start mb-3">
                                 <div>
                                   <h4 className="font-semibold text-[#0d5c75] flex items-center gap-2">
-                                    <Prescription className="h-4 w-4" />
+                                    <Pill className="h-4 w-4" />
                                     Prescription ID: {prescription.id}
                                   </h4>
                                   <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
@@ -622,7 +622,7 @@ export default function PatientTrackingPage() {
                         </div>
                       ) : (
                         <div className="text-center py-8">
-                          <Prescription className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                          <Pill className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                           <p className="text-gray-500">No prescription records found for this patient</p>
                           <p className="text-sm text-gray-400 mt-1">
                             Prescriptions will appear here after they are generated
