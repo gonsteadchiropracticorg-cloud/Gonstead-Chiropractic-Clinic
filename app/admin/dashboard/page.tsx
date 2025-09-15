@@ -1139,9 +1139,9 @@ Doctor Signature: Dr. Bashir Khan, DCP
             {/* Bottom Row: Controls and Action Buttons - Mobile Responsive */}
             <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
               {/* Combined Time and Weather Display - Mobile Optimized */}
-              <div className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex-1 sm:flex-none`}>
+              <div className={`flex items-center gap-1 sm:gap-3 p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex-1 sm:flex-none min-w-0`}>
                 {/* Weather Section - Hidden on very small screens */}
-                <div className="hidden xs:flex items-center gap-1 sm:gap-2 border-r border-white/20 pr-2 sm:pr-3">
+                <div className="hidden md:flex items-center gap-1 sm:gap-2 border-r border-white/20 pr-2 sm:pr-3">
                   <Cloud className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
                   <div>
                     <div className={`text-xs sm:text-sm font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
@@ -1151,28 +1151,28 @@ Doctor Signature: Dr. Bashir Khan, DCP
                   </div>
                 </div>
                 
-                {/* Time Section - Always visible */}
-                <div className="text-center flex-1">
-                  <div className="text-xs sm:text-sm font-bold font-mono tracking-wider">
+                {/* Time Section - Always visible but compact on mobile */}
+                <div className="text-center flex-1 min-w-0">
+                  <div className="text-[10px] sm:text-sm font-bold font-mono tracking-wider truncate">
                     {typeof window !== 'undefined' ? formatTime12Hour(currentTime) : '--:--:-- --'}
                   </div>
-                  <div className="text-[8px] sm:text-xs opacity-80 font-medium">
+                  <div className="text-[8px] sm:text-xs opacity-80 font-medium truncate">
                     {typeof window !== 'undefined' ? formatDate(currentTime).split(',')[0] : '-- --'}
                   </div>
                 </div>
               </div>
 
-              {/* Header Action Buttons - Restored to Top Right */}
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Header Action Buttons - Mobile Responsive */}
+              <div className="flex items-center gap-1 sm:gap-2">
                 {/* Add Patient Button */}
                 <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
                   <DialogTrigger asChild>
                     <Button 
                       size="sm" 
-                      className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
+                      className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white px-1.5 sm:px-3 py-1 sm:py-1.5 h-auto text-[10px] sm:text-sm min-w-0 shrink-0"
                     >
-                      <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Add Patient</span>
+                      <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                      <span className="hidden md:inline ml-1">Add</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">

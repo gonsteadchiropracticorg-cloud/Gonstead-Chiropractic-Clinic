@@ -215,11 +215,11 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
       />
       
       {/* Sidebar with smooth slide animation */}
-      <div className={`fixed top-0 left-0 h-full w-80 bg-white shadow-2xl z-50 border-r border-gray-200 transform transition-transform duration-300 ease-out ${
+      <div className={`fixed top-0 left-0 h-screen w-80 bg-white shadow-2xl z-50 border-r border-gray-200 transform transition-transform duration-300 ease-out flex flex-col ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        {/* Professional Header */}
-        <div className="bg-gradient-to-br from-[#0d5c75] via-[#1a6b7d] to-[#2a9d8f] text-white relative overflow-hidden">
+      }`} style={{ maxHeight: '100vh', overflowY: 'hidden' }}>
+        {/* Professional Header - Fixed height */}
+        <div className="flex-shrink-0 bg-gradient-to-br from-[#0d5c75] via-[#1a6b7d] to-[#2a9d8f] text-white relative overflow-hidden">
           {/* Subtle background pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full -translate-y-8 translate-x-8"></div>
@@ -288,8 +288,8 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
           </div>
         </div>
 
-        {/* Scrollable Navigation Menu */}
-        <div className="flex-1 overflow-y-auto" style={{ height: 'calc(100vh - 280px)' }}>
+      {/* Scrollable Navigation Menu - Takes remaining space */}
+        <div className="admin-sidebar-scroll">
           <div className="p-3 space-y-1">
             {sidebarItems.map((item) => {
               const Icon = item.icon
@@ -413,29 +413,32 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
               )
             })}
           </div>
+          
+          {/* Extra padding at the bottom to ensure last items are accessible */}
+          <div className="h-16"></div>
         </div>
 
-        {/* Professional Footer */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gray-50/80 backdrop-blur-sm border-t border-gray-200">
+        {/* Professional Footer - Fixed at bottom */}
+        <div className="flex-shrink-0 bg-gray-50/80 backdrop-blur-sm border-t border-gray-200">
           <div className="p-4">
             {/* Help and Logout */}
             <div className="flex gap-2 mb-3">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="flex-1 text-gray-600 hover:text-[#0d5c75] hover:bg-[#0d5c75]/5"
+                className="flex-1 text-gray-600 hover:text-[#0d5c75] hover:bg-[#0d5c75]/5 transition-all duration-200"
               >
                 <HelpCircle className="h-4 w-4 mr-2" />
-                Help
+                <span className="text-sm font-medium">Help</span>
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={handleLogout}
-                className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Logout
+                <span className="text-sm font-medium">Logout</span>
               </Button>
             </div>
             
