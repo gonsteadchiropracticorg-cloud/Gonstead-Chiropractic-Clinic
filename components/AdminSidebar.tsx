@@ -133,7 +133,7 @@ const sidebarItems: MenuItem[] = [
     description: "System management",
     category: "admin",
     children: [
-      { id: "settings", title: "System Settings", href: "/admin/settings", icon: Settings },
+      { id: "settings", title: "Basic Settings", href: "/admin/settings", icon: Settings },
       { id: "location-settings", title: "Location & Maps", href: "/admin/location-settings", icon: MapPin },
       { id: "import-export", title: "Import/Export", href: "/admin/import-export", icon: Database },
     ]
@@ -182,6 +182,7 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
 
   const handleNavigation = (href: string) => {
     if (href) {
+      console.log('AdminSidebar: Navigating to:', href)
       router.push(href)
       onClose()
     }
@@ -300,10 +301,13 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
                 <div key={item.id} className="space-y-1">
                   {/* Main Menu Item */}
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault()
                       if (hasChildren) {
+                        console.log('AdminSidebar: Toggling expansion for:', item.id)
                         toggleExpanded(item.id)
                       } else if (item.href) {
+                        console.log('AdminSidebar: Direct navigation to:', item.href)
                         handleNavigation(item.href)
                       }
                     }}
@@ -372,7 +376,14 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
                           return (
                             <button
                               key={child.id}
-                              onClick={() => child.href && handleNavigation(child.href)}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                console.log('AdminSidebar: Child navigation to:', child.href)
+                                if (child.href) {
+                                  handleNavigation(child.href)
+                                }
+                              }}
                               className={`
                                 w-full text-left p-2.5 rounded-lg transition-all duration-200 group
                                 ${

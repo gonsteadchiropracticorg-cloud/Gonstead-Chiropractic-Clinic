@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,8 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import {
   Upload,
   Download,
@@ -23,35 +20,33 @@ import {
   AlertTriangle,
   RefreshCw,
   Users,
-  FileCheck,
-  FileX,
-  Calendar,
-  Phone,
-  Mail,
   ArrowLeft,
-  Import,
   FileDown,
   FileUp,
-  Filter,
   Search,
   X,
-  Plus,
   Clock,
-  ChevronDown,
-  ChevronUp,
+  Phone,
+  Mail
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import {
-  getPatients,
-  createPatient,
-  deletePatient,
-  getCurrentUser,
-  type Patient,
-} from "@/lib/supabase"
-import Image from "next/image"
-import ExcelJS from 'exceljs'
-import { useSeamlessData } from "@/hooks/use-silent-sync"
-import { SeamlessDotIndicator } from "@/components/ui/seamless-update-indicator"
+
+interface Patient {
+  id: string
+  name: string
+  phone: string
+  email?: string
+  session_type: "in_clinic" | "video"
+  appointment_date: string
+  status: "pending" | "confirmed" | "completed" | "cancelled"
+  urgency: "normal" | "urgent" | "emergency"
+  payment_method?: "cash" | "jazzcash" | "easypaisa"
+  sessions_completed?: number
+  notes?: string
+  created_at?: string
+  updated_at?: string
+  last_visit?: string
+}
 
 interface ImportedPatient extends Patient {
   importStatus?: 'success' | 'error' | 'pending'
@@ -73,126 +68,24 @@ interface ImportExportRecord {
 export default function ImportExportPage() {
   const [patients, setPatients] = useState<Patient[]>([])
   const [importExportHistory, setImportExportHistory] = useState<ImportExportRecord[]>([])
-  const [selectedRecord, setSelectedRecord] = useState<ImportExportRecord | null>(null)
-  const [expandedRecord, setExpandedRecord] = useState<string | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterType, setFilterType] = useState<string>("all")
-  const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
   const [importedData, setImportedData] = useState<ImportedPatient[]>([])
   const [importStats, setImportStats] = useState({ total: 0, success: 0, errors: 0, pending: 0 })
   const [selectedPatient, setSelectedPatient] = useState<ImportedPatient | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  
-  const deleteRecord = (recordId: string) => {
-    setImportExportHistory(prev => prev.filter(record => record.id !== recordId))
-    toast({
-      title: "Record Deleted",
-      description: "Import/Export record has been removed from history",
-    })
-  }
-  
-  const deleteImportedRecord = (index: number) => {
-    setImportedData(prev => prev.filter((_, i) => i !== index))
-    toast({
-      title: "Record Removed",
-      description: "Imported record has been removed from preview",
-    })
-  }
-
-  const deleteExportRecord = (recordId: string) => {
-    setImportExportHistory(prev => prev.filter(record => record.id !== recordId))
-    toast({
-      title: "Export Record Deleted",
-      description: "Export record has been removed from history",
-    })
-  }
-
-  const addToDashboard = async (recordId: string) => {
-    const record = importExportHistory.find(r => r.id === recordId)
-    if (!record) return
-
-    try {
-      // Add patients to main dashboard
-      const validPatients = record.patients.filter(p => p.importStatus === 'success')
-      setPatients(prev => [...prev, ...validPatients])
-      
-      toast({
-        title: "Added to Dashboard! 🎉",
-        description: `Successfully added ${validPatients.length} patients to the main dashboard`,
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add records to dashboard",
-        variant: "destructive",
-      })
-    }
-  }
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const { toast } = useToast()
 
-  // Seamless patient data loading
-  const loadPatientsData = async () => {
-    const savedPatients = localStorage.getItem("gonstead_patients")
-    return savedPatients ? JSON.parse(savedPatients) : []
-  }
-
-  const { data: seamlessPatients, syncState } = useSeamlessData<Patient[]>(
-    [],
-    loadPatientsData,
-    {
-      syncInterval: 25000,
-      enableRealTimeSync: false
-    }
-  )
-
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace("/admin/auth")
-    }
-  }, [isAuthenticated, router])
-
-  useEffect(() => {
-    checkAuthAndLoadData()
+    loadPatientData()
+    loadImportExportHistory()
   }, [])
 
-  const checkAuthAndLoadData = async () => {
-    try {
-      const isAuthenticated = localStorage.getItem("admin_authenticated")
-      const storedEmail = localStorage.getItem("admin_email")
-
-      if (isAuthenticated === "true" && storedEmail) {
-        setIsAuthenticated(true)
-        await loadInitialData()
-        return
-      }
-
-      const { user, error } = await getCurrentUser()
-
-      if (error || !user) {
-        router.replace("/admin/auth")
-        return
-      }
-
-      localStorage.setItem("admin_authenticated", "true")
-      localStorage.setItem("admin_email", user.email || "")
-
-      setIsAuthenticated(true)
-      await loadInitialData()
-    } catch (error) {
-      console.error("Auth check failed:", error)
-      localStorage.removeItem("admin_authenticated")
-      localStorage.removeItem("admin_email")
-      router.replace("/admin/auth")
-    }
-  }
-
-  const loadInitialData = async () => {
+  const loadPatientData = () => {
     try {
       const savedPatients = localStorage.getItem("gonstead_patients")
       if (savedPatients) {
@@ -203,108 +96,22 @@ export default function ImportExportPage() {
     }
   }
 
-  const exportToExcel = async () => {
-    setIsExporting(true)
+  const loadImportExportHistory = () => {
     try {
-      const headers = [
-        "ID",
-        "Name",
-        "Phone",
-        "Email",
-        "Session Type",
-        "Appointment Date",
-        "Status",
-        "Urgency",
-        "Payment Method",
-        "Sessions Completed",
-        "Notes",
-        "Created At",
-        "Last Visit"
-      ]
-
-      const data = patients.map(patient => [
-        patient.id,
-        patient.name,
-        patient.phone,
-        patient.email || "",
-        patient.session_type,
-        patient.appointment_date,
-        patient.status,
-        patient.urgency,
-        patient.payment_method || "",
-        patient.sessions_completed || 0,
-        patient.notes || "",
-        patient.created_at || "",
-        patient.last_visit || ""
-      ])
-
-      // Create ExcelJS workbook and worksheet
-      const workbook = new ExcelJS.Workbook()
-      const worksheet = workbook.addWorksheet('Patients')
-      
-      // Add headers
-      worksheet.addRow(headers)
-      
-      // Add data rows
-      data.forEach(row => {
-        worksheet.addRow(row)
-      })
-      
-      // Style the header row
-      const headerRow = worksheet.getRow(1)
-      headerRow.font = { bold: true }
-      headerRow.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF0D5C75' }
+      const savedHistory = localStorage.getItem("import_export_history")
+      if (savedHistory) {
+        setImportExportHistory(JSON.parse(savedHistory))
       }
-      
-      // Auto-size columns
-      worksheet.columns.forEach(column => {
-        column.width = 15
-      })
-      
-      // Generate buffer and download
-      const buffer = await workbook.xlsx.writeBuffer()
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
-      
-      const filename = `gonstead_patients_${new Date().toISOString().split('T')[0]}.xlsx`
-      link.setAttribute('href', url)
-      link.setAttribute('download', filename)
-      link.style.visibility = 'hidden'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      
-      // Add to history
-      const newRecord: ImportExportRecord = {
-        id: `export_${Date.now()}`,
-        type: 'export',
-        date: new Date().toLocaleDateString(),
-        time: new Date().toLocaleTimeString(),
-        filename: filename,
-        recordCount: patients.length,
-        status: 'success',
-        patients: patients.map(p => ({ ...p, importStatus: 'success' as const })),
-      }
-      
-      setImportExportHistory(prev => [newRecord, ...prev])
-      
-      toast({
-        title: "Export Successful! 🎉",
-        description: `Successfully exported ${patients.length} patient records to Excel`,
-      })
     } catch (error) {
-      console.error("Export error:", error)
-      toast({
-        title: "Export Failed",
-        description: "There was an error exporting the data",
-        variant: "destructive",
-      })
-    } finally {
-      setIsExporting(false)
+      console.error("Error loading history:", error)
+    }
+  }
+
+  const saveImportExportHistory = (history: ImportExportRecord[]) => {
+    try {
+      localStorage.setItem("import_export_history", JSON.stringify(history))
+    } catch (error) {
+      console.error("Error saving history:", error)
     }
   }
 
@@ -312,19 +119,9 @@ export default function ImportExportPage() {
     setIsExporting(true)
     try {
       const csvHeaders = [
-        "ID",
-        "Name",
-        "Phone",
-        "Email",
-        "Session Type",
-        "Appointment Date",
-        "Status",
-        "Urgency",
-        "Payment Method",
-        "Sessions Completed",
-        "Notes",
-        "Created At",
-        "Last Visit"
+        "ID", "Name", "Phone", "Email", "Session Type", "Appointment Date", 
+        "Status", "Urgency", "Payment Method", "Sessions Completed", "Notes", 
+        "Created At", "Last Visit"
       ]
 
       const csvData = patients.map(patient => [
@@ -372,7 +169,9 @@ export default function ImportExportPage() {
         patients: patients.map(p => ({ ...p, importStatus: 'success' as const })),
       }
       
-      setImportExportHistory(prev => [newRecord, ...prev])
+      const updatedHistory = [newRecord, ...importExportHistory]
+      setImportExportHistory(updatedHistory)
+      saveImportExportHistory(updatedHistory)
       
       toast({
         title: "Export Successful! 🎉",
@@ -395,10 +194,10 @@ export default function ImportExportPage() {
     if (!file) return
 
     const fileExtension = file.name.split('.').pop()?.toLowerCase()
-    if (!fileExtension || !['csv', 'xlsx'].includes(fileExtension)) {
+    if (!fileExtension || !['csv'].includes(fileExtension)) {
       toast({
         title: "Invalid File Type",
-        description: "Please select a CSV or Excel (.xlsx) file",
+        description: "Please select a CSV file",
         variant: "destructive",
       })
       return
@@ -406,122 +205,10 @@ export default function ImportExportPage() {
 
     const reader = new FileReader()
     reader.onload = (e) => {
-      const data = e.target?.result
-      if (fileExtension === 'csv') {
-        parseCsvData(data as string)
-      } else {
-        parseExcelData(data as ArrayBuffer)
-      }
+      const data = e.target?.result as string
+      parseCsvData(data)
     }
-    
-    if (fileExtension === 'csv') {
-      reader.readAsText(file)
-    } else {
-      reader.readAsArrayBuffer(file)
-    }
-  }
-
-  const parseExcelData = async (arrayBuffer: ArrayBuffer) => {
-    try {
-      // Create ExcelJS workbook from buffer
-      const workbook = new ExcelJS.Workbook()
-      await workbook.xlsx.load(arrayBuffer)
-      
-      // Get first worksheet
-      const worksheet = workbook.getWorksheet(1)
-      if (!worksheet) {
-        toast({
-          title: "Empty File",
-          description: "The Excel file appears to be empty",
-          variant: "destructive",
-        })
-        return
-      }
-      
-      // Convert worksheet to array format
-      const jsonData: any[][] = []
-      worksheet.eachRow((row, rowNumber) => {
-        const rowData: any[] = []
-        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-          rowData[colNumber - 1] = cell.value
-        })
-        jsonData.push(rowData)
-      })
-      
-      if (jsonData.length === 0) {
-        toast({
-          title: "Empty File",
-          description: "The Excel file appears to be empty",
-          variant: "destructive",
-        })
-        return
-      }
-
-      const headers = jsonData[0].map(h => String(h).trim())
-      const expectedHeaders = ["ID", "Name", "Phone", "Email", "Session Type", "Appointment Date", "Status", "Urgency"]
-      const missingHeaders = expectedHeaders.filter(h => !headers.some(header => header.toLowerCase().includes(h.toLowerCase())))
-      
-      if (missingHeaders.length > 0) {
-        toast({
-          title: "Invalid Excel Format",
-          description: `Missing required columns: ${missingHeaders.join(', ')}`,
-          variant: "destructive",
-        })
-        return
-      }
-
-      const data: ImportedPatient[] = []
-      
-      for (let i = 1; i < jsonData.length; i++) {
-        const values = jsonData[i].map(v => String(v || '').trim())
-        
-        if (values.length < headers.length) continue
-
-        try {
-          const patient: ImportedPatient = {
-            id: values[0] || `import_${Date.now()}_${i}`,
-            name: values[1] || "",
-            phone: values[2] || "",
-            email: values[3] || undefined,
-            session_type: (values[4] as "in_clinic" | "video") || "in_clinic",
-            appointment_date: values[5] || new Date().toISOString(),
-            status: (values[6] as "pending" | "confirmed" | "completed" | "cancelled") || "pending",
-            urgency: (values[7] as "normal" | "urgent" | "emergency") || "normal",
-            payment_method: (values[8] as "cash" | "jazzcash" | "easypaisa") || "cash",
-            sessions_completed: parseInt(values[9]) || 0,
-            notes: values[10] || undefined,
-            created_at: values[11] || new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            last_visit: values[12] || undefined,
-            importStatus: 'pending'
-          }
-
-          // Validation
-          if (!patient.name || !patient.phone) {
-            patient.importStatus = 'error'
-            patient.importError = 'Missing required fields (Name or Phone)'
-          } else if (!/^[\+]?[0-9\s\-\(\)]{10,}$/.test(patient.phone)) {
-            patient.importStatus = 'error'
-            patient.importError = 'Invalid phone number format'
-          } else {
-            patient.importStatus = 'success'
-          }
-
-          data.push(patient)
-        } catch (error) {
-          console.error('Error parsing row:', error)
-        }
-      }
-
-      processImportData(data)
-    } catch (error) {
-      console.error("Excel parsing error:", error)
-      toast({
-        title: "Parse Error",
-        description: "Failed to parse Excel file. Please check the format.",
-        variant: "destructive",
-      })
-    }
+    reader.readAsText(file)
   }
 
   const parseCsvData = (csv: string) => {
@@ -546,7 +233,7 @@ export default function ImportExportPage() {
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim())
         
-        if (values.length < headers.length) continue
+        if (values.length < 8) continue
 
         try {
           const patient: ImportedPatient = {
@@ -617,7 +304,9 @@ export default function ImportExportPage() {
       errorMessage: stats.errors > 0 ? `${stats.errors} records failed validation` : undefined
     }
     
-    setImportExportHistory(prev => [newRecord, ...prev])
+    const updatedHistory = [newRecord, ...importExportHistory]
+    setImportExportHistory(updatedHistory)
+    saveImportExportHistory(updatedHistory)
     setImportedData(data)
 
     toast({
@@ -631,30 +320,21 @@ export default function ImportExportPage() {
     const validRecords = importedData.filter(p => p.importStatus === 'success')
     
     try {
-      let successCount = 0
-      let errorCount = 0
-
-      for (const patient of validRecords) {
-        try {
-          const { id, importStatus, importError, ...patientData } = patient
-          await createPatient(patientData)
-          successCount++
-        } catch (error) {
-          errorCount++
-          console.error(`Failed to import patient ${patient.name}:`, error)
-        }
-      }
-
+      // Add valid records to existing patients
+      const updatedPatients = [...patients, ...validRecords.map(({ importStatus, importError, ...patient }) => patient)]
+      setPatients(updatedPatients)
+      
+      // Save to localStorage
+      localStorage.setItem("gonstead_patients", JSON.stringify(updatedPatients))
+      
       toast({
         title: "Import Completed! 🎉",
-        description: `Successfully imported ${successCount} patients. ${errorCount} failed.`,
+        description: `Successfully imported ${validRecords.length} patients to dashboard.`,
       })
 
-      if (successCount > 0) {
-        await loadInitialData()
-        setImportedData([])
-        setImportStats({ total: 0, success: 0, errors: 0, pending: 0 })
-      }
+      // Clear import data
+      setImportedData([])
+      setImportStats({ total: 0, success: 0, errors: 0, pending: 0 })
     } catch (error) {
       console.error("Import error:", error)
       toast({
@@ -678,41 +358,15 @@ export default function ImportExportPage() {
   const filteredImportedData = importedData.filter((patient) => {
     const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          patient.phone.includes(searchTerm) ||
-                         patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                         (patient.email && patient.email.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchesStatus = filterStatus === "all" || patient.importStatus === filterStatus
     return matchesSearch && matchesStatus
   })
 
-  const filteredPatients = patients.filter((patient) => {
-    return patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           patient.phone.includes(searchTerm) ||
-           patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  })
-
-  if (!isAuthenticated) {
-    router.replace("/admin/auth")
-    return null
-  }
-
   return (
-    <div className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-gradient-to-br from-[rgb(190,205,203)] to-white"} relative`}>
-      {/* Seamless Update Indicator */}
-      <SeamlessDotIndicator
-        isUpdating={syncState.isUpdating}
-        isOnline={syncState.isOnline}
-        errorCount={syncState.errorCount}
-        position="top-right"
-        className="mt-6"
-      />
+    <div className="min-h-screen bg-gradient-to-br from-[rgb(190,205,203)] to-white relative">
       {/* Professional Header */}
       <header className="bg-gradient-to-r from-[#0d5c75] via-[#2a9d8f] to-[#0d5c75] text-white p-6 shadow-2xl relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-4 left-1/4 w-32 h-32 bg-white rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-4 right-1/4 w-24 h-24 bg-white rounded-full blur-2xl animate-pulse animation-delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-white rounded-full blur-xl animate-pulse animation-delay-2000"></div>
-        </div>
-        
         <div className="container mx-auto relative z-10">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
@@ -724,32 +378,24 @@ export default function ImportExportPage() {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
-              <div className="w-12 h-12 bg-white/20 rounded-xl border border-white/30 flex items-center justify-center">
-                <Image
-                  src="/images/gonstead-logo-new.png"
-                  alt="Logo"
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                />
-              </div>
               <div>
                 <h1 className="text-3xl font-bold font-poppins">Import & Export Center</h1>
-                  <p className="text-white/80">Streamlined Patient Data Management</p>
+                <p className="text-white/80">Streamlined Patient Data Management</p>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={isDarkMode}
-                onCheckedChange={setIsDarkMode}
-                className="data-[state=checked]:bg-white/20"
-              />
-              <span className="text-sm">Dark Mode</span>
             </div>
           </div>
           
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+              <div className="flex items-center gap-3">
+                <Database className="h-8 w-8 text-blue-300" />
+                <div>
+                  <p className="text-white/80 text-sm">Total Patients</p>
+                  <p className="text-2xl font-bold text-blue-300">{patients.length}</p>
+                </div>
+              </div>
+            </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
               <div className="flex items-center gap-3">
                 <FileUp className="h-8 w-8 text-green-300" />
@@ -776,7 +422,7 @@ export default function ImportExportPage() {
         {/* Action Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Export Card */}
-          <Card className="border-[#0d5c75]/20 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+          <Card className="border-[#0d5c75]/20 shadow-xl hover:shadow-2xl transition-all duration-300">
             <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -788,6 +434,15 @@ export default function ImportExportPage() {
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-4">
+                <div className="text-sm text-gray-600">
+                  <p className="mb-2">Available for export:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Patient contact information</li>
+                    <li>Appointment details and status</li>
+                    <li>Session history and notes</li>
+                    <li>Payment and urgency information</li>
+                  </ul>
+                </div>
                 <Button
                   onClick={exportToCsv}
                   disabled={isExporting || patients.length === 0}
@@ -810,7 +465,7 @@ export default function ImportExportPage() {
           </Card>
 
           {/* Import Card */}
-          <Card className="border-[#2a9d8f]/20 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+          <Card className="border-[#2a9d8f]/20 shadow-xl hover:shadow-2xl transition-all duration-300">
             <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#238a7a] text-white">
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -822,10 +477,16 @@ export default function ImportExportPage() {
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-4">
+                <div className="text-sm text-gray-600">
+                  <p className="mb-2">Required CSV format:</p>
+                  <p className="text-xs font-mono bg-gray-100 p-2 rounded">
+                    ID,Name,Phone,Email,Session Type,Appointment Date,Status,Urgency
+                  </p>
+                </div>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv,.xlsx"
+                  accept=".csv"
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -963,28 +624,14 @@ export default function ImportExportPage() {
                               {new Date(patient.appointment_date).toLocaleDateString()}
                             </div>
                             <div className="text-xs text-gray-600">
-                              {new Date(patient.appointment_date).toLocaleTimeString()}
+                              {patient.status} • {patient.urgency}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="space-y-1">
-                            <Badge variant={patient.session_type === "in_clinic" ? "default" : "secondary"} className="text-xs">
-                              {patient.session_type === "in_clinic" ? "Clinic" : "Video"}
-                            </Badge>
-                            <Badge
-                              variant={
-                                patient.urgency === "emergency"
-                                  ? "destructive"
-                                  : patient.urgency === "urgent"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                              className="text-xs ml-1"
-                            >
-                              {patient.urgency}
-                            </Badge>
-                          </div>
+                          <Badge variant={patient.session_type === "in_clinic" ? "default" : "secondary"} className="text-xs">
+                            {patient.session_type === "in_clinic" ? "Clinic" : "Video"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           {patient.importError && (
@@ -1060,14 +707,6 @@ export default function ImportExportPage() {
                                 )}
                               </DialogContent>
                             </Dialog>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => deleteImportedRecord(index)}
-                              className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white h-6 w-6 p-0"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1079,222 +718,119 @@ export default function ImportExportPage() {
           </Card>
         )}
 
-        {/* Current Database Table */}
+        {/* Import/Export History */}
+        {importExportHistory.length > 0 && (
+          <Card className="border-[#f3a800]/20 shadow-xl mb-8">
+            <CardHeader className="bg-gradient-to-r from-[#f3a800] to-[#e09700] text-white">
+              <CardTitle className="flex items-center gap-3">
+                <Clock className="h-5 w-5" />
+                Import/Export History ({importExportHistory.length} records)
+              </CardTitle>
+              <p className="text-white/80 text-sm">Manage and view your import/export activity</p>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid gap-4">
+                {importExportHistory.map((record) => (
+                  <div key={record.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center">
+                        {record.type === 'import' ? (
+                          <FileUp className={`h-6 w-6 ${record.status === 'success' ? 'text-green-600' : record.status === 'error' ? 'text-red-600' : 'text-yellow-600'}`} />
+                        ) : (
+                          <FileDown className="h-6 w-6 text-blue-600" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={record.type === 'import' ? 'default' : 'secondary'}>
+                            {record.type === 'import' ? 'Import' : 'Export'}
+                          </Badge>
+                          <Badge
+                            variant={
+                              record.status === 'success' ? 'default' : record.status === 'error' ? 'destructive' : 'secondary'
+                            }
+                          >
+                            {record.status}
+                          </Badge>
+                        </div>
+                        <h4 className="font-semibold">{record.filename}</h4>
+                        <p className="text-sm text-gray-600">
+                          {record.recordCount} records • {record.date} at {record.time}
+                        </p>
+                        {record.errorMessage && (
+                          <p className="text-sm text-red-600 mt-1">{record.errorMessage}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-[#0d5c75]">{record.recordCount}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const updatedHistory = importExportHistory.filter(h => h.id !== record.id)
+                          setImportExportHistory(updatedHistory)
+                          saveImportExportHistory(updatedHistory)
+                          toast({
+                            title: "Record Deleted",
+                            description: "History record has been removed",
+                          })
+                        }}
+                        className="border-red-500 text-red-500 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Current Database Summary */}
         <Card className="border-[#0d5c75]/20 shadow-xl">
           <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
             <CardTitle className="flex items-center gap-3">
               <Database className="h-5 w-5" />
               Current Patient Database ({patients.length} records)
             </CardTitle>
-            <div className="flex-1 relative mt-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70" />
-              <Input
-                placeholder="Search current patients..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/70"
-              />
-            </div>
           </CardHeader>
-          <CardContent className="p-0">
-            {filteredPatients.length === 0 ? (
+          <CardContent className="p-6">
+            {patients.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">No Patients Found</h3>
-                <p className="text-gray-500">
-                  {patients.length === 0
-                    ? "Import patient data to get started"
-                    : "No patients match your search criteria"}
-                </p>
+                <p className="text-gray-500">Import patient data to get started</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#F8F5F0]">
-                      <TableHead className="text-[#0d5c75] font-semibold">Patient</TableHead>
-                      <TableHead className="text-[#0d5c75] font-semibold">Contact</TableHead>
-                      <TableHead className="text-[#0d5c75] font-semibold">Appointment</TableHead>
-                      <TableHead className="text-[#0d5c75] font-semibold">Status</TableHead>
-                      <TableHead className="text-[#0d5c75] font-semibold">Type</TableHead>
-                      <TableHead className="text-[#0d5c75] font-semibold">Sessions</TableHead>
-                      <TableHead className="text-[#0d5c75] font-semibold">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPatients.map((patient) => (
-                      <TableRow key={patient.id} className="hover:bg-[#F8F5F0]/50">
-                        <TableCell>
-                          <div>
-                            <div className="font-semibold">{patient.name}</div>
-                            <div className="text-xs text-gray-600">ID: {patient.id.slice(0, 8)}...</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1 text-sm">
-                              <Phone className="h-3 w-3" />
-                              {patient.phone}
-                            </div>
-                            {patient.email && (
-                              <div className="flex items-center gap-1 text-sm">
-                                <Mail className="h-3 w-3" />
-                                {patient.email}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="text-sm font-medium">
-                              {new Date(patient.appointment_date).toLocaleDateString()}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {new Date(patient.appointment_date).toLocaleTimeString()}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              patient.status === "completed"
-                                ? "default"
-                                : patient.status === "confirmed"
-                                  ? "secondary"
-                                  : patient.status === "cancelled"
-                                    ? "destructive"
-                                    : "outline"
-                            }
-                            className="text-xs"
-                          >
-                            {patient.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <Badge variant={patient.session_type === "in_clinic" ? "default" : "secondary"} className="text-xs">
-                              {patient.session_type === "in_clinic" ? "Clinic" : "Video"}
-                            </Badge>
-                            <Badge
-                              variant={
-                                patient.urgency === "emergency"
-                                  ? "destructive"
-                                  : patient.urgency === "urgent"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                              className="text-xs ml-1"
-                            >
-                              {patient.urgency}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-center">
-                            <div className="text-sm font-bold">{patient.sessions_completed || 0}</div>
-                            {patient.last_visit && (
-                              <div className="text-xs text-gray-600">
-                                {new Date(patient.last_visit).toLocaleDateString()}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setSelectedPatient(patient)}
-                                  className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white h-6 w-6 p-0"
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl">
-                                <DialogHeader>
-                                  <DialogTitle className="text-[#0d5c75] font-poppins">
-                                    Patient Record - {patient.name}
-                                  </DialogTitle>
-                                </DialogHeader>
-                                {selectedPatient && (
-                                  <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div>
-                                        <Label className="text-sm font-semibold">Name</Label>
-                                        <p className="text-sm">{selectedPatient.name}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-semibold">Phone</Label>
-                                        <p className="text-sm">{selectedPatient.phone}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-semibold">Email</Label>
-                                        <p className="text-sm">{selectedPatient.email || "Not provided"}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-semibold">Session Type</Label>
-                                        <p className="text-sm">{selectedPatient.session_type}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-semibold">Status</Label>
-                                        <p className="text-sm">{selectedPatient.status}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-semibold">Urgency</Label>
-                                        <p className="text-sm">{selectedPatient.urgency}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-semibold">Sessions Completed</Label>
-                                        <p className="text-sm">{selectedPatient.sessions_completed || 0}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-semibold">Last Visit</Label>
-                                        <p className="text-sm">
-                                          {selectedPatient.last_visit 
-                                            ? new Date(selectedPatient.last_visit).toLocaleDateString()
-                                            : "No previous visits"
-                                          }
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-semibold">Appointment Date</Label>
-                                      <p className="text-sm">{new Date(selectedPatient.appointment_date).toLocaleString()}</p>
-                                    </div>
-                                    {selectedPatient.notes && (
-                                      <div>
-                                        <Label className="text-sm font-semibold">Notes</Label>
-                                        <p className="text-sm bg-gray-50 p-3 rounded">{selectedPatient.notes}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </DialogContent>
-                            </Dialog>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setPatients(prev => prev.filter(p => p.id !== patient.id))
-                                toast({
-                                  title: "Success!",
-                                  description: "Patient record has been removed from the database",
-                                })
-                              }}
-                              className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white h-6 w-6 p-0"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-[#0d5c75] mb-2">{patients.length}</div>
+                  <div className="text-sm text-gray-600">Total Patients</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    {patients.filter(p => p.status === 'confirmed' || p.status === 'completed').length}
+                  </div>
+                  <div className="text-sm text-gray-600">Active Records</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">
+                    {patients.filter(p => p.status === 'pending').length}
+                  </div>
+                  <div className="text-sm text-gray-600">Pending</div>
+                </div>
               </div>
             )}
+            <div className="mt-6 pt-6 border-t">
+              <Button
+                onClick={() => router.push('/admin/dashboard')}
+                className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c] text-white"
+              >
+                View Full Dashboard
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </main>

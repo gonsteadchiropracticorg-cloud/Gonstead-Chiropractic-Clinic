@@ -1136,7 +1136,7 @@ Doctor Signature: Dr. Bashir Khan, DCP
               </Button>
             </div>
 
-            {/* Bottom Row: Controls - Mobile Responsive */}
+            {/* Bottom Row: Controls and Action Buttons - Mobile Responsive */}
             <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
               {/* Combined Time and Weather Display - Mobile Optimized */}
               <div className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex-1 sm:flex-none`}>
@@ -1161,6 +1161,227 @@ Doctor Signature: Dr. Bashir Khan, DCP
                   </div>
                 </div>
               </div>
+
+              {/* Header Action Buttons - Restored to Top Right */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {/* Add Patient Button */}
+                <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
+                    >
+                      <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Add Patient</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2 text-sm sm:text-base">
+                        <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+                        Add New Patient (Phone Call)
+                      </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleAddPatient} className="space-y-3 sm:space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                          <Label htmlFor="name" className="text-sm">Full Name *</Label>
+                          <Input
+                            id="name"
+                            value={newPatient.name}
+                            onChange={(e) => setNewPatient((prev) => ({ ...prev, name: e.target.value }))}
+                            required
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone" className="text-sm">Phone *</Label>
+                          <Input
+                            id="phone"
+                            value={newPatient.phone}
+                            onChange={(e) => setNewPatient((prev) => ({ ...prev, phone: e.target.value }))}
+                            required
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="email" className="text-sm">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={newPatient.email}
+                          onChange={(e) => setNewPatient((prev) => ({ ...prev, email: e.target.value }))}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                          <Label htmlFor="session_type" className="text-sm">Session Type</Label>
+                          <Select
+                            value={newPatient.session_type}
+                            onValueChange={(value: "in_clinic" | "video") =>
+                              setNewPatient((prev) => ({ ...prev, session_type: value }))
+                            }
+                          >
+                            <SelectTrigger className="text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="in_clinic">In-Clinic</SelectItem>
+                              <SelectItem value="video">Video Consultation</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="urgency" className="text-sm">Urgency</Label>
+                          <Select
+                            value={newPatient.urgency}
+                            onValueChange={(value: "normal" | "urgent" | "emergency") =>
+                              setNewPatient((prev) => ({ ...prev, urgency: value }))
+                            }
+                          >
+                            <SelectTrigger className="text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="normal">Normal</SelectItem>
+                              <SelectItem value="urgent">Urgent</SelectItem>
+                              <SelectItem value="emergency">Emergency</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="appointment_date" className="text-sm">Appointment Date & Time *</Label>
+                        <Input
+                          id="appointment_date"
+                          type="datetime-local"
+                          value={newPatient.appointment_date}
+                          onChange={(e) => setNewPatient((prev) => ({ ...prev, appointment_date: e.target.value }))}
+                          required
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="notes" className="text-sm">Notes</Label>
+                        <Textarea
+                          id="notes"
+                          value={newPatient.notes}
+                          onChange={(e) => setNewPatient((prev) => ({ ...prev, notes: e.target.value }))}
+                          placeholder="Chief complaint, symptoms, etc."
+                          className="text-sm min-h-[80px]"
+                        />
+                      </div>
+                      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+                        <Button type="button" variant="outline" onClick={() => setIsAddPatientDialogOpen(false)} className="text-sm">
+                          Cancel
+                        </Button>
+                        <Button type="submit" className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-sm">
+                          Add Patient
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Location Settings Button */}
+                <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
+                    >
+                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Location</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
+                        <MapPin className="h-5 w-5" />
+                        Clinic Location Settings
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="address">Clinic Address</Label>
+                        <Input
+                          id="address"
+                          value={clinicLocation.address}
+                          onChange={(e) => setClinicLocation((prev) => ({ ...prev, address: e.target.value }))}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="lat">Latitude</Label>
+                          <Input
+                            id="lat"
+                            type="number"
+                            step="any"
+                            value={clinicLocation.coordinates.lat}
+                            onChange={(e) =>
+                              setClinicLocation((prev) => ({
+                                ...prev,
+                                coordinates: { ...prev.coordinates, lat: Number.parseFloat(e.target.value) },
+                              }))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="lng">Longitude</Label>
+                          <Input
+                            id="lng"
+                            type="number"
+                            step="any"
+                            value={clinicLocation.coordinates.lng}
+                            onChange={(e) =>
+                              setClinicLocation((prev) => ({
+                                ...prev,
+                                coordinates: { ...prev.coordinates, lng: Number.parseFloat(e.target.value) },
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="mapUrl">Google Maps URL</Label>
+                        <Input
+                          id="mapUrl"
+                          value={clinicLocation.mapUrl}
+                          onChange={(e) => setClinicLocation((prev) => ({ ...prev, mapUrl: e.target.value }))}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <Button type="button" variant="outline" onClick={() => setIsLocationDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            updateClinicLocation(clinicLocation)
+                            setIsLocationDialogOpen(false)
+                          }}
+                          className="bg-[#0d5c75] hover:bg-[#0a4a5c]"
+                        >
+                          Update Location
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Exit/Logout Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="border-red-500 text-red-600 hover:bg-red-50 px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
+                >
+                  <LogOut className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Exit</span>
+                </Button>
+              </div>
               
               {/* Compact Theme Toggle - Mobile Optimized */}
               <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg">
@@ -1181,229 +1402,6 @@ Doctor Signature: Dr. Bashir Khan, DCP
         </div>
       </header>
       
-      {/* Mobile Action Bar - Positioned below header */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 p-2 mx-2 sm:mx-4 rounded-lg mt-2 mb-4 shadow-sm">
-        <div className="container mx-auto">
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            
-            {/* Quick Add Patient - Mobile Optimized */}
-            <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 h-auto">
-                  <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden xs:inline">Quick Add</span>
-                  <span className="xs:hidden">Add</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2 text-sm sm:text-base">
-                    <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
-                    Add New Patient (Phone Call)
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleAddPatient} className="space-y-3 sm:space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                      <Label htmlFor="name" className="text-sm">Full Name *</Label>
-                      <Input
-                        id="name"
-                        value={newPatient.name}
-                        onChange={(e) => setNewPatient((prev) => ({ ...prev, name: e.target.value }))}
-                        required
-                        className="text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone" className="text-sm">Phone *</Label>
-                      <Input
-                        id="phone"
-                        value={newPatient.phone}
-                        onChange={(e) => setNewPatient((prev) => ({ ...prev, phone: e.target.value }))}
-                        required
-                        className="text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="email" className="text-sm">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={newPatient.email}
-                      onChange={(e) => setNewPatient((prev) => ({ ...prev, email: e.target.value }))}
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                      <Label htmlFor="session_type" className="text-sm">Session Type</Label>
-                      <Select
-                        value={newPatient.session_type}
-                        onValueChange={(value: "in_clinic" | "video") =>
-                          setNewPatient((prev) => ({ ...prev, session_type: value }))
-                        }
-                      >
-                        <SelectTrigger className="text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="in_clinic">In-Clinic</SelectItem>
-                          <SelectItem value="video">Video Consultation</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="urgency" className="text-sm">Urgency</Label>
-                      <Select
-                        value={newPatient.urgency}
-                        onValueChange={(value: "normal" | "urgent" | "emergency") =>
-                          setNewPatient((prev) => ({ ...prev, urgency: value }))
-                        }
-                      >
-                        <SelectTrigger className="text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="normal">Normal</SelectItem>
-                          <SelectItem value="urgent">Urgent</SelectItem>
-                          <SelectItem value="emergency">Emergency</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="appointment_date" className="text-sm">Appointment Date & Time *</Label>
-                    <Input
-                      id="appointment_date"
-                      type="datetime-local"
-                      value={newPatient.appointment_date}
-                      onChange={(e) => setNewPatient((prev) => ({ ...prev, appointment_date: e.target.value }))}
-                      required
-                      className="text-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="notes" className="text-sm">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={newPatient.notes}
-                      onChange={(e) => setNewPatient((prev) => ({ ...prev, notes: e.target.value }))}
-                      placeholder="Chief complaint, symptoms, etc."
-                      className="text-sm min-h-[80px]"
-                    />
-                  </div>
-                  <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
-                    <Button type="button" variant="outline" onClick={() => setIsAddPatientDialogOpen(false)} className="text-sm">
-                      Cancel
-                    </Button>
-                    <Button type="submit" className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-sm">
-                      Add Patient
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-
-            {/* Location Settings - Mobile Optimized */}
-            <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white bg-transparent text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 h-auto"
-                >
-                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden xs:inline">Location</span>
-                  <span className="xs:hidden">Loc</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
-                    <MapPin className="h-5 w-5" />
-                    Clinic Location Settings
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="address">Clinic Address</Label>
-                    <Input
-                      id="address"
-                      value={clinicLocation.address}
-                      onChange={(e) => setClinicLocation((prev) => ({ ...prev, address: e.target.value }))}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="lat">Latitude</Label>
-                      <Input
-                        id="lat"
-                        type="number"
-                        step="any"
-                        value={clinicLocation.coordinates.lat}
-                        onChange={(e) =>
-                          setClinicLocation((prev) => ({
-                            ...prev,
-                            coordinates: { ...prev.coordinates, lat: Number.parseFloat(e.target.value) },
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lng">Longitude</Label>
-                      <Input
-                        id="lng"
-                        type="number"
-                        step="any"
-                        value={clinicLocation.coordinates.lng}
-                        onChange={(e) =>
-                          setClinicLocation((prev) => ({
-                            ...prev,
-                            coordinates: { ...prev.coordinates, lng: Number.parseFloat(e.target.value) },
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="mapUrl">Google Maps URL</Label>
-                    <Input
-                      id="mapUrl"
-                      value={clinicLocation.mapUrl}
-                      onChange={(e) => setClinicLocation((prev) => ({ ...prev, mapUrl: e.target.value }))}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <Button type="button" variant="outline" onClick={() => setIsLocationDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        updateClinicLocation(clinicLocation)
-                        setIsLocationDialogOpen(false)
-                      }}
-                      className="bg-[#0d5c75] hover:bg-[#0a4a5c]"
-                    >
-                      Update Location
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            {/* Logout Button - Mobile Optimized */}
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="border-red-500 text-red-600 hover:bg-red-50 bg-transparent shadow-lg hover:shadow-xl transition-shadow duration-300 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 h-auto"
-            >
-              <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              <span className="hidden xs:inline">Logout</span>
-              <span className="xs:hidden">Exit</span>
-            </Button>
-          </div>
-        </div>
-      </div>
 
       <main className="container mx-auto px-4 py-8">
         {/* Stats Dashboard */}

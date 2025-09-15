@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft, Users, List, BarChart3, Shield, Key, Eye, EyeOff } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft, Users, List, BarChart3, Shield, Key, Eye, EyeOff, Building2, Globe, Phone, Mail, Copy, ExternalLink } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser } from "@/lib/supabase"
 import Image from "next/image"
-import { useSeamlessData } from "@/hooks/use-silent-sync"
-import { SeamlessDotIndicator } from "@/components/ui/seamless-update-indicator"
 
 export default function AdminSettings() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -79,7 +80,7 @@ export default function AdminSettings() {
   const router = useRouter()
   const { toast } = useToast()
 
-  // Seamless settings loading
+  // Settings loading
   const loadSettingsData = async () => {
     const settings = {
       clinic: JSON.parse(localStorage.getItem("clinic_settings") || 'null'),
@@ -90,11 +91,6 @@ export default function AdminSettings() {
     }
     return settings
   }
-
-  const { syncState } = useSeamlessData({}, loadSettingsData, {
-    syncInterval: 30000,
-    enableRealTimeSync: false // Settings don't need frequent sync
-  })
 
   useEffect(() => {
     checkAuthAndLoadSettings()
@@ -270,14 +266,6 @@ export default function AdminSettings() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white">
-      {/* Seamless Update Indicator */}
-      <SeamlessDotIndicator
-        isUpdating={syncState.isUpdating}
-        isOnline={syncState.isOnline}
-        errorCount={syncState.errorCount}
-        position="top-right"
-        className="mt-6"
-      />
       {/* Header */}
       <header className="bg-white shadow-sm border-b-2 border-[#0d5c75] p-4">
         <div className="container mx-auto flex justify-between items-center">
