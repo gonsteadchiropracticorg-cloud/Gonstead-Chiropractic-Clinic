@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, Suspense, memo } from "react"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -30,26 +31,78 @@ import {
   Activity,
 } from "lucide-react"
 import Image from "next/image"
-import { EnhancedAppointmentBooking } from "@/components/enhanced-appointment-booking"
-import { TechnologyShowcase } from "@/components/technology-showcase"
-import { AdvancedChatbot } from "@/components/advanced-chatbot"
-import { SportsInjuriesFloat } from "@/components/sports-injuries-float"
 import { LanguageProvider, useLanguage } from "@/components/language-provider"
 import { LanguageToggle } from "@/components/language-toggle"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AppointmentBookingModal } from "@/components/appointment-booking-modal"
 import { EmailContactSection } from "@/components/EmailContactSection"
-import { FooterWeatherWidget } from "@/components/footer-weather-widget"
-import { PreVisitInstructions } from "@/components/pre-visit-instructions"
 
-function HomePageContent() {
+// Import lightweight wrapper for feature-preserving optimization
+import { createLightweightDynamic, LightweightFallback } from "@/components/LightweightWrapper"
+
+// Feature-preserving lazy loading - maintains all functionality while optimizing performance
+const TechnologyShowcase = createLightweightDynamic(
+  () => import("@/components/technology-showcase").then(mod => ({ default: mod.TechnologyShowcase })),
+  {
+    fallback: LightweightFallback.Technology,
+    preserveFeatures: true, // Ensures all features work
+    delay: 1000, // Small delay for performance, but still loads automatically
+    ssr: false
+  }
+)
+
+const AdvancedChatbot = createLightweightDynamic(
+  () => import("@/components/advanced-chatbot").then(mod => ({ default: mod.AdvancedChatbot })),
+  {
+    fallback: LightweightFallback.Chatbot,
+    preserveFeatures: true, // Maintains chatbot functionality
+    delay: 500, // Quick delay for performance
+    ssr: false
+  }
+)
+
+const SportsInjuriesFloat = createLightweightDynamic(
+  () => import("@/components/sports-injuries-float").then(mod => ({ default: mod.SportsInjuriesFloat })),
+  {
+    fallback: LightweightFallback.SportsFloat,
+    preserveFeatures: true, // Preserves all sports injury features
+    delay: 800, // Slightly longer delay as it's less critical
+    ssr: false
+  }
+)
+
+const FooterWeatherWidget = createLightweightDynamic(
+  () => import("@/components/footer-weather-widget").then(mod => ({ default: mod.FooterWeatherWidget })),
+  {
+    fallback: LightweightFallback.WeatherWidget,
+    preserveFeatures: true, // Maintains weather functionality
+    delay: 1200, // Load after core content
+    ssr: false
+  }
+)
+
+// Performance optimizations
+const throttle = (func: Function, limit: number) => {
+  let inThrottle: boolean
+  return function (this: any, ...args: any[]) {
+    if (!inThrottle) {
+      func.apply(this, args)
+      inThrottle = true
+      setTimeout(() => (inThrottle = false), limit)
+    }
+  }
+}
+
+// Feature-preserving optimized component with React.memo for performance
+const HomePageContent = memo(() => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeSection, setActiveSection] = useState(null as string | null)
   const { t } = useLanguage()
 
-  useEffect(() => {
-    const handleScroll = () => {
+  // Throttled scroll handler for better performance
+  const handleScroll = useCallback(
+    throttle(() => {
       const sections = ["home", "about", "services", "doctor", "technology", "contact"]
       const scrollPosition = window.scrollY + 100
 
@@ -65,14 +118,17 @@ function HomePageContent() {
           }
         }
       }
-    }
+    }, 100),
+    []
+  )
 
+  useEffect(() => {
     // Initialize active section on mount
     handleScroll()
     
-    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+  }, [handleScroll])
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
@@ -84,6 +140,7 @@ function HomePageContent() {
 
   return (
     <>
+      {/* Lightweight optimized main container */}
       <div className="min-h-screen bg-gradient-to-br from-[#F1F5F9] via-[#E0F2F1] to-[#F8F5F0] dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900">
           {/* Enhanced Professional Navigation - COMPREHENSIVE MODERN DESIGN */}
       <nav className="fixed top-0 left-0 right-0 z-[9999] bg-[rgb(70,146,138)]/95 dark:bg-[rgb(70,146,138)]/95 backdrop-blur-xl border-b border-white/20 shadow-[0_4px_32px_rgba(70,146,138,0.25)]">
@@ -114,7 +171,7 @@ function HomePageContent() {
                     </span>
                     {/* Compact clinic badge */}
                     <span className="inline-flex items-center bg-gradient-to-r from-emerald-400/15 to-cyan-400/15 backdrop-blur-sm border border-white/15 rounded-full px-2 py-0.5 text-white font-medium tracking-wide text-xs mt-0.5">
-                      <span className="w-1 h-1 bg-emerald-400 rounded-full mr-1.5 animate-pulse"></span>
+                      <span className="w-1 h-1 bg-emerald-400 rounded-full mr-1.5"></span>
                       CLINIC
                     </span>
                   </h1>
@@ -235,7 +292,7 @@ function HomePageContent() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10 backdrop-blur-[1px]"></div>
               
               {/* Subtle Glass Shimmer Effects */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/6 to-transparent animate-pulse opacity-50"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/6 to-transparent opacity-50"></div>
               
               {/* Professional Spine Pattern - Mobile Hidden */}
               <div className="hidden sm:block absolute right-10 top-1/4 w-3 h-96 bg-gradient-to-b from-transparent via-white/20 to-transparent rounded-full shadow-lg"></div>
@@ -244,18 +301,18 @@ function HomePageContent() {
               <div className="hidden sm:block absolute right-11 top-2/3 w-5 h-5 bg-white/30 rounded-full shadow-md"></div>
             </div>
 
-            <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-12 relative z-10 transform-gpu">
+            <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-12 relative z-10">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-                {/* Content Section with 3D Transform */}
-                <div className="space-y-8 lg:pr-8 transform-gpu animate-slide-in-left relative z-10">
+                {/* Content Section */}
+                <div className="space-y-8 lg:pr-8 relative z-10">
                   {/* Board Certified Gonstead Specialist Badge */}
                   <div className="flex items-center justify-center sm:justify-start mb-4">
                     <div className="inline-flex items-center bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-sm border border-emerald-400/30 rounded-full px-4 py-2 shadow-lg">
-                      <div className="w-2 h-2 bg-emerald-400 rounded-full mr-3 animate-pulse"></div>
+                      <div className="w-2 h-2 bg-emerald-400 rounded-full mr-3"></div>
                       <span className="text-emerald-300 dark:text-emerald-400 font-bold text-sm tracking-wide uppercase">
                         Board Certified Gonstead Specialist
                       </span>
-                      <div className="w-2 h-2 bg-cyan-400 rounded-full ml-3 animate-pulse animation-delay-1000"></div>
+                      <div className="w-2 h-2 bg-cyan-400 rounded-full ml-3"></div>
                     </div>
                   </div>
 
@@ -263,7 +320,7 @@ function HomePageContent() {
                   <div className="space-y-3 sm:space-y-4">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-white font-poppins leading-tight">
                       {t("hero.precision")}
-                      <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 animate-gradient">
+                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400">
                         {t("hero.spinal.care")}
                       </span>
                       <span className="block text-lg sm:text-xl md:text-3xl lg:text-4xl text-blue-200 font-light mt-1 sm:mt-2">
@@ -348,17 +405,17 @@ function HomePageContent() {
                   </div>
                 </div>
 
-                {/* Professional Image Section with 3D Effects */}
-                <div className="relative flex justify-center lg:justify-end transform-gpu animate-slide-in-right z-10">
+                {/* Professional Image Section */}
+                <div className="relative flex justify-center lg:justify-end z-10">
                   {/* Main Professional Container */}
                   <div className="relative">
-                    {/* Enhanced 3D Glowing Background Effects */}
-                    <div className="absolute -inset-12 bg-gradient-to-r from-blue-500/25 via-cyan-500/25 to-teal-500/25 rounded-3xl blur-3xl animate-pulse-3d transform-gpu translate-z-10"></div>
-                    <div className="absolute -inset-8 bg-gradient-to-r from-blue-400/20 via-cyan-400/20 to-teal-400/20 rounded-3xl blur-2xl animate-pulse-3d animation-delay-1000 transform-gpu translate-z-20"></div>
-                    <div className="absolute -inset-4 bg-gradient-to-br from-blue-600/35 to-cyan-600/35 rounded-2xl animate-pulse-3d animation-delay-2000 transform-gpu translate-z-30 shadow-2xl"></div>
+                    {/* Background Effects */}
+                    <div className="absolute -inset-12 bg-gradient-to-r from-blue-500/25 via-cyan-500/25 to-teal-500/25 rounded-3xl blur-3xl"></div>
+                    <div className="absolute -inset-8 bg-gradient-to-r from-blue-400/20 via-cyan-400/20 to-teal-400/20 rounded-3xl blur-2xl"></div>
+                    <div className="absolute -inset-4 bg-gradient-to-br from-blue-600/35 to-cyan-600/35 rounded-2xl shadow-2xl"></div>
                     
-                    {/* Professional 3D Image Frame */}
-                    <div className="relative w-64 h-80 md:w-80 md:h-96 overflow-hidden rounded-2xl border-2 border-blue-400/40 shadow-2xl shadow-blue-500/30 bg-gradient-to-br from-gray-800 to-gray-900 transform-gpu hover:rotate-y-12 hover:rotate-x-6 transition-all duration-700 preserve-3d animate-tilt-3d">
+                    {/* Professional Image Frame */}
+                    <div className="relative w-64 h-80 md:w-80 md:h-96 overflow-hidden rounded-2xl border-2 border-blue-400/40 shadow-2xl shadow-blue-500/30 bg-gradient-to-br from-gray-800 to-gray-900 transition-all duration-700">
                       {/* Doctor's Image */}
                       <div className="relative w-full h-full">
                         <Image
@@ -419,7 +476,7 @@ function HomePageContent() {
 
               {/* Additional Professional Elements */}
               <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
-                <div className="flex items-center gap-4 text-blue-200 animate-bounce">
+                <div className="flex items-center gap-4 text-blue-200">
                   <div className="w-1 h-12 bg-gradient-to-b from-blue-400 to-transparent rounded-full"></div>
                   <span className="text-sm font-medium">{t("hero.scroll.explore")}</span>
                 </div>
@@ -821,7 +878,7 @@ function HomePageContent() {
             <div className="container mx-auto px-4 relative z-20">
               <div className="text-center mb-16">
                 <div className="inline-flex items-center justify-center px-4 py-2 mb-6 bg-gradient-to-r from-[#0d5c75]/10 to-[#2a9d8f]/10 rounded-full border border-[#0d5c75]/20 backdrop-blur-sm">
-                  <div className="w-2 h-2 bg-[#0d5c75] rounded-full mr-3 animate-pulse"></div>
+                  <div className="w-2 h-2 bg-[#0d5c75] rounded-full mr-3"></div>
                   <span className="text-[#0d5c75] dark:text-blue-400 font-semibold text-sm tracking-wide uppercase">
                     Meet Your Doctor
                   </span>
@@ -845,13 +902,13 @@ function HomePageContent() {
                 <div className="order-1 lg:order-2 relative flex justify-center">
                   <div className="relative group">
                     {/* Outer Decorative Ring */}
-                    <div className="absolute -inset-8 rounded-full bg-gradient-to-r from-[#0d5c75]/20 via-[#2a9d8f]/20 to-[#0d5c75]/20 animate-spin-slow"></div>
+                    <div className="absolute -inset-8 rounded-full bg-gradient-to-r from-[#0d5c75]/20 via-[#2a9d8f]/20 to-[#0d5c75]/20"></div>
                     
                     {/* Middle Ring */}
                     <div className="absolute -inset-6 rounded-full bg-gradient-to-r from-white/80 to-gray-100/80 dark:from-gray-700/80 dark:to-gray-600/80 shadow-2xl"></div>
                     
                     {/* Inner Glow Ring */}
-                    <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-[#0d5c75]/30 to-[#2a9d8f]/30 blur-sm animate-pulse"></div>
+                    <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-[#0d5c75]/30 to-[#2a9d8f]/30 blur-sm"></div>
                     
                     {/* Main Image Container */}
                     <div className="w-80 h-80 relative overflow-hidden rounded-full border-4 border-white dark:border-gray-700 shadow-2xl bg-gradient-to-br from-[#0d5c75]/5 to-[#2a9d8f]/5 group-hover:scale-105 transition-all duration-700">
@@ -872,10 +929,10 @@ function HomePageContent() {
                     </div>
 
                     {/* Professional Achievement Badges */}
-                    <div className="absolute -top-4 -right-4 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white p-3 rounded-full shadow-xl border-4 border-white dark:border-gray-700 animate-bounce-slow">
+                    <div className="absolute -top-4 -right-4 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white p-3 rounded-full shadow-xl border-4 border-white dark:border-gray-700">
                       <Award className="h-6 w-6" />
                     </div>
-                    <div className="absolute -bottom-4 -left-4 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white p-3 rounded-full shadow-xl border-4 border-white dark:border-gray-700 animate-bounce-slow animation-delay-1000">
+                    <div className="absolute -bottom-4 -left-4 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white p-3 rounded-full shadow-xl border-4 border-white dark:border-gray-700">
                       <Stethoscope className="h-6 w-6" />
                     </div>
                     
@@ -890,9 +947,9 @@ function HomePageContent() {
                     </div>
                     
                     {/* Floating Particles */}
-                    <div className="absolute -top-8 -left-8 w-4 h-4 bg-[#0d5c75]/60 rounded-full animate-float"></div>
-                    <div className="absolute -bottom-8 -right-8 w-3 h-3 bg-[#2a9d8f]/60 rounded-full animate-float animation-delay-2000"></div>
-                    <div className="absolute top-1/2 -right-12 w-2 h-2 bg-[#0d5c75]/40 rounded-full animate-float animation-delay-3000"></div>
+                    <div className="absolute -top-8 -left-8 w-4 h-4 bg-[#0d5c75]/60 rounded-full"></div>
+                    <div className="absolute -bottom-8 -right-8 w-3 h-3 bg-[#2a9d8f]/60 rounded-full"></div>
+                    <div className="absolute top-1/2 -right-12 w-2 h-2 bg-[#0d5c75]/40 rounded-full"></div>
                   </div>
                 </div>
 
@@ -987,19 +1044,19 @@ function HomePageContent() {
               <div className="text-center mb-16 relative">
                 {/* Animated Background Pattern */}
                 <div className="absolute inset-0 overflow-hidden">
-                  <div className="absolute -top-24 -left-24 w-48 h-48 bg-gradient-to-br from-[#0d5c75]/10 to-[#2a9d8f]/10 rounded-full blur-3xl animate-pulse"></div>
-                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-[#2a9d8f]/15 to-[#0d5c75]/15 rounded-full blur-2xl animate-pulse animation-delay-1000"></div>
+                  <div className="absolute -top-24 -left-24 w-48 h-48 bg-gradient-to-br from-[#0d5c75]/10 to-[#2a9d8f]/10 rounded-full blur-3xl"></div>
+                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-[#2a9d8f]/15 to-[#0d5c75]/15 rounded-full blur-2xl"></div>
                   <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-64 h-24 bg-gradient-to-r from-transparent via-[#0d5c75]/5 to-transparent rounded-full blur-xl"></div>
                 </div>
                 
                 {/* Professional Badge with 3D Effect */}
                 <div className="relative inline-block mb-6">
-                  <div className="absolute -inset-2 bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 rounded-full blur-md opacity-70 animate-pulse"></div>
+                  <div className="absolute -inset-2 bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 rounded-full blur-md opacity-70"></div>
                   <Badge className="relative bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 text-[#0d5c75] dark:bg-blue-900/20 dark:text-blue-400 border-2 border-[#0d5c75]/30 px-6 py-3 text-base font-bold shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-105">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-[#0d5c75] rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-[#0d5c75] rounded-full"></div>
                       <span className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] bg-clip-text text-transparent font-bold">Book Your Appointment</span>
-                      <div className="w-2 h-2 bg-[#2a9d8f] rounded-full animate-pulse animation-delay-1000"></div>
+                      <div className="w-2 h-2 bg-[#2a9d8f] rounded-full"></div>
                     </div>
                   </Badge>
                 </div>
@@ -1012,7 +1069,7 @@ function HomePageContent() {
                         <span className="bg-gradient-to-r from-[#0d5c75] via-[#2a9d8f] to-[#0d5c75] bg-clip-text text-transparent animate-gradient bg-300% font-black tracking-tight hover:scale-105 transition-transform duration-300">
                           Start Your Journey
                         </span>
-                        <div className="absolute -inset-2 bg-gradient-to-r from-[#0d5c75]/20 via-[#2a9d8f]/20 to-[#0d5c75]/20 rounded-lg blur-lg opacity-30 animate-pulse"></div>
+                        <div className="absolute -inset-2 bg-gradient-to-r from-[#0d5c75]/20 via-[#2a9d8f]/20 to-[#0d5c75]/20 rounded-lg blur-lg opacity-30"></div>
                       </span>
                     </span>
                     <span className="block mt-2">
@@ -1020,14 +1077,14 @@ function HomePageContent() {
                         <span className="bg-gradient-to-r from-[#2a9d8f] via-[#0d5c75] to-[#2a9d8f] bg-clip-text text-transparent animate-gradient bg-300% font-black tracking-tight hover:scale-105 transition-transform duration-300">
                           to Better Spinal Health
                         </span>
-                        <div className="absolute -inset-2 bg-gradient-to-r from-[#2a9d8f]/20 via-[#0d5c75]/20 to-[#2a9d8f]/20 rounded-lg blur-lg opacity-30 animate-pulse animation-delay-2000"></div>
+                        <div className="absolute -inset-2 bg-gradient-to-r from-[#2a9d8f]/20 via-[#0d5c75]/20 to-[#2a9d8f]/20 rounded-lg blur-lg opacity-30"></div>
                       </span>
                     </span>
                   </h2>
                   
                   {/* Animated Underline */}
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full animate-pulse"></div>
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-0.5 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] rounded-full animate-pulse animation-delay-1000"></div>
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full"></div>
+                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-0.5 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] rounded-full"></div>
                 </div>
                 
                 {/* Enhanced Description with Professional Styling */}
@@ -1043,10 +1100,10 @@ function HomePageContent() {
                   </p>
                   
                   {/* Floating Elements */}
-                  <div className="absolute -top-4 -left-4 w-8 h-8 bg-[#0d5c75]/20 rounded-full animate-bounce opacity-60"></div>
-                  <div className="absolute -top-2 -right-6 w-6 h-6 bg-[#2a9d8f]/20 rounded-full animate-bounce animation-delay-1000 opacity-60"></div>
-                  <div className="absolute -bottom-4 left-1/4 w-4 h-4 bg-[#0d5c75]/20 rounded-full animate-bounce animation-delay-2000 opacity-60"></div>
-                  <div className="absolute -bottom-2 right-1/4 w-5 h-5 bg-[#2a9d8f]/20 rounded-full animate-bounce animation-delay-3000 opacity-60"></div>
+                  <div className="absolute -top-4 -left-4 w-8 h-8 bg-[#0d5c75]/20 rounded-full opacity-60"></div>
+                  <div className="absolute -top-2 -right-6 w-6 h-6 bg-[#2a9d8f]/20 rounded-full opacity-60"></div>
+                  <div className="absolute -bottom-4 left-1/4 w-4 h-4 bg-[#0d5c75]/20 rounded-full opacity-60"></div>
+                  <div className="absolute -bottom-2 right-1/4 w-5 h-5 bg-[#2a9d8f]/20 rounded-full opacity-60"></div>
                 </div>
                 
                 {/* Professional Stats with Animation */}
@@ -1244,7 +1301,7 @@ function HomePageContent() {
                       alt="Gonstead Chiropractic Logo"
                       width={80}
                       height={80}
-                      className="filter brightness-110 animate-pulse"
+                      className="filter brightness-110"
                       quality={75}
                       sizes="80px"
                     />
@@ -1304,12 +1361,19 @@ function HomePageContent() {
         <SportsInjuriesFloat />
     </>
   )
-}
+})
 
-export default function HomePage() {
+// Feature-preserving optimized main component with memoization
+const HomePage = memo(() => {
   return (
     <LanguageProvider>
       <HomePageContent />
     </LanguageProvider>
   )
-}
+})
+
+// Set display names for debugging
+HomePageContent.displayName = 'HomePageContent'
+HomePage.displayName = 'HomePage'
+
+export default HomePage
