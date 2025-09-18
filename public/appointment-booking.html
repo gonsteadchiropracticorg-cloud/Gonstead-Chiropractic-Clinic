@@ -312,11 +312,89 @@
         </div>
     </div>
 
+    <!-- Bundle Manager for Optimized Loading -->
+    <script src="js/bundle-manager.js"></script>
+    
+    <!-- Progressive Enhancement Script - now managed by bundle manager -->
+    <script src="js/progressive-enhancement.js" defer></script>
+    
+    <!-- Optimization Testing Suite (for development) -->
+    <script src="js/optimization-tester.js" defer></script>
+    
     <script>
-        // Simple page initialization
+        // Page-specific enhancements
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Appointment booking page loaded successfully');
+            
+            // Initialize page-specific features when progressive enhancer is ready
+            document.addEventListener('criticalFeaturesLoaded', () => {
+                initializeBookingFeatures();
+            });
+            
+            // Fallback for browsers without progressive enhancement support
+            setTimeout(() => {
+                if (!window.progressiveEnhancer) {
+                    initializeBookingFeatures();
+                }
+            }, 100);
         });
+        
+        function initializeBookingFeatures() {
+            // Add loading states to interactive elements
+            const phoneButton = document.querySelector('a[href^="tel:"]');
+            const whatsappButton = document.querySelector('a[href^="https://wa.me"]');
+            
+            if (phoneButton) {
+                phoneButton.addEventListener('click', () => {
+                    phoneButton.style.opacity = '0.7';
+                    setTimeout(() => phoneButton.style.opacity = '1', 200);
+                });
+            }
+            
+            if (whatsappButton) {
+                whatsappButton.addEventListener('click', () => {
+                    whatsappButton.style.opacity = '0.7';
+                    setTimeout(() => whatsappButton.style.opacity = '1', 200);
+                });
+            }
+            
+            // Add smooth scroll for internal navigation
+            document.querySelectorAll('a[href^="#"]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = document.querySelector(link.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+            
+            // Add form validation if forms are present
+            enhanceFormValidation();
+            
+            // Add keyboard navigation improvements
+            enhanceKeyboardNavigation();
+        }
+        
+        function enhanceFormValidation() {
+            // Future form validation enhancements
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                // Add real-time validation here when forms are added
+            });
+        }
+        
+        function enhanceKeyboardNavigation() {
+            // Improve keyboard accessibility
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const focused = document.activeElement;
+                    if (focused && focused.matches('a[href], button')) {
+                        focused.click();
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
