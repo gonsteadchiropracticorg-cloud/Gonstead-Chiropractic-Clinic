@@ -550,7 +550,7 @@ Phone: +92 304 699 6267
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[rgb(190,205,203)] to-[rgb(190,205,203)]">
+    <div className="admin-compact min-h-screen bg-gradient-to-br from-[rgb(190,205,203)] to-[rgb(190,205,203)]">
       {/* Seamless Update Indicator */}
       <SeamlessUpdateIndicator
         isUpdating={syncState.isUpdating}

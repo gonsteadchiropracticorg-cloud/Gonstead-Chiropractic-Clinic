@@ -1066,7 +1066,7 @@ Doctor Signature: Dr. Bashir Khan, DCP
   return (
     <React.Fragment>
 
-      <div className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-[rgb(220,230,229)]"}`}>
+      <div className={`admin-compact min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-[rgb(220,230,229)]"}`}>
       {/* Mobile-Responsive Professional Header */}
       <header className="relative bg-white/20 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.10)] border-0 p-2 sm:p-3 overflow-hidden mt-1 mx-2 sm:mx-4 rounded-xl">
         {/* Animated Background Gradient */}

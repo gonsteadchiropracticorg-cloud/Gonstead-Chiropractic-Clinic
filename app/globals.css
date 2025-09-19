@@ -149,6 +149,48 @@
       transition: none;
     }
   }
+
+  /* Admin performance optimization styles */
+  .admin-compact {
+    /* Optimized rendering for admin pages */
+    will-change: auto;
+    contain: layout style;
+    
+    /* Reduce animation complexity */
+    * {
+      animation-duration: 0.15s !important;
+      transition-duration: 0.15s !important;
+    }
+    
+    /* Optimize backdrop blur for performance */
+    .backdrop-blur-xl {
+      backdrop-filter: blur(4px);
+    }
+    
+    .backdrop-blur-lg {
+      backdrop-filter: blur(2px);
+    }
+    
+    /* Simplify gradients for admin pages */
+    .bg-gradient-to-br,
+    .bg-gradient-to-r {
+      background: linear-gradient(var(--tw-gradient-from), var(--tw-gradient-to));
+    }
+    
+    /* Optimize transform operations */
+    .transform {
+      transform: translateZ(0);
+    }
+    
+    /* Reduce shadow complexity */
+    .shadow-2xl {
+      box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15);
+    }
+    
+    .shadow-xl {
+      box-shadow: 0 8px 20px -3px rgb(0 0 0 / 0.12);
+    }
+  }
 }
 
 /* Doctor Name Gold Gradient Effect */

@@ -12,16 +12,16 @@ import AnalyticsProvider from "@/components/AnalyticsProvider"
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["400", "600"], // REDUCED from 6 weights to 2 for performance
   variable: "--font-poppins",
-  display: "swap",
+  display: "swap", // Prevent FOIT (Flash of Invisible Text)
 })
 
 const openSans = Open_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "600"], // REDUCED from 5 weights to 2 for performance
   variable: "--font-open-sans",
-  display: "swap",
+  display: "swap", // Prevent FOIT (Flash of Invisible Text)
 })
 
 export const metadata: Metadata = {

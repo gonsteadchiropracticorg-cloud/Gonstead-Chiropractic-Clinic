@@ -16,10 +16,7 @@ import {
   Star,
   CheckCircle,
   Calendar,
-  Video,
   Shield,
-  Heart,
-  Zap,
   Target,
   BookOpen,
   ArrowRight,
@@ -29,6 +26,9 @@ import {
   Award,
   GraduationCap,
   Activity,
+  Zap,
+  Heart,
+  Video,
 } from "lucide-react"
 import Image from "next/image"
 import { LanguageProvider, useLanguage } from "@/components/language-provider"
@@ -103,6 +103,9 @@ const HomePageContent = memo(() => {
   // Throttled scroll handler for better performance
   const handleScroll = useCallback(
     throttle(() => {
+      // Client-side only checks
+      if (typeof window === 'undefined') return
+      
       const sections = ["home", "about", "services", "doctor", "technology", "contact"]
       const scrollPosition = window.scrollY + 100
 
@@ -131,6 +134,9 @@ const HomePageContent = memo(() => {
   }, [handleScroll])
 
   const scrollToSection = (sectionId: string) => {
+    // Client-side only
+    if (typeof window === 'undefined') return
+    
     const element = document.getElementById(sectionId)
     if (element) {
       element.scrollIntoView({ behavior: "smooth" })
@@ -355,6 +361,9 @@ const HomePageContent = memo(() => {
                     <Button
                       variant="ghost"
                       onClick={() => {
+                        // Client-side only
+                        if (typeof window === 'undefined' || typeof document === 'undefined') return
+                        
                         const link = document.createElement('a')
                         link.href = '/images/visiting-card.jpg'
                         link.download = 'Gonstead-Chiropractic-Visiting-Card.jpg'
