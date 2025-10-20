@@ -2007,4 +2007,4 @@ This project is proprietary software developed specifically for Gonstead Chiropr
 
 *This comprehensive healthcare management system represents the cutting edge of modern medical practice technology, combining advanced security, AI-powered features, and exceptional user experience in a single, powerful platform.*
 
-                                                                                                                                                    𝐃𝐄𝐕𝐄𝐋𝐎𝐏𝐄𝐃 & 𝐃𝐄𝐒𝐈𝐆𝐍𝐄𝐃 𝐁𝐘 𝐌𝐔𝐇𝐀𝐌𝐌𝐀𝐃 𝐔𝐙𝐀𝐈𝐑
+𝐃𝐄𝐕𝐄𝐋𝐎𝐏𝐄𝐃 & 𝐃𝐄𝐒𝐈𝐆𝐍𝐄𝐃 𝐁𝐘 𝐌𝐔𝐇𝐀𝐌𝐌𝐀𝐃 𝐔𝐙𝐀𝐈𝐑
