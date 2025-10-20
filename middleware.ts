@@ -46,7 +46,6 @@ const SUSPICIOUS_PATTERNS = [
   /robots\.txt/i,
   /sitemap/i,
   /wp-admin/i,
-  /admin/i,
   /\.zip$/i,
   /\.rar$/i,
   /download/i,
@@ -61,6 +60,11 @@ export function middleware(request: NextRequest) {
   const referer = request.headers.get('referer') || ''
   const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
   const url = request.nextUrl.pathname.toLowerCase()
+  
+  // Allow all admin routes to bypass anti-scraping checks
+  if (url.startsWith('/admin')) {
+    return NextResponse.next()
+  }
   
   // Skip middleware for static assets and API routes
   if (url.startsWith('/api/') || 
