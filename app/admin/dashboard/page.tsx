@@ -1070,7 +1070,7 @@ Doctor Signature: Dr. Bashir Khan, DCP
       {/* Mobile-Responsive Professional Header */}
       <header className="relative bg-white/20 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.10)] border-0 p-2 sm:p-3 overflow-hidden mt-1 mx-2 sm:mx-4 rounded-xl">
         {/* Animated Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/10 to-[#2a9d8f]/5 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/10 to-[#2a9d8f]/5"></div>
         
         {/* Glass Effect Overlay */}
         <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
@@ -1097,10 +1097,10 @@ Doctor Signature: Dr. Bashir Khan, DCP
                     />
                     {/* Clinical Badge */}
                     <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full flex items-center justify-center shadow-xl border-2 border-white">
-                      <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white rounded-full animate-pulse"></div>
+                      <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white rounded-full"></div>
                     </div>
                     {/* Professional Ring */}
-                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl border border-[#0d5c75]/30 animate-pulse" style={{ animationDuration: '3s' }}></div>
+                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl border border-[#0d5c75]/30"></div>
                   </div>
                 </div>
                 {/* Professional Clinical Badge */}
@@ -1118,7 +1118,7 @@ Doctor Signature: Dr. Bashir Khan, DCP
                   Gonstead Chiropractic Specialist
                 </p>
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full"></div>
                   <p className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider`}>
                     ADMIN PORTAL
                   </p>
