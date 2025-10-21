@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gonstead-chiropractic-v1.0.0'
+const CACHE_NAME = 'gonstead-chiropractic-v1.0.1'
 const OFFLINE_URL = '/offline'
 const SYNC_TAG = 'background-sync'
 
@@ -11,7 +11,7 @@ const FILES_TO_CACHE = [
   '/patient-portal',
   '/offline',
   '/manifest.json',
-  '/images/gonstead-logo.png',
+'images/gonstead-chiropractic-logo-new.png'
   '/images/gonstead-logo-new.png',
   // Add other critical assets
 ]
