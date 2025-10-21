@@ -42,8 +42,9 @@ import {
   MoreVertical,
   ChevronDown,
   ChevronUp,
+  Activity,
+  User as UserIcon
 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
 import {
   getPatients,
   updatePatient,
