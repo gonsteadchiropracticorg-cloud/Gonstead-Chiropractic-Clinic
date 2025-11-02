@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getStaffAccounts, createStaffAccount, updateStaffAccount, removeStaffAccount, type StaffAccount, addAuditLog } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
-import { UserPlus, Shield, UserCheck, Pencil, Trash2, RefreshCw, Eye, Lock, Unlock, Mail, Phone, Link2, KeyRound, Search, Users, Anchor } from "lucide-react"
+import { UserPlus, Shield, UserCheck, Pencil, Trash2, RefreshCw, Lock, Unlock, Mail, Phone, Link2, Search, Users, BadgeCheck, SlidersHorizontal } from "lucide-react"
 import Link from "next/link"
 
 export default function StaffAccessPage() {
@@ -20,6 +20,8 @@ export default function StaffAccessPage() {
   const [loading, setLoading] = useState(true)
   const [openDialog, setOpenDialog] = useState(false)
   const [editing, setEditing] = useState<StaffAccount | null>(null)
+  const [roleFilter, setRoleFilter] = useState<'all' | 'staff' | 'assistant'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disabled'>('all')
   const [form, setForm] = useState({
     username: "",
     display_name: "",
@@ -46,10 +48,18 @@ export default function StaffAccessPage() {
   }, [])
 
   const filtered = useMemo(() => {
-    if (!search) return accounts
-    const q = search.toLowerCase()
-    return accounts.filter(a => (a.username||'').toLowerCase().includes(q) || (a.display_name||'').toLowerCase().includes(q) || (a.email||'').toLowerCase().includes(q) || (a.phone||'').toLowerCase().includes(q))
-  }, [accounts, search])
+    let arr = accounts
+    // search
+    if (search) {
+      const q = search.toLowerCase()
+      arr = arr.filter(a => (a.username||'').toLowerCase().includes(q) || (a.display_name||'').toLowerCase().includes(q) || (a.email||'').toLowerCase().includes(q) || (a.phone||'').toLowerCase().includes(q))
+    }
+    // role/status filters
+    if (roleFilter !== 'all') arr = arr.filter(a => (a.role || 'staff') === roleFilter)
+    if (statusFilter !== 'all') arr = arr.filter(a => statusFilter === 'active' ? a.active : !a.active)
+    // order active first, then recent
+    return arr.sort((a,b) => (Number(b.active) - Number(a.active)) || new Date(b.updated_at||b.created_at).getTime() - new Date(a.updated_at||a.created_at).getTime())
+  }, [accounts, search, roleFilter, statusFilter])
 
   const resetForm = () => setForm({ username: "", display_name: "", email: "", phone: "", role: "staff", password: "" })
 
@@ -110,31 +120,85 @@ await removeStaffAccount(acc.id)
   const toStaffLink = () => `${window.location.origin}/staff-dashboard`
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#F1FBF7] via-[#E6F6F1] to-[#F0FAFF] p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Shield className="h-7 w-7 text-emerald-700" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Staff Access Management</h1>
-              <p className="text-sm text-gray-600">Create, edit, and revoke staff access credentials</p>
+        {/* Hero */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-600 to-cyan-600 px-6 py-6 text-white shadow-xl">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/30 to-transparent" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                <Shield className="h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold">Staff Access Management</h1>
+                <p className="text-white/80 text-sm">Create, manage, and revoke staff credentials securely</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
+                <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search staff..." className="pl-9 w-64 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:ring-white/30 focus:border-white/40" />
+              </div>
+              <Button onClick={()=>{ resetForm(); setEditing(null); setOpenDialog(true) }} className="bg-white text-emerald-700 hover:bg-emerald-50">
+                <UserPlus className="h-4 w-4 mr-2" /> New Staff
+              </Button>
+              <Button variant="outline" onClick={load} className="border-white/40 text-white hover:bg-white/10"><RefreshCw className="h-4 w-4 mr-2"/>Refresh</Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search staff..." className="pl-9 w-64" />
+          {/* Quick stats */}
+          <div className="relative z-10 mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="text-white/80">Total</div>
+              <div className="text-lg font-semibold">{accounts.length}</div>
             </div>
-            <Button onClick={()=>{ resetForm(); setEditing(null); setOpenDialog(true) }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              <UserPlus className="h-4 w-4 mr-2" /> New Staff
-            </Button>
-            <Button variant="outline" onClick={load} className="text-gray-700"><RefreshCw className="h-4 w-4 mr-2"/>Refresh</Button>
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="text-white/80">Active</div>
+              <div className="text-lg font-semibold">{accounts.filter(a=>a.active).length}</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="text-white/80">Disabled</div>
+              <div className="text-lg font-semibold">{accounts.filter(a=>!a.active).length}</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="text-white/80">Assistants</div>
+              <div className="text-lg font-semibold">{accounts.filter(a=>a.role==='assistant').length}</div>
+            </div>
           </div>
         </div>
 
-        <Card className="bg-white">
+        {/* Filters */}
+        <Card className="bg-white/90 backdrop-blur-sm border-emerald-100 shadow">
+          <CardContent className="p-4 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 text-gray-700">
+              <SlidersHorizontal className="h-4 w-4" />
+              <span className="text-sm font-medium">Filters</span>
+            </div>
+            <Select value={roleFilter} onValueChange={(v:any)=>setRoleFilter(v)}>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Role"/></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="staff">Staff</SelectItem>
+                <SelectItem value="assistant">Assistant</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={(v:any)=>setStatusFilter(v)}>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Status"/></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="disabled">Disabled</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="ml-auto flex items-center gap-2 text-xs text-gray-500">
+              <Badge className="bg-emerald-100 text-emerald-800"><Users className="h-3 w-3 mr-1"/> {filtered.length} result(s)</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white shadow-lg border-emerald-100">
           <CardHeader className="py-4 flex items-center justify-between">
-            <CardTitle className="text-base">Accounts</CardTitle>
+            <CardTitle className="text-base text-emerald-800">Accounts</CardTitle>
             <Badge className="bg-emerald-100 text-emerald-800"><Users className="h-3 w-3 mr-1"/>{accounts.length}</Badge>
           </CardHeader>
           <CardContent className="overflow-auto">
@@ -156,10 +220,20 @@ await removeStaffAccount(acc.id)
                   <TableRow><TableCell colSpan={6} className="text-center py-8 text-gray-500">No staff accounts</TableCell></TableRow>
                 ) : (
                   filtered.map(acc => (
-                    <TableRow key={acc.id} className="hover:bg-gray-50">
+                    <TableRow key={acc.id} className="hover:bg-emerald-50/40">
                       <TableCell>
-                        <div className="font-semibold text-gray-800">{acc.display_name || acc.username}</div>
-                        <div className="text-xs text-gray-500">{acc.username}</div>
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
+                            {(acc.display_name || acc.username || '?').slice(0,2).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-800 flex items-center gap-1">
+                              {acc.display_name || acc.username}
+                              {acc.role === 'assistant' && <Badge className="bg-teal-100 text-teal-700 ml-1">Assistant</Badge>}
+                            </div>
+                            <div className="text-xs text-gray-500">{acc.username}</div>
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm flex items-center gap-2 text-gray-700">
@@ -169,7 +243,11 @@ await removeStaffAccount(acc.id)
                           {acc.phone && <><Phone className="h-3.5 w-3.5" />{acc.phone}</>}
                         </div>
                       </TableCell>
-                      <TableCell className="capitalize">{acc.role || 'staff'}</TableCell>
+                      <TableCell className="capitalize">
+                        <Badge className={acc.role==='assistant' ? 'bg-teal-100 text-teal-700' : 'bg-emerald-100 text-emerald-800'}>
+                          {acc.role || 'staff'}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         {acc.active ? (
                           <Badge className="bg-green-100 text-green-800">Active</Badge>
@@ -179,11 +257,16 @@ await removeStaffAccount(acc.id)
                       </TableCell>
                       <TableCell className="text-xs text-gray-500">{acc.last_login_at || localStorage.getItem(`staff_last_login_${acc.username}`) || '-'}</TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-2">
-                          <Button variant="ghost" size="sm" onClick={()=>openEdit(acc)} className="text-gray-700"><Pencil className="h-4 w-4"/></Button>
-                          <Button variant="ghost" size="sm" onClick={()=>toggleActive(acc)} className={acc.active?"text-red-600":"text-green-600"}>{acc.active ? <Lock className="h-4 w-4"/> : <Unlock className="h-4 w-4"/>}</Button>
-                          <Button variant="ghost" size="sm" onClick={()=>onDelete(acc)} className="text-red-600"><Trash2 className="h-4 w-4"/></Button>
-                          <Button variant="outline" size="sm" onClick={()=>{ navigator.clipboard.writeText(toStaffLink()); toast({ title: 'Link copied', description: 'Staff login link copied' }) }} className="text-gray-700"><Link2 className="h-4 w-4 mr-1"/>Copy Staff Link</Button>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button variant="ghost" size="sm" onClick={()=>openEdit(acc)} className="text-emerald-700 hover:bg-emerald-50"><Pencil className="h-4 w-4"/></Button>
+                          <Button variant="ghost" size="sm" onClick={()=>{
+                            if (acc.active) {
+                              if (!confirm('Disable this staff account?')) return;
+                            }
+                            toggleActive(acc)
+                          }} className={acc.active?"text-red-600 hover:bg-red-50":"text-green-600 hover:bg-green-50"}>{acc.active ? <Lock className="h-4 w-4"/> : <Unlock className="h-4 w-4"/>}</Button>
+                          <Button variant="ghost" size="sm" onClick={()=>{ if (confirm('Permanently delete this staff account?')) onDelete(acc) }} className="text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4"/></Button>
+                          <Button variant="outline" size="sm" onClick={()=>{ navigator.clipboard.writeText(toStaffLink()); toast({ title: 'Link copied', description: 'Staff login link copied' }) }} className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"><Link2 className="h-4 w-4 mr-1"/>Copy Staff Link</Button>
                         </div>
                       </TableCell>
                     </TableRow>
