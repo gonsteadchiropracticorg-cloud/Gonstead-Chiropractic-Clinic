@@ -22,7 +22,7 @@ import { TrendingUp, Users, DollarSign, Download, ArrowLeft, Activity, Target, A
 import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser, getPatients } from "@/lib/supabase"
 import Image from "next/image"
-import VisitorAnalytics from "@/components/visitor-analytics"
+import { VisitorAnalytics } from "@/components/visitor-analytics"
 import { useSeamlessData } from "@/hooks/use-silent-sync"
 import { SeamlessDotIndicator } from "@/components/ui/seamless-update-indicator"
 
