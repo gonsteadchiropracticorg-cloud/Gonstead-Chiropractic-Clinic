@@ -640,11 +640,20 @@ const HomePageContent = memo(() => {
             </div>
           </section>
 
-          {/* Reviews & Ratings Section */}
+          {/* Reviews & Ratings Section (Trust-style) */}
           <section id="reviews" className="relative py-20 bg-white dark:bg-slate-900">
             <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 to-cyan-50/40 dark:from-slate-800 dark:to-slate-900" />
             <div className="container mx-auto px-4 relative z-10">
-              <div className="text-center mb-12">
+              {/* Trust-style summary + submission + list */}
+              <div className="mb-12">
+                {/** Render dynamic reviews component */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* The following component handles cloud storage and UI */}
+                {require('@/components/trust-reviews').default()}
+              </div>
+
+              {/* Legacy static cards removed in favor of dynamic component */}
+              <div className="hidden">
                 <Badge className="bg-[#2a9d8f]/10 text-[#2a9d8f] border-[#2a9d8f]/20 mb-4">Reviews & Ratings</Badge>
                 <h2 className="text-3xl md:text-4xl font-bold text-[#0d5c75] dark:text-white mb-3 font-poppins">What Our Patients Say</h2>
                 <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Real experiences from people who trusted Gonstead chiropractic care for relief and long-term spinal health.</p>

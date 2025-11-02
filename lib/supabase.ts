@@ -725,6 +725,59 @@ export const getAuditLogs = async () => {
   }
 }
 
+// Reviews
+export interface Review {
+  id: string
+  name: string
+  rating: number // 1-5
+  title?: string
+  text: string
+  created_at: string
+  source?: string // website
+  verified?: boolean
+}
+
+export const addReview = async (review: Omit<Review, 'id' | 'created_at'>) => {
+  const row: Review = {
+    id: `rev_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+    created_at: new Date().toISOString(),
+    ...review,
+  }
+  try {
+    const { data, error } = await supabase.from('reviews').insert(row as any).select('*').single()
+    if (error) throw error
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('reviewsUpdated'))
+    }
+    return data as Review
+  } catch (e) {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('reviews') || '[]'
+      const arr = JSON.parse(raw)
+      arr.unshift(row)
+      localStorage.setItem('reviews', JSON.stringify(arr))
+      window.dispatchEvent(new CustomEvent('reviewsUpdated'))
+      return row
+    }
+    throw e
+  }
+}
+
+export const getReviews = async (limit = 30) => {
+  try {
+    const { data, error } = await supabase.from('reviews').select('*').order('created_at', { ascending: false }).limit(limit)
+    if (error) throw error
+    return { data: (data || []) as Review[], error: null }
+  } catch (e) {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('reviews') || '[]'
+      const arr = JSON.parse(raw)
+      return { data: arr, error: null }
+    }
+    return { data: [], error: e as any }
+  }
+}
+
 // Best-effort undo for common actions
 export const undoAuditLog = async (log: AuditLog) => {
   if (!log.reversible) return { ok: false, error: 'Not reversible' }
