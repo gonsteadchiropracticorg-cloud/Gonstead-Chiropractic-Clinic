@@ -426,6 +426,7 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
               <Button 
                 variant="ghost" 
                 size="sm" 
+                onClick={() => handleNavigation('/admin/help')}
                 className="flex-1 text-gray-600 hover:text-[#0d5c75] hover:bg-[#0d5c75]/5 transition-all duration-200"
               >
                 <HelpCircle className="h-4 w-4 mr-2" />

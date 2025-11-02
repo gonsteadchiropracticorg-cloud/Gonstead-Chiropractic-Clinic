@@ -54,6 +54,7 @@ import {
   getCurrentUser,
   type Patient,
 } from "@/lib/supabase"
+import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import { WeatherWidget } from "@/components/weather-widget"
 import { EnhancedLoadingPage } from "@/components/loading-spinner"
@@ -1875,10 +1876,10 @@ Doctor Signature: Dr. Bashir Khan, DCP
                             </Button>
 
                             {/* Collapsible Action Buttons */}
-                            {expandedActions.has(patient.id) && (
-                              <div className="absolute top-full left-1/3 transform -translate-x-2/3 mt-2 z-50 w-80 bg-white shadow-2xl border border-gray-200 rounded-lg p-3 space-y-2 transition-all duration-300 ease-in-out">
+{expandedActions.has(patient.id) && (
+                              <div className={`absolute top-full left-0 md:left-auto md:right-0 mt-2 z-50 w-[min(20rem,calc(100vw-2rem))] md:w-96 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-3 space-y-2 transition-all duration-300 ease-in-out`}>
                                 {/* Professional Action Grid */}
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                   {/* View Details Button */}
                                   <Dialog>
                                     <DialogTrigger asChild>

@@ -10,8 +10,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 import AnalyticsProvider from "@/components/AnalyticsProvider"
 import AntiScraping from "@/components/AntiScraping"
-import dynamic from 'next/dynamic'
-const SWClient = dynamic(() => import('@/components/ServiceWorkerClient'), { ssr: false })
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -101,8 +99,6 @@ export default function RootLayout({
             <SpeedInsights />
             <Analytics />
           </ThemeProvider>
-          {/* Client SW registrar */}
-          <SWClient />
         </ErrorBoundary>
       </body>
     </html>
