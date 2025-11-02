@@ -642,7 +642,7 @@ export const updateStaffAccount = async (id: string, updates: Partial<StaffAccou
   }
 }
 
-export const deleteStaffAccount = async (id: string) => {
+export const removeStaffAccount = async (id: string) => {
   try {
     const { error } = await supabase.from('staff_accounts').delete().eq('id', id)
     if (error) throw error

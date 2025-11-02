@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { getStaffAccounts, createStaffAccount, updateStaffAccount, deleteStaffAccount, type StaffAccount, addAuditLog } from "@/lib/supabase"
+import { getStaffAccounts, createStaffAccount, updateStaffAccount, removeStaffAccount, type StaffAccount, addAuditLog } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { UserPlus, Shield, UserCheck, Pencil, Trash2, RefreshCw, Eye, Lock, Unlock, Mail, Phone, Link2, KeyRound, Search, Users, Anchor } from "lucide-react"
 import Link from "next/link"
@@ -88,7 +88,7 @@ export default function StaffAccessPage() {
   }
 
   const onDelete = async (acc: StaffAccount) => {
-    await deleteStaffAccount(acc.id)
+await removeStaffAccount(acc.id)
     await addAuditLog({ action: 'delete', entity_type: 'staff', entity_id: acc.id, source: 'admin_dashboard', reversible: true, meta: { before: acc } })
     toast({ title: 'Deleted', description: `Account ${acc.username} removed` })
     await load()
