@@ -199,6 +199,15 @@ export default function AdminAuth() {
             </Alert>
           )}
 
+          {/* Sample guidance */}
+          <div className="mb-4 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+            <div className="font-semibold mb-1">Sample (for understanding only):</div>
+            <div>Name: MUHAMMAD UZAIR</div>
+            <div>Email: kmuzairkhan123@gmail.com</div>
+            <div>Phone: 03433885835</div>
+            <div>Username: Uzair</div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-[#0d5c75] font-semibold flex items-center gap-2">
@@ -212,7 +221,7 @@ export default function AdminAuth() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)]"
-                placeholder="Enter admin email"
+                placeholder="kmuzairkhan123@gmail.com"
                 disabled={isLoading}
               />
             </div>

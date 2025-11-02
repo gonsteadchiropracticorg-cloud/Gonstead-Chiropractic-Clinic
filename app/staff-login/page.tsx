@@ -96,6 +96,15 @@ export default function StaffLoginPage() {
           </div>
 
           <div className="p-5 space-y-3">
+            {/* Sample guidance */}
+            <div className="p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+              <div className="font-semibold mb-1">Sample (for understanding only):</div>
+              <div>Name: MUHAMMAD UZAIR</div>
+              <div>Email: kmuzairkhan123@gmail.com</div>
+              <div>Phone: 03433885835</div>
+              <div>Username: Uzair</div>
+            </div>
+
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-3">
               {/* Email Field */}
@@ -112,7 +121,7 @@ export default function StaffLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
-                  placeholder="Enter staff email"
+                  placeholder="kmuzairkhan123@gmail.com"
                   disabled={isLoading}
                 />
               </div>
