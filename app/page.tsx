@@ -200,6 +200,7 @@ const HomePageContent = memo(() => {
                 { id: "home", label: "Home" },
                 { id: "about", label: "About" },
                 { id: "services", label: "Services" },
+                { id: "reviews", label: "Reviews" },
                 { id: "doctor", label: "Doctor" },
                 { id: "technology", label: "Technology" },
                 { id: "contact", label: "Contact" },
@@ -635,6 +636,82 @@ const HomePageContent = memo(() => {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Reviews & Ratings Section */}
+          <section id="reviews" className="relative py-20 bg-white dark:bg-slate-900">
+            <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 to-cyan-50/40 dark:from-slate-800 dark:to-slate-900" />
+            <div className="container mx-auto px-4 relative z-10">
+              <div className="text-center mb-12">
+                <Badge className="bg-[#2a9d8f]/10 text-[#2a9d8f] border-[#2a9d8f]/20 mb-4">Reviews & Ratings</Badge>
+                <h2 className="text-3xl md:text-4xl font-bold text-[#0d5c75] dark:text-white mb-3 font-poppins">What Our Patients Say</h2>
+                <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Real experiences from people who trusted Gonstead chiropractic care for relief and long-term spinal health.</p>
+                <div className="mt-4 inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-full px-4 py-2">
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (<Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-400" />))}
+                  </div>
+                  <span className="text-sm font-semibold text-yellow-700">4.9/5 average</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  {
+                    name: 'Ayesha Khan',
+                    text: 'I had severe lower back pain for months. After just a few sessions, my pain reduced dramatically. Professional and precise care!',
+                    rating: 5,
+                  },
+                  {
+                    name: 'Muhammad Ali',
+                    text: 'The Gonstead method was new to me, but the detailed assessment and targeted adjustments made a visible difference.',
+                    rating: 5,
+                  },
+                  {
+                    name: 'Fatima Zahra',
+                    text: 'Great experience! Clean clinic, respectful staff, and results that speak for themselves. Highly recommended.',
+                    rating: 5,
+                  },
+                  {
+                    name: 'Usman Tariq',
+                    text: 'Neck stiffness from desk work – gone. The doctor explained everything clearly and treated the root cause.',
+                    rating: 5,
+                  },
+                  {
+                    name: 'Sana Iqbal',
+                    text: 'Came in with sciatica. Got customized care and home guidance. Recovery was much faster than I expected.',
+                    rating: 5,
+                  },
+                  {
+                    name: 'Hamza Yousaf',
+                    text: 'Professional, accurate diagnosis, and effective treatment. I’m back to training without pain.',
+                    rating: 5,
+                  },
+                ].map((r, idx) => (
+                  <Card key={idx} className="border-[#0d5c75]/10 hover:border-[#0d5c75]/30 transition-colors bg-white/90 dark:bg-slate-800/90 shadow-sm hover:shadow-md">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-100 to-cyan-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
+                            {r.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()}
+                          </div>
+                          <div className="font-semibold text-[#0d5c75] dark:text-white">{r.name}</div>
+                        </div>
+                        <div className="flex">
+                          {[...Array(r.rating)].map((_, i) => (<Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-400" />))}
+                        </div>
+                      </div>
+                      <p className="text-gray-700 dark:text-gray-200 leading-relaxed">{r.text}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="text-center mt-10">
+                <a href="#contact" className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-6 py-3 rounded-lg font-semibold shadow hover:shadow-lg transition-shadow">
+                  Share Your Experience
+                </a>
               </div>
             </div>
           </section>
