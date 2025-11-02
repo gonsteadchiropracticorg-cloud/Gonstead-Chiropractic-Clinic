@@ -137,6 +137,7 @@ const sidebarItems: MenuItem[] = [
       { id: "location-settings", title: "Location & Maps", href: "/admin/location-settings", icon: MapPin },
       { id: "import-export", title: "Import/Export", href: "/admin/import-export", icon: Database },
       { id: "audit-logs", title: "Audit Logs", href: "/admin/audit-logs", icon: Activity },
+      { id: "staff-access", title: "Staff Access", href: "/admin/staff-access", icon: UserCheck },
     ]
   },
   {

@@ -386,6 +386,21 @@ export interface ClinicSettings {
   updated_at: string
 }
 
+// Staff Accounts (admin-managed)
+export interface StaffAccount {
+  id: string
+  username: string
+  display_name?: string
+  email?: string
+  phone?: string
+  role: 'staff' | 'assistant'
+  active: boolean
+  password?: string // stored only in local fallback; do NOT store in DB plaintext
+  last_login_at?: string
+  created_at: string
+  updated_at: string
+}
+
 
 // Database Functions with fallback data
 export const createPatient = async (patientData: Omit<Patient, "id" | "created_at" | "updated_at">) => {
@@ -554,6 +569,94 @@ export const getPrescriptions = async (patientId: string) => {
   } catch (error) {
     console.error("Get prescriptions error:", error)
     return { data: [], error }
+  }
+}
+
+// Staff Accounts CRUD with localStorage fallback
+const STAFF_ACCOUNTS_KEY = 'staff_accounts'
+
+export const getStaffAccounts = async (): Promise<{ data: StaffAccount[]; error: any }> => {
+  try {
+    const { data, error } = await supabase.from('staff_accounts').select('*').order('created_at', { ascending: false })
+    if (error) throw error
+    return { data: (data || []) as StaffAccount[], error: null }
+  } catch (e) {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(STAFF_ACCOUNTS_KEY) || '[]'
+        const parsed = JSON.parse(raw)
+        return { data: parsed, error: null }
+      } catch (err) {
+        return { data: [], error: err }
+      }
+    }
+    return { data: [], error: e }
+  }
+}
+
+export const createStaffAccount = async (account: Omit<StaffAccount, 'id' | 'created_at' | 'updated_at'>) => {
+  const record: StaffAccount = {
+    id: `staff_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+    active: true,
+    role: account.role || 'staff',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...account,
+  }
+  try {
+    // Do not send plaintext password to DB
+    const { password, ...dbPayload } = record
+    const { data, error } = await supabase.from('staff_accounts').insert(dbPayload as any).select('*').single()
+    if (error) throw error
+    return data as StaffAccount
+  } catch (e) {
+    // Fallback to localStorage
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem(STAFF_ACCOUNTS_KEY) || '[]'
+      const arr = JSON.parse(raw)
+      arr.unshift(record)
+      localStorage.setItem(STAFF_ACCOUNTS_KEY, JSON.stringify(arr))
+      window.dispatchEvent(new CustomEvent('staffAccountsUpdated'))
+      return record
+    }
+    throw e
+  }
+}
+
+export const updateStaffAccount = async (id: string, updates: Partial<StaffAccount>) => {
+  try {
+    const { password, ...dbUpdates } = updates
+    const { data, error } = await supabase.from('staff_accounts').update({ ...dbUpdates, updated_at: new Date().toISOString() }).eq('id', id).select('*').single()
+    if (error) throw error
+    return data as StaffAccount
+  } catch (e) {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem(STAFF_ACCOUNTS_KEY) || '[]'
+      const arr = JSON.parse(raw) as StaffAccount[]
+      const updated = arr.map(a => a.id === id ? { ...a, ...updates, updated_at: new Date().toISOString() } : a)
+      localStorage.setItem(STAFF_ACCOUNTS_KEY, JSON.stringify(updated))
+      window.dispatchEvent(new CustomEvent('staffAccountsUpdated'))
+      return updated.find(a => a.id === id)
+    }
+    return null
+  }
+}
+
+export const deleteStaffAccount = async (id: string) => {
+  try {
+    const { error } = await supabase.from('staff_accounts').delete().eq('id', id)
+    if (error) throw error
+    return true
+  } catch (e) {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem(STAFF_ACCOUNTS_KEY) || '[]'
+      const arr = JSON.parse(raw) as StaffAccount[]
+      const filtered = arr.filter(a => a.id !== id)
+      localStorage.setItem(STAFF_ACCOUNTS_KEY, JSON.stringify(filtered))
+      window.dispatchEvent(new CustomEvent('staffAccountsUpdated'))
+      return true
+    }
+    return false
   }
 }
 

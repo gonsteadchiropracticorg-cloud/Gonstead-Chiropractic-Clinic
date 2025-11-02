@@ -224,8 +224,8 @@ export default function StaffDashboard() {
         }
       })()
 
-      // Filter Supabase patients to admin-managed only
-      const adminDbPatients = (realPatients as any[]).filter((p: any) => p.booking_source === 'admin_dashboard')
+      // Filter Supabase patients to admin-managed only (treat missing booking_source as admin-created)
+      const adminDbPatients = (realPatients as any[]).filter((p: any) => !p.booking_source || p.booking_source === 'admin_dashboard')
 
       // Merge (prefer Supabase over localStorage on ID conflicts)
       const mergedMap = new Map<string, Patient>()
@@ -255,11 +255,40 @@ export default function StaffDashboard() {
     setAuthLoading(true)
     
     try {
-      // Get staff credentials from localStorage (set by admin)
+      // 1) New multi-account support: check staff_accounts list first
+      const staffAccountsRaw = localStorage.getItem('staff_accounts')
+      if (staffAccountsRaw) {
+        try {
+          const accounts = JSON.parse(staffAccountsRaw) as Array<any>
+          const match = accounts.find(a => a.username?.toLowerCase() === credentials.username.toLowerCase())
+          if (match) {
+            if (match.active === false) {
+              toast({ title: 'Access disabled', description: 'This staff account is disabled.', variant: 'destructive' })
+              setAuthLoading(false)
+              return
+            }
+            if (match.password === credentials.password) {
+              // Set authentication
+              localStorage.setItem('staff_authenticated', 'true')
+              localStorage.setItem('staff_login_time', new Date().toISOString())
+              localStorage.setItem('staff_username', match.username)
+              localStorage.setItem(`staff_last_login_${match.username}`, new Date().toISOString())
+
+              setIsAuthenticated(true)
+              setStaffUsername(match.username)
+              await loadPatientData()
+              setupSessionTimeout()
+              toast({ title: '✅ Authentication Successful', description: `Welcome ${match.display_name || match.username}` })
+              setAuthLoading(false)
+              return
+            }
+          }
+        } catch {}
+      }
+
+      // 2) Legacy single credential fallback
       let storedCredentials = localStorage.getItem('staff_credentials')
-      
       if (!storedCredentials) {
-        // Set default credentials if none exist
         const defaultCredentials = {
           username: 'staff',
           password: 'staff123',
@@ -269,12 +298,8 @@ export default function StaffDashboard() {
         localStorage.setItem('staff_credentials', JSON.stringify(defaultCredentials))
         storedCredentials = JSON.stringify(defaultCredentials)
       }
-      
       const savedCredentials = JSON.parse(storedCredentials)
-      
-      // Validate credentials
-      if (credentials.username === savedCredentials.username && 
-          credentials.password === savedCredentials.password) {
+      if (credentials.username === savedCredentials.username && credentials.password === savedCredentials.password) {
         
         // Set authentication
         localStorage.setItem('staff_authenticated', 'true')
