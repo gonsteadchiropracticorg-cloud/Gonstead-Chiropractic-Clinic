@@ -44,6 +44,8 @@ export async function signInAdmin(email: string, password: string) {
 
       if (!error && data.user) {
         console.log("Supabase auth successful:", data.user.email)
+        // Audit: sign in
+        try { await addAuditLog({ action: 'sign_in', entity_type: 'auth', actor_email: data.user.email || email, source: 'admin_dashboard', reversible: false }) } catch {}
         return { user: data.user, error: null }
       }
 
@@ -61,6 +63,8 @@ export async function signInAdmin(email: string, password: string) {
     // Fallback to hardcoded credentials for admin access
     if (email.trim() === AUTH_CREDENTIALS.email && password.trim() === AUTH_CREDENTIALS.password) {
       console.log("Fallback auth successful")
+      // Audit: sign in
+      try { await addAuditLog({ action: 'sign_in', entity_type: 'auth', actor_email: email.trim(), source: 'admin_dashboard', reversible: false }) } catch {}
       return {
         user: {
           id: "admin-user",
@@ -155,6 +159,7 @@ export async function getCurrentUser() {
 export async function signOutAdmin() {
   try {
     // Clear localStorage
+    const actor = localStorage.getItem("admin_email") || undefined
     localStorage.removeItem("admin_authenticated")
     localStorage.removeItem("admin_email")
 
@@ -164,6 +169,9 @@ export async function signOutAdmin() {
     } catch (supabaseError) {
       console.log("Supabase sign out failed:", supabaseError)
     }
+
+    // Audit: sign out (best effort)
+    try { await addAuditLog({ action: 'sign_out', entity_type: 'auth', actor_email: actor, source: 'admin_dashboard', reversible: false }) } catch {}
 
     return { error: null }
   } catch (error: any) {
@@ -546,6 +554,97 @@ export const getPrescriptions = async (patientId: string) => {
   } catch (error) {
     console.error("Get prescriptions error:", error)
     return { data: [], error }
+  }
+}
+
+// =========================
+// Audit Log (with fallback)
+// =========================
+export interface AuditLog {
+  id: string
+  timestamp: string
+  action: string // create | update | delete | rename | sign_in | sign_out | import | export | settings_update | error
+  entity_type?: string // patient | prescription | settings | auth | system
+  entity_id?: string
+  actor_id?: string
+  actor_email?: string
+  source?: string // admin_dashboard | main_page | api | system
+  reversible?: boolean
+  meta?: any // { before?: any, after?: any, reason?: string }
+}
+
+export const addAuditLog = async (log: Omit<AuditLog, "id" | "timestamp">) => {
+  const entry: AuditLog = {
+    id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    timestamp: new Date().toISOString(),
+    ...log,
+  }
+
+  try {
+    const { error } = await supabase.from("audit_logs").insert(entry as any)
+    if (error) throw error
+  } catch (e) {
+    // Fallback to localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('audit_logs') || '[]'
+        const parsed = JSON.parse(raw)
+        parsed.unshift(entry)
+        localStorage.setItem('audit_logs', JSON.stringify(parsed))
+        // Notify listeners
+        window.dispatchEvent(new CustomEvent('auditLogCreated', { detail: entry }))
+      } catch {}
+    }
+  }
+  return entry
+}
+
+export const getAuditLogs = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .order('timestamp', { ascending: false })
+    if (error) throw error
+    return { data: (data || []) as AuditLog[], error: null }
+  } catch (e) {
+    // Fallback to localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('audit_logs') || '[]'
+        const parsed: AuditLog[] = JSON.parse(raw)
+        return { data: parsed, error: null }
+      } catch (err) {
+        return { data: [], error: err as any }
+      }
+    }
+    return { data: [], error: e as any }
+  }
+}
+
+// Best-effort undo for common actions
+export const undoAuditLog = async (log: AuditLog) => {
+  if (!log.reversible) return { ok: false, error: 'Not reversible' }
+  try {
+    if (log.entity_type === 'patient') {
+      if (log.action === 'create' && log.entity_id) {
+        await deletePatient(log.entity_id)
+        return { ok: true }
+      }
+      if (log.action === 'delete' && log.meta?.before) {
+        await createPatient({ ...(log.meta.before as any) })
+        return { ok: true }
+      }
+      if (log.action === 'update' && log.entity_id && log.meta?.before) {
+        await updatePatient(log.entity_id, { ...(log.meta.before as any) })
+        return { ok: true }
+      }
+    }
+    // Extend for other entity types as needed
+    return { ok: false, error: 'Undo not implemented for this action' }
+  } catch (error) {
+    console.error('Undo error:', error)
+    return { ok: false, error }
   }
 }
 

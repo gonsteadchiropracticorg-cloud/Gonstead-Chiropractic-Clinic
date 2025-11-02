@@ -52,6 +52,7 @@ import {
   createPatient,
   signOutAdmin,
   getCurrentUser,
+  addAuditLog,
   type Patient,
 } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
@@ -343,7 +344,10 @@ export default function AdminDashboard() {
 
   const handleDeletePatient = async (patientId: string) => {
     try {
+      const before = patients.find(p => p.id === patientId) || null
       await deletePatient(patientId)
+      // Audit: delete
+      try { await addAuditLog({ action: 'delete', entity_type: 'patient', entity_id: patientId, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before } }) } catch {}
       await loadPatients()
       toast({
         title: "Patient Deleted",
@@ -372,7 +376,10 @@ export default function AdminDashboard() {
         updateData.last_visit = new Date().toISOString()
       }
 
+      const prev = patients.find((p) => p.id === patientId)
       await updatePatient(patientId, updateData)
+      // Audit: update status
+      try { await addAuditLog({ action: 'update', entity_type: 'patient', entity_id: patientId, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before: { status: prev?.status, sessions_completed: prev?.sessions_completed, last_visit: prev?.last_visit }, after: { status: newStatus, sessions_completed: updateData.sessions_completed, last_visit: updateData.last_visit } } }) } catch {}
       await loadPatients()
       toast({
         title: "✅ Status Successfully Updated",
@@ -407,6 +414,9 @@ export default function AdminDashboard() {
         const existingPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
         const updatedPatients = [newPatientRecord, ...existingPatients]
         localStorage.setItem("gonstead_patients", JSON.stringify(updatedPatients))
+        
+        // Audit: create
+        try { await addAuditLog({ action: 'create', entity_type: 'patient', entity_id: newPatientRecord.id, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { after: newPatientRecord } }) } catch {}
         
         // DO NOT automatically create medical records - only patient records
         // Medical records should be created separately via Medical History page
@@ -871,7 +881,10 @@ Doctor Signature: Dr. Bashir Khan, DCP
     if (!editingPatient) return
 
     try {
+      const before = patients.find(p => p.id === editingPatient.id)
       await updatePatient(editingPatient.id, editingPatient)
+      // Audit: update
+      try { await addAuditLog({ action: 'update', entity_type: 'patient', entity_id: editingPatient.id, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before, after: editingPatient } }) } catch {}
       await loadPatients()
       setIsEditPatientDialogOpen(false)
       setEditingPatient(null)
