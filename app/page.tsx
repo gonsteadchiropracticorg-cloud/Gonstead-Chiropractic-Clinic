@@ -640,40 +640,6 @@ const HomePageContent = memo(() => {
             </div>
           </section>
 
-          {/* Reviews & Ratings Section (Trust-style) */}
-          <section id="reviews" className="relative py-20 bg-white dark:bg-slate-900">
-            <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 to-cyan-50/40 dark:from-slate-800 dark:to-slate-900" />
-            <div className="container mx-auto px-4 relative z-10">
-              {/* Trust-style summary + submission + list */}
-              <div className="mb-12">
-                {/** Render dynamic reviews component */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {/* The following component handles cloud storage and UI */}
-                {require('@/components/trust-reviews').default()}
-              </div>
-
-              {/* Legacy static cards removed in favor of dynamic component */}
-              <div className="hidden">
-                <Badge className="bg-[#2a9d8f]/10 text-[#2a9d8f] border-[#2a9d8f]/20 mb-4">Reviews & Ratings</Badge>
-                <h2 className="text-3xl md:text-4xl font-bold text-[#0d5c75] dark:text-white mb-3 font-poppins">What Our Patients Say</h2>
-                <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Real experiences from people who trusted Gonstead chiropractic care for relief and long-term spinal health.</p>
-                <div className="mt-4 inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-full px-4 py-2">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (<Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-400" />))}
-                  </div>
-                  <span className="text-sm font-semibold text-yellow-700">4.9/5 average</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                  {
-                    name: 'Ayesha Khan',
-                    text: 'I had severe lower back pain for months. After just a few sessions, my pain reduced dramatically. Professional and precise care!',
-                    rating: 5,
-                  },
-                  {
-                    name: 'Muhammad Ali',
                     text: 'The Gonstead method was new to me, but the detailed assessment and targeted adjustments made a visible difference.',
                     rating: 5,
                   },
@@ -1316,6 +1282,13 @@ const HomePageContent = memo(() => {
             </div>
           </section>
 
+
+          {/* Reviews & Ratings Section (Trust-style) - placed just above Education Hub */}
+          <section id="reviews" className="relative py-16 bg-white dark:bg-slate-900">
+            <div className="container mx-auto px-4">
+              {require('@/components/trust-reviews').default()}
+            </div>
+          </section>
 
           {/* Compact Patient Education Resources Section */}
           <section className="relative py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-[#0d5c75]/5 via-white to-[#2a9d8f]/5 dark:from-gray-900/50 dark:to-gray-800/50">
