@@ -461,15 +461,6 @@ export default function StaffDashboard() {
                   <p className="text-sm text-gray-600">Enter your credentials to access patient data</p>
                 </div>
 
-                {/* Sample guidance */}
-                <div className="mb-2 p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
-                  <div className="font-semibold mb-1">Sample (for understanding only):</div>
-                  <div>Name: MUHAMMAD UZAIR</div>
-                  <div>Email: kmuzairkhan123@gmail.com</div>
-                  <div>Phone: 03433885835</div>
-                  <div>Username: Uzair</div>
-                </div>
-
                 {/* Username Field */}
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-[#0d5c75] font-medium">Username</Label>
@@ -478,7 +469,7 @@ export default function StaffDashboard() {
                     <Input
                       id="username"
                       type="text"
-                      placeholder="Uzair"
+                      placeholder="Enter your username"
                       value={credentials.username}
                       onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
                       className="pl-10 border-2 border-gray-200 focus:border-[#0d5c75] rounded-lg"
