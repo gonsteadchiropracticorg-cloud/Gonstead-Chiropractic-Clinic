@@ -414,24 +414,9 @@ export const getPatients = async () => {
     return { data, error: null }
   } catch (error) {
     console.error("Get patients error:", error)
-    // Return mock data for development
+    // Do not return mock demo patients in production/staging; return empty list to avoid fake names
     return {
-      data: [
-        {
-          id: "1",
-          name: "John Doe",
-          phone: "+92 300 1234567",
-          email: "john@example.com",
-          session_type: "in_clinic",
-          appointment_date: new Date().toISOString(),
-          status: "confirmed",
-          urgency: "normal",
-          payment_method: "cash",
-          sessions_completed: 3,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ],
+      data: [],
       error: null,
     }
   }

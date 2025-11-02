@@ -61,8 +61,8 @@ export function middleware(request: NextRequest) {
   const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
   const url = request.nextUrl.pathname.toLowerCase()
   
-  // Allow all admin routes to bypass anti-scraping checks
-  if (url.startsWith('/admin')) {
+  // Allow admin and staff routes to bypass anti-scraping checks
+  if (url.startsWith('/admin') || url.startsWith('/staff-dashboard')) {
     return NextResponse.next()
   }
   
@@ -145,15 +145,9 @@ export function middleware(request: NextRequest) {
     }
   }
   
-  // 5. Block rapid sequential requests (scraping pattern)
+  // 5. Previously blocked rapid sequential requests (<100ms) which interfered with normal navigation.
+  //    Relax this rule to avoid false positives during page refreshes and client-side routing.
   const sequentialKey = `sequential_${ip}`
-  const lastRequest = rateLimitMap.get(sequentialKey)
-  
-  if (lastRequest && now - lastRequest.timestamp < 100) { // Less than 100ms between requests
-    console.log(`Blocked rapid sequential request from IP: ${ip}`)
-    return new NextResponse('Request Too Fast', { status: 429 })
-  }
-  
   rateLimitMap.set(sequentialKey, { count: 1, timestamp: now })
   
   // Add security headers

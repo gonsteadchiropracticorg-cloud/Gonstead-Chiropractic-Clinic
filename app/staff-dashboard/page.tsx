@@ -107,7 +107,13 @@ export default function StaffDashboard() {
     // Listen for new appointments from the booking form and admin dashboard
     const handleNewAppointment = (event: CustomEvent) => {
       console.log('Staff Dashboard: Received new appointment event:', event.detail)
-      const newPatient = event.detail
+      const newPatient = event.detail as any
+      
+      // Only accept admin-managed bookings for staff view
+      if (newPatient?.booking_source !== 'admin_dashboard') {
+        console.log('Staff Dashboard: Ignoring non-admin booking in staff view')
+        return
+      }
       
       // Update patient list with new appointment
       setPatients(prev => {
@@ -207,114 +213,27 @@ export default function StaffDashboard() {
       const realPatients = supabasePatients || []
       console.log('Staff Dashboard: Loaded Supabase patients:', realPatients.length)
       
-      // Load from localStorage (appointments from booking form and admin dashboard)
-      const localStoragePatients = JSON.parse(localStorage.getItem('gonstead_patients') || '[]')
-      console.log('Staff Dashboard: Loaded localStorage patients:', localStoragePatients.length)
-      
-      // Create dummy patients for demonstration
-      const dummyPatients: Patient[] = [
-        {
-          id: 'staff-p1',
-          name: 'Ahmed Hassan',
-          phone: '+92 301 234 5678',
-          email: 'ahmed.hassan@email.com',
-          session_type: 'in_clinic',
-          appointment_date: new Date().toISOString(),
-          urgency: 'normal',
-          payment_method: 'cash',
-          status: 'confirmed',
-          notes: 'Lower back pain, chronic issue for 3 months',
-          sessions_completed: 2,
-          last_visit: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: 'staff-p2',
-          name: 'Fatima Khan',
-          phone: '+92 302 345 6789',
-          email: 'fatima.khan@email.com',
-          session_type: 'video',
-          appointment_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          urgency: 'urgent',
-          payment_method: 'jazzcash',
-          status: 'pending',
-          notes: 'Neck stiffness after car accident',
-          sessions_completed: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: 'staff-p3',
-          name: 'Muhammad Ali',
-          phone: '+92 303 456 7890',
-          email: 'muhammad.ali@email.com',
-          session_type: 'in_clinic',
-          appointment_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-          urgency: 'emergency',
-          payment_method: 'easypaisa',
-          status: 'completed',
-          notes: 'Severe back spasm, requiring immediate attention',
-          sessions_completed: 5,
-          last_visit: new Date().toISOString(),
-          created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: 'staff-p4',
-          name: 'Aisha Malik',
-          phone: '+92 304 567 8901',
-          email: 'aisha.malik@email.com',
-          session_type: 'in_clinic',
-          appointment_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-          urgency: 'normal',
-          payment_method: 'cash',
-          status: 'confirmed',
-          notes: 'Regular maintenance adjustment, office worker',
-          sessions_completed: 8,
-          last_visit: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-          created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: 'staff-p5',
-          name: 'Omar Sheikh',
-          phone: '+92 305 678 9012',
-          email: 'omar.sheikh@email.com',
-          session_type: 'video',
-          appointment_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-          urgency: 'normal',
-          payment_method: 'jazzcash',
-          status: 'cancelled',
-          notes: 'Shoulder pain from sports injury, rescheduled',
-          sessions_completed: 1,
-          last_visit: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-          created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date().toISOString()
+      // Include admin-managed patients from localStorage as a fallback (when DB is unavailable)
+      const localStoragePatients: Patient[] = (() => {
+        try {
+          const raw = localStorage.getItem('gonstead_patients') || '[]'
+          const parsed: any[] = JSON.parse(raw)
+          return parsed.filter((p: any) => p.booking_source === 'admin_dashboard')
+        } catch {
+          return []
         }
-      ]
-      
-      // Merge patients with proper deduplication - prioritize Supabase data
-      const mergedPatients = [...realPatients]
-      const existingIds = new Set(realPatients.map(p => p.id))
-      
-      // Add localStorage patients that aren't already in Supabase (by ID)
-      localStoragePatients.forEach((localPatient: Patient) => {
-        if (!existingIds.has(localPatient.id)) {
-          mergedPatients.push(localPatient)
-          existingIds.add(localPatient.id)
-        }
-      })
-      
-      // Add dummy patients for demonstration (always include these for staff to see)
-      dummyPatients.forEach((dummyPatient) => {
-        if (!existingIds.has(dummyPatient.id)) {
-          mergedPatients.push(dummyPatient)
-          existingIds.add(dummyPatient.id)
-        }
-      })
-      
-      console.log('Staff Dashboard: Total merged patients:', mergedPatients.length)
+      })()
+
+      // Filter Supabase patients to admin-managed only
+      const adminDbPatients = (realPatients as any[]).filter((p: any) => p.booking_source === 'admin_dashboard')
+
+      // Merge (prefer Supabase over localStorage on ID conflicts)
+      const mergedMap = new Map<string, Patient>()
+      adminDbPatients.forEach(p => mergedMap.set(p.id, p))
+      localStoragePatients.forEach(p => { if (!mergedMap.has(p.id)) mergedMap.set(p.id, p) })
+      const mergedPatients = Array.from(mergedMap.values())
+
+      console.log('Staff Dashboard: Admin-managed patients (db+local):', mergedPatients.length)
       
       // Sort by appointment date (most recent first)
       const sortedPatients = mergedPatients.sort((a, b) => 
