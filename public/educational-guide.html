@@ -1925,6 +1925,8 @@ left: 80px;
         /* Heading anchor link */
         .anchor-link { margin-left: 8px; opacity: 0; transition: opacity 120ms; font-size: 12px; color: #0d5c75; text-decoration: none; }
         h2.section-title:hover .anchor-link, .card-title:hover .anchor-link { opacity: 1; }
+        .toc-filter { width: 100%; height: 32px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0 10px; font-size: 12px; margin-top: 8px; }
+        .sidebar:not(.expanded):not(:hover) .toc-filter { display: none; }
     </style>
 </head>
 <body>
@@ -1932,10 +1934,6 @@ left: 80px;
     <a href="#mainContent" class="skip-link">Skip to content</a>
     <!-- Professional Icons Container -->
     <div class="professional-icons-container">
-        <!-- Print Button (desktop only) -->
-        <button id="printPage" class="professional-icon" title="Print page" aria-label="Print page">
-            <i class="fas fa-print" aria-hidden="true"></i>
-        </button>
         <!-- Day/Night Mode Toggle -->
         <button id="theme-toggle" class="professional-icon" title="Toggle Day/Night Mode" aria-label="Toggle Day/Night Mode">
             <i class="fas fa-moon" id="theme-icon"></i>
@@ -1983,6 +1981,7 @@ left: 80px;
                 </span>
                 <span class="toc-text">On this page</span>
             </a>
+            <input id="tocFilter" class="toc-filter" type="text" placeholder="Filter sections" aria-label="Filter sections" />
         </div>
         <ul class="toc-list" id="tocList"></ul>
     </nav>
@@ -3489,6 +3488,7 @@ left: 80px;
                     a.setAttribute('title', label);
                     a.setAttribute('aria-label', label);
                     a.setAttribute('data-tip', label);
+                    a.setAttribute('data-label', label.toLowerCase());
                     const svgWrap = document.createElement('span'); svgWrap.className = 'toc-svg'; svgWrap.innerHTML = svgForKey(key);
                     const text = document.createElement('span'); text.className = 'toc-text'; text.textContent = label;
                     a.appendChild(svgWrap); a.appendChild(text);
@@ -3526,6 +3526,25 @@ left: 80px;
                 document.addEventListener('scroll', onScroll, { passive: true });
                 onScroll();
             }
+
+            // TOC filter
+            (function(){
+                const input = document.getElementById('tocFilter');
+                const list = document.getElementById('tocList');
+                if (!input || !list) return;
+                const applyFilter = () => {
+                    const q = input.value.trim().toLowerCase();
+                    const items = Array.from(list.querySelectorAll('li'));
+                    items.forEach(li => {
+                        const link = li.querySelector('.toc-link');
+                        if (!link) return;
+                        const label = link.getAttribute('data-label') || '';
+                        const show = !q || label.includes(q);
+                        li.style.display = show ? '' : 'none';
+                    });
+                };
+                input.addEventListener('input', applyFilter);
+            })();
 
             // Rail keyboard navigation
             (function() {
@@ -3605,8 +3624,6 @@ left: 80px;
                 });
             })();
 
-            // Print
-            document.getElementById('printPage')?.addEventListener('click', () => window.print());
             
             // Inject section icons and initialize collapsed state
             document.querySelectorAll('.collapsible-section').forEach((section) => {
