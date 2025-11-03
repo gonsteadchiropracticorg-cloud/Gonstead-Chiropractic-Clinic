@@ -1,13 +1,13 @@
 {
-  "name": "Gonstead Chiropractic - Dr. Bahir Khan",
-  "short_name": "Gonstead Chiropractic",
-  "description": "Expert Gonstead chiropractic care with advanced machine-assisted treatment in Nowshera, Pakistan",
-  "start_url": "/",
+  "name": "Gonstead Chiropractic Admin",
+  "short_name": "GC Admin",
+  "description": "Gonstead Chiropractic Admin Dashboard - Patient Management System",
+  "start_url": "/admin/dashboard",
   "display": "standalone",
-  "background_color": "#f4f1de",
-  "theme_color": "#2a9d8f",
-  "orientation": "portrait-primary",
-  "scope": "/",
+  "background_color": "#0d5c75",
+  "theme_color": "#0d5c75",
+  "orientation": "portrait",
+  "scope": "/admin",
   "lang": "en",
   "dir": "ltr",
   "categories": ["health", "medical", "healthcare", "chiropractic"],
@@ -79,10 +79,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Book Appointment",
-      "short_name": "Book",
-      "description": "Quick appointment booking",
-      "url": "/#appointment",
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Main admin dashboard",
+      "url": "/admin/dashboard",
       "icons": [
         {
           "src": "/images/gonstead-chiropractic-logo-new.png",
@@ -91,10 +91,34 @@
       ]
     },
     {
-      "name": "Emergency Contact",
-      "short_name": "Emergency",
-      "description": "Emergency contact",
-      "url": "/#contact",
+      "name": "Patients",
+      "short_name": "Patients",
+      "description": "Patient tracking",
+      "url": "/admin/patient-tracking",
+      "icons": [
+        {
+          "src": "/images/gonstead-chiropractic-logo-new.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "description": "Appointment calendar",
+      "url": "/admin/calendar",
+      "icons": [
+        {
+          "src": "/images/gonstead-chiropractic-logo-new.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Money",
+      "short_name": "Money",
+      "description": "Money management",
+      "url": "/admin/money-management",
       "icons": [
         {
           "src": "/images/gonstead-chiropractic-logo-new.png",
