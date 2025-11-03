@@ -1139,16 +1139,6 @@ Doctor Signature: Dr. Bashir Khan, DCP
                   </p>
                 </div>
               </div>
-              
-              {/* Mobile Menu Button */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsSidebarOpen(true)}
-                className="sm:hidden p-2 hover:bg-white/10"
-              >
-                <MoreVertical className="h-5 w-5" />
-              </Button>
             </div>
 
             {/* Bottom Row: Controls and Action Buttons - Mobile Responsive */}
