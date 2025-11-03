@@ -281,6 +281,69 @@ function MoneyManagementContent() {
     .filter(r => r.status === "pending")
     .reduce((sum, r) => sum + r.amount, 0)
 
+  // Quick View base (respects all filters except category)
+  const quickViewBase = records.filter(record => {
+    const matchesSearch = 
+      record.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.phone.includes(searchTerm) ||
+      record.description.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesMethod = filterMethod === "all" || record.paymentMethod === filterMethod
+    const matchesStatus = filterStatus === "all" || record.status === filterStatus
+
+    let matchesDate = true
+    if (dateFilter !== "all") {
+      const recordDate = new Date(record.date)
+      const today = new Date()
+
+      switch (dateFilter) {
+        case "today":
+          matchesDate = recordDate.toDateString() === today.toDateString()
+          break
+        case "week":
+          const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+          matchesDate = recordDate >= weekAgo
+          break
+        case "month":
+          matchesDate = recordDate.getMonth() === today.getMonth() && 
+                       recordDate.getFullYear() === today.getFullYear()
+          break
+        case "custom":
+          if (customDateStart && customDateEnd) {
+            const start = new Date(customDateStart)
+            const end = new Date(customDateEnd)
+            matchesDate = recordDate >= start && recordDate <= end
+          }
+          break
+      }
+    }
+
+    return matchesSearch && matchesMethod && matchesStatus && matchesDate
+  })
+
+  const categorySummary = {
+    all: {
+      count: quickViewBase.length,
+      amount: quickViewBase.reduce((sum, r) => sum + r.amount, 0)
+    },
+    consultation: {
+      count: quickViewBase.filter(r => r.category === "consultation").length,
+      amount: quickViewBase.filter(r => r.category === "consultation").reduce((s, r) => s + r.amount, 0)
+    },
+    treatment: {
+      count: quickViewBase.filter(r => r.category === "treatment").length,
+      amount: quickViewBase.filter(r => r.category === "treatment").reduce((s, r) => s + r.amount, 0)
+    },
+    medication: {
+      count: quickViewBase.filter(r => r.category === "medication").length,
+      amount: quickViewBase.filter(r => r.category === "medication").reduce((s, r) => s + r.amount, 0)
+    },
+    other: {
+      count: quickViewBase.filter(r => r.category === "other").length,
+      amount: quickViewBase.filter(r => r.category === "other").reduce((s, r) => s + r.amount, 0)
+    }
+  } as const
+
   // Sorting function
   const handleSort = (field: "date" | "amount" | "patientName" | "status") => {
     if (sortField === field) {
@@ -525,6 +588,45 @@ function MoneyManagementContent() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick View Filters */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-[#0d5c75]">Quick View</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {([
+              { key: "all", label: "All", color: "from-gray-50 to-gray-100", border: "border-gray-200" },
+              { key: "consultation", label: "Consultation", color: "from-blue-50 to-blue-100", border: "border-blue-200" },
+              { key: "treatment", label: "Treatment", color: "from-green-50 to-green-100", border: "border-green-200" },
+              { key: "medication", label: "Medication", color: "from-purple-50 to-purple-100", border: "border-purple-200" },
+              { key: "other", label: "Other", color: "from-orange-50 to-orange-100", border: "border-orange-200" },
+            ] as const).map((item) => {
+              const active = filterCategory === item.key
+              const stats = categorySummary[item.key as keyof typeof categorySummary]
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => setFilterCategory(active ? "all" : item.key)}
+                  className={`text-left p-4 rounded-xl border ${item.border} bg-gradient-to-br ${item.color} hover:shadow-md transition-all ${active ? "ring-2 ring-[#0d5c75]" : ""}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm text-gray-600">{item.label}</div>
+                      <div className="text-lg font-semibold text-[#0d5c75]">{stats.count} records</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-gray-500">Amount</div>
+                      <div className="text-base font-bold text-[#0d5c75]">PKR {stats.amount.toLocaleString()}</div>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Controls */}
       <Card className="mb-6">
