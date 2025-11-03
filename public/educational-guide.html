@@ -2775,6 +2775,224 @@ left: 80px;
                 </div>
             </div>
         </section>
+
+        <!-- Research & Education Hubs -->
+        <section id="researchEvidenceHub" class="content-section">
+            <h2 class="section-title">Research Evidence Hub</h2>
+            <p class="section-subtitle">Curated trials, systematic reviews, and evidence grading for Gonstead and related chiropractic care.</p>
+            <div class="content-grid">
+                <div class="content-card">
+                    <div class="card-header">
+                        <div class="card-icon"><i class="fas fa-flask"></i></div>
+                        <h3 class="card-title">Clinical Trials & Studies</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="highlight-box">
+                            <h4>Evidence Grading</h4>
+                            <p><span class="evidence-badge" data-grade="A">Grade A</span> Strong evidence &nbsp;|&nbsp; <span class="evidence-badge" data-grade="B">Grade B</span> Moderate &nbsp;|&nbsp; <span class="evidence-badge" data-grade="C">Grade C</span> Limited</p>
+                        </div>
+                        <div style="overflow:auto;">
+                            <table id="trialsTable" class="comparison-table" aria-label="Clinical trials and studies">
+                                <thead>
+                                    <tr>
+                                        <th>Study</th>
+                                        <th>Design</th>
+                                        <th>Population</th>
+                                        <th>Intervention</th>
+                                        <th>Comparator</th>
+                                        <th>Primary Outcome</th>
+                                        <th>Effect</th>
+                                        <th>Evidence</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Hypertension pilot RCT (practice-based)</td>
+                                        <td>Randomized, pilot RCT</td>
+                                        <td>Adults with essential hypertension</td>
+                                        <td>Chiropractic adjustment (incl. Gonstead)</td>
+                                        <td>No-treatment control</td>
+                                        <td>Blood pressure change</td>
+                                        <td>Signal toward reduction; larger RCT needed</td>
+                                        <td><span class="evidence-badge" data-grade="C">C</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Cervical mobility asymmetry</td>
+                                        <td>Controlled biomechanical study</td>
+                                        <td>Asymptomatic subjects</td>
+                                        <td>Unilateral Gonstead adjustment</td>
+                                        <td>Opposite side/none</td>
+                                        <td>Lat-flex end-range symmetry</td>
+                                        <td>Immediate improvement on restricted side</td>
+                                        <td><span class="evidence-badge" data-grade="B">B</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Cervicogenic dizziness case series</td>
+                                        <td>Case reports/series</td>
+                                        <td>Adults with CGD</td>
+                                        <td>Specific Gonstead cervical adjustments</td>
+                                        <td>—</td>
+                                        <td>Dizziness severity/frequency</td>
+                                        <td>Marked symptom improvement</td>
+                                        <td><span class="evidence-badge" data-grade="C">C</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button id="exportTrialsCsv" class="start-assessment-btn-compact" aria-label="Export trials as CSV">
+                            <i class="fas fa-file-csv"></i>
+                            <span>Export CSV</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparativeAnalysis" class="content-section">
+            <h2 class="section-title">Comparative Effectiveness</h2>
+            <p class="section-subtitle">Side-by-side comparison of chiropractic techniques and outcomes.</p>
+            <div class="content-grid">
+                <div class="content-card">
+                    <div class="card-header"><div class="card-icon"><i class="fas fa-balance-scale"></i></div><h3 class="card-title">Technique Comparison</h3></div>
+                    <div class="card-content">
+                        <table class="comparison-table" aria-label="Technique comparison">
+                            <thead>
+                                <tr>
+                                    <th>Technique</th>
+                                    <th>Primary Focus</th>
+                                    <th>Typical Plan</th>
+                                    <th>Outcomes (indicative)</th>
+                                    <th>Evidence Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Gonstead</td><td>Specific, primary subluxation</td><td>Targeted HVLA, imaging-guided</td><td>High specificity; consistent mobility improvements</td><td><span class="evidence-badge" data-grade="B">B</span></td></tr>
+                                <tr><td>Diversified</td><td>Broad manual manipulation</td><td>Segmental HVLA</td><td>General improvements; strong evidence base</td><td><span class="evidence-badge" data-grade="A">A</span></td></tr>
+                                <tr><td>Activator</td><td>Instrument-assisted</td><td>Low-force impulses</td><td>Mixed evidence for some outcomes</td><td><span class="evidence-badge" data-grade="B">B</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="caseStudies" class="content-section">
+            <h2 class="section-title">Case Studies Library</h2>
+            <p class="section-subtitle">Structured, anonymized cases with diagnostics, protocols, and outcomes.</p>
+            <div class="content-grid">
+                <div class="content-card">
+                    <div class="card-header"><div class="card-icon"><i class="fas fa-notes-medical"></i></div><h3 class="card-title">Case Template</h3></div>
+                    <div class="card-content">
+                        <ul>
+                            <li><strong>Presentation:</strong> age/sex, chief complaint, duration</li>
+                            <li><strong>Diagnostics:</strong> 5-component analysis, imaging</li>
+                            <li><strong>Plan:</strong> adjustment protocol, frequency</li>
+                            <li><strong>Outcomes:</strong> VAS/NDI/ODI baseline → follow-up</li>
+                            <li><strong>Follow-up:</strong> maintenance, relapse prevention</li>
+                        </ul>
+                        <button class="start-assessment-btn-compact" aria-label="Submit a case"><i class="fas fa-upload"></i><span>Submit a Case (PDF)</span></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="proTools" class="content-section">
+            <h2 class="section-title">Professional Tools & Downloads</h2>
+            <p class="section-subtitle">Clinical decision aids and data for research workflows.</p>
+            <div class="content-grid">
+                <div class="content-card">
+                    <div class="card-header"><div class="card-icon"><i class="fas fa-tools"></i></div><h3 class="card-title">Downloads</h3></div>
+                    <div class="card-content">
+                        <ul>
+                            <li><a href="#" download>Diagnostic Flowchart (PDF)</a></li>
+                            <li><a href="#" download>Gonstead Protocol Checklist (PDF)</a></li>
+                            <li><a href="#" id="downloadOutcomesCsv">Outcome Measures Template (CSV)</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="medicalGlossary" class="content-section">
+            <h2 class="section-title">Medical Glossary</h2>
+            <p class="section-subtitle">Quick definitions for key terms used throughout.</p>
+            <div class="content-grid">
+                <div class="content-card">
+                    <div class="card-header"><div class="card-icon"><i class="fas fa-book"></i></div><h3 class="card-title">Key Terms</h3></div>
+                    <div class="card-content">
+                        <dl>
+                            <dt>HVLA</dt><dd>High-Velocity, Low-Amplitude thrust used in spinal manipulation.</dd>
+                            <dt>Nervoscope</dt><dd>Thermographic instrument to detect paraspinal heat differentials.</dd>
+                            <dt>Primary Subluxation</dt><dd>The causative lesion targeted for specific adjustment.</dd>
+                            <dt>ODI/NDI/VAS</dt><dd>Standardized outcome scales for disability and pain.</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="references" class="content-section">
+            <h2 class="section-title">References & Bibliography</h2>
+            <p class="section-subtitle">Peer-reviewed sources with DOI/PubMed links. Citations will be expanded.</p>
+            <div class="content-grid">
+                <div class="content-card">
+                    <div class="card-header"><div class="card-icon"><i class="fas fa-list-ol"></i></div><h3 class="card-title">Citations</h3></div>
+                    <div class="card-content">
+                        <ol id="referencesList">
+                            <li data-doi="" data-pmid="">Practice-based RCT on chiropractic and hypertension — pilot feasibility and BP outcomes. [DOI pending]</li>
+                            <li data-doi="" data-pmid="">Unilateral Gonstead adjustment improves cervical end-range asymmetry. [DOI pending]</li>
+                            <li data-doi="" data-pmid="">Cervicogenic dizziness case reports responsive to specific cervical manipulation. [DOI pending]</li>
+                            <li data-doi="" data-pmid="">GCSS training and diplomate standards documentation. [URL pending]</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function(){
+          function exportTableToCSV(tableId, filename){
+            const table = document.getElementById(tableId);
+            if(!table) return;
+            const rows = Array.from(table.querySelectorAll('tr'));
+            const csv = rows.map(tr => Array.from(tr.querySelectorAll('th,td')).map(td => {
+              let t = td.textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""');
+              return `"${t}"`;
+            }).join(',')).join('\r\n');
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            setTimeout(()=>URL.revokeObjectURL(link.href), 1000);
+          }
+          document.getElementById('exportTrialsCsv')?.addEventListener('click', function(){
+            exportTableToCSV('trialsTable', 'clinical_trials.csv');
+          });
+          document.getElementById('downloadOutcomesCsv')?.addEventListener('click', function(e){
+            e.preventDefault();
+            const header = ['PatientID','Date','ODI','NDI','VAS','Notes'];
+            const blob = new Blob([header.join(',') + '\r\n'], {type:'text/csv;charset=utf-8;'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'outcome_measures_template.csv';
+            link.click();
+            setTimeout(()=>URL.revokeObjectURL(link.href), 1000);
+          });
+          // Style evidence badges
+          document.querySelectorAll('.evidence-badge').forEach(b => {
+            const g = (b.getAttribute('data-grade')||'').toUpperCase();
+            const styles = {A:'#0ea5e9', B:'#22c55e', C:'#f59e0b', D:'#ef4444'};
+            b.style.display='inline-block';
+            b.style.padding='2px 8px';
+            b.style.borderRadius='9999px';
+            b.style.fontWeight='700';
+            b.style.fontSize='12px';
+            b.style.color='#fff';
+            b.style.background = styles[g] || '#64748b';
+          });
+        });
+        </script>
     </main>
 
     <!-- Enhanced Styles for Assessment System -->
