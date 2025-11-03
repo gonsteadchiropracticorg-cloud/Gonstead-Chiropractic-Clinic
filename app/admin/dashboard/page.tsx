@@ -1642,7 +1642,6 @@ Doctor Signature: Dr. Bashir Khan, DCP
           </Card>
         </div>
 
-
         {/* Patient Management */}
         <Card className={`border-[#0d5c75]/20 shadow-xl ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
           <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">

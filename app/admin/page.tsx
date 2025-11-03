@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -67,6 +67,9 @@ import { usePagination, usePaginationKeyboard } from "@/hooks/use-pagination"
 import { PaginationNavigation } from "@/components/ui/pagination-navigation"
 import { useSeamlessData } from "@/hooks/use-silent-sync"
 import { SeamlessUpdateIndicator } from "@/components/ui/seamless-update-indicator"
+import ExcelJS from "exceljs"
+import { z } from "zod"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface PatientRecord {
   id: string
@@ -96,6 +99,36 @@ interface PatientRecord {
   }
 }
 
+interface ImportedPatient extends PatientRecord {
+  importStatus?: 'success' | 'error' | 'pending'
+  importError?: string
+}
+
+interface ImportExportRecord {
+  id: string
+  type: 'import' | 'export'
+  date: string
+  time: string
+  filename: string
+  recordCount: number
+  status: 'success' | 'error' | 'partial'
+  patients: ImportedPatient[]
+  errorMessage?: string
+}
+
+// Zod validation schema for patient data
+const patientSchema = z.object({
+  id: z.string(),
+  name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
+  phone: z.string().regex(/^[\+]?[0-9\s\-\(\)]{10,}$/, "Invalid phone format"),
+  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  sessionType: z.enum(["in_clinic", "video"]),
+  appointmentDate: z.string(),
+  status: z.enum(["pending", "confirmed", "completed", "cancelled"]),
+  urgency: z.enum(["normal", "urgent", "emergency"]),
+  paymentMethod: z.enum(["cash", "jazzcash", "easypaisa"]),
+})
+
 export default function AdminDashboard() {
   const [patients, setPatients] = useState<PatientRecord[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -116,6 +149,18 @@ export default function AdminDashboard() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
   const [showScrollToTop, setShowScrollToTop] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importedData, setImportedData] = useState<ImportedPatient[]>([])
+  const [importStats, setImportStats] = useState({ total: 0, success: 0, errors: 0, pending: 0 })
+  const [exportFormat, setExportFormat] = useState<'csv' | 'xlsx' | 'json'>('csv')
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+  const [selectedFields, setSelectedFields] = useState<string[]>([
+    'id', 'name', 'phone', 'email', 'sessionType', 'appointmentDate', 
+    'status', 'urgency', 'paymentMethod', 'notes'
+  ])
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -543,6 +588,281 @@ Phone: +92 304 699 6267
     }
   }
 
+  // Available fields for export
+  const availableFields = [
+    { id: 'id', label: 'ID' },
+    { id: 'name', label: 'Name' },
+    { id: 'phone', label: 'Phone' },
+    { id: 'email', label: 'Email' },
+    { id: 'sessionType', label: 'Session Type' },
+    { id: 'appointmentDate', label: 'Appointment Date' },
+    { id: 'status', label: 'Status' },
+    { id: 'urgency', label: 'Urgency' },
+    { id: 'paymentMethod', label: 'Payment Method' },
+    { id: 'sessions', label: 'Sessions Completed' },
+    { id: 'notes', label: 'Notes' },
+    { id: 'createdAt', label: 'Created At' },
+    { id: 'lastVisit', label: 'Last Visit' },
+  ]
+
+  const toggleField = (fieldId: string) => {
+    setSelectedFields(prev => 
+      prev.includes(fieldId) 
+        ? prev.filter(id => id !== fieldId)
+        : [...prev, fieldId]
+    )
+  }
+
+  const exportData = async () => {
+    if (selectedFields.length === 0) {
+      toast({
+        title: "No Fields Selected",
+        description: "Please select at least one field to export",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsExporting(true)
+    setIsExportDialogOpen(false)
+    
+    try {
+      const dateStr = new Date().toISOString().split('T')[0]
+      let filename = ''
+      let blob: Blob
+
+      // Filter patients data to only selected fields
+      const filteredData = patients.map(patient => {
+        const filtered: any = {}
+        selectedFields.forEach(field => {
+          filtered[field] = (patient as any)[field] || ''
+        })
+        return filtered
+      })
+
+      switch (exportFormat) {
+        case 'csv':
+          filename = `gonstead_patients_${dateStr}.csv`
+          const csvHeaders = selectedFields.map(field => 
+            availableFields.find(f => f.id === field)?.label || field
+          )
+          const csvData = filteredData.map(patient => 
+            selectedFields.map(field => {
+              const value = patient[field]
+              if (typeof value === 'string') {
+                return `"${value.replace(/"/g, '""')}"`
+              }
+              return `"${value || ''}"`
+            })
+          )
+          const csvContent = [
+            csvHeaders.join(','),
+            ...csvData.map(row => row.join(','))
+          ].join('\n')
+          blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+          break
+
+        case 'xlsx':
+          filename = `gonstead_patients_${dateStr}.xlsx`
+          const workbook = new ExcelJS.Workbook()
+          const worksheet = workbook.addWorksheet('Patients')
+          
+          const headers = selectedFields.map(field => 
+            availableFields.find(f => f.id === field)?.label || field
+          )
+          worksheet.addRow(headers)
+          worksheet.getRow(1).font = { bold: true, size: 12 }
+          worksheet.getRow(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF0d5c75' }
+          }
+          worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }
+          
+          filteredData.forEach(patient => {
+            const row = selectedFields.map(field => patient[field] || '')
+            worksheet.addRow(row)
+          })
+          
+          worksheet.columns.forEach((column, index) => {
+            let maxLength = headers[index].length
+            column.eachCell?.({ includeEmpty: false }, (cell) => {
+              const cellLength = cell.value ? cell.value.toString().length : 0
+              maxLength = Math.max(maxLength, cellLength)
+            })
+            column.width = Math.min(maxLength + 2, 50)
+          })
+          
+          const buffer = await workbook.xlsx.writeBuffer()
+          blob = new Blob([buffer], { 
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+          })
+          break
+
+        case 'json':
+          filename = `gonstead_patients_${dateStr}.json`
+          const jsonContent = JSON.stringify(filteredData, null, 2)
+          blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' })
+          break
+
+        default:
+          throw new Error('Invalid export format')
+      }
+
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', filename)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      
+      toast({
+        title: `Export Successful! 🎉`,
+        description: `Exported ${patients.length} records to ${exportFormat.toUpperCase()}`,
+      })
+    } catch (error) {
+      console.error('Export error:', error)
+      toast({
+        title: 'Export Failed',
+        description: error instanceof Error ? error.message : 'There was an error exporting the data',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const fileExtension = file.name.split('.').pop()?.toLowerCase()
+    if (!fileExtension || !['csv'].includes(fileExtension)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please select a CSV file",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const data = e.target?.result as string
+      parseCsvData(data, file.name)
+    }
+    reader.readAsText(file)
+  }
+
+  const parseCsvData = (csv: string, filename: string) => {
+    try {
+      const lines = csv.split('\n').filter(line => line.trim())
+      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim())
+      
+      const data: ImportedPatient[] = []
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim())
+        
+        if (values.length < 8) continue
+
+        try {
+          const patient: ImportedPatient = {
+            id: values[0] || `import_${Date.now()}_${i}`,
+            name: values[1] || "",
+            phone: values[2] || "",
+            email: values[3] || undefined,
+            sessionType: (values[4] as "in_clinic" | "video") || "in_clinic",
+            appointmentDate: values[5] || new Date().toISOString(),
+            status: (values[6] as "pending" | "confirmed" | "completed" | "cancelled") || "pending",
+            urgency: (values[7] as "normal" | "urgent" | "emergency") || "normal",
+            paymentMethod: (values[8] as "cash" | "jazzcash" | "easypaisa") || "cash",
+            sessions: parseInt(values[9]) || 0,
+            notes: values[10] || undefined,
+            createdAt: values[11] || new Date().toISOString(),
+            lastVisit: values[12] || undefined,
+            demographics: {},
+            importStatus: 'pending'
+          }
+
+          try {
+            patientSchema.parse(patient)
+            patient.importStatus = 'success'
+          } catch (error) {
+            patient.importStatus = 'error'
+            if (error instanceof z.ZodError) {
+              const firstError = error.errors[0]
+              patient.importError = `${firstError.path.join('.')}: ${firstError.message}`
+            } else {
+              patient.importError = 'Validation failed'
+            }
+          }
+
+          data.push(patient)
+        } catch (error) {
+          console.error('Error parsing row:', error)
+        }
+      }
+
+      processImportData(data)
+    } catch (error) {
+      console.error("CSV parsing error:", error)
+      toast({
+        title: "Parse Error",
+        description: "Failed to parse CSV file. Please check the format.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const processImportData = (data: ImportedPatient[]) => {
+    const stats = {
+      total: data.length,
+      success: data.filter(p => p.importStatus === 'success').length,
+      errors: data.filter(p => p.importStatus === 'error').length,
+      pending: data.filter(p => p.importStatus === 'pending').length
+    }
+    setImportStats(stats)
+    setImportedData(data)
+
+    toast({
+      title: "File Parsed Successfully! 📊",
+      description: `Loaded ${data.length} records. ${stats.success} valid, ${stats.errors} errors`,
+    })
+  }
+
+  const confirmImport = async () => {
+    setIsImporting(true)
+    const validRecords = importedData.filter(p => p.importStatus === 'success')
+    
+    try {
+      const updatedPatients = [...patients, ...validRecords.map(({ importStatus, importError, ...patient }) => patient)]
+      setPatients(updatedPatients)
+      localStorage.setItem("gonstead_patients", JSON.stringify(updatedPatients))
+      
+      toast({
+        title: "Import Completed! 🎉",
+        description: `Successfully imported ${validRecords.length} patients.`,
+      })
+
+      setImportedData([])
+      setImportStats({ total: 0, success: 0, errors: 0, pending: 0 })
+      setIsImportDialogOpen(false)
+    } catch (error) {
+      console.error("Import error:", error)
+      toast({
+        title: "Import Failed",
+        description: "There was an error importing the data",
+        variant: "destructive",
+      })
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
   if (!isAuthenticated) {
     // Immediate redirect without loading screen
     router.replace("/admin/auth")
@@ -662,7 +982,7 @@ Phone: +92 304 699 6267
 
           {/* Data Management */}
           <div className={`p-3 rounded-xl transition-all duration-200 cursor-pointer group ${activeMenu === 'data' ? 'bg-white/20 shadow-lg' : 'hover:bg-white/10'}`}
-               onClick={() => { setActiveMenu('data'); router.push('/admin/import-export'); }}>
+               onClick={() => { setActiveMenu('data'); setIsExportDialogOpen(true); }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center group-hover:bg-white/20 transition-colors">
                 <Database className="h-5 w-5 text-white" />
@@ -790,7 +1110,7 @@ Phone: +92 304 699 6267
                       <CalendarIcon className="h-4 w-4 text-[#2a9d8f]" />
                       <span className="font-medium">Appointment Calendar</span>
                     </div>
-                    <div onClick={() => { setIsMenuOpen(false); router.push('/admin/import-export'); }} className="px-4 py-3 text-sm hover:bg-[#f3a800]/10 cursor-pointer border-b border-gray-100 flex items-center gap-3 transition-colors">
+                    <div onClick={() => { setIsMenuOpen(false); setIsExportDialogOpen(true); }} className="px-4 py-3 text-sm hover:bg-[#f3a800]/10 cursor-pointer border-b border-gray-100 flex items-center gap-3 transition-colors">
                       <Database className="h-4 w-4 text-[#f3a800]" />
                       <span className="font-medium">Import / Export Data</span>
                     </div>
@@ -994,6 +1314,162 @@ Phone: +92 304 699 6267
             </CardContent>
           </Card>
         </div>
+
+        {/* Data Import & Export (Inline) */}
+        <Card className="mb-8 border-[#0d5c75]/20">
+          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Data Import & Export
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                onClick={() => setIsExportDialogOpen(true)}
+                className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Data
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsImportDialogOpen(true)}
+                className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Import CSV
+              </Button>
+              <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Export Dialog */}
+        <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-[#0d5c75]">Configure Export</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div>
+                <Label className="text-sm font-semibold text-[#0d5c75] mb-2 block">Format</Label>
+                <select
+                  value={exportFormat}
+                  onChange={(e) => setExportFormat(e.target.value as 'csv' | 'xlsx' | 'json')}
+                  className="w-full px-3 py-2 border rounded"
+                >
+                  <option value="csv">CSV</option>
+                  <option value="xlsx">Excel (.xlsx)</option>
+                  <option value="json">JSON</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-sm font-semibold text-[#0d5c75] mb-2 block">Fields</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {availableFields.map((f) => (
+                    <label key={f.id} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={selectedFields.includes(f.id)}
+                        onCheckedChange={() => toggleField(f.id)}
+                      />
+                      {f.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>Cancel</Button>
+                <Button onClick={exportData} className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white" disabled={isExporting}>
+                  {isExporting ? 'Exporting…' : 'Export'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Import Dialog */}
+        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-[#0d5c75]">Import Patients (CSV)</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
+                >
+                  <Upload className="h-4 w-4 mr-2" /> Choose CSV File
+                </Button>
+                <span className="text-sm text-gray-600">Expected columns: id, name, phone, email, sessionType, appointmentDate, status, urgency, paymentMethod, sessions, notes, createdAt, lastVisit</span>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-3 rounded bg-gray-50">
+                  <div className="text-xs text-gray-500">Total</div>
+                  <div className="text-xl font-semibold">{importStats.total}</div>
+                </div>
+                <div className="p-3 rounded bg-green-50">
+                  <div className="text-xs text-green-700">Valid</div>
+                  <div className="text-xl font-semibold text-green-700">{importStats.success}</div>
+                </div>
+                <div className="p-3 rounded bg-yellow-50">
+                  <div className="text-xs text-yellow-700">Pending</div>
+                  <div className="text-xl font-semibold text-yellow-700">{importStats.pending}</div>
+                </div>
+                <div className="p-3 rounded bg-red-50">
+                  <div className="text-xs text-red-700">Errors</div>
+                  <div className="text-xl font-semibold text-red-700">{importStats.errors}</div>
+                </div>
+              </div>
+
+              {importedData.length > 0 && (
+                <div className="max-h-64 overflow-auto border rounded">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Result</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {importedData.slice(0, 25).map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell className="text-sm">{p.name}</TableCell>
+                          <TableCell className="text-sm">{p.phone}</TableCell>
+                          <TableCell className="text-sm">{p.status}</TableCell>
+                          <TableCell className="text-sm">
+                            {p.importStatus === 'success' ? (
+                              <Badge>OK</Badge>
+                            ) : p.importStatus === 'error' ? (
+                              <Badge variant="destructive">{p.importError || 'Error'}</Badge>
+                            ) : (
+                              <Badge variant="secondary">Pending</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {importedData.length > 25 && (
+                    <div className="text-xs text-gray-500 p-2">Showing first 25 of {importedData.length} rows…</div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>Close</Button>
+                <Button onClick={confirmImport} disabled={isImporting || importStats.success === 0} className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white">
+                  {isImporting ? 'Importing…' : `Import ${importStats.success} records`}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Patient Management */}
         <Card className="border-[#0d5c75]/20">
