@@ -75,6 +75,18 @@ export default function AdminAnalytics() {
     try {
       if (typeof window === "undefined") return
       
+      // Check localStorage first to prevent loops (same as dashboard)
+      const isAuthenticatedLocal = localStorage.getItem("admin_authenticated")
+      const storedEmail = localStorage.getItem("admin_email")
+
+      if (isAuthenticatedLocal === "true" && storedEmail) {
+        console.log("Analytics: Found localStorage auth, proceeding...")
+        setIsAuthenticated(true)
+        await loadInitialData()
+        return
+      }
+
+      // If no localStorage, check Supabase auth
       const { user } = await getCurrentUser()
       const adminEmails = [
         "bashirahmad123.org@gmail.com",
@@ -87,6 +99,10 @@ export default function AdminAnalytics() {
         router.replace("/admin/auth")
         return
       }
+
+      // Store auth in localStorage to prevent future loops
+      localStorage.setItem("admin_authenticated", "true")
+      localStorage.setItem("admin_email", user.email || "")
 
       setIsAuthenticated(true)
       await loadInitialData()

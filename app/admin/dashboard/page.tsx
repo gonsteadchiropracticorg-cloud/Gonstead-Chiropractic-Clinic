@@ -1954,7 +1954,7 @@ Doctor Signature: Dr. Bashir Khan, DCP
 
                             {/* Collapsible Action Buttons */}
 {expandedActions.has(patient.id) && (
-                              <div className={`absolute top-full left-0 md:left-auto md:right-0 mt-2 z-50 w-[min(20rem,calc(100vw-2rem))] md:w-96 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-3 space-y-2 transition-all duration-300 ease-in-out`}>
+                              <div className={`absolute top-full right-0 md:left-auto md:right-0 mt-2 z-50 w-[min(20rem,calc(100vw-2rem))] md:w-96 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-3 space-y-2 transition-all duration-300 ease-in-out`}>
                                 {/* Professional Action Grid */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                   {/* View Details Button */}
