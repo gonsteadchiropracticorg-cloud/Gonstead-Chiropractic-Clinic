@@ -4,6 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Education Platform - Gonstead Chiropractic</title>
+    <meta name="description" content="Comprehensive patient education on the Gonstead Chiropractic Technique: history, diagnostics, adjustments, clinical evidence, protocols, and rehabilitation.">
+    <link rel="canonical" href="https://gonsteadchiropractic.com/educational-guide.html">
+    <meta property="og:title" content="Patient Education Platform - Gonstead Chiropractic">
+    <meta property="og:description" content="Explore Gonstead chiropractic: precise diagnostics, evidence, protocols, and patient guidance.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://gonsteadchiropractic.com/educational-guide.html">
+    <meta property="og:image" content="/images/education/header.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Patient Education Platform - Gonstead Chiropractic">
+    <meta name="twitter:description" content="Explore Gonstead chiropractic: precise diagnostics, evidence, protocols, and patient guidance.">
+    <meta name="twitter:image" content="/images/education/header.jpg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalWebPage",
+      "name": "Patient Education Platform - Gonstead Chiropractic",
+      "url": "https://gonsteadchiropractic.com/educational-guide.html",
+      "about": {
+        "@type": "MedicalEntity",
+        "name": "Gonstead Chiropractic Technique"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Gonstead Chiropractic Clinic",
+        "url": "https://gonsteadchiropractic.com"
+      }
+    }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -541,11 +569,28 @@ body {
             padding: 24px; /* Increased from 20px */
             cursor: pointer;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
-            transition: background 0.3s ease;
-            min-height: 70px; /* Added minimum height */
+            gap: 12px;
+            transition: background 0.2s ease;
+            min-height: 56px; /* compact */
         }
+        .section-icon {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #0d5c75;
+            border-radius: 6px;
+            background: #e6f3ff;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        .collapsible-section.collapsed .collapsible-title { display: none; }
+        .collapsible-section.collapsed .collapsible-icon { display: none; }
+        .collapsible-section.collapsed .collapsible-header { justify-content: flex-start; padding: 12px 16px; }
+        .collapsible-section .collapsible-content { transition: max-height 60ms ease-out, padding 60ms ease-out; }
 
         .collapsible-header:hover {
             background: #e9ecef;
@@ -707,6 +752,10 @@ body {
             }
         }
         
+        /* Sidebar toggle visibility */
+        @media (min-width: 1025px) { #sidebarToggle { display: none !important; } }
+        @media (max-width: 1024px) { #sidebarToggle { display: inline-flex !important; } }
+
         @media (max-width: 768px) {
             .container {
                 padding: 0 16px;
@@ -1241,17 +1290,43 @@ body {
         .sidebar {
             position: fixed;
             top: 80px;
-            left: 20px;
-            width: 280px;
+            left: 0;
+width: 68px; /* collapsed width */
             height: calc(100vh - 100px);
             background: white;
             border: 1px solid #e5e7eb;
-            border-radius: 12px;
+            border-radius: 0 12px 12px 0;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
-            z-index: 50;
-            padding: 20px;
+            overflow: hidden;
+            z-index: 1100;
+            padding: 16px 10px;
+            transition: width 60ms ease-out;
         }
+        .sidebar:hover,
+        .sidebar.expanded {
+            width: 300px; /* expanded width */
+            overflow-y: auto;
+        }
+        /* Collapsed rail visuals */
+.sidebar .toc-list { display: flex; flex-direction: column; gap: 6px; padding: 0; }
+.sidebar .toc-link { height: 48px; border-left-color: transparent; width: 100%; } 
+        /* Expanded rail layout */
+.sidebar.expanded .toc-link { display: grid; grid-template-columns: 68px 1fr; align-items: center; column-gap: 8px; padding: 8px 8px; height: 56px; border-radius: 12px; box-sizing: border-box; }
+.sidebar.expanded .toc-svg { margin: 0 auto; width: 40px; height: 40px; }
+.sidebar.expanded .toc-text { display: inline-block; font-size: 14px; line-height: 1.2; color: #0f172a; font-weight: 600; letter-spacing: .2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+        .sidebar.expanded .toc-link:hover { background: #f0f9ff; }
+        .sidebar.expanded .toc-link.active { background: linear-gradient(135deg, #e6fffa, #f0f9ff); }
+        .sidebar.expanded .toc-link[data-tip]::after { display: none !important; }
+        .sidebar:not(.expanded):not(:hover) .toc-link { justify-content: center; align-items: center; padding: 0; border-radius: 10px; }
+        .sidebar:not(.expanded):not(:hover) .toc-text { display: none; }
+        .sidebar:not(.expanded):not(:hover) .toc-svg { margin: 0 auto; }
+        .sidebar .toc-link:hover { background: #f0f9ff; }
+        .sidebar .toc-link.active { background: linear-gradient(135deg, #e6fffa, #f0f9ff); border-left-color: #009688; }
+        .sidebar:not(.expanded):not(:hover) .toc-item + .toc-item { border-top: 1px solid #e5e7eb; }
+        .sidebar:not(.expanded):not(:hover) .toc-sub-item { opacity: 0.75; margin-left: 0 !important; }
+        .toc-svg { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #0d5c75, #2a9d8f); border: 1px solid rgba(13,92,117,0.15); box-shadow: 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.3); color: #ffffff; }
+        .toc-svg svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .toc-svg svg .fill { fill: currentColor; stroke: none; }
 
         .sidebar-header {
             margin-bottom: 20px;
@@ -1281,7 +1356,9 @@ body {
         }
 
         .toc-link {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             padding: 8px 12px;
             color: #4a5568;
             text-decoration: none;
@@ -1289,7 +1366,11 @@ body {
             border-radius: 8px;
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
+            white-space: nowrap;
         }
+        .toc-fa-icon { color: #0d5c75; min-width: 16px; font-size: 14px; text-align: center; }
+        .toc-text { opacity: 0; transform: translateX(-8px); transition: all 80ms ease-out; }
+        .sidebar:hover .toc-text, .sidebar.expanded .toc-text { opacity: 1; transform: translateX(0); }
 
         .toc-link:hover {
             background: #f0f9ff;
@@ -1318,8 +1399,15 @@ body {
         /* Main Content with Sidebar */
         .main-content {
             padding: 48px 0;
-            margin-left: 0; /* Remove sidebar space */
+            margin-left: 0; /* default, overridden on desktop */
+            transition: margin-left 120ms ease-out;
         }
+        @media (min-width: 1025px) {
+.main-content { margin-left: 90px; }
+body.sidebar-expanded .main-content { margin-left: 320px; }
+        }
+        /* Hide back-to-top on desktop to reduce icon clutter */
+        @media (min-width: 769px) { #backToTop { display: none !important; } }
 
         .content-header {
             display: flex;
@@ -1470,9 +1558,16 @@ body {
 
         /* Responsive Design */
         @media (max-width: 1024px) {
-            /* Hide sidebar on tablets and small screens */
+            /* Sidebar hidden by default on small screens; shown when expanded */
             .sidebar {
                 display: none;
+            }
+            .sidebar.expanded {
+                display: block;
+                width: 85vw;
+                left: 0;
+                top: 60px;
+                height: calc(100vh - 70px);
             }
 
             .main-content {
@@ -1795,11 +1890,52 @@ body {
                 font-size: 12px;
             }
         }
+        /* Skip link */
+        .skip-link { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+        .skip-link:focus { position: absolute; left: 10px; top: 10px; width: auto; height: auto; padding: 8px 12px; background: #0d5c75; color: #fff; z-index: 2000; border-radius: 4px; }
+        /* Reading progress bar */
+        #readingProgress { position: fixed; top: 0; left: 0; width: 100%; height: 3px; background: transparent; z-index: 1400; }
+        #readingProgress .rp-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #0d5c75, #2a9d8f); transition: width 80ms linear; }
+
+        /* Rail active indicator and tooltips */
+        .sidebar .toc-link { position: relative; }
+.sidebar .toc-link.active::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; background: #009688; border-radius: 2px; }
+        .sidebar:not(.expanded):not(:hover) .toc-link::before { display: none; }
+        .sidebar-header .toc-link { display: flex; align-items: center; gap: 10px; }
+        .sidebar:not(.expanded):not(:hover) .toc-link[data-tip]:hover::after {
+            content: attr(data-tip);
+            position: fixed;
+left: 80px;
+            background: #111827;
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 1300;
+        }
+
+        /* Icon micro-animations */
+        .toc-svg svg { transition: transform 80ms ease-out; }
+        .sidebar .toc-link:hover .toc-svg svg { transform: scale(1.05); }
+
+        /* TOC separators */
+        .toc-separator { margin: 6px 0; border-top: 1px solid #e5e7eb; }
+
+        /* Heading anchor link */
+        .anchor-link { margin-left: 8px; opacity: 0; transition: opacity 120ms; font-size: 12px; color: #0d5c75; text-decoration: none; }
+        h2.section-title:hover .anchor-link, .card-title:hover .anchor-link { opacity: 1; }
     </style>
 </head>
 <body>
+    <div id="readingProgress"><div class="rp-fill" id="rpFill"></div></div>
+    <a href="#mainContent" class="skip-link">Skip to content</a>
     <!-- Professional Icons Container -->
     <div class="professional-icons-container">
+        <!-- Print Button (desktop only) -->
+        <button id="printPage" class="professional-icon" title="Print page" aria-label="Print page">
+            <i class="fas fa-print" aria-hidden="true"></i>
+        </button>
         <!-- Day/Night Mode Toggle -->
         <button id="theme-toggle" class="professional-icon" title="Toggle Day/Night Mode" aria-label="Toggle Day/Night Mode">
             <i class="fas fa-moon" id="theme-icon"></i>
@@ -1833,6 +1969,24 @@ body {
         </div>
     </header>
     
+    <!-- Table of Contents Sidebar -->
+    <!-- Sidebar Toggle Button (for mobile and keyboard) -->
+    <button id="sidebarToggle" aria-label="Toggle sidebar" aria-expanded="false" style="position: fixed; left: 8px; top: 88px; width: 40px; height: 40px; border-radius: 8px; border: 1px solid #e5e7eb; background: #ffffff; color: #0d5c75; display: inline-flex; align-items: center; justify-content: center; z-index: 1200; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+    </button>
+
+    <nav class="sidebar" aria-label="On this page">
+        <div class="sidebar-header" style="padding: 0 8px 8px 8px;">
+            <a class="toc-link toc-link--header" href="#mainContent" aria-label="On this page" data-tip="On this page">
+                <span class="toc-svg" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h12"/><path d="M4 18h8"/></svg>
+                </span>
+                <span class="toc-text">On this page</span>
+            </a>
+        </div>
+        <ul class="toc-list" id="tocList"></ul>
+    </nav>
+
     <!-- Compact Search Filters Section -->
     <section class="compact-filters-section">
         <div class="container">
@@ -1873,11 +2027,11 @@ body {
 
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main id="mainContent" class="main-content">
         <div class="container">
             <div class="content-header">
                 <div class="results-info">
-                    <span id="resultsCount">8</span> educational resources available
+                    <span id="resultsCount" aria-live="polite" aria-atomic="true">8</span> educational resources available
                 </div>
                 <div class="sort-dropdown">
                     <span>Sort by:</span>
@@ -1898,7 +2052,7 @@ body {
                     <!-- Dr. Clarence Gonstead Introduction -->
                     <div class="doctor-introduction" style="display: flex; align-items: center; gap: 40px; margin-bottom: 40px; padding: 40px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
                         <div class="doctor-image" style="flex-shrink: 0;">
-                            <img src="/images/clarence-gonstead.png" alt="Dr. Clarence S. Gonstead - Founder of the Gonstead Chiropractic Technique" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 6px solid #0d5c75; box-shadow: 0 8px 24px rgba(13, 92, 117, 0.3);">
+<img src="/images/clarence-gonstead.png" loading="lazy" alt="Dr. Clarence S. Gonstead - Founder of the Gonstead Chiropractic Technique" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 6px solid #0d5c75; box-shadow: 0 8px 24px rgba(13, 92, 117, 0.3);">
                         </div>
                         <div class="doctor-content" style="flex: 1;">
                             <h3 style="color: #0d5c75; font-size: 2.2rem; font-weight: 700; margin-bottom: 15px; font-family: 'Poppins', sans-serif;">Dr. Clarence S. Gonstead</h3>
@@ -1942,7 +2096,7 @@ body {
                             <!-- Dr. Gonstead's First Clinic Historical Image -->
                             <div class="chart-container" style="margin: 35px 0; background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);">
                                 <h5 style="text-align: center; margin-bottom: 25px; color: #0d5c75; font-weight: 700; font-size: 1.4rem;">Dr. Gonstead's First Chiropractic Office - 1923</h5>
-                                <img src="/images/education/first time gonstead clinic.jpg" 
+<img src="/images/education/first time gonstead clinic.jpg" loading="lazy"
                                      alt="Dr. Clarence Gonstead's first chiropractic office in downtown Mount Horeb, Wisconsin - 1923, showing the humble beginnings of what would become a revolutionary chiropractic practice"
                                      class="chart-image"
                                      onclick="openImageModal(this)"
@@ -1971,7 +2125,7 @@ body {
                             <!-- Historical Gonstead Clinic Image -->
                             <div class="chart-container" style="margin: 40px 0;">
                                 <h5 style="text-align: center; margin-bottom: 20px; color: #0d5c75; font-weight: 600;">The Historic Gonstead Clinic - 2007</h5>
-                                <img src="/images/education/gonstead clinic_page-0001.jpg" 
+<img src="/images/education/gonstead clinic_page-0001.jpg" loading="lazy"
                                      alt="Historic Gonstead Clinic of Chiropractic - 2007 photograph showing the renowned facility in Mount Horeb, Wisconsin"
                                      class="chart-image"
                                      onclick="openImageModal(this)"
@@ -2050,7 +2204,7 @@ body {
                                 <!-- Enhanced Chart Display -->
                                 <div class="chart-container">
                                     <h5 style="text-align: center; margin-bottom: 20px; color: #0d5c75; font-weight: 600;">Comprehensive Spinal Nerve Chart</h5>
-                                    <img src="/images/education/spinalnervechart.jpeg" 
+<img src="/images/education/spinalnervechart.jpeg" loading="lazy"
                                          alt="Spinal Nerve Chart showing nerve pathways and their connection to various body systems and organs"
                                          class="chart-image"
                                          onclick="openImageModal(this)"
@@ -2062,7 +2216,7 @@ body {
                                 <div class="chart-container" style="margin: 40px 0; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); padding: 35px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); border: 2px solid rgba(42, 157, 143, 0.2);">
                                     <h5 style="text-align: center; margin-bottom: 25px; color: #0d5c75; font-weight: 700; font-size: 1.4rem; font-family: 'Poppins', sans-serif;">Nervous System Function Demonstration</h5>
                                     <div style="text-align: center;">
-                                        <img src="/images/education/autonomic-motor-sensory.gif" 
+<img src="/images/education/autonomic-motor-sensory.gif" loading="lazy"
                                              alt="Autonomic, Motor, and Sensory Nervous System Function - Educational Animation demonstrating the three primary divisions of the nervous system and their roles in body function" 
                                              class="chart-image"
                                              onclick="openImageModal(this)"
@@ -2080,11 +2234,11 @@ body {
                                 
                                 <div class="visual-grid">
                                     <div class="visual-item">
-                                        <img src="/images/education/the-31-pairs-of-spinal-nerves-diagram.jpeg" alt="The 31 pairs of spinal nerves anatomical diagram" onclick="openImageModal(this)">
+<img src="/images/education/the-31-pairs-of-spinal-nerves-diagram.jpeg" loading="lazy" alt="The 31 pairs of spinal nerves anatomical diagram" onclick="openImageModal(this)">
                                         <p class="visual-caption">Detailed anatomical diagram showing the 31 pairs of spinal nerves that emerge from the spinal cord. This educational image demonstrates the complex nervous system organization that Gonstead practitioners work to optimize through precise spinal adjustments.</p>
                                     </div>
                                     <div class="visual-item">
-                                        <img src="/images/education/chiropractic-spinal-examination.jpeg" alt="Chiropractic spinal examination demonstrating diagnostic techniques" onclick="openImageModal(this)">
+<img src="/images/education/chiropractic-spinal-examination.jpeg" loading="lazy" alt="Chiropractic spinal examination demonstrating diagnostic techniques" onclick="openImageModal(this)">
                                         <p class="visual-caption">Professional chiropractic spinal examination demonstrating the hands-on diagnostic techniques used in the Gonstead method. This shows the careful palpation and assessment procedures that form part of the five-component diagnostic framework.</p>
                                     </div>
                                 </div>
@@ -2117,7 +2271,7 @@ body {
                             
                             <div class="visual-grid">
                                 <div class="visual-item">
-                                    <img src="/images/education/chiropractic-spinal-examination.jpeg" alt="Professional Chiropractic Spinal Examination">
+<img src="/images/education/chiropractic-spinal-examination.jpeg" loading="lazy" alt="Professional Chiropractic Spinal Examination">
                                     <h5>Professional Spinal Examination</h5>
                                     <p class="visual-caption">Comprehensive examination techniques using advanced diagnostic protocols to ensure precise identification of spinal subluxations and optimal treatment outcomes.</p>
                                 </div>
@@ -3213,6 +3367,11 @@ body {
         </div>
     </footer>
 
+    <!-- Back to top button -->
+    <button id="backToTop" aria-label="Back to top" style="position: fixed; right: 16px; bottom: 16px; width: 44px; height: 44px; border-radius: 50%; border: none; background: #0d5c75; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; align-items: center; justify-content: center; z-index: 1200;">
+        <i class="fas fa-arrow-up" aria-hidden="true"></i>
+    </button>
+
 
     <!-- JavaScript for Search and Filter Functionality -->
     <script>
@@ -3225,23 +3384,51 @@ body {
         });
         
         // Toggle collapsible sections
+        function openCollapsible(headerEl) {
+            const content = headerEl.nextElementSibling;
+            const icon = headerEl.querySelector('.collapsible-icon');
+            const section = headerEl.closest('.collapsible-section');
+            if (!content) return;
+            content.classList.add('active');
+            if (icon) icon.classList.add('active');
+            headerEl.setAttribute('aria-expanded', 'true');
+            if (section) section.classList.remove('collapsed');
+        }
+        function closeCollapsible(headerEl) {
+            const content = headerEl.nextElementSibling;
+            const icon = headerEl.querySelector('.collapsible-icon');
+            const section = headerEl.closest('.collapsible-section');
+            if (!content) return;
+            content.classList.remove('active');
+            if (icon) icon.classList.remove('active');
+            headerEl.setAttribute('aria-expanded', 'false');
+            if (section) section.classList.add('collapsed');
+        }
         function toggleCollapsible(element) {
             try {
                 const content = element.nextElementSibling;
                 const icon = element.querySelector('.collapsible-icon');
                 
-                if (content.classList.contains('active')) {
-                    content.classList.remove('active');
-                    icon.classList.remove('active');
+                const isActive = content.classList.contains('active');
+                if (isActive) {
+                    closeCollapsible(element);
                 } else {
-                    content.classList.add('active');
-                    icon.classList.add('active');
+                    openCollapsible(element);
                 }
             } catch (error) {
                 console.log('Collapsible toggle error handled');
             }
         }
         
+        // Utility: slugify for IDs
+        function slugify(text) {
+            return text.toString().toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+        }
+
         // Wait for DOM to be ready
         document.addEventListener('DOMContentLoaded', function() {
 
@@ -3255,11 +3442,237 @@ body {
             const resultsCount = document.getElementById('resultsCount');
             const contentCards = document.querySelectorAll('.content-card');
             const collapsibleSections = document.querySelectorAll('.collapsible-section');
+
+            // Build Table of Contents
+            const tocList = document.getElementById('tocList');
+            if (tocList) {
+                const svgForKey = (key) => {
+                    switch (key) {
+                        case 'history': return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.708"/><path d="M3 3v6h6"/><path d="M12 7v5l3 3"/></svg>';
+                        case 'diagnostic': return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20s4-2 8-2 8 2 8 2"/><path d="M12 14a4 4 0 1 0-4-4"/></svg>';
+                        case 'tools': return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10"/><path d="M8 12l-5 5 1 1 5-5"/><path d="M16 3l5 5-4 4-5-5z"/></svg>';
+                        case 'evidence': return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l3-3 3 2 4-5"/></svg>';
+                        case 'education': return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M21 10v6"/><path d="M3 10v6"/></svg>';
+                        case 'critique': return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18"/><path d="M6 7v10"/><path d="M18 7v10"/><path d="M6 17h12"/></svg>';
+                        case 'safety': return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l9 4v6c0 5-3.5 9-9 10-5.5-1-9-5-9-10V6l9-4z"/><path d="M12 8v5"/><circle cx="12" cy="16" r="1" class="fill"/></svg>';
+                        case 'treatment': return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-8"/><path d="M14 3v8"/><rect x="3" y="12" width="18" height="8" rx="2"/></svg>';
+                        default: return '<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12v18l-6-4-6 4z\"/></svg>';
+                    }
+                };
+                const iconKeyFromTitle = (title) => {
+                    const t = (title || '').toLowerCase();
+                    if (t.includes('gonstead')) return 'education';
+                    if (t.includes('history') || t.includes('evolution')) return 'history';
+                    if (t.includes('diagnostic') || t.includes('principle') || t.includes('core principles')) return 'diagnostic';
+                    if (t.includes('adjustment') || t.includes('tools') || t.includes('protocol')) return 'tools';
+                    if (t.includes('evidence') || t.includes('outcomes') || t.includes('research')) return 'evidence';
+                    if (t.includes('education') || t.includes('training')) return 'education';
+                    if (t.includes('critique') || t.includes('relevance')) return 'critique';
+                    if (t.includes('consideration') || t.includes('safety') || t.includes('important')) return 'safety';
+                    if (t.includes('treatment') || t.includes('rehabilitation')) return 'treatment';
+                    return 'default';
+                };
+                const headings = Array.from(document.querySelectorAll('h2.section-title, .content-card .card-title'));
+                headings.forEach((h, idx) => {
+                    // Determine icon key
+                    let key = iconKeyFromTitle(h.textContent);
+                    const level = h.matches('h2.section-title') ? 2 : 3;
+                    if (!h.id) {
+                        h.id = slugify(h.textContent) || `section-${idx}`;
+                    }
+                    const li = document.createElement('li');
+                    li.className = level === 3 ? 'toc-sub-item' : 'toc-item';
+                    const a = document.createElement('a');
+                    a.href = `#${h.id}`;
+                    a.className = 'toc-link';
+                    const label = h.textContent.trim();
+                    a.setAttribute('title', label);
+                    a.setAttribute('aria-label', label);
+                    a.setAttribute('data-tip', label);
+                    const svgWrap = document.createElement('span'); svgWrap.className = 'toc-svg'; svgWrap.innerHTML = svgForKey(key);
+                    const text = document.createElement('span'); text.className = 'toc-text'; text.textContent = label;
+                    a.appendChild(svgWrap); a.appendChild(text);
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                    li.appendChild(a);
+                    tocList.appendChild(li);
+                });
+                // Insert group separators between top-level sections
+                let lastLevel = null;
+                const items = tocList.querySelectorAll('li');
+                items.forEach((li) => {
+                    const isTop = li.classList.contains('toc-item');
+                    if (isTop && lastLevel === 'sub') {
+                        const sep = document.createElement('li'); sep.className = 'toc-separator'; tocList.insertBefore(sep, li);
+                    }
+                    lastLevel = isTop ? 'top' : 'sub';
+                });
+
+                // Scrollspy active state
+                const links = tocList.querySelectorAll('.toc-link');
+                const onScroll = () => {
+                    let activeId = null;
+                    for (const h of headings) {
+                        const rect = h.getBoundingClientRect();
+                        if (rect.top >= 0 && rect.top <= 200) {
+                            activeId = h.id; break;
+                        }
+                        if (rect.top < 0) activeId = h.id; // last seen
+                    }
+                    links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === `#${activeId}`));
+                };
+                document.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+            }
+
+            // Rail keyboard navigation
+            (function() {
+                const railLinks = Array.from(document.querySelectorAll('.sidebar .toc-link'));
+                if (!railLinks.length) return;
+                const focusAt = (i) => { if (railLinks[i]) railLinks[i].focus(); };
+                document.querySelector('.sidebar')?.addEventListener('keydown', (e) => {
+                    const idx = railLinks.indexOf(document.activeElement);
+                    if (e.key === 'ArrowDown') { e.preventDefault(); focusAt(Math.min(railLinks.length - 1, Math.max(0, idx + 1))); }
+                    if (e.key === 'ArrowUp') { e.preventDefault(); focusAt(Math.max(0, idx - 1)); }
+                    if (e.key === 'Home') { e.preventDefault(); focusAt(0); }
+                    if (e.key === 'End') { e.preventDefault(); focusAt(railLinks.length - 1); }
+                });
+            })();
+
+            // Sidebar toggle logic
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebar && sidebarToggle) {
+                const toggle = () => {
+                    const isExpanded = sidebar.classList.toggle('expanded');
+                    sidebarToggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+                    if (window.matchMedia('(min-width: 1025px)').matches) {
+                        document.body.classList.toggle('sidebar-expanded', isExpanded);
+                    }
+                };
+                sidebarToggle.addEventListener('click', toggle);
+                sidebarToggle.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+                });
+                // Close on Esc (mobile/keyboard)
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && sidebar.classList.contains('expanded')) {
+                        sidebar.classList.remove('expanded');
+                        sidebarToggle.setAttribute('aria-expanded', 'false');
+                        document.body.classList.remove('sidebar-expanded');
+                    }
+                });
+                // Desktop hover to sync content offset
+                if (window.matchMedia('(min-width: 1025px)').matches) {
+                    sidebar.addEventListener('mouseenter', () => document.body.classList.add('sidebar-expanded'));
+                    sidebar.addEventListener('mouseleave', () => document.body.classList.remove('sidebar-expanded'));
+                }
+            }
+            
+            // Reading progress
+            (function(){
+                const fill = document.getElementById('rpFill');
+                const onScroll = () => {
+                    const doc = document.documentElement;
+                    const sTop = window.scrollY || doc.scrollTop;
+                    const height = doc.scrollHeight - doc.clientHeight;
+                    const pct = Math.max(0, Math.min(100, (sTop / (height || 1)) * 100));
+                    if (fill) fill.style.width = pct + '%';
+                };
+                document.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+            })();
+
+            // Copy anchors for headings
+            (function(){
+                const headings = Array.from(document.querySelectorAll('h2.section-title, .content-card .card-title'));
+                headings.forEach((h) => {
+                    if (!h.id) return;
+                    if (h.querySelector('.anchor-link')) return;
+                    const a = document.createElement('a');
+                    a.href = `#${h.id}`;
+                    a.className = 'anchor-link';
+                    a.setAttribute('title', 'Copy link');
+                    a.innerHTML = '<i class="fas fa-link" aria-hidden="true"></i>';
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const url = location.origin + location.pathname + '#' + h.id;
+                        navigator.clipboard?.writeText(url);
+                    });
+                    h.appendChild(a);
+                });
+            })();
+
+            // Print
+            document.getElementById('printPage')?.addEventListener('click', () => window.print());
+            
+            // Inject section icons and initialize collapsed state
+            document.querySelectorAll('.collapsible-section').forEach((section) => {
+                const header = section.querySelector('.collapsible-header');
+                if (!header) return;
+                // Add icon if missing
+                if (!header.querySelector('.section-icon')) {
+                    const iconEl = document.createElement('i');
+                    iconEl.className = 'fas fa-circle-question section-icon';
+                    iconEl.setAttribute('aria-hidden', 'true');
+                    header.prepend(iconEl);
+                }
+                // Start collapsed by default when content is not active
+                const content = section.querySelector('.collapsible-content');
+                if (content && !content.classList.contains('active')) {
+                    section.classList.add('collapsed');
+                }
+            });
+
+            // Initialize accessible collapsible headers
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+            collapsibleHeaders.forEach((hdr, idx) => {
+                const section = hdr.closest('.collapsible-section');
+                hdr.setAttribute('role', 'button');
+                hdr.setAttribute('tabindex', '0');
+                const content = hdr.nextElementSibling;
+                if (content) {
+                    const cid = content.id || `collapsible-content-${idx}`;
+                    content.id = cid;
+                    hdr.setAttribute('aria-controls', cid);
+                    hdr.setAttribute('aria-expanded', content.classList.contains('active') ? 'true' : 'false');
+                }
+                // Desktop hover open/close (pointer fine)
+                const mqHover = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+                if (mqHover && section) {
+                    section.addEventListener('mouseenter', () => openCollapsible(hdr));
+                    section.addEventListener('mouseleave', () => closeCollapsible(hdr));
+                }
+                hdr.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleCollapsible(hdr);
+                    }
+                });
+            });
             
             let currentTopicFilter = '';
             let currentBodyAreaFilter = '';
             let currentContentTypeFilter = '';
             
+            // Heuristic tagging for filters
+            const tagCard = (card) => {
+                const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+                const topics = [];
+                if (/gonstead|history|principles|diagnostic|adjustment|clinic|education|protocol/.test(title)) topics.push('gonstead-technique');
+                if (/protocol|treatment|rehabilitation|maintenance/.test(title)) topics.push('treatment', 'rehabilitation');
+                if (/evidence|research|case|trial/.test(title)) topics.push('research');
+                if (/anatomy|principles|diagnostic/.test(title)) topics.push('anatomy');
+                if (/prevention|maintenance|considerations|safety/.test(title)) topics.push('prevention');
+                const types = [];
+                if (/protocol|guide/.test(title)) types.push('guide'); else types.push('article');
+                card.dataset.topic = Array.from(new Set(topics)).join(' ').trim() || 'gonstead-technique';
+                card.dataset.type = Array.from(new Set(types)).join(' ').trim() || 'article';
+            };
+            document.querySelectorAll('.content-card').forEach(tagCard);
+
             // Search function
             function performSearch() {
                 try {
@@ -3272,9 +3685,9 @@ body {
                         const content = card.querySelector('.card-content')?.textContent.toLowerCase() || '';
                         
                         const matchesSearch = !searchTerm || title.includes(searchTerm) || content.includes(searchTerm);
-                        const matchesTopicFilter = !currentTopicFilter || title.includes(currentTopicFilter.replace('-', ' '));
+                        const matchesTopicFilter = !currentTopicFilter || (card.dataset.topic || '').split(/\s+/).includes(currentTopicFilter);
                         const matchesBodyAreaFilter = !currentBodyAreaFilter || content.includes(currentBodyAreaFilter);
-                        const matchesContentTypeFilter = !currentContentTypeFilter || true; // All cards are articles for now
+                        const matchesContentTypeFilter = !currentContentTypeFilter || (card.dataset.type || '').split(/\s+/).includes(currentContentTypeFilter);
                         
                         if (matchesSearch && matchesTopicFilter && matchesBodyAreaFilter && matchesContentTypeFilter) {
                             card.style.display = 'block';
@@ -3344,7 +3757,7 @@ body {
             }
             
             // Search icon click
-            const searchIcon = document.querySelector('.search-icon');
+            const searchIcon = document.querySelector('.compact-search-icon');
             if (searchIcon) {
                 searchIcon.addEventListener('click', performSearch);
             }
@@ -3361,6 +3774,16 @@ body {
                 });
             }
         });
+
+        // Back to top
+        (function(){
+            const btn = document.getElementById('backToTop');
+            if (!btn) return;
+            const onScroll = () => { btn.style.display = window.scrollY > 300 ? 'flex' : 'none'; };
+            document.addEventListener('scroll', onScroll, { passive: true });
+            btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+            onScroll();
+        })();
     </script>
     
     <!-- Google Translate Widget -->
@@ -3375,6 +3798,13 @@ body {
                 gaTrack: true,
                 gaId: 'UA-XXXXX-X'
             }, 'google_translate_element');
+            // Hide the default Google Translate widget after initialization
+            setTimeout(function() {
+                var googleTranslateElement = document.getElementById('google_translate_element');
+                if (googleTranslateElement) {
+                    googleTranslateElement.style.display = 'none';
+                }
+            }, 1000);
         }
         
         // Load Google Translate script
@@ -3389,58 +3819,6 @@ body {
 	<!-- Zoom Functionality Script -->
 	<script>
 	    // Zoom functionality
-let currentZoom = parseFloat(localStorage.getItem('pageZoom')) || 200;
-
-	    // Apply zoom on page load
-	    document.addEventListener('DOMContentLoaded', function() {
-	        applyZoom(currentZoom);
-	        updateZoomDisplay();
-	    });
-
-	    function applyZoom(zoomLevel) {
-	        const zoomContainer = document.querySelector('.zoom-container');
-	        if (zoomContainer) {
-	            zoomContainer.style.transform = 'scale(' + (zoomLevel / 100) + ')';
-	            zoomContainer.style.transformOrigin = 'top center';
-	        }
-	        currentZoom = zoomLevel;
-	        localStorage.setItem('pageZoom', zoomLevel);
-	    }
-    	
-	    function updateZoomDisplay() {
-	        const zoomDisplay = document.getElementById('zoom-level');
-	        if (zoomDisplay) {
-            zoomDisplay.textContent = '200%';
-	        }
-	    }
-        
-        
-        // Keyboard shortcuts for zoom
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey || e.metaKey) {
-                if (e.key === '=' || e.key === '+') {
-                    e.preventDefault();
-                    if (currentZoom < 200) {
-                        currentZoom += 10;
-                        applyZoom(currentZoom);
-                        updateZoomDisplay();
-                    }
-                } else if (e.key === '-') {
-                    e.preventDefault();
-                    if (currentZoom > 50) {
-                        currentZoom -= 10;
-                        applyZoom(currentZoom);
-                        updateZoomDisplay();
-                    }
-                } else if (e.key === '0') {
-                    e.preventDefault();
-	    	    currentZoom = 200;
-                    applyZoom(currentZoom);
-                    updateZoomDisplay();
-                }
-            }
-        });
-        
         // Day/Night Mode Functionality
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggle = document.getElementById('theme-toggle');
@@ -3525,43 +3903,9 @@ let currentZoom = parseFloat(localStorage.getItem('pageZoom')) || 200;
             setTimeout(waitForGoogleTranslate, 1000);
         });
         
-        // Enhanced Zoom Functionality
-        let currentPageZoom = 1.0;
-        
-        function adjustZoom(delta) {
-            currentPageZoom += delta;
-            if (currentPageZoom < 0.7) currentPageZoom = 0.7;
-            if (currentPageZoom > 1.5) currentPageZoom = 1.5;
-            
-            // Use transform instead of browser zoom for better compatibility
-            document.body.style.transform = `scale(${currentPageZoom})`;
-            document.body.style.transformOrigin = 'top center';
-            
-            // Adjust body width to prevent horizontal scrolling
-            document.body.style.width = `${100 / currentPageZoom}%`;
-            
-            document.getElementById('zoom-display').textContent = Math.round(currentPageZoom * 100) + '%';
-            localStorage.setItem('pageZoom', currentPageZoom);
-        }
-        
-        // Reset zoom to normal and load saved zoom level
-        document.addEventListener('DOMContentLoaded', function() {
-            // Clear any existing zoom settings
-            localStorage.removeItem('pageZoom');
-            
-            // Reset to normal zoom
-            currentPageZoom = 1.0;
-            document.body.style.transform = 'scale(1.0)';
-            document.body.style.transformOrigin = 'top center';
-            document.body.style.width = '100%';
-            
-            const zoomDisplay = document.getElementById('zoom-display');
-            if (zoomDisplay) {
-                zoomDisplay.textContent = '100%';
-            }
-        });
         
         // Image Modal Functionality
+        let imageModalPreviousFocus = null;
         function openImageModal(img) {
             // Create modal if it doesn't exist
             let modal = document.getElementById('imageModal');
@@ -3569,9 +3913,9 @@ let currentZoom = parseFloat(localStorage.getItem('pageZoom')) || 200;
                 modal = document.createElement('div');
                 modal.id = 'imageModal';
                 modal.innerHTML = `
-                    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                    <div role="dialog" aria-modal="true" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                         <div style="position: relative; max-width: 90%; max-height: 90%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-                            <button onclick="closeImageModal()" style="position: absolute; top: 10px; right: 10px; background: #009688; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+                            <button onclick="closeImageModal()" aria-label="Close image" style="position: absolute; top: 10px; right: 10px; background: #009688; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
                             <img id="modalImage" style="max-width: 100%; max-height: 80vh; object-fit: contain;" />
                             <p id="modalCaption" style="margin-top: 15px; text-align: center; color: #666; font-size: 14px;"></p>
                         </div>
@@ -3595,8 +3939,11 @@ let currentZoom = parseFloat(localStorage.getItem('pageZoom')) || 200;
             modalImage.alt = img.alt;
             modalCaption.textContent = img.alt;
             
+            imageModalPreviousFocus = document.activeElement;
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            const closeBtn = modal.querySelector('button');
+            if (closeBtn) closeBtn.focus();
         }
         
         function closeImageModal() {
@@ -3604,6 +3951,10 @@ let currentZoom = parseFloat(localStorage.getItem('pageZoom')) || 200;
             if (modal) {
                 modal.style.display = 'none';
                 document.body.style.overflow = 'auto';
+            }
+            if (imageModalPreviousFocus) {
+                try { imageModalPreviousFocus.focus(); } catch(e) {}
+                imageModalPreviousFocus = null;
             }
         }
         
@@ -3614,24 +3965,6 @@ let currentZoom = parseFloat(localStorage.getItem('pageZoom')) || 200;
             }
         });
         
-        // Enhanced Google Translate Integration
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'en',
-                includedLanguages: 'ur,ar,hi,es,fr,de,it,pt,zh,ja,ko,tr,ru,pl,nl,sv,da,no,fi,cs,hu,ro,bg,hr,sk,sl,et,lv,lt,mt,ga,cy,is,mk,sq,sr,bs,me,ka,hy,az,kk,ky,uz,tk,tg,mn,ne,si,my,th,vi,lo,km,ms,id,tl,sw,zu,af,am,ig,yo,ha,st,xh,sn,ny,mg,rw,so,om,ti,bn,gu,kn,ml,mr,or,pa,ta,te,as,mai,bho,sa,gom,mni,sat,ks,sd,dv,ps,fa,ku,ckb,lrc,mzn,glk,bal,brh,sd,ur',
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-                gaTrack: true,
-                gaId: 'UA-XXXXX-X'
-            }, 'google_translate_element');
-            
-            // Hide the default Google Translate widget after initialization
-            setTimeout(function() {
-                const googleTranslateElement = document.getElementById('google_translate_element');
-                if (googleTranslateElement) {
-                    googleTranslateElement.style.display = 'none';
-                }
-            }, 1000);
-        }
         
         // 🎯 COMPREHENSIVE SPINAL HEALTH ASSESSMENT SYSTEM JAVASCRIPT
         let currentStep = 0;
