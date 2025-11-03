@@ -136,7 +136,6 @@ export function EmailJSContactForm() {
         healthConcerns: "",
       })
     } catch (error) {
-      console.error("EmailJS Error:", error)
       toast({
         title: language === "ur" ? "خرابی" : "Error",
         description: language === "ur" ? "پیغام بھیجنے میں مسئلہ ہے" : "Failed to send message. Please try again.",

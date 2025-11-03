@@ -243,8 +243,8 @@ export function SportsInjuriesFloat() {
         onClick={() => setIsOpen(!isOpen)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`h-14 w-14 md:h-16 md:w-16 lg:h-18 lg:w-18 rounded-full bg-gradient-to-br from-[#2a9d8f] via-[#0d5c75] to-[#1e6f8f] hover:from-[#2a9d8f] hover:via-[#0d5c75] hover:to-[#2a9d8f] shadow-lg hover:shadow-2xl transition-all duration-300 transform ${
-          isHovered ? "scale-110" : "scale-100"
+className={`h-14 w-14 md:h-16 md:w-16 lg:h-18 lg:w-18 rounded-full bg-gradient-to-br from-[#2a9d8f] via-[#0d5c75] to-[#1e6f8f] hover:from-[#2a9d8f] hover:via-[#0d5c75] hover:to-[#2a9d8f] shadow-lg hover:shadow-2xl transition-all duration-300 transform ${
+          isHovered ? "scale-110 opacity-100" : "scale-100 opacity-90"
         } relative overflow-hidden border-4 border-white/30 ring-4 ring-white/20 backdrop-blur-sm`}
         size="icon"
         title="Sports Injuries Information"

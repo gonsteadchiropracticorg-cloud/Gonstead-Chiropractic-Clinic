@@ -101,15 +101,6 @@ const sidebarItems: MenuItem[] = [
     badge: "Secure"
   },
   {
-    id: "reviews",
-    title: "Reviews & Ratings",
-    href: "/admin/reviews",
-    icon: Star,
-    description: "Manage patient reviews & feedback",
-    category: "core",
-    badge: "New"
-  },
-  {
     id: "analytics",
     title: "Analytics",
     href: "/admin/analytics",

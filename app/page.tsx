@@ -37,6 +37,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AppointmentBookingModal } from "@/components/appointment-booking-modal"
 import { EmailContactSection } from "@/components/EmailContactSection"
+import { NoSSR } from "@/components/no-ssr"
 
 // Import lightweight wrapper for feature-preserving optimization
 import { createLightweightDynamic, LightweightFallback } from "@/components/LightweightWrapper"
@@ -200,7 +201,6 @@ const HomePageContent = memo(() => {
                 { id: "home", label: "Home" },
                 { id: "about", label: "About" },
                 { id: "services", label: "Services" },
-                { id: "reviews", label: "Reviews" },
                 { id: "doctor", label: "Doctor" },
                 { id: "technology", label: "Technology" },
                 { id: "contact", label: "Contact" },
@@ -636,57 +636,6 @@ const HomePageContent = memo(() => {
                     </CardContent>
                   </Card>
                 ))}
-              </div>
-            </div>
-          </section>
-
-                    text: 'The Gonstead method was new to me, but the detailed assessment and targeted adjustments made a visible difference.',
-                    rating: 5,
-                  },
-                  {
-                    name: 'Fatima Zahra',
-                    text: 'Great experience! Clean clinic, respectful staff, and results that speak for themselves. Highly recommended.',
-                    rating: 5,
-                  },
-                  {
-                    name: 'Usman Tariq',
-                    text: 'Neck stiffness from desk work – gone. The doctor explained everything clearly and treated the root cause.',
-                    rating: 5,
-                  },
-                  {
-                    name: 'Sana Iqbal',
-                    text: 'Came in with sciatica. Got customized care and home guidance. Recovery was much faster than I expected.',
-                    rating: 5,
-                  },
-                  {
-                    name: 'Hamza Yousaf',
-                    text: 'Professional, accurate diagnosis, and effective treatment. I’m back to training without pain.',
-                    rating: 5,
-                  },
-                ].map((r, idx) => (
-                  <Card key={idx} className="border-[#0d5c75]/10 hover:border-[#0d5c75]/30 transition-colors bg-white/90 dark:bg-slate-800/90 shadow-sm hover:shadow-md">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-100 to-cyan-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
-                            {r.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()}
-                          </div>
-                          <div className="font-semibold text-[#0d5c75] dark:text-white">{r.name}</div>
-                        </div>
-                        <div className="flex">
-                          {[...Array(r.rating)].map((_, i) => (<Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-400" />))}
-                        </div>
-                      </div>
-                      <p className="text-gray-700 dark:text-gray-200 leading-relaxed">{r.text}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              <div className="text-center mt-10">
-                <a href="#contact" className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-6 py-3 rounded-lg font-semibold shadow hover:shadow-lg transition-shadow">
-                  Share Your Experience
-                </a>
               </div>
             </div>
           </section>
@@ -1188,8 +1137,10 @@ const HomePageContent = memo(() => {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 {/* Professional Email Contact Section */}
-                <div className="space-y-8">
-                  <EmailContactSection />
+<div className="space-y-8" suppressHydrationWarning>
+                  <NoSSR>
+                    <EmailContactSection />
+                  </NoSSR>
                 </div>
 
                 {/* Contact Information & Map */}
@@ -1283,12 +1234,6 @@ const HomePageContent = memo(() => {
           </section>
 
 
-          {/* Reviews & Ratings Section (Trust-style) - placed just above Education Hub */}
-          <section id="reviews" className="relative py-16 bg-white dark:bg-slate-900">
-            <div className="container mx-auto px-4">
-              {require('@/components/trust-reviews').default()}
-            </div>
-          </section>
 
           {/* Compact Patient Education Resources Section */}
           <section className="relative py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-[#0d5c75]/5 via-white to-[#2a9d8f]/5 dark:from-gray-900/50 dark:to-gray-800/50">

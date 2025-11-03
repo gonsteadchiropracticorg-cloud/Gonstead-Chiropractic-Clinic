@@ -41,7 +41,6 @@ export const EmailContactSection = () => {
       setEmail('');
       setComment('');
     } catch (error) {
-      console.error('EmailJS Error:', error);
       setConfirmation('Sorry, there was an error sending your message. Please try again or contact us directly at +92 304 699 6267.');
     } finally {
       setIsSubmitting(false);

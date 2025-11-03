@@ -202,28 +202,12 @@ export function AIChatbotSystem() {
         systemPrompt += `\n\nRelevant medical information: ${medicalContext}`
       }
 
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          Authorization: "Bearer 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",
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://drbashir-gonstead.vercel.app",
-          "X-Title": "Dr. Bashir Gonstead Chiropractic",
-        },
-        body: JSON.stringify({
-          model: "meta-llama/llama-3.1-8b-instruct:free",
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt,
-            },
-            ...conversationHistory,
-          ],
-          max_tokens: 150,
-          temperature: 0.7,
-          top_p: 0.9,
-          frequency_penalty: 0.1,
-          presence_penalty: 0.1,
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+          message: userMessage,
+          history: conversationState.messages,
         }),
       })
 
@@ -231,8 +215,8 @@ export function AIChatbotSystem() {
         throw new Error(`API request failed: ${response.status}`)
       }
 
-      const data = await response.json()
-      const aiResponse = data.choices[0]?.message?.content || "I'm here to help you with your chiropractic needs."
+const data = await response.json()
+      const aiResponse = data?.text || "I'm here to help you with your chiropractic needs."
 
       // Update medical context if relevant
       if (medicalContext) {

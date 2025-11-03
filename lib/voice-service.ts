@@ -23,23 +23,12 @@ interface VoiceConfig {
 
 export class VoiceService {
   private static instance: VoiceService
-  private voiceConfig: VoiceConfig
+  // Removed external TTS keys; default to browser TTS only
+  private voiceConfig: Partial<VoiceConfig> = {}
   private audioContext: AudioContext | null = null
   private isPlaying = false
 
-  constructor() {
-    this.voiceConfig = {
-      voiceId: "HKFOb9iktHA85uKXydRT", // Default voice ID
-      apiKey: "sk_ac49c7210f2433d3f1aa3e5bae75db5daea3245231426707", // API Key
-      modelId: "eleven_multilingual_v2",
-      settings: {
-        stability: 0.5,
-        similarity_boost: 0.8,
-        style: 0.2,
-        use_speaker_boost: true
-      }
-    }
-  }
+  constructor() {}
 
   static getInstance(): VoiceService {
     if (!VoiceService.instance) {
@@ -73,41 +62,8 @@ export class VoiceService {
       // Clean text for better synthesis
       const cleanText = this.cleanTextForSpeech(text)
       
-      // Try ElevenLabs API first
-      try {
-        // Merge options with default config
-        const config = { ...this.voiceConfig, ...options }
-        const currentVoiceId = config.voiceId
-
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${currentVoiceId}`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': config.apiKey
-          },
-          body: JSON.stringify({
-            text: cleanText,
-            model_id: config.modelId,
-            voice_settings: config.settings
-          })
-        })
-
-        if (response.ok) {
-          const audioBlob = await response.blob()
-          const audioUrl = URL.createObjectURL(audioBlob)
-          return {
-            success: true,
-            audioUrl
-          }
-        }
-      } catch (apiError) {
-        console.warn('ElevenLabs API error:', {
-          message: apiError instanceof Error ? apiError.message : 'Unknown API error',
-          name: apiError instanceof Error ? apiError.name : 'APIError'
-        })
-        // Fall through to browser TTS
-      }
+      // External TTS disabled; using browser TTS
+      // Skipping external API; proceed to browser TTS
 
       // Fallback to browser's built-in TTS
       return this.useBrowserTTS(cleanText)

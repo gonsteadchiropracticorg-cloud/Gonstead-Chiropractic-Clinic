@@ -1,6 +1,6 @@
 "use client"
 
-// Google AI Studio API Integration
+// Client wrapper that calls server API; removes any direct key usage
 interface GoogleAIResponse {
   candidates?: Array<{
     content: {
@@ -24,13 +24,9 @@ interface ChatMessage {
 
 export class GoogleAIService {
   private static instance: GoogleAIService
-  private apiKey: string
-  private baseUrl: string
+  // no client-side keys
 
-  constructor() {
-    this.apiKey = "AIzaSyA2fde6Xtaq8fPl7xnpRJvKRrVH-ZHDUWI"
-    this.baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
-  }
+  constructor() {}
 
   static getInstance(): GoogleAIService {
     if (!GoogleAIService.instance) {
@@ -62,72 +58,20 @@ export class GoogleAIService {
         }
       ]
 
-      const requestBody = {
-        contents: messages,
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.8,
-          maxOutputTokens: 1024,
-        },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
-      }
-
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
+      const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage, history: conversationHistory })
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        // Error logging removed to prevent runtime issues
-        return {
-          success: false,
-          error: `API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`
-        }
+        return { success: false, error: `API Error: ${response.status}` }
       }
 
-      const data: GoogleAIResponse = await response.json()
-
-      if (data.error) {
-        return {
-          success: false,
-          error: data.error.message
-        }
-      }
-
-      if (data.candidates && data.candidates.length > 0) {
-        const generatedText = data.candidates[0].content.parts[0].text
-        return {
-          success: true,
-          response: generatedText
-        }
-      }
-
-      return {
-        success: false,
-        error: 'No response generated'
-      }
+      const data = await response.json()
+      const generatedText = data?.text as string | undefined
+      if (generatedText) return { success: true, response: generatedText }
+      return { success: false, error: 'No response generated' }
 
     } catch (error) {
       // Error logging removed to prevent runtime issues
