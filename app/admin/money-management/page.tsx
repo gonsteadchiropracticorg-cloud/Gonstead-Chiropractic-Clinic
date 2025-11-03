@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
@@ -32,7 +32,13 @@ import {
   Calendar,
   Search,
   Filter,
-  X
+  X,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle
 } from "lucide-react"
 
 interface PaymentRecord {
@@ -62,6 +68,14 @@ function MoneyManagementContent() {
   const [filterMethod, setFilterMethod] = useState<string>("all")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [dateFilter, setDateFilter] = useState<string>("all")
+  const [customDateStart, setCustomDateStart] = useState("")
+  const [customDateEnd, setCustomDateEnd] = useState("")
+  const [sortField, setSortField] = useState<"date" | "amount" | "patientName" | "status">("date")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [deleteConfirmRecord, setDeleteConfirmRecord] = useState<PaymentRecord | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -150,13 +164,23 @@ function MoneyManagementContent() {
       return
     }
 
+    const amount = parseFloat(newRecord.amount)
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid positive amount",
+        variant: "destructive",
+      })
+      return
+    }
+
     const record: PaymentRecord = {
       id: `MR-${Date.now()}`,
       date: new Date().toISOString().split('T')[0],
       patientName: newRecord.patientName,
       phone: newRecord.phone,
       sessionType: newRecord.sessionType,
-      amount: parseFloat(newRecord.amount),
+      amount: amount,
       paymentMethod: newRecord.paymentMethod,
       description: newRecord.description,
       category: newRecord.category,
@@ -193,6 +217,15 @@ function MoneyManagementContent() {
   const handleUpdateRecord = () => {
     if (!editingRecord) return
 
+    if (isNaN(editingRecord.amount) || editingRecord.amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid positive amount",
+        variant: "destructive",
+      })
+      return
+    }
+
     const updatedRecords = records.map(record =>
       record.id === editingRecord.id ? editingRecord : record
     )
@@ -207,14 +240,24 @@ function MoneyManagementContent() {
     })
   }
 
-  const handleDeleteRecord = (recordId: string) => {
-    const updatedRecords = records.filter(record => record.id !== recordId)
+  const handleDeleteRecord = () => {
+    if (!deleteConfirmRecord) return
+
+    const updatedRecords = records.filter(record => record.id !== deleteConfirmRecord.id)
     saveRecords(updatedRecords)
+
+    setIsDeleteDialogOpen(false)
+    setDeleteConfirmRecord(null)
 
     toast({
       title: "🗑️ Record Deleted",
       description: "Payment record has been removed successfully",
     })
+  }
+
+  const openDeleteConfirmation = (record: PaymentRecord) => {
+    setDeleteConfirmRecord(record)
+    setIsDeleteDialogOpen(true)
   }
 
 
@@ -238,7 +281,18 @@ function MoneyManagementContent() {
     .filter(r => r.status === "pending")
     .reduce((sum, r) => sum + r.amount, 0)
 
-  // Filtered records
+  // Sorting function
+  const handleSort = (field: "date" | "amount" | "patientName" | "status") => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      setSortField(field)
+      setSortDirection("asc")
+    }
+    setCurrentPage(1)
+  }
+
+  // Filtered and sorted records
   const filteredRecords = records.filter(record => {
     const matchesSearch = 
       record.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -266,11 +320,49 @@ function MoneyManagementContent() {
           matchesDate = recordDate.getMonth() === today.getMonth() && 
                        recordDate.getFullYear() === today.getFullYear()
           break
+        case "custom":
+          if (customDateStart && customDateEnd) {
+            const start = new Date(customDateStart)
+            const end = new Date(customDateEnd)
+            matchesDate = recordDate >= start && recordDate <= end
+          }
+          break
       }
     }
 
     return matchesSearch && matchesCategory && matchesMethod && matchesStatus && matchesDate
+  }).sort((a, b) => {
+    let comparison = 0
+    
+    switch (sortField) {
+      case "date":
+        comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
+        break
+      case "amount":
+        comparison = a.amount - b.amount
+        break
+      case "patientName":
+        comparison = a.patientName.localeCompare(b.patientName)
+        break
+      case "status":
+        comparison = a.status.localeCompare(b.status)
+        break
+    }
+    
+    return sortDirection === "asc" ? comparison : -comparison
   })
+
+  // Pagination
+  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage)
+  const paginatedRecords = filteredRecords.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, filterCategory, filterMethod, filterStatus, dateFilter, customDateStart, customDateEnd])
 
   // Export functionality
   const exportRecords = () => {
@@ -511,9 +603,35 @@ function MoneyManagementContent() {
                 <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="week">This Week</SelectItem>
                 <SelectItem value="month">This Month</SelectItem>
+                <SelectItem value="custom">Custom Range</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {dateFilter === "custom" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 col-span-full">
+              <div>
+                <Label htmlFor="startDate" className="text-sm mb-1 block">Start Date</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={customDateStart}
+                  onChange={(e) => setCustomDateStart(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Label htmlFor="endDate" className="text-sm mb-1 block">End Date</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={customDateEnd}
+                  onChange={(e) => setCustomDateEnd(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2 mt-4">
             {/* Add Record Dialog */}
@@ -572,6 +690,8 @@ function MoneyManagementContent() {
                     <Input
                       id="amount"
                       type="number"
+                      min="0.01"
+                      step="0.01"
                       value={newRecord.amount}
                       onChange={(e) => setNewRecord(prev => ({ ...prev, amount: e.target.value }))}
                       placeholder="Enter amount"
@@ -687,17 +807,65 @@ function MoneyManagementContent() {
                 <TableHeader>
                   <TableRow className="bg-gray-50">
                     <TableHead className="text-[#0d5c75] font-semibold">ID</TableHead>
-                    <TableHead className="text-[#0d5c75] font-semibold">Date</TableHead>
-                    <TableHead className="text-[#0d5c75] font-semibold">Patient</TableHead>
-                    <TableHead className="text-[#0d5c75] font-semibold">Amount</TableHead>
+                    <TableHead 
+                      className="text-[#0d5c75] font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("date")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Date
+                        {sortField === "date" ? (
+                          sortDirection === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : (
+                          <ArrowUpDown className="h-4 w-4 opacity-40" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-[#0d5c75] font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("patientName")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Patient
+                        {sortField === "patientName" ? (
+                          sortDirection === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : (
+                          <ArrowUpDown className="h-4 w-4 opacity-40" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-[#0d5c75] font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("amount")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Amount
+                        {sortField === "amount" ? (
+                          sortDirection === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : (
+                          <ArrowUpDown className="h-4 w-4 opacity-40" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead className="text-[#0d5c75] font-semibold">Payment</TableHead>
                     <TableHead className="text-[#0d5c75] font-semibold">Category</TableHead>
-                    <TableHead className="text-[#0d5c75] font-semibold">Status</TableHead>
+                    <TableHead 
+                      className="text-[#0d5c75] font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleSort("status")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Status
+                        {sortField === "status" ? (
+                          sortDirection === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : (
+                          <ArrowUpDown className="h-4 w-4 opacity-40" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead className="text-[#0d5c75] font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRecords.map((record) => (
+                  {paginatedRecords.map((record) => (
                     <TableRow key={record.id} className="hover:bg-gray-50">
                       <TableCell className="font-mono text-sm">{record.id}</TableCell>
                       <TableCell>{record.date}</TableCell>
@@ -757,7 +925,7 @@ function MoneyManagementContent() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleDeleteRecord(record.id)}
+                            onClick={() => openDeleteConfirmation(record)}
                             className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
                           >
                             <Trash2 className="h-3 w-3" />
@@ -768,6 +936,78 @@ function MoneyManagementContent() {
                   ))}
                 </TableBody>
               </Table>
+
+              {/* Pagination Controls */}
+              {filteredRecords.length > 0 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Items per page:</span>
+                    <Select 
+                      value={itemsPerPage.toString()} 
+                      onValueChange={(value) => {
+                        setItemsPerPage(parseInt(value))
+                        setCurrentPage(1)
+                      }}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-sm text-gray-600">
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length} records
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="border-[#0d5c75] text-[#0d5c75]"
+                    >
+                      First
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="border-[#0d5c75] text-[#0d5c75]"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium px-3">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="border-[#0d5c75] text-[#0d5c75]"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="border-[#0d5c75] text-[#0d5c75]"
+                    >
+                      Last
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -805,6 +1045,8 @@ function MoneyManagementContent() {
                 <Input
                   id="editAmount"
                   type="number"
+                  min="0.01"
+                  step="0.01"
                   value={editingRecord.amount}
                   onChange={(e) => setEditingRecord(prev => prev ? ({ ...prev, amount: parseFloat(e.target.value) }) : null)}
                 />
@@ -883,6 +1125,76 @@ function MoneyManagementContent() {
               Update Record
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Confirm Deletion
+            </DialogTitle>
+          </DialogHeader>
+          {deleteConfirmRecord && (
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                Are you sure you want to delete this payment record? This action cannot be undone.
+              </p>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2 border border-gray-200">
+                <div className="flex justify-between">
+                  <span className="text-sm font-semibold text-gray-600">ID:</span>
+                  <span className="text-sm font-mono">{deleteConfirmRecord.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-semibold text-gray-600">Patient:</span>
+                  <span className="text-sm font-semibold">{deleteConfirmRecord.patientName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-semibold text-gray-600">Amount:</span>
+                  <span className="text-sm font-bold text-green-600">PKR {deleteConfirmRecord.amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-semibold text-gray-600">Date:</span>
+                  <span className="text-sm">{deleteConfirmRecord.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-semibold text-gray-600">Status:</span>
+                  <Badge
+                    variant={
+                      deleteConfirmRecord.status === "completed"
+                        ? "default"
+                        : deleteConfirmRecord.status === "pending"
+                          ? "secondary"
+                          : "destructive"
+                    }
+                    className="capitalize"
+                  >
+                    {deleteConfirmRecord.status}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDeleteDialogOpen(false)
+                setDeleteConfirmRecord(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeleteRecord}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Record
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
