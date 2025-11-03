@@ -84,6 +84,7 @@ export default function AdminDashboard() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterUrgency, setFilterUrgency] = useState<string>("all")
+  const [filterTimePeriod, setFilterTimePeriod] = useState<string>("all")
   const [isLoading, setIsLoading] = useState(true)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -1001,7 +1002,30 @@ Doctor Signature: Dr. Bashir Khan, DCP
     }
     
     const matchesUrgency = filterUrgency === "all" || patient.urgency === filterUrgency
-    return matchesSearch && matchesStatus && matchesUrgency
+    
+    // Handle time period filters
+    let matchesTimePeriod = true
+    if (filterTimePeriod !== "all") {
+      const appointmentDate = new Date(patient.appointment_date)
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      
+      if (filterTimePeriod === "today") {
+        matchesTimePeriod = appointmentDate.toDateString() === today.toDateString()
+      } else if (filterTimePeriod === "week") {
+        const weekStart = new Date(today)
+        weekStart.setDate(today.getDate() - today.getDay()) // Start of this week (Sunday)
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekStart.getDate() + 7)
+        matchesTimePeriod = appointmentDate >= weekStart && appointmentDate < weekEnd
+      } else if (filterTimePeriod === "month") {
+        matchesTimePeriod = appointmentDate.getMonth() === now.getMonth() && appointmentDate.getFullYear() === now.getFullYear()
+      } else if (filterTimePeriod === "year") {
+        matchesTimePeriod = appointmentDate.getFullYear() === now.getFullYear()
+      }
+    }
+    
+    return matchesSearch && matchesStatus && matchesUrgency && matchesTimePeriod
   })
 
   // Show loading screen while checking auth
@@ -1670,6 +1694,18 @@ Doctor Signature: Dr. Bashir Khan, DCP
                   <SelectItem value="normal">Normal</SelectItem>
                   <SelectItem value="urgent">Urgent</SelectItem>
                   <SelectItem value="emergency">Emergency</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterTimePeriod} onValueChange={setFilterTimePeriod}>
+                <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Time Period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="year">This Year</SelectItem>
                 </SelectContent>
               </Select>
             </div>

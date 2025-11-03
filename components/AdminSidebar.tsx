@@ -66,16 +66,6 @@ const sidebarItems: MenuItem[] = [
     ]
   },
   {
-    id: "appointments",
-    title: "Appointments",
-    icon: Calendar,
-    description: "Schedule & manage",
-    category: "core",
-    children: [
-      { id: "calendar", title: "Calendar View", href: "/admin/calendar", icon: Calendar },
-    ]
-  },
-  {
     id: "medical",
     title: "Medical History",
     href: "/medical-history",
