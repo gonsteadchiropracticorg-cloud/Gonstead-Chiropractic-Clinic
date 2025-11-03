@@ -1854,12 +1854,51 @@ Doctor Signature: Dr. Bashir Khan, DCP
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-center">
-                            <div className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                              {patient.sessions_completed || 0}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  const newCount = Math.max(0, (patient.sessions_completed || 0) - 1)
+                                  await updatePatient(patient.id, { sessions_completed: newCount })
+                                  await loadPatients()
+                                  toast({
+                                    title: "Session Decreased",
+                                    description: `${patient.name}'s session count: ${newCount}`,
+                                  })
+                                }}
+                                className="h-7 w-7 p-0 border-red-500 text-red-600 hover:bg-red-50"
+                                title="Decrease session count"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <div className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} min-w-[2rem] text-center`}>
+                                {patient.sessions_completed || 0}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  const newCount = (patient.sessions_completed || 0) + 1
+                                  await updatePatient(patient.id, { 
+                                    sessions_completed: newCount,
+                                    last_visit: new Date().toISOString()
+                                  })
+                                  await loadPatients()
+                                  toast({
+                                    title: "✅ Session Added",
+                                    description: `${patient.name}'s session count: ${newCount}`,
+                                  })
+                                }}
+                                className="h-7 w-7 p-0 border-green-600 text-green-600 hover:bg-green-50"
+                                title="Increase session count"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
                             </div>
                             {patient.last_visit && (
-                              <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                              <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} text-center`}>
                                 Last: {new Date(patient.last_visit).toLocaleDateString()}
                               </div>
                             )}
