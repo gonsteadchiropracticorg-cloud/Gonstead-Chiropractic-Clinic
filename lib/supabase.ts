@@ -1,10 +1,14 @@
 import { createClient } from "@supabase/supabase-js"
 
-// Use environment variables with fallback values for development
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ibtchhspcnbflldriokw.supabase.co"
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlidGNoaHNwY25iZmxsZHJpb2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNTQ2MTksImV4cCI6MjA2NDczMDYxOX0.dSWBbP4B7tOdHyUTDrEBUcqt98CI36_u5sQSvd4gSrY"
+// Get environment variables - fail early if not set
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error(
+    'Missing Supabase environment variables. Please check your .env file.'
+  )
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 // Create Supabase client with proper configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -24,11 +28,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 })
 
-// Simple authentication store for fallback
-const AUTH_CREDENTIALS = {
-  email: "admin@gonsteadchiropractic.com",
-  password: "admin123",
-}
+// SECURITY: Use only Supabase authentication - no hardcoded credentials
+// For initial setup, create admin user through Supabase dashboard or signUpAdmin()
 
 // Admin authentication function with user registration support
 export async function signInAdmin(email: string, password: string) {
@@ -60,22 +61,7 @@ export async function signInAdmin(email: string, password: string) {
       console.log("Supabase connection failed:", supabaseError)
     }
 
-    // Fallback to hardcoded credentials for admin access
-    if (email.trim() === AUTH_CREDENTIALS.email && password.trim() === AUTH_CREDENTIALS.password) {
-      console.log("Fallback auth successful")
-      // Audit: sign in
-      try { await addAuditLog({ action: 'sign_in', entity_type: 'auth', actor_email: email.trim(), source: 'admin_dashboard', reversible: false }) } catch {}
-      return {
-        user: {
-          id: "admin-user",
-          email: email.trim(),
-          created_at: new Date().toISOString(),
-        },
-        error: null,
-      }
-    }
-
-    // If both fail, return error
+    // If authentication fails, return the error
     throw new Error("Invalid credentials. Please check your email and password.")
   } catch (error: any) {
     console.error("Sign in error:", error)
