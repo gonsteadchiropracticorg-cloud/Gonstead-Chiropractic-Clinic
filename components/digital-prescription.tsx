@@ -22,6 +22,7 @@ import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { PrescriptionData } from '@/lib/prescription-types'
 import Image from 'next/image'
+import { QRCodeGenerator } from './prescription/qr-code-generator'
 
 interface DigitalPrescriptionProps {
   prescription: PrescriptionData
@@ -482,10 +483,23 @@ export function DigitalPrescription({
               </div>
             </div>
 
+            {/* Footer with QR Code */}
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-xs text-gray-500 space-y-1">
+                <div>Digital Prescription ID: {prescription.id}</div>
+                <div>Generated: {new Date(prescription.created_at).toLocaleString()}</div>
+              </div>
+              {prescription.id && (
+                <QRCodeGenerator
+                  data={`${typeof window !== 'undefined' ? window.location.origin : ''}/prescription/digital/${prescription.id}`}
+                  size={80}
+                  className="ml-4"
+                />
+              )}
+            </div>
+            
             {/* Digital Verification Info */}
-            <div className="mt-4 text-center text-xs text-gray-500 space-y-1">
-              <div>Digital Prescription ID: {prescription.id}</div>
-              <div>Generated: {new Date(prescription.created_at).toLocaleString()}</div>
+            <div className="mt-2 text-center text-xs text-gray-400 space-y-1">
               <div className="flex items-center justify-center gap-1">
                 <Shield className="h-3 w-3" />
                 Secured by Gonstead Chiropractic Digital System

@@ -125,6 +125,31 @@ export default function AdminDashboard() {
     "Sleep with proper pillow support",
   ])
   const [newSuggestion, setNewSuggestion] = useState("")
+  // Patient-facing visual tools state
+  const [painLevel, setPainLevel] = useState<number>(3)
+  const [affectedAreas, setAffectedAreas] = useState<string[]>([])
+  const [selectedExercises, setSelectedExercises] = useState<string[]>([])
+  const [redFlags, setRedFlags] = useState<string[]>([])
+  const [doseSchedule, setDoseSchedule] = useState<{ morning: boolean; afternoon: boolean; night: boolean }>({
+    morning: true,
+    afternoon: false,
+    night: true,
+  })
+  const exerciseBank = [
+    "Neck Mobility (Cat-Cow)",
+    "Chin Tucks (Posture Reset)",
+    "Thoracic Extension on Wall",
+    "Hip Hinge Drill",
+    "Pelvic Tilt (Core Activation)",
+    "Hamstring Stretch",
+  ]
+  const areaBank = ["Neck", "Upper Back", "Lower Back", "Shoulders", "Hips", "Knees"]
+  const redFlagBank = [
+    "Numbness/Tingling",
+    "Severe Weakness",
+    "Fever/Unexplained Weight Loss",
+    "Recent Trauma",
+  ]
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
@@ -133,6 +158,8 @@ export default function AdminDashboard() {
   const [selectedPatientHistory, setSelectedPatientHistory] = useState<Patient | null>(null)
   const [isPatientHistoryDialogOpen, setIsPatientHistoryDialogOpen] = useState(false)
   const [currentPrescriptionId, setCurrentPrescriptionId] = useState<string>('')
+  const detailsRef = useRef<HTMLDivElement | null>(null)
+  const [selectedPatientDetail, setSelectedPatientDetail] = useState<Patient | null>(null)
 
   const router = useRouter()
   const pathname = usePathname()
@@ -534,6 +561,33 @@ export default function AdminDashboard() {
 
   const removeChiropracticSuggestion = (index: number) => {
     setChiropracticSuggestions(chiropracticSuggestions.filter((_, i) => i !== index))
+  }
+
+  // Helpers for clinical tools
+  const toggleArea = (area: string) => {
+    setAffectedAreas(prev => (
+      prev.includes(area) ? prev.filter(a => a !== area) : [...prev, area]
+    ))
+  }
+  const toggleExercise = (ex: string) => {
+    setSelectedExercises(prev => (
+      prev.includes(ex) ? prev.filter(e => e !== ex) : [...prev, ex]
+    ))
+  }
+  const toggleRedFlag = (flag: string, value: boolean) => {
+    setRedFlags(prev => {
+      const set = new Set(prev)
+      if (value) set.add(flag); else set.delete(flag)
+      return Array.from(set)
+    })
+  }
+  const setDose = (key: keyof typeof doseSchedule, value: boolean) => {
+    setDoseSchedule(prev => ({ ...prev, [key]: value }))
+  }
+  const deriveSeverity = () => {
+    if (painLevel >= 7 || redFlags.length > 0 || selectedPatient?.urgency === 'emergency') return 'Severe'
+    if (painLevel >= 4) return 'Moderate'
+    return 'Mild'
   }
 
   const downloadPrescriptionPDF = async () => {
@@ -1958,126 +2012,31 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                 {/* Professional Action Grid */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                   {/* View Details Button */}
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          // Get fresh patient data
-                                          const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                          setSelectedPatient(currentPatientData)
-                                          
-                                          // Mark patient as viewed
-                                          setViewedPatients(prev => new Set([...prev, patient.id]))
-                                          
-                                          // Close the action menu after selection
-                                          setExpandedActions(new Set())
-                                        }}
-                                        className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white text-xs w-full"
-                                        title="View Details"
-                                      >
-                                        <Eye className="h-3 w-3 mr-1" />
-                                        View
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                                      <DialogHeader>
-                                        <DialogTitle className="text-[#0d5c75] font-poppins">
-                                          Patient Record - {patient.name}
-                                        </DialogTitle>
-                                      </DialogHeader>
-                                      {selectedPatient && (
-                                        <div className="space-y-6">
-                                          
-                                          {/* Patient Information Cards */}
-                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <Card>
-                                              <CardHeader className="bg-[#0d5c75] text-white py-3">
-                                              <CardTitle className="text-lg text-white">
-                                                Contact Information
-                                              </CardTitle>
-                                              </CardHeader>
-                                              <CardContent className="p-4 space-y-2">
-                                                <div>
-                                                  <Label className="text-sm font-semibold">Name</Label>
-                                                  <p className="text-sm">{selectedPatient.name}</p>
-                                                </div>
-                                                <div>
-                                                  <Label className="text-sm font-semibold">Phone</Label>
-                                                  <p className="text-sm">{selectedPatient.phone}</p>
-                                                </div>
-                                                <div>
-                                                  <Label className="text-sm font-semibold">Email</Label>
-                                                  <p className="text-sm">{selectedPatient.email || "Not provided"}</p>
-                                                </div>
-                                                {selectedPatient.profession && (
-                                                  <div>
-                                                    <Label className="text-sm font-semibold">Profession</Label>
-                                                    <p className="text-sm">
-                                                      {selectedPatient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                                    </p>
-                                                  </div>
-                                                )}
-                                                {selectedPatient.demographics?.occupation && (
-                                                  <div>
-                                                    <Label className="text-sm font-semibold">Occupation</Label>
-                                                    <p className="text-sm">{selectedPatient.demographics.occupation}</p>
-                                                  </div>
-                                                )}
-                                              </CardContent>
-                                            </Card>
-
-                                            <Card>
-                                              <CardHeader className="bg-[#f3a800] text-white py-3">
-                                              <CardTitle className="text-lg text-white">Appointment Details</CardTitle>
-                                              </CardHeader>
-                                              <CardContent className="p-4 space-y-2">
-                                                <div>
-                                                  <Label className="text-sm font-semibold">Appointment ID</Label>
-                                                  <p className="text-sm font-mono bg-gray-50 px-2 py-1 rounded border">
-                                                    {selectedPatient.id}
-                                                  </p>
-                                                </div>
-                                                <div>
-                                                  <Label className="text-sm font-semibold">Date & Time</Label>
-                                                  <p className="text-sm">
-                                                    {new Date(selectedPatient.appointment_date).toLocaleString()}
-                                                  </p>
-                                                </div>
-                                                <div>
-                                                  <Label className="text-sm font-semibold">Type</Label>
-                                                  <p className="text-sm">
-                                                    {selectedPatient.session_type === "in_clinic"
-                                                      ? "In-Clinic Treatment"
-                                                      : "Video Consultation"}
-                                                  </p>
-                                                </div>
-                                                <div>
-                                                  <Label className="text-sm font-semibold">Status</Label>
-                                                  <p className="text-sm capitalize">{selectedPatient.status}</p>
-                                                </div>
-                                              </CardContent>
-                                            </Card>
-                                          </div>
-
-                                          <Card>
-                                            <CardHeader className="bg-green-600 text-white py-3">
-                                              <CardTitle className="text-lg text-white">Clinical Notes</CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="p-4">
-                                              <div>
-                                                <Label className="text-sm font-semibold">Chief Complaint</Label>
-                                                <p className="text-sm bg-gray-50 p-3 rounded mt-1">
-                                                  {selectedPatient.notes || "No complaints noted"}
-                                                </p>
-                                              </div>
-                                            </CardContent>
-                                          </Card>
-                                        </div>
-                                      )}
-                                    </DialogContent>
-                                  </Dialog>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Get fresh patient data
+                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                      setSelectedPatientDetail(currentPatientData)
+                                      
+                                      // Mark patient as viewed (keeps existing red-dot behavior)
+                                      setViewedPatients(prev => new Set([...prev, patient.id]))
+                                      
+                                      // Close the action menu after selection
+                                      setExpandedActions(new Set())
+                                      
+                                      // Smooth scroll to the detail section
+                                      setTimeout(() => {
+                                        detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                                      }, 0)
+                                    }}
+                                    className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white text-xs w-full"
+                                    title="View Full Patient Details"
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View
+                                  </Button>
 
                                   {/* Real-time Smart Patient History Button */}
                                   <Button
@@ -2312,6 +2271,60 @@ Doctor Signature: Dr. Bashir Khan, DCP
             )}
           </CardContent>
         </Card>
+
+        {selectedPatientDetail && (
+          <div ref={detailsRef} className="mt-6">
+            <Card className={`border-[#0d5c75]/20 shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+              <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white flex flex-row items-center justify-between">
+                <CardTitle className="font-poppins">Selected Patient Details</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-white/20 text-white">
+                    {selectedPatientDetail.session_type === 'in_clinic' ? 'Clinic' : 'Video'} • {selectedPatientDetail.urgency}
+                  </Badge>
+                  <Button size="sm" variant="outline" onClick={() => setSelectedPatientDetail(null)} className="border-white/40 text-white hover:bg-white/20">
+                    Hide Details
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Patient Info</h4>
+                    <p className="text-sm"><span className="font-medium">Name:</span> {selectedPatientDetail.name}</p>
+                    <p className="text-sm"><span className="font-medium">Phone:</span> {selectedPatientDetail.phone}</p>
+                    <p className="text-sm"><span className="font-medium">Email:</span> {selectedPatientDetail.email || 'Not provided'}</p>
+                    <p className="text-sm"><span className="font-medium">Patient ID:</span> <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">{selectedPatientDetail.id}</code></p>
+                    {selectedPatientDetail.profession && (
+                      <p className="text-sm"><span className="font-medium">Profession:</span> {selectedPatientDetail.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Appointment</h4>
+                    <p className="text-sm"><span className="font-medium">Date:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleDateString()}</p>
+                    <p className="text-sm"><span className="font-medium">Time:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleTimeString()}</p>
+                    <p className="text-sm"><span className="font-medium">Status:</span> <Badge className="ml-2">{selectedPatientDetail.status}</Badge></p>
+                    <p className="text-sm"><span className="font-medium">Payment:</span> {selectedPatientDetail.payment_method?.toUpperCase?.() || 'CASH'}</p>
+                    {selectedPatientDetail.last_visit && (
+                      <p className="text-sm"><span className="font-medium">Last Visit:</span> {new Date(selectedPatientDetail.last_visit).toLocaleDateString()}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Sessions</h4>
+                    <p className="text-sm"><span className="font-medium">Completed:</span> {selectedPatientDetail.sessions_completed || 0}</p>
+                    <p className="text-sm"><span className="font-medium">Prescription Generated:</span> {selectedPatientDetail.prescription_generated ? `Yes (${selectedPatientDetail.prescription_count || 0})` : 'No'}</p>
+                    {selectedPatientDetail.treatment_plan?.progress && (
+                      <p className="text-sm"><span className="font-medium">Progress:</span> {selectedPatientDetail.treatment_plan.progress}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Clinical Notes</h4>
+                  <p className="text-sm bg-gray-50 p-3 rounded border">{selectedPatientDetail.notes || 'No complaints noted'}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
       </div>
 
@@ -2374,6 +2387,130 @@ Doctor Signature: Dr. Bashir Khan, DCP
                   placeholder="Enter prescribed medications..."
                   className="min-h-[120px]"
                 />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Clinical Tools & Visual Aids */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Clinical Tools */}
+            <Card>
+              <CardHeader className="bg-[#0d5c75] text-white py-3">
+                <CardTitle className="text-lg">Clinical Tools</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                {/* Pain Level */}
+                <div>
+                  <Label className="text-sm font-semibold text-[#0d5c75]">Pain Level (0-10)</Label>
+                  <div className="flex items-center gap-3 mt-2">
+                    <Input type="range" min={0} max={10} value={painLevel}
+                      onChange={e => setPainLevel(Number(e.target.value))} className="cursor-pointer" />
+                    <Badge className={`${painLevel >=7 ? 'bg-red-600' : painLevel>=4 ? 'bg-orange-500' : 'bg-green-600'}`}>{painLevel}</Badge>
+                  </div>
+                </div>
+                {/* Affected Areas */}
+                <div>
+                  <Label className="text-sm font-semibold text-[#0d5c75]">Affected Areas</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {areaBank.map(area => (
+                      <Button key={area} size="sm" variant={affectedAreas.includes(area) ? 'default' : 'outline'}
+                        onClick={() => toggleArea(area)}
+                        className={affectedAreas.includes(area) ? 'bg-[#2a9d8f] text-white' : ''}
+                      >{area}</Button>
+                    ))}
+                  </div>
+                </div>
+                {/* Red Flags */}
+                <div>
+                  <Label className="text-sm font-semibold text-[#0d5c75]">Clinical Red Flags</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    {redFlagBank.map(flag => (
+                      <div key={flag} className="flex items-center justify-between p-2 border rounded">
+                        <span className="text-sm">{flag}</span>
+                        <Switch checked={redFlags.includes(flag)} onCheckedChange={(val) => toggleRedFlag(flag, !!val)} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Exercises Selector */}
+                <div>
+                  <Label className="text-sm font-semibold text-[#0d5c75]">Recommended Exercises</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {exerciseBank.map(ex => (
+                      <Button key={ex} size="sm" variant={selectedExercises.includes(ex) ? 'default' : 'outline'}
+                        onClick={() => toggleExercise(ex)}
+                        className={selectedExercises.includes(ex) ? 'bg-[#f3a800] text-white' : ''}
+                      >{ex}</Button>
+                    ))}
+                  </div>
+                </div>
+                {/* Dose Schedule */}
+                <div>
+                  <Label className="text-sm font-semibold text-[#0d5c75]">Dose Schedule</Label>
+                  <div className="grid grid-cols-3 gap-3 mt-2">
+                    {(['morning','afternoon','night'] as const).map(k => (
+                      <div key={k} className="flex items-center justify-between p-2 border rounded">
+                        <span className="capitalize text-sm">{k}</span>
+                        <Switch checked={doseSchedule[k]} onCheckedChange={(val)=> setDose(k, !!val)} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Patient Visual Summary */}
+            <Card>
+              <CardHeader className="bg-[#2a9d8f] text-white py-3">
+                <CardTitle className="text-lg">Patient Visual Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                {/* Severity Meter */}
+                <div>
+                  <Label className="text-sm font-semibold text-[#0d5c75]">Condition Severity</Label>
+                  <div className="mt-2">
+                    <div className="w-full h-3 bg-gray-200 rounded">
+                      <div className={`h-3 rounded ${painLevel>=7 || redFlags.length>0 ? 'bg-red-600 w-11/12' : painLevel>=4 ? 'bg-orange-500 w-7/12' : 'bg-green-600 w-3/12'}`}></div>
+                    </div>
+                    <p className="text-xs mt-1 text-gray-600">{deriveSeverity()}</p>
+                  </div>
+                </div>
+                {/* Affected Areas badges */}
+                <div>
+                  <Label className="text-sm font-semibold text-[#0d5c75]">Areas</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {affectedAreas.length === 0 ? <span className="text-xs text-gray-500">No area selected</span> : affectedAreas.map(a => (
+                      <Badge key={a} variant="secondary" className="bg-[#0d5c75] text-white">{a}</Badge>
+                    ))}
+                  </div>
+                </div>
+                {/* Exercises list */}
+                <div>
+                  <Label className="text-sm font-semibold text-[#0d5c75]">Exercises to Do</Label>
+                  <ul className="list-disc pl-5 mt-2 text-sm text-gray-800 space-y-1">
+                    {selectedExercises.length === 0 ? (
+                      <li>Select exercises from tools</li>
+                    ) : selectedExercises.map(ex => <li key={ex}>{ex}</li>)}
+                  </ul>
+                </div>
+                {/* Dose badges */}
+                <div>
+                  <Label className="text-sm font-semibold text-[#0d5c75]">Medication Times</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {doseSchedule.morning && <Badge className="bg-[#0d5c75] text-white">Morning</Badge>}
+                    {doseSchedule.afternoon && <Badge className="bg-[#f3a800] text-white">Afternoon</Badge>}
+                    {doseSchedule.night && <Badge className="bg-[#2a9d8f] text-white">Night</Badge>}
+                    {!doseSchedule.morning && !doseSchedule.afternoon && !doseSchedule.night && (
+                      <span className="text-xs text-gray-500">No dose timing selected</span>
+                    )}
+                  </div>
+                </div>
+                {/* Red flag alert */}
+                {redFlags.length > 0 && (
+                  <div className="p-3 rounded border border-red-300 bg-red-50 text-red-700 text-sm">
+                    ⚠️ Important: {redFlags.join(', ')} — consider urgent evaluation if symptoms persist or worsen.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -2615,6 +2752,61 @@ Doctor Signature: Dr. Bashir Khan, DCP
                     {selectedPatient.session_type === "in_clinic" ? "In-Clinic" : "Video Consultation"}
                   </p>
                 </div>
+              </div>
+
+              {/* Patient Visual Summary (Print) */}
+              <div style={{ marginBottom: "20px" }}>
+                <h3 style={{
+                  fontSize: "16px", fontWeight: "bold", color: "#0d5c75",
+                  margin: "0 0 10px 0", padding: "8px 12px", backgroundColor: "rgba(13,92,117,0.1)", borderRadius: "5px",
+                }}>PATIENT VISUAL SUMMARY</h3>
+                {/* Severity bar */}
+                <div style={{ marginBottom: "10px" }}>
+                  <div style={{ height: 10, background: "#e5e7eb", borderRadius: 6, overflow: 'hidden' }}>
+                    <div style={{ height: 10, width: `${Math.min(100, (painLevel>=7?90:(painLevel>=4?60:30)))}%`, background: painLevel>=7 || redFlags.length>0 ? '#ef4444' : painLevel>=4 ? '#f59e0b' : '#22c55e' }}></div>
+                  </div>
+                  <p style={{ fontSize: 12, color: '#374151', marginTop: 6 }}>Severity: {deriveSeverity()}</p>
+                </div>
+                {/* Pain level and areas */}
+                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 10 }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 12, color: '#374151' }}>Pain Level</p>
+                    <p style={{ margin: 0, fontSize: 18, fontWeight: 'bold', color: '#111827' }}>{painLevel}/10</p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 12, color: '#374151' }}>Affected Areas</p>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {(affectedAreas.length? affectedAreas : ['None']).map(a => (
+                        <span key={a} style={{ background: '#0d5c75', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 12 }}>{a}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* Dose schedule */}
+                <div style={{ marginBottom: 10 }}>
+                  <p style={{ margin: 0, fontSize: 12, color: '#374151' }}>Medication Times</p>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                    {doseSchedule.morning ? <span style={{ background: '#0d5c75', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 12 }}>Morning</span> : null}
+                    {doseSchedule.afternoon ? <span style={{ background: '#f3a800', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 12 }}>Afternoon</span> : null}
+                    {doseSchedule.night ? <span style={{ background: '#2a9d8f', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 12 }}>Night</span> : null}
+                    {!doseSchedule.morning && !doseSchedule.afternoon && !doseSchedule.night ? <span style={{ color: '#6b7280', fontSize: 12 }}>No timing chosen</span> : null}
+                  </div>
+                </div>
+                {/* Exercises */}
+                {selectedExercises.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: '#374151' }}>Exercises</p>
+                    <ul style={{ margin: '4px 0 0 16px', padding: 0, fontSize: 13 }}>
+                      {selectedExercises.map(ex => <li key={ex}>{ex}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {/* Red flags */}
+                {redFlags.length > 0 && (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: 10, borderRadius: 8, fontSize: 12 }}>
+                    ⚠️ Important: {redFlags.join(', ')} — Consider urgent evaluation if symptoms persist/worsen.
+                  </div>
+                )}
               </div>
 
               {/* Treatment Plan */}
