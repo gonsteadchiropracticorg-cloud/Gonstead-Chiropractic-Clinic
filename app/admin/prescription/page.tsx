@@ -83,7 +83,7 @@ function PrescriptionPageContent() {
   const [doctorSignature, setDoctorSignature] = useState<string>("")
   const [clinicLogo, setClinicLogo] = useState<string>("")
   const [selectedTemplate, setSelectedTemplate] = useState<string>("classic")
-  const [showQRCode, setShowQRCode] = useState(true)
+  const [showQRCode, setShowQRCode] = useState(false)
   
   const router = useRouter()
   const prescriptionRef = useRef<HTMLDivElement>(null)
@@ -421,6 +421,35 @@ function PrescriptionPageContent() {
           padding: 2px;
           box-shadow: none;
           filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        /* Patient ID badge */
+        .patient-id-badge {
+          position: absolute;
+          top: 18px;
+          right: 10px;
+          background: linear-gradient(135deg, rgb(36,80,100) 0%, rgb(46,100,120) 100%);
+          color: #ffffff;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-radius: 9999px;
+          padding: 4px 10px;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.3px;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          z-index: 2;
+          user-select: text;
+        }
+        
+        .patient-id-badge .dot {
+          width: 6px;
+          height: 6px;
+          background: #ffffff;
+          border-radius: 50%;
+          display: inline-block;
         }
 
         @media print {
@@ -1295,6 +1324,7 @@ function PrescriptionPageContent() {
             color: white !important;
             min-height: 45px !important;
             padding: 12px !important;
+            padding-right: 120px !important; /* Reserve space for QR so it doesn't cover phone number */
             font-size: 13px !important;
             display: flex !important;
             align-items: center !important;
@@ -1304,23 +1334,53 @@ function PrescriptionPageContent() {
           
           .qr-code-container {
             position: absolute !important;
-            right: 15px !important;
+            right: 12px !important;
             top: 50% !important;
             transform: translateY(-50%) !important;
-            background: white !important;
-            padding: 8px !important;
-            border-radius: 8px !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+            padding: 10px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 12px rgba(36,80,100,0.25) !important;
+            border: 2px solid rgba(36,80,100,0.15) !important;
           }
           
           .qr-code-container canvas {
             display: block !important;
-            width: 80px !important;
-            height: 80px !important;
+            width: 85px !important;
+            height: 85px !important;
+            border-radius: 6px !important;
+            image-rendering: pixelated !important;
+            image-rendering: -moz-crisp-edges !important;
+            image-rendering: crisp-edges !important;
           }
           
           .qr-code-container p {
             display: none !important;
+          }
+          
+          .qr-code-container::before {
+            content: 'SCAN ME' !important;
+            display: block !important;
+            text-align: center !important;
+            font-size: 7px !important;
+            font-weight: 700 !important;
+            color: rgb(36,80,100) !important;
+            margin-bottom: 4px !important;
+            letter-spacing: 1px !important;
+          }
+
+          /* Ensure Patient ID badge prints crisply and never hides content */
+          .patient-id-badge {
+            background: linear-gradient(135deg, rgb(36,80,100) 0%, rgb(46,100,120) 100%) !important;
+            color: #ffffff !important;
+            border: 2px solid rgba(255,255,255,0.3) !important;
+            box-shadow: none !important;
+            top: 18px !important;
+            right: 10px !important;
+          }
+          
+          .patient-id-badge .dot {
+            background: #ffffff !important;
           }
           
           .footer-info {
@@ -1359,6 +1419,12 @@ function PrescriptionPageContent() {
         <div className="prescription-area">
           <div className="prescription-container" ref={prescriptionRef}>
             <div className="header">
+              {patient?.id && (
+                <div className="patient-id-badge" title="Patient ID">
+                  <span className="dot" />
+                  PID: {patient.id}
+                </div>
+              )}
               <div className="logo-container">
                 <Image
                   src={clinicLogo || "/images/gonstead-chiropractic-logo-new.png"}
@@ -1631,7 +1697,7 @@ function PrescriptionPageContent() {
                   <div className="qr-code-container">
                     <QRCodeGenerator
                       data={`${typeof window !== 'undefined' ? window.location.origin : ''}/prescription/digital/${currentPrescriptionId.id}`}
-                      size={80}
+                      size={90}
                       logo={clinicLogo || "/images/gonstead-chiropractic-logo-new.png"}
                     />
                   </div>
