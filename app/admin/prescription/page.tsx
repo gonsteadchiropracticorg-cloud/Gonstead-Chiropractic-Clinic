@@ -1359,14 +1359,7 @@ function PrescriptionPageContent() {
           }
           
           .qr-code-container::before {
-            content: 'SCAN ME' !important;
-            display: block !important;
-            text-align: center !important;
-            font-size: 7px !important;
-            font-weight: 700 !important;
-            color: rgb(36,80,100) !important;
-            margin-bottom: 4px !important;
-            letter-spacing: 1px !important;
+            display: none !important;
           }
 
           /* Ensure Patient ID badge prints crisply and never hides content */
