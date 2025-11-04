@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { X, RotateCcw, Check, Pen } from 'lucide-react'
+import { X, RotateCcw, Check, Pen, Upload } from 'lucide-react'
 
 interface SignaturePadProps {
   onSave: (signature: string) => void
@@ -19,6 +19,7 @@ export function SignaturePad({
   existingSignature 
 }: SignaturePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasDrawn, setHasDrawn] = useState(false)
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null)
@@ -107,10 +108,46 @@ export function SignaturePad({
     onSave(signature)
   }
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = canvasRef.current
+        if (!canvas || !context) return
+
+        // Clear canvas first
+        context.clearRect(0, 0, canvas.width, canvas.height)
+
+        // Calculate scaling to fit canvas while maintaining aspect ratio
+        const canvasWidth = canvas.width / 2
+        const canvasHeight = canvas.height / 2
+        const scale = Math.min(canvasWidth / img.width, canvasHeight / img.height)
+        const x = (canvasWidth - img.width * scale) / 2
+        const y = (canvasHeight - img.height * scale) / 2
+
+        context.drawImage(img, x, y, img.width * scale, img.height * scale)
+        setHasDrawn(true)
+      }
+      img.src = event.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-2xl shadow-2xl">
-        <CardContent className="p-6">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="min-h-screen w-full flex items-center justify-center py-8">
+        <Card className="w-full max-w-2xl shadow-2xl my-auto">
+          <CardContent className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -144,8 +181,27 @@ export function SignaturePad({
               />
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
-              Draw your signature in the box above using mouse or touch
+              Draw your signature in the box above using mouse or touch, or upload an image
             </p>
+          </div>
+
+          {/* Upload Option */}
+          <div className="mb-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 border-[#245064] text-[#245064] hover:bg-[#245064] hover:text-white"
+            >
+              <Upload className="h-4 w-4" />
+              Upload Signature Image
+            </Button>
           </div>
 
           {/* Action Buttons */}
@@ -176,9 +232,9 @@ export function SignaturePad({
               Save Signature
             </Button>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
-
