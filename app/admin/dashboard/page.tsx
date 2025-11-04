@@ -61,6 +61,8 @@ import { WeatherWidget } from "@/components/weather-widget"
 import { EnhancedLoadingPage } from "@/components/loading-spinner"
 import AdminSidebar from "@/components/AdminSidebar"
 import ScrollToTopButton from "@/components/ScrollToTopButton"
+import dynamic from 'next/dynamic'
+const AdminServiceWorkerClient = dynamic(() => import('@/components/AdminServiceWorkerClient'), { ssr: false })
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 import {
@@ -1823,8 +1825,48 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New appointment - not yet viewed" />
                                 )}
                               </div>
-                              <div className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                ID: {patient.id.slice(0, 8)}...
+                              <div className="relative group">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    const btn = e.currentTarget
+                                    const dropdown = btn.nextElementSibling as HTMLElement
+                                    if (dropdown) {
+                                      dropdown.classList.toggle('hidden')
+                                    }
+                                  }}
+                                  className={`text-sm ${isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-[#0d5c75]"} flex items-center gap-1 cursor-pointer transition-colors duration-200`}
+                                >
+                                  <span className="font-mono">ID: {patient.id.slice(0, 8)}...</span>
+                                  <ChevronDown className="h-3 w-3" />
+                                </button>
+                                <div
+                                  className={`hidden absolute top-full left-0 mt-1 z-50 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} border rounded-lg shadow-xl p-3 min-w-[280px]`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className={`text-xs font-semibold ${isDarkMode ? "text-gray-400" : "text-gray-500"} uppercase tracking-wide`}>Patient ID</span>
+                                    <button
+                                      onClick={(e) => {
+                                        navigator.clipboard.writeText(patient.id)
+                                        toast({
+                                          title: "✅ Copied!",
+                                          description: "Patient ID copied to clipboard",
+                                        })
+                                      }}
+                                      className={`text-xs ${isDarkMode ? "text-blue-400 hover:text-blue-300" : "text-[#0d5c75] hover:text-[#0a4a5c]"} font-medium transition-colors`}
+                                    >
+                                      Copy
+                                    </button>
+                                  </div>
+                                  <div className={`${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-gradient-to-r from-[#0d5c75]/5 to-[#2a9d8f]/5 border-[#0d5c75]/20"} border-2 rounded-md p-2 mb-2`}>
+                                    <code className={`text-sm font-mono ${isDarkMode ? "text-white" : "text-[#0d5c75]"} break-all select-all`}>{patient.id}</code>
+                                  </div>
+                                  <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} flex items-center gap-1`}>
+                                    <UserIcon className="h-3 w-3" />
+                                    <span>Click "Copy" to copy full ID</span>
+                                  </div>
+                                </div>
                               </div>
                               {patient.profession && (
                                 <div className={`text-xs ${isDarkMode ? "text-blue-300" : "text-blue-600"} bg-blue-50 px-2 py-1 rounded-full`}>
@@ -3717,6 +3759,9 @@ Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTim
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Admin App Install Prompt - Only shows when on admin routes */}
+      <AdminServiceWorkerClient />
     </React.Fragment>
   )
 }

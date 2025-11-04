@@ -13,8 +13,6 @@ import { Eye, EyeOff, Shield, Lock, User, AlertCircle, Wifi, WifiOff } from "luc
 import { useToast } from "@/hooks/use-toast"
 import { signInAdmin, getCurrentUser } from "@/lib/supabase"
 import Image from "next/image"
-import dynamic from 'next/dynamic'
-const SWClient = dynamic(() => import('@/components/ServiceWorkerClient'), { ssr: false })
 
 export default function AdminAuth() {
   const [email, setEmail] = useState("")
@@ -275,8 +273,6 @@ export default function AdminAuth() {
           </div>
         </CardContent>
       </Card>
-      {/* Keep install-app button only on sign-in page */}
-      <SWClient />
     </div>
   )
 }
