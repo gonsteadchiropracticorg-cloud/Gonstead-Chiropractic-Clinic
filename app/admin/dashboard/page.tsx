@@ -1935,7 +1935,22 @@ Doctor Signature: Dr. Bashir Khan, DCP
                         </TableCell>
                         <TableCell>
                           <div className="space-y-2">
-                            <div className="flex items-center justify-center gap-2">
+                            {/* Session Progress Display */}
+                            <div className="text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+                                  {patient.sessions_completed || 0}
+                                </div>
+                                <div className={`text-lg ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>/</div>
+                                <div className={`text-lg font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                  {patient.total_sessions || 8}
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">sessions</div>
+                            </div>
+                            
+                            {/* Session Control Buttons */}
+                            <div className="flex items-center justify-center gap-1">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1945,17 +1960,14 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                   await loadPatients()
                                   toast({
                                     title: "Session Decreased",
-                                    description: `${patient.name}'s session count: ${newCount}`,
+                                    description: `${patient.name}: ${newCount}/${patient.total_sessions || 8} sessions`,
                                   })
                                 }}
-                                className="h-7 w-7 p-0 border-red-500 text-red-600 hover:bg-red-50"
-                                title="Decrease session count"
+                                className="h-6 w-6 p-0 border-red-500 text-red-600 hover:bg-red-50"
+                                title="Decrease completed sessions"
                               >
                                 <Minus className="h-3 w-3" />
                               </Button>
-                              <div className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} min-w-[2rem] text-center`}>
-                                {patient.sessions_completed || 0}
-                              </div>
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1968,14 +1980,65 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                   await loadPatients()
                                   toast({
                                     title: "✅ Session Added",
-                                    description: `${patient.name}'s session count: ${newCount}`,
+                                    description: `${patient.name}: ${newCount}/${patient.total_sessions || 8} sessions`,
                                   })
                                 }}
-                                className="h-7 w-7 p-0 border-green-600 text-green-600 hover:bg-green-50"
-                                title="Increase session count"
+                                className="h-6 w-6 p-0 border-green-600 text-green-600 hover:bg-green-50"
+                                title="Increase completed sessions"
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 px-2 text-xs border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+                                    title="Set total sessions"
+                                  >
+                                    Set Total
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-sm">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-[#0d5c75]">Set Total Sessions</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <Label>Total Sessions for {patient.name}</Label>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        max="100"
+                                        defaultValue={patient.total_sessions || 8}
+                                        onChange={(e) => {
+                                          const value = parseInt(e.target.value) || 8
+                                          e.target.setAttribute('data-value', value.toString())
+                                        }}
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                    <Button
+                                      onClick={async (e) => {
+                                        const input = e.currentTarget.parentElement?.querySelector('input')
+                                        const newTotal = parseInt(input?.getAttribute('data-value') || input?.value || '8')
+                                        await updatePatient(patient.id, { total_sessions: newTotal })
+                                        await loadPatients()
+                                        toast({
+                                          title: "Total Sessions Updated",
+                                          description: `${patient.name} now has ${newTotal} total sessions prescribed`,
+                                        })
+                                        // Close dialog
+                                        const closeBtn = e.currentTarget.parentElement?.parentElement?.querySelector('[aria-label="Close"]') as HTMLElement
+                                        closeBtn?.click()
+                                      }}
+                                      className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c]"
+                                    >
+                                      Save Total Sessions
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
                             </div>
                             {patient.last_visit && (
                               <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} text-center`}>
@@ -2310,7 +2373,19 @@ Doctor Signature: Dr. Bashir Khan, DCP
                   </div>
                   <div className="space-y-2">
                     <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Sessions</h4>
-                    <p className="text-sm"><span className="font-medium">Completed:</span> {selectedPatientDetail.sessions_completed || 0}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm">
+                        <span className="font-medium">Progress:</span> 
+                        <span className={`ml-2 text-xl font-bold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>
+                          {selectedPatientDetail.sessions_completed || 0}
+                        </span>
+                        <span className="text-gray-500">/</span>
+                        <span className="text-lg font-semibold text-gray-600">
+                          {selectedPatientDetail.total_sessions || 8}
+                        </span>
+                        <span className="ml-1 text-sm text-gray-500">sessions</span>
+                      </p>
+                    </div>
                     <p className="text-sm"><span className="font-medium">Prescription Generated:</span> {selectedPatientDetail.prescription_generated ? `Yes (${selectedPatientDetail.prescription_count || 0})` : 'No'}</p>
                     {selectedPatientDetail.treatment_plan?.progress && (
                       <p className="text-sm"><span className="font-medium">Progress:</span> {selectedPatientDetail.treatment_plan.progress}</p>
@@ -2747,10 +2822,86 @@ Doctor Signature: Dr. Bashir Khan, DCP
                   <p style={{ margin: "0 0 5px 0", fontSize: "13px" }}>
                     <strong>Time:</strong> {typeof window !== 'undefined' ? new Date().toLocaleTimeString() : '--:--:-- --'}
                   </p>
-                  <p style={{ margin: "0", fontSize: "13px" }}>
+                  <p style={{ margin: "0 0 5px 0", fontSize: "13px" }}>
                     <strong>Session:</strong>{" "}
                     {selectedPatient.session_type === "in_clinic" ? "In-Clinic" : "Video Consultation"}
                   </p>
+                  <p style={{ margin: "0", fontSize: "13px" }}>
+                    <strong>Treatment Progress:</strong>{" "}
+                    <span style={{ 
+                      backgroundColor: "#22c55e", 
+                      color: "white", 
+                      padding: "2px 8px", 
+                      borderRadius: "4px",
+                      fontWeight: "bold",
+                      marginLeft: "4px"
+                    }}>
+                      {selectedPatient.sessions_completed || 0}/{selectedPatient.total_sessions || 8} Sessions
+                    </span>
+                    {" "}
+                    <span style={{ color: "#f59e0b", fontWeight: "600", marginLeft: "8px" }}>
+                      ({Math.max(0, (selectedPatient.total_sessions || 8) - (selectedPatient.sessions_completed || 0))} Remaining)
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Session Progress Summary */}
+              <div style={{ marginBottom: "20px" }}>
+                <h3 style={{
+                  fontSize: "16px", fontWeight: "bold", color: "#0d5c75",
+                  margin: "0 0 10px 0", padding: "8px 12px", backgroundColor: "rgba(13,92,117,0.1)", borderRadius: "5px",
+                }}>SESSION PROGRESS & TREATMENT STATUS</h3>
+                <div style={{ 
+                  padding: "15px", 
+                  border: "2px solid #22c55e", 
+                  borderRadius: "8px", 
+                  backgroundColor: "#f0fdf4",
+                  marginBottom: "15px"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-around", alignItems: "center", gap: "20px" }}>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ margin: "0 0 5px 0", fontSize: "11px", color: "#6b7280", fontWeight: "600", textTransform: "uppercase" }}>Completed Sessions</p>
+                      <p style={{ margin: 0, fontSize: "32px", fontWeight: "bold", color: "#22c55e" }}>
+                        {selectedPatient.sessions_completed || 0}
+                      </p>
+                    </div>
+                    <div style={{ 
+                      width: "2px", 
+                      height: "50px", 
+                      backgroundColor: "#d1d5db" 
+                    }}></div>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ margin: "0 0 5px 0", fontSize: "11px", color: "#6b7280", fontWeight: "600", textTransform: "uppercase" }}>Remaining Sessions</p>
+                      <p style={{ margin: 0, fontSize: "32px", fontWeight: "bold", color: "#f59e0b" }}>
+                        {Math.max(0, (selectedPatient.total_sessions || 8) - (selectedPatient.sessions_completed || 0))}
+                      </p>
+                    </div>
+                    <div style={{ 
+                      width: "2px", 
+                      height: "50px", 
+                      backgroundColor: "#d1d5db" 
+                    }}></div>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ margin: "0 0 5px 0", fontSize: "11px", color: "#6b7280", fontWeight: "600", textTransform: "uppercase" }}>Total Prescribed</p>
+                      <p style={{ margin: 0, fontSize: "32px", fontWeight: "bold", color: "#0d5c75" }}>
+                        {selectedPatient.total_sessions || 8}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: "15px", paddingTop: "15px", borderTop: "1px solid #d1fae5" }}>
+                    <div style={{ backgroundColor: "#e5e7eb", height: "12px", borderRadius: "6px", overflow: "hidden" }}>
+                      <div style={{ 
+                        backgroundColor: "#22c55e", 
+                        height: "12px", 
+                        width: `${Math.min(100, Math.round(((selectedPatient.sessions_completed || 0) / (selectedPatient.total_sessions || 8)) * 100))}%`,
+                        transition: "width 0.3s ease"
+                      }}></div>
+                    </div>
+                    <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#374151", textAlign: "center", fontWeight: "600" }}>
+                      Treatment Progress: {Math.min(100, Math.round(((selectedPatient.sessions_completed || 0) / (selectedPatient.total_sessions || 8)) * 100))}% Complete
+                    </p>
+                  </div>
                 </div>
               </div>
 

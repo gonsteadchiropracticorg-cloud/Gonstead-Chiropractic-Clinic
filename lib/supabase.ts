@@ -338,6 +338,7 @@ export interface Patient {
   notes?: string
   medical_history?: string
   sessions_completed: number
+  total_sessions?: number // Total sessions prescribed by doctor
   last_visit?: string
   created_at: string
   updated_at: string
