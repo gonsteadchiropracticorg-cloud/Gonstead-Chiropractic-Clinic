@@ -285,6 +285,9 @@ export async function POST(request: NextRequest) {
       validationPassed: true
     })
 
+    // Note: Local IndexedDB sync happens on client-side after successful response
+    // Client should save to IndexedDB when it receives the appointment ID
+
     // Log notification
     console.log(`📩 Appointment notification - Patient: ${appointmentData.name}, Phone: ${appointmentData.phone}, Time: ${appointmentData.appointment_date}`)
     

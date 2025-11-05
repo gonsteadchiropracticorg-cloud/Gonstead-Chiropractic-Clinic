@@ -335,6 +335,29 @@ export function SmartAppointmentBooking() {
       const result = await response.json()
       const appointmentId = result.id
 
+      // Save to local IndexedDB for offline access and sync
+      try {
+        const { localDB } = await import('@/lib/local-db')
+        await localDB.savePatient({
+          id: appointmentId,
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          session_type: formData.sessionType,
+          appointment_date: formData.selectedTime,
+          status: 'pending',
+          urgency: formData.urgency,
+          payment_method: formData.paymentMethod,
+          notes: formData.notes,
+          sessions_completed: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        console.log('✅ Saved to local IndexedDB')
+      } catch (localError) {
+        console.warn('Failed to save to local cache:', localError)
+      }
+
       setAppointmentId(appointmentId)
       setIsSubmitted(true)
 
