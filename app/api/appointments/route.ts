@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 
 // Business hours constants
 const BUSINESS_HOURS_START = 9 // 9:00 AM
@@ -26,7 +26,7 @@ const mockAppointments: Array<{
 // Function to get all appointments from Supabase
 async function getAllAppointments() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('patients')
       .select('*')
       .order('created_at', { ascending: false })
@@ -239,20 +239,46 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate appointment ID
-    const appointmentId = `APT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    // Save to Supabase database
+    const { data: newPatient, error: dbError } = await supabaseAdmin
+      .from('patients')
+      .insert({
+        name: appointmentData.name,
+        phone: appointmentData.phone,
+        email: appointmentData.email || null,
+        session_type: appointmentData.session_type || 'in_clinic',
+        appointment_date: appointmentData.appointment_date,
+        status: 'pending',
+        urgency: appointmentData.urgency || 'normal',
+        payment_method: appointmentData.payment_method || 'cash',
+        notes: appointmentData.notes || '',
+        sessions_completed: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
 
-    // Add to mock database
+    if (dbError) {
+      console.error("❌ Database error:", dbError)
+      return NextResponse.json(
+        { success: false, error: `Database error: ${dbError.message}` },
+        { status: 500 }
+      )
+    }
+
+    const appointmentId = newPatient.id
+
+    // Add to mock database for backward compatibility
     mockAppointments.push({
       id: appointmentId,
       datetime: appointmentData.appointment_date,
-      duration: 60, // Default duration
+      duration: 60,
       patientName: appointmentData.name,
       phone: appointmentData.phone
     })
 
-    // In a real application, you would save this to a database
-    console.log("✅ New appointment booked:", {
+    console.log("✅ New appointment saved to database:", {
       id: appointmentId,
       ...appointmentData,
       timestamp: new Date().toISOString(),
