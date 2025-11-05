@@ -33,8 +33,15 @@ export default function StaffAccessPage() {
 
   const load = async () => {
     setLoading(true)
-    const { data } = await getStaffAccounts()
-    setAccounts(data || [])
+    try {
+      const response = await fetch('/api/staff')
+      const result = await response.json()
+      setAccounts(result.data || [])
+    } catch (error) {
+      console.error('Failed to load staff accounts:', error)
+      toast({ title: 'Error', description: 'Failed to load staff accounts', variant: 'destructive' })
+      setAccounts([])
+    }
     setLoading(false)
   }
 
@@ -68,47 +75,96 @@ export default function StaffAccessPage() {
       toast({ title: 'Missing fields', description: 'Username and password are required', variant: 'destructive' })
       return
     }
-    const record = await createStaffAccount({
-      username: form.username,
-      display_name: form.display_name,
-      email: form.email,
-      phone: form.phone,
-      role: form.role,
-      active: true,
-      password: form.password,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    } as any)
-    await addAuditLog({ action: 'create', entity_type: 'staff', entity_id: (record as any).id, source: 'admin_dashboard', reversible: true, meta: { after: record } })
-    toast({ title: 'Staff created', description: `Account ${form.username} ready to use` })
-    setOpenDialog(false)
-    resetForm()
-    await load()
+    try {
+      const response = await fetch('/api/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: form.username,
+          display_name: form.display_name,
+          email: form.email,
+          phone: form.phone,
+          role: form.role,
+          password: form.password,
+        })
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create staff account')
+      }
+      toast({ title: 'Staff created', description: `Account ${form.username} ready to use` })
+      setOpenDialog(false)
+      resetForm()
+      await load()
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
   }
 
   const onUpdate = async () => {
     if (!editing) return
-    const updated = await updateStaffAccount(editing.id, { ...editing, ...form })
-    await addAuditLog({ action: 'update', entity_type: 'staff', entity_id: editing.id, source: 'admin_dashboard', reversible: true, meta: { after: updated } })
-    toast({ title: 'Updated', description: `Account ${editing.username} updated` })
-    setOpenDialog(false)
-    setEditing(null)
-    resetForm()
-    await load()
+    try {
+      const response = await fetch('/api/staff', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editing.id,
+          username: form.username,
+          display_name: form.display_name,
+          email: form.email,
+          phone: form.phone,
+          role: form.role,
+        })
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update staff account')
+      }
+      toast({ title: 'Updated', description: `Account ${editing.username} updated` })
+      setOpenDialog(false)
+      setEditing(null)
+      resetForm()
+      await load()
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
   }
 
   const onDelete = async (acc: StaffAccount) => {
-await removeStaffAccount(acc.id)
-    await addAuditLog({ action: 'delete', entity_type: 'staff', entity_id: acc.id, source: 'admin_dashboard', reversible: true, meta: { before: acc } })
-    toast({ title: 'Deleted', description: `Account ${acc.username} removed` })
-    await load()
+    try {
+      const response = await fetch(`/api/staff?id=${acc.id}`, {
+        method: 'DELETE',
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete staff account')
+      }
+      toast({ title: 'Deleted', description: `Account ${acc.username} removed` })
+      await load()
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
   }
 
   const toggleActive = async (acc: StaffAccount) => {
-    const updated = await updateStaffAccount(acc.id, { active: !acc.active })
-    await addAuditLog({ action: 'update', entity_type: 'staff', entity_id: acc.id, source: 'admin_dashboard', reversible: true, meta: { before: acc, after: updated } })
-    toast({ title: updated?.active ? 'Enabled' : 'Disabled', description: `Account ${acc.username} ${updated?.active ? 'enabled' : 'disabled'}` })
-    await load()
+    try {
+      const response = await fetch('/api/staff', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: acc.id,
+          active: !acc.active
+        })
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to toggle staff account')
+      }
+      toast({ title: result.data.active ? 'Enabled' : 'Disabled', description: `Account ${acc.username} ${result.data.active ? 'enabled' : 'disabled'}` })
+      await load()
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    }
   }
 
   const openEdit = (acc: StaffAccount) => {
