@@ -212,6 +212,14 @@ function validateAppointmentTime(datetime: string): {
 }
 
 export async function POST(request: NextRequest) {
+  // Add CORS headers for mobile browsers - must be set BEFORE any async operations
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400', // 24 hours
+  }
+
   try {
     const appointmentData = await request.json()
     
@@ -219,7 +227,7 @@ export async function POST(request: NextRequest) {
     if (!appointmentData.name || !appointmentData.phone || !appointmentData.appointment_date) {
       return NextResponse.json(
         { success: false, error: "Missing required fields: name, phone, or appointment_date" },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -235,7 +243,7 @@ export async function POST(request: NextRequest) {
             "Here are some available appointment times close to your preferred choice:" : 
             "Please select a different date and time."
         },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -263,7 +271,7 @@ export async function POST(request: NextRequest) {
       console.error("❌ Database error:", dbError)
       return NextResponse.json(
         { success: false, error: `Database error: ${dbError.message}` },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       )
     }
 
@@ -307,15 +315,42 @@ export async function POST(request: NextRequest) {
         urgency: appointmentData.urgency,
         notes: appointmentData.notes
       }
-    })
+    }, { headers: corsHeaders })
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Appointment booking error:", error)
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    }
     return NextResponse.json(
-      { success: false, error: "Internal server error. Please try again later." },
-      { status: 500 }
+      { 
+        success: false, 
+        error: "Internal server error. Please try again later.",
+        details: error?.message || 'Unknown error',
+        timestamp: new Date().toISOString()
+      },
+      { 
+        status: 500,
+        headers: corsHeaders
+      }
     )
   }
+}
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 204, // No Content - standard for OPTIONS
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Max-Age': '86400', // Cache preflight for 24 hours
+    },
+  })
 }
 
 export async function GET(request: NextRequest) {

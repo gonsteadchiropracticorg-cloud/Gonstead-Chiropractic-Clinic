@@ -16,6 +16,16 @@ export const supabaseAdmin = createClient(
       autoRefreshToken: false,
       persistSession: false,
     },
+    global: {
+      headers: {
+        'X-Client-Info': 'gonstead-admin-api',
+      },
+    },
+    db: {
+      schema: 'public',
+    },
+    // Increased timeout for mobile networks
+    // Note: fetch timeout must be set in Next.js config or API route
   }
 )
 

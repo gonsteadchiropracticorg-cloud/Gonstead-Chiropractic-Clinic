@@ -258,6 +258,9 @@ export function SmartAppointmentBooking() {
   // Fetch smart suggestions from API
   const fetchSmartSuggestions = async (conflictedDateTime: string) => {
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout for mobile
+      
       const response = await fetch('/api/appointments', {
         method: 'POST',
         headers: {
@@ -268,8 +271,10 @@ export function SmartAppointmentBooking() {
           phone: '03001234567',
           appointment_date: conflictedDateTime,
         }),
+        signal: controller.signal,
       })
       
+      clearTimeout(timeoutId)
       const result = await response.json()
       
       if (!result.success && result.alternatives) {
@@ -321,19 +326,61 @@ export function SmartAppointmentBooking() {
         notes: formData.notes,
       }
 
-      const response = await fetch('/api/appointments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patientData),
-      })
+      // Retry logic for mobile networks with exponential backoff
+      let appointmentId: string = ''
+      let lastError: Error | null = null
+      const maxRetries = 3
+      
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          const controller = new AbortController()
+          const timeout = 15000 + (attempt * 5000) // Increase timeout on each retry: 15s, 20s, 25s
+          const timeoutId = setTimeout(() => controller.abort(), timeout)
+          
+          const response = await fetch('/api/appointments', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Retry-Attempt': String(attempt + 1),
+            },
+            body: JSON.stringify(patientData),
+            signal: controller.signal,
+          })
+          
+          clearTimeout(timeoutId)
+          
+          if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.error || 'Failed to book appointment')
+          }
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to book appointment')
+          const result = await response.json()
+          appointmentId = result.id
+          break // Success! Exit retry loop
+          
+        } catch (error: any) {
+          lastError = error
+          console.error(`Attempt ${attempt + 1}/${maxRetries} failed:`, error.message)
+          
+          // If this was the last attempt, throw the error
+          if (attempt === maxRetries - 1) {
+            if (error.name === 'AbortError') {
+              throw new Error(language === "ur" 
+                ? "نیٹ ورک ٹائم آؤٹ۔ براہ کرم اپنے انٹرنیٹ کنکشن کو چیک کریں اور دوبارہ کوشش کریں۔"
+                : "Network timeout. Please check your internet connection and try again.")
+            }
+            throw error
+          }
+          
+          // Wait before retrying (exponential backoff: 1s, 2s, 4s)
+          const waitTime = Math.pow(2, attempt) * 1000
+          await new Promise(resolve => setTimeout(resolve, waitTime))
+        }
       }
-
-      const result = await response.json()
-      const appointmentId = result.id
+      
+      if (!appointmentId) {
+        throw lastError || new Error('Failed to create appointment')
+      }
 
       // Save to local IndexedDB for offline access and sync
       try {
