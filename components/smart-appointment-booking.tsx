@@ -309,22 +309,31 @@ export function SmartAppointmentBooking() {
         throw new Error(timeValidationError)
       }
 
-      // Create patient record
+      // Create patient record via API (uses admin client to bypass RLS)
       const patientData = {
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
         session_type: formData.sessionType,
         appointment_date: formData.selectedTime,
-        status: "pending" as const,
         urgency: formData.urgency,
         payment_method: formData.paymentMethod,
         notes: formData.notes,
-        sessions_completed: 0,
       }
 
-      const newPatient = await createPatient(patientData)
-      const appointmentId = newPatient.id
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patientData),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to book appointment')
+      }
+
+      const result = await response.json()
+      const appointmentId = result.id
 
       setAppointmentId(appointmentId)
       setIsSubmitted(true)
