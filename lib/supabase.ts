@@ -389,30 +389,56 @@ export interface StaffAccount {
 }
 
 
-// Database Functions with fallback data
+// Database Functions with hybrid local + cloud storage
 export const createPatient = async (patientData: Omit<Patient, "id" | "created_at" | "updated_at">) => {
   try {
+    const timestamp = new Date().toISOString()
+    const patient = {
+      ...patientData,
+      created_at: timestamp,
+      updated_at: timestamp,
+    }
+
     const { data, error } = await supabase
       .from("patients")
-      .insert({
-        ...patientData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .insert(patient)
       .select()
       .single()
 
     if (error) throw error
+
+    // Save to local IndexedDB for offline access
+    if (typeof window !== 'undefined') {
+      try {
+        const { localDB } = await import('./local-db')
+        await localDB.savePatient(data)
+      } catch (localError) {
+        console.warn('Failed to save to local cache:', localError)
+      }
+    }
+
     return data
   } catch (error) {
     console.error("Create patient error:", error)
-    // Return mock data for development
-    return {
-      id: `patient-${Date.now()}`,
-      ...patientData,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+    // Offline fallback: save to local only
+    if (typeof window !== 'undefined') {
+      try {
+        const { localDB } = await import('./local-db')
+        const tempId = `temp_${Date.now()}`
+        const localPatient = {
+          id: tempId,
+          ...patientData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+        await localDB.savePatient(localPatient)
+        await localDB.addToSyncQueue('create', 'patients', localPatient)
+        return localPatient
+      } catch (localError) {
+        console.error('Local fallback failed:', localError)
+      }
     }
+    throw error
   }
 }
 
