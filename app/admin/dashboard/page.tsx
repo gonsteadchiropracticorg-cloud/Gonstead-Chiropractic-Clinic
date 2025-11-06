@@ -432,7 +432,7 @@ export default function AdminDashboard() {
         ...newPatient,
         status: "pending" as const,
         sessions_completed: 0,
-        booking_source: "admin_dashboard", // Mark as admin-created
+        booking_source: "admin_dashboard" as const, // Mark as admin-created
       }
       const newPatientRecord = await createPatient(patientData)
       
@@ -444,6 +444,9 @@ export default function AdminDashboard() {
         const existingPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
         const updatedPatients = [newPatientRecord, ...existingPatients]
         localStorage.setItem("gonstead_patients", JSON.stringify(updatedPatients))
+        
+        // Trigger medicalRecordsUpdated event for Medical History page to sync
+        window.dispatchEvent(new CustomEvent('medicalRecordsUpdated'))
         
         // Audit: create
         try { await addAuditLog({ action: 'create', entity_type: 'patient', entity_id: newPatientRecord.id, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { after: newPatientRecord } }) } catch {}
@@ -466,13 +469,13 @@ export default function AdminDashboard() {
       })
       toast({
         title: "✅ Patient Successfully Added",
-        description: `${newPatient.name} has been registered to patient records. Create medical record separately if needed.`,
+        description: `${newPatient.name} has been registered. The record is now available in Medical History.`,
       })
     } catch (error) {
       console.error("Error adding patient:", error)
       toast({
         title: "Error",
-        description: "Failed to add patient",
+        description: "Failed to add patient. Please check your connection and try again.",
         variant: "destructive",
       })
     }
