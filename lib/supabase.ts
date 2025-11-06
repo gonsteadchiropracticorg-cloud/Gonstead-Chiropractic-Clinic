@@ -389,15 +389,43 @@ export interface StaffAccount {
 }
 
 
+// Generate professional patient code: GCC-NSR-YYYYMM-####
+function generateProfessionalPatientCode(appointmentDate?: string): string {
+  try {
+    const CLINIC_CODE = 'GCC-NSR' // Gonstead Chiropractic Clinic - Nowshera
+    const date = appointmentDate ? new Date(appointmentDate) : new Date()
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const period = `${year}${month}` // e.g., 202511
+    
+    // Get sequence number for this period from localStorage
+    if (typeof window !== 'undefined') {
+      const seqKey = `patient_code_seq_${period}`
+      const currentSeq = parseInt(localStorage.getItem(seqKey) || '0', 10)
+      const nextSeq = currentSeq + 1
+      localStorage.setItem(seqKey, String(nextSeq))
+      return `${CLINIC_CODE}-${period}-${String(nextSeq).padStart(4, '0')}`
+    }
+    
+    // Fallback if localStorage unavailable
+    return `${CLINIC_CODE}-${period}-${String(Date.now()).slice(-4)}`
+  } catch (error) {
+    console.error('Failed to generate professional patient code:', error)
+    // Ultimate fallback
+    return `GCC-NSR-${Date.now()}`
+  }
+}
+
 // Database Functions with OFFLINE-FIRST architecture
 // Strategy: Save to localStorage first, then sync to Supabase in background
 export const createPatient = async (patientData: Omit<Patient, "id" | "created_at" | "updated_at">) => {
   try {
     const timestamp = new Date().toISOString()
-    const tempId = `patient_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    // Generate professional patient code instead of random UUID
+    const professionalId = generateProfessionalPatientCode(patientData.appointment_date)
     
     const patient = {
-      id: tempId,
+      id: professionalId,
       ...patientData,
       created_at: timestamp,
       updated_at: timestamp,
