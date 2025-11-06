@@ -854,122 +854,353 @@ export default function AdminDashboard() {
     setIsVideoCallDialogOpen(true)
   }
 
-  const generateDetailedReport = (patient: Patient) => {
-    const currentDate = new Date().toLocaleDateString('en-GB')
-    const reportTime = new Date().toLocaleTimeString('en-US', { hour12: true })
-    
-    const report = `
-╔══════════════════════════════════════════════════════════════════╗
-║                    GONSTEAD CHIROPRACTIC CLINIC                     ║
-║                   SPINAL HEALTH ASSESSMENT REPORT                   ║
-║                    Dr. Bashir Khan - DCP, Gonstead Certified        ║
-║              Near Police Station, Tehsil Road, Nowshera, KPK        ║
-║                         Pakistan | +92 304 699 6267                 ║
-╚══════════════════════════════════════════════════════════════════╝
+  const generateDetailedReport = async (patient: Patient) => {
+    try {
+      // Helper: load logo as data URL (same-origin public path)
+      const loadImageAsDataURL = async (path: string) => {
+        const res = await fetch(path)
+        const blob = await res.blob()
+        return await new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(blob)
+        })
+      }
 
-📋 PATIENT INFORMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Patient Name      : ${patient.name}
-Contact Number    : ${patient.phone}
-Email Address     : ${patient.email || "Not provided"}
-Age / Gender      : ${patient.demographics?.age || "--"} years / ${patient.demographics?.gender || "Not specified"}
-Profession        : ${patient.profession ? patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Not specified"}
-Occupation        : ${patient.demographics?.occupation || "Not specified"}
-Report Date       : ${currentDate} at ${reportTime}
+      const logo = await loadImageAsDataURL('/images/gonstead-chiropractic-logo-new.png')
 
-🏥 CLINICAL ASSESSMENT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Appointment Date  : ${new Date(patient.appointment_date).toLocaleDateString('en-GB')} at ${new Date(patient.appointment_date).toLocaleTimeString('en-US', { hour12: true })}
-Session Type      : ${patient.session_type === "in_clinic" ? "In-Clinic Gonstead Analysis & Adjustment" : "Video Consultation & Assessment"}
-Treatment Status  : ${patient.status.charAt(0).toUpperCase() + patient.status.slice(1)}
-Priority Level    : ${patient.urgency.charAt(0).toUpperCase() + patient.urgency.slice(1)}
-Sessions Count    : ${patient.sessions_completed || 0} completed
-Last Visit        : ${patient.last_visit ? new Date(patient.last_visit).toLocaleDateString('en-GB') : "First consultation"}
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pageWidth = 210
+      const pageHeight = 297
+      const margin = 15
+      let y = 14
 
-📝 CHIEF COMPLAINT & CLINICAL FINDINGS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${patient.notes || "Patient reports general spinal discomfort. Detailed assessment pending."}
+      // Global typography
+      pdf.setLineHeightFactor(1.35)
 
-🔬 GONSTEAD ANALYSIS SUMMARY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Diagnosis         : ${patient.treatment_plan?.diagnosis || "Initial spinal assessment pending"}
-Treatment Plan    : ${patient.treatment_plan?.goals?.join(", ") || "Comprehensive Gonstead chiropractic care plan"}
-Progress Status   : ${patient.treatment_plan?.progress || "Patient scheduled for detailed spinal analysis"}
-Medical History   : ${patient.medical_history || "Medical history to be obtained during consultation"}
+      // Page border
+      pdf.setDrawColor(228)
+      pdf.rect(7, 7, pageWidth - 14, pageHeight - 14)
 
-💊 PAYMENT & BILLING INFORMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Payment Method    : ${patient.payment_method ? patient.payment_method.charAt(0).toUpperCase() + patient.payment_method.slice(1) : "Cash"}
-Session Fee       : ${patient.session_type === "in_clinic" ? "PKR 1,500 (In-Clinic)" : "PKR 1,000 (Video)"}
-Treatment Package : Available upon request
+      // Header band with logo
+      pdf.setFillColor(13, 92, 117)
+      pdf.rect(0, 0, pageWidth, 32, 'F')
+      // Logo badge
+      pdf.setFillColor(255, 255, 255)
+      pdf.circle(20, 16, 10, 'F')
+      pdf.addImage(logo, 'PNG', 11, 7, 18, 18)
 
+      // Clinic identity
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(18)
+      pdf.text('GONSTEAD CHIROPRACTIC CLINIC', pageWidth / 2 + 6, 13, { align: 'center' })
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text('Dr. Bashir Khan — Gonstead Certified Specialist', pageWidth / 2 + 6, 19.5, { align: 'center' })
+      pdf.text('Near Police Station, Tehsil Road, Nowshera  •  +92 304 699 6267', pageWidth / 2 + 6, 26, { align: 'center' })
 
-═══════════════════════════════════════════════════════════════════
-                              PAGE 1 OF 2
-═══════════════════════════════════════════════════════════════════
+      // Report ribbon
+      pdf.setFillColor(227, 252, 236)
+      pdf.roundedRect(margin, 34, pageWidth - margin * 2, 8, 2, 2, 'F')
+      pdf.setTextColor(13, 92, 117)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(11)
+      pdf.text('PATIENT CLINICAL REPORT', pageWidth / 2, 40, { align: 'center' })
 
+      // Small helpers
+      const muted = () => pdf.setTextColor(75, 85, 99)
+      const strong = () => pdf.setTextColor(17, 24, 39)
 
-╔══════════════════════════════════════════════════════════════════╗
-║                    GONSTEAD CHIROPRACTIC CLINIC                     ║
-║                  TREATMENT RECOMMENDATIONS & PLAN                   ║
-║                         Continued from Page 1                       ║
-╚══════════════════════════════════════════════════════════════════╝
+      // Badge chip helper
+      const chip = (txt: string, x: number, y0: number, fill: [number,number,number]) => {
+        const padX = 2.8
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(9)
+        const w = Math.min(pageWidth - margin - x, pdf.getTextWidth(txt) + padX * 2)
+        pdf.setFillColor(...fill)
+        pdf.setTextColor(255,255,255)
+        pdf.roundedRect(x, y0 - 4.6, w, 7, 2, 2, 'F')
+        pdf.text(txt, x + padX, y0)
+        strong()
+        return x + w + 3
+      }
 
-🎯 GONSTEAD TECHNIQUE APPROACH
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✓ Comprehensive spinal analysis using Gonstead methodology
-✓ Precise adjustment techniques for optimal spinal alignment
-✓ Focus on root cause identification and correction
-✓ Patient education on spinal health and posture
+      // Section helper
+      const section = (title: string) => {
+        y += 9
+        pdf.setDrawColor(13, 92, 117)
+        pdf.setFillColor(240, 253, 249)
+        pdf.roundedRect(margin, y, pageWidth - margin * 2, 9, 2, 2, 'FD')
+        pdf.setTextColor(13, 92, 117)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(11)
+        pdf.text(title, margin + 3, y + 6)
+        y += 10
+        strong()
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(10.5)
+      }
 
-📊 RECOMMENDED TREATMENT SCHEDULE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Phase 1 (Relief)  : 2-3 sessions per week (Weeks 1-4)
-Phase 2 (Correct) : 1-2 sessions per week (Weeks 5-8)
-Phase 3 (Maintain): 1 session per week (Weeks 9-12)
-Follow-up Care    : Monthly maintenance (as needed)
+      // Key header row for clarity
+      y = 48
+      strong(); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(15)
+      pdf.text(patient.name || '-', margin, y)
+      muted(); pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10.5)
+      const apptText = patient.appointment_date ? `${new Date(patient.appointment_date).toLocaleDateString()}  •  ${new Date(patient.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '—'
+      pdf.text(apptText, pageWidth - margin, y, { align: 'right' })
+      y += 6
 
-🏠 HOME CARE INSTRUCTIONS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Apply ice for 15-20 minutes, 2-3 times daily (acute phase)
-• Maintain proper posture during sitting and standing
-• Perform gentle stretching exercises as demonstrated
-• Sleep with proper spinal alignment (suitable pillow/mattress)
-• Avoid prolonged static positions
-• Stay adequately hydrated
+      // Overview chips
+      let cx = margin
+      cx = chip(`STATUS: ${patient.status.toUpperCase()}`, cx, y, patient.status === 'completed' ? [34,197,94] : patient.status === 'confirmed' ? [59,130,246] : patient.status === 'cancelled' ? [239,68,68] : [234,179,8])
+      cx = chip(`URGENCY: ${(patient.urgency || 'normal').toUpperCase()}`, cx, y, patient.urgency === 'emergency' ? [220,38,38] : patient.urgency === 'urgent' ? [245,158,11] : [107,114,128])
+      chip(`SESSION: ${patient.session_type === 'in_clinic' ? 'IN-CLINIC' : 'VIDEO'}`, cx, y, patient.session_type === 'in_clinic' ? [13,92,117] : [99,102,241])
 
-⚠️  IMPORTANT NOTES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Follow prescribed treatment schedule for optimal results
-• Report any unusual symptoms or concerns immediately
-• Attend all scheduled appointments for best outcomes
-• Emergency contact available 24/7 for urgent spinal issues
+      // Patient information table helper
+      const drawInfoTable = (title: string, rows: Array<{ label: string; value: string }>) => {
+        section(title)
+        
+        const tableWidth = pageWidth - margin * 2
+        const labelColWidth = tableWidth * 0.35
+        const valueColWidth = tableWidth * 0.65
+        const cellPadding = 3.5
+        const rowHeight = 10
+        
+        // Table border
+        pdf.setDrawColor(200, 200, 200)
+        pdf.setLineWidth(0.2)
+        
+        rows.forEach((row, idx) => {
+          const rowY = y + (idx * rowHeight)
+          
+          // Alternating row background
+          if (idx % 2 === 0) {
+            pdf.setFillColor(249, 250, 251)
+            pdf.rect(margin, rowY, tableWidth, rowHeight, 'F')
+          }
+          
+          // Draw cell borders
+          pdf.setDrawColor(220, 220, 220)
+          pdf.rect(margin, rowY, labelColWidth, rowHeight, 'S')
+          pdf.rect(margin + labelColWidth, rowY, valueColWidth, rowHeight, 'S')
+          
+          // Label (left column) - bold and colored
+          pdf.setTextColor(55, 65, 81)
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(9.5)
+          pdf.text(row.label.toUpperCase(), margin + cellPadding, rowY + rowHeight / 2 + 1.5)
+          
+          // Value (right column) - regular weight
+          pdf.setTextColor(31, 41, 55)
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(10)
+          
+          // Handle text wrapping for long values
+          const maxValueWidth = valueColWidth - (cellPadding * 2)
+          const wrappedValue = pdf.splitTextToSize(row.value || '—', maxValueWidth)
+          const valueLines = Array.isArray(wrappedValue) ? wrappedValue : [wrappedValue]
+          
+          // Only show first line if too long, otherwise show full text
+          const displayValue = valueLines.length > 1 ? valueLines[0] : valueLines[0]
+          pdf.text(displayValue, margin + labelColWidth + cellPadding, rowY + rowHeight / 2 + 1.5)
+        })
+        
+        // Outer table border
+        pdf.setDrawColor(180, 180, 180)
+        pdf.setLineWidth(0.4)
+        pdf.rect(margin, y, tableWidth, rowHeight * rows.length, 'S')
+        
+        y += rowHeight * rows.length + 3
+        strong()
+      }
 
-📞 CLINIC CONTACT INFORMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Dr. Bashir Khan, DCP (Gonstead Certified)
-Gonstead Chiropractic Clinic
-Near Police Station, Tehsil Road
-Nowshera, Khyber Pakhtunkhwa, Pakistan
-Phone: +92 304 699 6267
-Email: Available upon request
+      // Patient Information Table
+      drawInfoTable('PATIENT INFORMATION', [
+        { label: 'Patient ID', value: patient.id },
+        { label: 'Full Name', value: patient.name || '—' },
+        { label: 'Phone Number', value: patient.phone || 'Not provided' },
+        { label: 'Email Address', value: patient.email || 'Not provided' },
+        { label: 'Age / Gender', value: `${patient.demographics?.age ?? '—'} / ${patient.demographics?.gender ?? 'Not specified'}` },
+        { label: 'Profession', value: patient.profession ? patient.profession.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()) : 'Not specified' },
+        { label: 'Payment Method', value: (patient.payment_method || 'cash').toUpperCase() },
+      ])
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Report Generated: ${currentDate} at ${reportTime}
-Doctor Signature: Dr. Bashir Khan, DCP
-"Excellence in Gonstead Chiropractic Care - Your Spine, Our Priority"
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                              PAGE 2 OF 2
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    `
+      // Appointment & Status Table
+      drawInfoTable('APPOINTMENT & STATUS', [
+        { label: 'Appointment Date & Time', value: apptText },
+        { label: 'Last Visit Date', value: patient.last_visit ? new Date(patient.last_visit).toLocaleDateString() : '—' },
+        { label: 'Session Progress', value: `${patient.sessions_completed || 0} of ${patient.total_sessions || 8} completed` },
+        { label: 'Session Type', value: patient.session_type === 'in_clinic' ? 'In-Clinic' : 'Video Consultation' },
+      ])
 
-    const blob = new Blob([report], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `${patient.name.replace(/\s+/g, "_")}_report_${new Date().toISOString().split("T")[0]}.txt`
-    a.click()
-    URL.revokeObjectURL(url)
+      section('CHIEF COMPLAINT')
+      const notes = pdf.splitTextToSize(patient.notes || 'No complaints noted.', pageWidth - margin * 2)
+      strong(); pdf.text(notes, margin, y + 5)
+      y += 5 + (Array.isArray(notes) ? Math.min(notes.length, 16) * 5 : 5)
+
+      section('TREATMENT PLAN')
+      const bullets: string[] = []
+      if (patient.treatment_plan?.diagnosis) bullets.push(`Diagnosis: ${patient.treatment_plan.diagnosis}`)
+      if (patient.treatment_plan?.goals) {
+        const arr = Array.isArray(patient.treatment_plan.goals) ? patient.treatment_plan.goals : [String(patient.treatment_plan.goals)]
+        bullets.push(...arr.map((g) => `Goal: ${g}`))
+      }
+      bullets.push(`Progress: ${patient.treatment_plan?.progress || 'Pending'}`)
+      pdf.setFillColor(13,92,117)
+      bullets.forEach((b) => {
+        const wrapped = pdf.splitTextToSize(b, pageWidth - margin * 2 - 6)
+        pdf.circle(margin + 1.8, y + 1.8, 0.8, 'F')
+        pdf.text(wrapped, margin + 5, y + 2.6)
+        y += 5 + (Array.isArray(wrapped) ? (wrapped as string[]).length * 4 : 5)
+      })
+
+      // Footer
+      pdf.setDrawColor(230)
+      pdf.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18)
+      pdf.setFontSize(9)
+      pdf.setTextColor(120)
+      const gen = new Date()
+      pdf.text(`Generated ${gen.toLocaleDateString()} ${gen.toLocaleTimeString()} • Gonstead Chiropractic Clinic`, pageWidth / 2, pageHeight - 10, { align: 'center' })
+
+      // Save
+      const fileName = `${patient.name.replace(/\s+/g, '_')}_Patient_Report_${new Date().toISOString().split('T')[0]}.pdf`
+      pdf.save(fileName)
+      toast({ title: '✅ PDF Generated', description: `Downloaded ${fileName}` })
+    } catch (err) {
+      console.error('PDF generation failed:', err)
+      toast({ title: 'Error', description: 'Failed to generate PDF report', variant: 'destructive' })
+    }
+  }
+
+  const generateDailyAppointmentsPDF = async (dateISO: string) => {
+    try {
+      // Load clinic logo
+      const loadImageAsDataURL = async (path: string) => {
+        const res = await fetch(path)
+        const blob = await res.blob()
+        return await new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(blob)
+        })
+      }
+      const logo = await loadImageAsDataURL('/images/gonstead-chiropractic-logo-new.png')
+
+      const target = new Date(dateISO)
+      const targetStr = target.toDateString()
+      const rows = patients.filter(p => new Date(p.appointment_date).toDateString() === targetStr)
+
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pageWidth = 210
+      const margin = 12
+      let y = 14
+
+      // Header with logo
+      pdf.setFillColor(42, 157, 143)
+      pdf.rect(0, 0, pageWidth, 28, 'F')
+      pdf.setFillColor(255,255,255)
+      pdf.circle(18, 14, 8, 'F')
+      pdf.addImage(logo, 'PNG', 11, 7, 14, 14)
+
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(15)
+      pdf.text('DAILY APPOINTMENTS SUMMARY', pageWidth / 2 + 8, 12.5, { align: 'center' })
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(`${target.toLocaleDateString()} • Gonstead Chiropractic Clinic`, pageWidth / 2 + 8, 20, { align: 'center' })
+
+      // Table header
+      y = 34
+      pdf.setTextColor(255,255,255)
+      pdf.setFillColor(13,92,117)
+      const headerH = 8
+      pdf.roundedRect(margin, y-6, pageWidth - margin*2, headerH, 2, 2, 'F')
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(10)
+      const cols = [
+        { k: '#', w: 10 },
+        { k: 'Name', w: 64 },
+        { k: 'Phone', w: 32 },
+        { k: 'Time', w: 20 },
+        { k: 'Type', w: 22 },
+        { k: 'Status', w: 22 },
+        { k: 'Urgency', w: 22 },
+      ]
+      let x = margin
+      cols.forEach(c => { pdf.text(String(c.k), x + (c.k==='Name' || c.k==='Phone' ? 0 : c.w/2), y-1.5, { align: (c.k==='Name' || c.k==='Phone') ? 'left' : 'center' }); x += c.w })
+
+      // Rows
+      y += 2
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(33, 37, 41)
+      let idx = 1
+      const timeFmt = (d: string) => new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const badge = (text: string, x: number, cw: number, yTop: number, color: [number,number,number]) => {
+        const padX = 2.5
+        const w = pdf.getTextWidth(text) + padX * 2
+        const bx = x + (cw - w) / 2
+        pdf.setFillColor(...color)
+        pdf.setTextColor(255,255,255)
+        pdf.roundedRect(bx, yTop - 4.2, Math.min(w, cw), 6.5, 2, 2, 'F')
+        pdf.text(text, x + cw/2, yTop, { align: 'center' })
+        pdf.setTextColor(33,37,41)
+      }
+
+      rows.forEach(r => {
+        if (y > 275) return // keep one-page
+        x = margin
+        const values = [
+          String(idx++),
+          r.name,
+          r.phone,
+          timeFmt(r.appointment_date),
+          r.session_type === 'in_clinic' ? 'Clinic' : 'Video',
+          r.status.toUpperCase(),
+          r.urgency.toUpperCase(),
+        ]
+        const nameWrapped = pdf.splitTextToSize(values[1], cols[1].w)
+        const rowHeight = Math.max(7, Array.isArray(nameWrapped) ? nameWrapped.length * 4.4 : 7)
+        // zebra background
+        if ((idx - 1) % 2 === 0) { pdf.setFillColor(248, 250, 252); pdf.rect(margin-1, y-5.5, pageWidth - (margin*2) + 2, rowHeight + 3, 'F') }
+
+        values.forEach((val, i) => {
+          const cw = cols[i].w
+          if (i === 1) {
+            pdf.text(nameWrapped, x, y)
+          } else if (i === 0 || i === 3) {
+            pdf.text(String(val), x + cw/2, y, { align: 'center' })
+          } else if (i === 5) {
+            const c = val === 'COMPLETED' ? [34,197,94] : val === 'CONFIRMED' ? [59,130,246] : val === 'CANCELLED' ? [239,68,68] : [234,179,8]
+            badge(String(val), x, cw, y, c as [number,number,number])
+          } else if (i === 6) {
+            const c = val === 'EMERGENCY' ? [220,38,38] : val === 'URGENT' ? [245,158,11] : [107,114,128]
+            badge(String(val), x, cw, y, c as [number,number,number])
+          } else {
+            pdf.text(String(val), x, y)
+          }
+          x += cw
+        })
+        y += rowHeight
+        pdf.setDrawColor(235); pdf.line(margin, y, pageWidth - margin, y); y += 1.4
+      })
+
+      // Footer
+      pdf.setDrawColor(230)
+      pdf.line(margin, 284, pageWidth - margin, 284)
+      pdf.setFontSize(9)
+      pdf.setTextColor(120)
+      pdf.text(`Total: ${rows.length} appointments`, margin, 290)
+      pdf.text('Gonstead Chiropractic Clinic', pageWidth - margin, 290, { align: 'right' })
+
+      const fileName = `Appointments_${target.toISOString().split('T')[0]}.pdf`
+      pdf.save(fileName)
+      toast({ title: '✅ PDF Generated', description: `Downloaded ${fileName}` })
+    } catch (err) {
+      console.error('Daily PDF generation failed:', err)
+      toast({ title: 'Error', description: 'Failed to generate day PDF', variant: 'destructive' })
+    }
   }
 
   const updateClinicLocation = (newLocation: any) => {
@@ -2366,11 +2597,12 @@ Doctor Signature: Dr. Bashir Khan, DCP
                                     variant="outline"
                                     onClick={() => generateDetailedReport(patient)}
                                     className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full"
-                                    title="Generate Spinal Health Assessment Report"
+                                    title="Download professional one-page PDF report for this patient"
                                   >
                                     <Download className="h-3 w-3 mr-1" />
-                                    Report
+                                    PDF Report
                                   </Button>
+
 
                                   {/* Edit Patient Button */}
                                   <Button
