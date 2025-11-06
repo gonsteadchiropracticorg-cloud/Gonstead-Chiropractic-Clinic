@@ -280,23 +280,79 @@ export default function MedicalHistoryPage() {
     }
   }, [records]) // Depend on records to trigger when they're loaded
 
-  // Load real medical records from localStorage
+  // Load real medical records from Supabase AND localStorage
   useEffect(() => {
-    const loadMedicalRecords = () => {
+    const loadMedicalRecords = async () => {
       try {
         setIsLoading(true)
-        // Load medical records from localStorage (synchronized with admin and booking)
+        console.log('[Medical History] Loading records from Supabase...')
+        
+        // Load from Supabase FIRST (primary source)
+        try {
+          const { getPatients } = await import('@/lib/supabase')
+          const { data: supabasePatients, error } = await getPatients()
+          
+          if (!error && supabasePatients && supabasePatients.length > 0) {
+            console.log(`[Medical History] Loaded ${supabasePatients.length} patients from Supabase`)
+            
+            // Convert Supabase patients to medical records format
+            const convertedRecords = supabasePatients.map((patient: any, index: number) => ({
+              id: patient.id || `MR${String(index + 1).padStart(3, '0')}`,
+              patientName: patient.name || 'Unknown Patient',
+              age: patient.demographics?.age || 0,
+              gender: patient.demographics?.gender || 'Not specified',
+              phone: patient.phone || 'Not provided',
+              email: patient.email || 'Not provided',
+              lastVisit: patient.last_visit || patient.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+              diagnosis: patient.treatment_plan?.diagnosis || 'Initial consultation pending',
+              treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
+              status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
+              sessionsCompleted: patient.sessions_completed || 0,
+              totalSessions: patient.total_sessions || 8,
+              nextAppointment: patient.appointment_date || 'To be scheduled',
+              chiefComplaint: patient.notes || 'General consultation',
+              medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
+              currentMedications: 'To be determined during consultation',
+              treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
+              progress: patient.treatment_plan?.progress || 'Initial assessment pending',
+              doctorNotes: patient.booking_source === 'admin_dashboard' 
+                ? 'Patient added via admin dashboard. Assessment in progress.'
+                : 'Patient booked online. Initial consultation scheduled.'
+            }))
+            
+            setRecords(convertedRecords)
+            setFilteredRecords(convertedRecords)
+            
+            // Also save to localStorage for offline access
+            try {
+              localStorage.setItem("medical_records", JSON.stringify(convertedRecords))
+              console.log('[Medical History] Saved to localStorage for offline access')
+            } catch (storageError) {
+              console.warn('[Medical History] localStorage save failed:', storageError)
+            }
+            
+            setIsLoading(false)
+            return // Exit early if Supabase load was successful
+          }
+        } catch (supabaseError) {
+          console.error('[Medical History] Supabase load failed:', supabaseError)
+        }
+        
+        // FALLBACK: Load from localStorage if Supabase fails
+        console.log('[Medical History] Falling back to localStorage...')
         const storedRecords = localStorage.getItem("medical_records")
         
         if (storedRecords) {
           const parsedRecords: MedicalRecord[] = JSON.parse(storedRecords)
+          console.log(`[Medical History] Loaded ${parsedRecords.length} records from localStorage`)
           setRecords(parsedRecords)
           setFilteredRecords(parsedRecords)
         } else {
-          // If no records exist, check if there are patient records to convert
+          // Last resort: check gonstead_patients in localStorage
           const patientRecords = localStorage.getItem("gonstead_patients")
           if (patientRecords) {
             const patients = JSON.parse(patientRecords)
+            console.log(`[Medical History] Converting ${patients.length} patient records from localStorage`)
             const convertedRecords = patients.map((patient: any, index: number) => ({
               id: `MR${String(index + 1).padStart(3, '0')}`,
               patientName: patient.name || 'Unknown Patient',
@@ -309,27 +365,27 @@ export default function MedicalHistoryPage() {
               treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
               status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
               sessionsCompleted: patient.sessions_completed || 0,
-              totalSessions: 8, // Default total sessions
+              totalSessions: 8,
               nextAppointment: patient.appointment_date || 'To be scheduled',
               chiefComplaint: patient.notes || 'General consultation',
               medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
               currentMedications: 'To be determined during consultation',
               treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
               progress: patient.treatment_plan?.progress || 'Initial assessment pending',
-              doctorNotes: patient.booking_source === 'main_page' 
-                ? 'Patient booked online. Initial consultation scheduled.'
-                : 'Patient added via admin dashboard. Assessment in progress.'
+              doctorNotes: patient.booking_source === 'admin_dashboard' 
+                ? 'Patient added via admin dashboard. Assessment in progress.'
+                : 'Patient booked online. Initial consultation scheduled.'
             }))
             
             setRecords(convertedRecords)
             setFilteredRecords(convertedRecords)
-            
-            // Save converted records to localStorage
             localStorage.setItem("medical_records", JSON.stringify(convertedRecords))
+          } else {
+            console.log('[Medical History] No records found in any source')
           }
         }
       } catch (error) {
-        console.error('Error loading medical records:', error)
+        console.error('[Medical History] Error loading medical records:', error)
         setRecords([])
         setFilteredRecords([])
       } finally {
@@ -359,54 +415,116 @@ export default function MedicalHistoryPage() {
     }
   }, [])
 
-  // Manual refresh function
-  const handleRefresh = () => {
+  // Manual refresh function - Force reload from Supabase
+  const handleRefresh = async () => {
     setIsLoading(true)
+    console.log('[Medical History] Manual refresh triggered - loading from Supabase...')
     
-    // Force reload from localStorage
-    const storedRecords = localStorage.getItem("medical_records")
-    const patientRecords = localStorage.getItem("gonstead_patients")
-    
-    if (storedRecords) {
-      const parsedRecords = JSON.parse(storedRecords)
-      setRecords(parsedRecords)
-      setFilteredRecords(parsedRecords)
-    } else if (patientRecords) {
-      // Re-convert patient records if medical records don't exist
-      const patients = JSON.parse(patientRecords)
-      const convertedRecords = patients.map((patient: any, index: number) => ({
-        id: `MR${String(index + 1).padStart(3, '0')}`,
-        patientName: patient.name || 'Unknown Patient',
-        age: patient.demographics?.age || 0,
-        gender: patient.demographics?.gender || 'Not specified',
-        phone: patient.phone || 'Not provided',
-        email: patient.email || 'Not provided',
-        lastVisit: patient.last_visit || patient.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
-        diagnosis: patient.treatment_plan?.diagnosis || 'Initial consultation pending',
-        treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
-        status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
-        sessionsCompleted: patient.sessions_completed || 0,
-        totalSessions: 8,
-        nextAppointment: patient.appointment_date || 'To be scheduled',
-        chiefComplaint: patient.notes || 'General consultation',
-        medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
-        currentMedications: 'To be determined during consultation',
-        treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
-        progress: patient.treatment_plan?.progress || 'Initial assessment pending',
-        doctorNotes: patient.booking_source === 'main_page' 
-          ? 'Patient booked online. Initial consultation scheduled.'
-          : 'Patient added via admin dashboard. Assessment in progress.'
-      }))
+    try {
+      // Force reload from Supabase
+      const { getPatients } = await import('@/lib/supabase')
+      const { data: supabasePatients, error } = await getPatients()
       
-      setRecords(convertedRecords)
-      setFilteredRecords(convertedRecords)
-      localStorage.setItem("medical_records", JSON.stringify(convertedRecords))
-    } else {
-      setRecords([])
-      setFilteredRecords([])
+      if (!error && supabasePatients && supabasePatients.length > 0) {
+        console.log(`[Medical History] Refreshed ${supabasePatients.length} patients from Supabase`)
+        
+        // Convert to medical records format
+        const convertedRecords = supabasePatients.map((patient: any, index: number) => ({
+          id: patient.id || `MR${String(index + 1).padStart(3, '0')}`,
+          patientName: patient.name || 'Unknown Patient',
+          age: patient.demographics?.age || 0,
+          gender: patient.demographics?.gender || 'Not specified',
+          phone: patient.phone || 'Not provided',
+          email: patient.email || 'Not provided',
+          lastVisit: patient.last_visit || patient.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          diagnosis: patient.treatment_plan?.diagnosis || 'Initial consultation pending',
+          treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
+          status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
+          sessionsCompleted: patient.sessions_completed || 0,
+          totalSessions: patient.total_sessions || 8,
+          nextAppointment: patient.appointment_date || 'To be scheduled',
+          chiefComplaint: patient.notes || 'General consultation',
+          medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
+          currentMedications: 'To be determined during consultation',
+          treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
+          progress: patient.treatment_plan?.progress || 'Initial assessment pending',
+          doctorNotes: patient.booking_source === 'admin_dashboard' 
+            ? 'Patient added via admin dashboard. Assessment in progress.'
+            : 'Patient booked online. Initial consultation scheduled.'
+        }))
+        
+        setRecords(convertedRecords)
+        setFilteredRecords(convertedRecords)
+        
+        // Update localStorage
+        try {
+          localStorage.setItem("medical_records", JSON.stringify(convertedRecords))
+        } catch {}
+        
+        toast({
+          title: "✅ Records Refreshed",
+          description: `Loaded ${convertedRecords.length} medical records from database`,
+        })
+      } else {
+        console.log('[Medical History] No records in Supabase, checking localStorage...')
+        
+        // Fallback to localStorage
+        const storedRecords = localStorage.getItem("medical_records")
+        const patientRecords = localStorage.getItem("gonstead_patients")
+        
+        if (storedRecords) {
+          const parsedRecords = JSON.parse(storedRecords)
+          setRecords(parsedRecords)
+          setFilteredRecords(parsedRecords)
+        } else if (patientRecords) {
+          const patients = JSON.parse(patientRecords)
+          const convertedRecords = patients.map((patient: any, index: number) => ({
+            id: `MR${String(index + 1).padStart(3, '0')}`,
+            patientName: patient.name || 'Unknown Patient',
+            age: patient.demographics?.age || 0,
+            gender: patient.demographics?.gender || 'Not specified',
+            phone: patient.phone || 'Not provided',
+            email: patient.email || 'Not provided',
+            lastVisit: patient.last_visit || patient.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+            diagnosis: patient.treatment_plan?.diagnosis || 'Initial consultation pending',
+            treatmentType: patient.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
+            status: patient.status === 'completed' ? 'Completed' : patient.status === 'pending' ? 'Ongoing' : 'Follow-up',
+            sessionsCompleted: patient.sessions_completed || 0,
+            totalSessions: 8,
+            nextAppointment: patient.appointment_date || 'To be scheduled',
+            chiefComplaint: patient.notes || 'General consultation',
+            medicalHistory: patient.medical_history || 'Medical history to be collected during consultation',
+            currentMedications: 'To be determined during consultation',
+            treatmentPlan: patient.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
+            progress: patient.treatment_plan?.progress || 'Initial assessment pending',
+            doctorNotes: patient.booking_source === 'admin_dashboard' 
+              ? 'Patient added via admin dashboard. Assessment in progress.'
+              : 'Patient booked online. Initial consultation scheduled.'
+          }))
+          
+          setRecords(convertedRecords)
+          setFilteredRecords(convertedRecords)
+          localStorage.setItem("medical_records", JSON.stringify(convertedRecords))
+        } else {
+          setRecords([])
+          setFilteredRecords([])
+        }
+        
+        toast({
+          title: "ℹ️ No Records Found",
+          description: "No medical records found in database or local storage",
+        })
+      }
+    } catch (error) {
+      console.error('[Medical History] Refresh error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to refresh records. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
-    
-    setIsLoading(false)
   }
 
   // Filter records based on search and filter criteria
