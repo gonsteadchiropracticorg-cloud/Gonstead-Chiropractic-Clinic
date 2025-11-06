@@ -65,6 +65,7 @@ import dynamic from 'next/dynamic'
 const AdminServiceWorkerClient = dynamic(() => import('@/components/AdminServiceWorkerClient'), { ssr: false })
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
+import { SignatureCanvas } from "@/components/SignatureCanvas"
 import {
   Menubar,
   MenubarContent,
@@ -162,6 +163,7 @@ export default function AdminDashboard() {
   const [currentPrescriptionId, setCurrentPrescriptionId] = useState<string>('')
   const detailsRef = useRef<HTMLDivElement | null>(null)
   const [selectedPatientDetail, setSelectedPatientDetail] = useState<Patient | null>(null)
+  const [doctorSignature, setDoctorSignature] = useState<string | null>(null)
 
   const router = useRouter()
   const pathname = usePathname()
@@ -642,6 +644,50 @@ export default function AdminDashboard() {
     if (painLevel >= 7 || redFlags.length > 0 || selectedPatient?.urgency === 'emergency') return 'Severe'
     if (painLevel >= 4) return 'Moderate'
     return 'Mild'
+  }
+
+  // Local professional patient code helpers
+  const CLINIC_CODE = 'GCC-NSR' // Gonstead Chiropractic Clinic - Nowshera (editable)
+
+  const getPeriod = (dateISO?: string) => {
+    const d = dateISO ? new Date(dateISO) : new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    return `${y}${m}` // e.g., 202511
+  }
+
+  // Returns existing code or assigns a new one and persists to localStorage
+  const getOrAssignPatientCode = (patient: Patient): string => {
+    if (typeof window === 'undefined') return (patient.id || '').slice(0, 8)
+    try {
+      const map = JSON.parse(localStorage.getItem('patient_code_map') || '{}') as Record<string, string>
+      if (map[patient.id]) return map[patient.id]
+
+      const period = getPeriod(patient.appointment_date)
+      const seqKey = `patient_code_seq_${period}`
+      const next = (parseInt(localStorage.getItem(seqKey) || '0', 10) || 0) + 1
+      localStorage.setItem(seqKey, String(next))
+
+      const code = `${CLINIC_CODE}-${period}-${String(next).padStart(4, '0')}` // e.g., GCC-NSR-202511-0007
+
+      map[patient.id] = code
+      localStorage.setItem('patient_code_map', JSON.stringify(map))
+      return code
+    } catch (e) {
+      console.warn('Patient code generation failed, falling back to short id:', e)
+      return (patient.id || '').slice(0, 8)
+    }
+  }
+
+  // Lookup helper when only the patient UUID is available
+  const getPatientCodeById = (id: string): string => {
+    if (typeof window === 'undefined') return (id || '').slice(0, 8)
+    try {
+      const map = JSON.parse(localStorage.getItem('patient_code_map') || '{}') as Record<string, string>
+      return map[id] || (id || '').slice(0, 8)
+    } catch {
+      return (id || '').slice(0, 8)
+    }
   }
 
   const downloadPrescriptionPDF = async () => {
@@ -2120,7 +2166,7 @@ export default function AdminDashboard() {
                                   }}
                                   className={`text-sm ${isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-[#0d5c75]"} flex items-center gap-1 cursor-pointer transition-colors duration-200`}
                                 >
-                                  <span className="font-mono">ID: {patient.id.slice(0, 8)}...</span>
+                                  <span className="font-mono">Code: {getOrAssignPatientCode(patient)}</span>
                                   <ChevronDown className="h-3 w-3" />
                                 </button>
                                 <div
@@ -2128,13 +2174,14 @@ export default function AdminDashboard() {
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className={`text-xs font-semibold ${isDarkMode ? "text-gray-400" : "text-gray-500"} uppercase tracking-wide`}>Patient ID</span>
+                                    <span className={`text-xs font-semibold ${isDarkMode ? "text-gray-400" : "text-gray-500"} uppercase tracking-wide`}>Patient Code</span>
                                     <button
                                       onClick={(e) => {
-                                        navigator.clipboard.writeText(patient.id)
+                                        const code = getOrAssignPatientCode(patient)
+                                        navigator.clipboard.writeText(code)
                                         toast({
                                           title: "✅ Copied!",
-                                          description: "Patient ID copied to clipboard",
+                                          description: "Patient code copied to clipboard",
                                         })
                                       }}
                                       className={`text-xs ${isDarkMode ? "text-blue-400 hover:text-blue-300" : "text-[#0d5c75] hover:text-[#0a4a5c]"} font-medium transition-colors`}
@@ -2143,11 +2190,11 @@ export default function AdminDashboard() {
                                     </button>
                                   </div>
                                   <div className={`${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-gradient-to-r from-[#0d5c75]/5 to-[#2a9d8f]/5 border-[#0d5c75]/20"} border-2 rounded-md p-2 mb-2`}>
-                                    <code className={`text-sm font-mono ${isDarkMode ? "text-white" : "text-[#0d5c75]"} break-all select-all`}>{patient.id}</code>
+                                    <code className={`text-sm font-mono ${isDarkMode ? "text-white" : "text-[#0d5c75]"} break-all select-all`}>{getOrAssignPatientCode(patient)}</code>
                                   </div>
                                   <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} flex items-center gap-1`}>
                                     <UserIcon className="h-3 w-3" />
-                                    <span>Click "Copy" to copy full ID</span>
+                                    <span>Click "Copy" to copy patient code</span>
                                   </div>
                                 </div>
                               </div>
@@ -2682,7 +2729,7 @@ export default function AdminDashboard() {
                     <p className="text-sm"><span className="font-medium">Name:</span> {selectedPatientDetail.name}</p>
                     <p className="text-sm"><span className="font-medium">Phone:</span> {selectedPatientDetail.phone}</p>
                     <p className="text-sm"><span className="font-medium">Email:</span> {selectedPatientDetail.email || 'Not provided'}</p>
-                    <p className="text-sm"><span className="font-medium">Patient ID:</span> <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">{selectedPatientDetail.id}</code></p>
+                    <p className="text-sm"><span className="font-medium">Patient Code:</span> <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">{getPatientCodeById(selectedPatientDetail.id)}</code></p>
                     {selectedPatientDetail.profession && (
                       <p className="text-sm"><span className="font-medium">Profession:</span> {selectedPatientDetail.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                     )}
@@ -2952,6 +2999,15 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
+          {/* Doctor's Signature Tool */}
+          <div className="mb-6">
+            <SignatureCanvas 
+              onSignatureChange={(dataUrl) => setDoctorSignature(dataUrl)}
+              width={500}
+              height={150}
+            />
+          </div>
+
           {/* Prescription Preview */}
           {selectedPatient && (
             <div
@@ -3123,7 +3179,7 @@ export default function AdminDashboard() {
                     <strong>Email:</strong> {selectedPatient.email || "Not provided"}
                   </p>
                   <p style={{ margin: "0", fontSize: "13px" }}>
-                    <strong>Patient ID:</strong> {selectedPatient.id.slice(0, 8)}...
+                    <strong>Patient Code:</strong> {getOrAssignPatientCode(selectedPatient)}
                   </p>
                 </div>
                 <div>
@@ -3414,7 +3470,15 @@ export default function AdminDashboard() {
                   </p>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ borderBottom: "2px solid #245064", marginBottom: "8px", height: "40px" }}></div>
+                  <div style={{ borderBottom: doctorSignature ? "none" : "2px solid #245064", marginBottom: "8px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {doctorSignature && (
+                      <img
+                        src={doctorSignature}
+                        alt="Doctor Signature"
+                        style={{ maxHeight: "40px", maxWidth: "100%", objectFit: "contain" }}
+                      />
+                    )}
+                  </div>
                   <p style={{ fontWeight: "bold", color: "#245064", fontSize: "12px", margin: "0" }}>
                     Doctor Signature
                   </p>
@@ -3520,7 +3584,7 @@ export default function AdminDashboard() {
                         <p><span className="font-medium">Name:</span> {selectedPatientHistory.name}</p>
                         <p><span className="font-medium">Phone:</span> {selectedPatientHistory.phone}</p>
                         <p><span className="font-medium">Email:</span> {selectedPatientHistory.email || 'Not provided'}</p>
-                        <p><span className="font-medium">Patient ID:</span> <code className="bg-gray-100 px-2 py-1 rounded text-xs">{selectedPatientHistory.id}</code></p>
+                        <p><span className="font-medium">Patient Code:</span> <code className="bg-gray-100 px-2 py-1 rounded text-xs">{getPatientCodeById(selectedPatientHistory.id)}</code></p>
                       </div>
                     </div>
                     
@@ -3833,7 +3897,7 @@ export default function AdminDashboard() {
 ╚══════════════════════════════════════════════════════════════════╝
 
 PATIENT: ${selectedPatientHistory.name}
-PATIENT ID: ${selectedPatientHistory.id}
+PATIENT CODE: ${getPatientCodeById(selectedPatientHistory.id)}
 GENERATED: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3842,7 +3906,7 @@ CONTACT INFORMATION
 Name: ${selectedPatientHistory.name}
 Phone: ${selectedPatientHistory.phone}
 Email: ${selectedPatientHistory.email || 'Not provided'}
-Patient ID: ${selectedPatientHistory.id}
+Patient Code: ${getPatientCodeById(selectedPatientHistory.id)}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TREATMENT STATISTICS
