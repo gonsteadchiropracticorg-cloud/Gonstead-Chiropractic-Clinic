@@ -43,7 +43,9 @@ import {
   ChevronDown,
   ChevronUp,
   Activity,
-  User as UserIcon
+  User as UserIcon,
+  Maximize,
+  Minimize
 } from "lucide-react"
 import {
   getPatients,
@@ -165,6 +167,8 @@ export default function AdminDashboard() {
   const detailsRef = useRef<HTMLDivElement | null>(null)
   const [selectedPatientDetail, setSelectedPatientDetail] = useState<Patient | null>(null)
   const [doctorSignature, setDoctorSignature] = useState<string | null>(null)
+  const [isVideoCallFullscreen, setIsVideoCallFullscreen] = useState(false)
+  const videoCallDialogRef = useRef<HTMLDivElement | null>(null)
 
   const router = useRouter()
   const pathname = usePathname()
@@ -900,6 +904,59 @@ export default function AdminDashboard() {
     setSelectedPatient(patient)
     setIsVideoCallDialogOpen(true)
   }
+
+  const toggleVideoCallFullscreen = () => {
+    if (!videoCallDialogRef.current) return
+    
+    if (!isVideoCallFullscreen) {
+      // Enter fullscreen
+      if (videoCallDialogRef.current.requestFullscreen) {
+        videoCallDialogRef.current.requestFullscreen()
+      } else if ((videoCallDialogRef.current as any).webkitRequestFullscreen) {
+        (videoCallDialogRef.current as any).webkitRequestFullscreen()
+      } else if ((videoCallDialogRef.current as any).mozRequestFullScreen) {
+        (videoCallDialogRef.current as any).mozRequestFullScreen()
+      } else if ((videoCallDialogRef.current as any).msRequestFullscreen) {
+        (videoCallDialogRef.current as any).msRequestFullscreen()
+      }
+      setIsVideoCallFullscreen(true)
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen()
+      } else if ((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen()
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen()
+      }
+      setIsVideoCallFullscreen(false)
+    }
+  }
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(document.fullscreenElement || 
+        (document as any).webkitFullscreenElement || 
+        (document as any).mozFullScreenElement || 
+        (document as any).msFullscreenElement)
+      setIsVideoCallFullscreen(isCurrentlyFullscreen)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+    }
+  }, [])
 
   const generateDetailedReport = async (patient: Patient) => {
     try {
@@ -4080,21 +4137,62 @@ Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTim
       </Dialog>
 
       {/* Video Call Dialog with Jitsi Meet Integration */}
-      <Dialog open={isVideoCallDialogOpen} onOpenChange={setIsVideoCallDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] p-0">
+      <Dialog open={isVideoCallDialogOpen} onOpenChange={(open) => {
+        setIsVideoCallDialogOpen(open)
+        if (!open && isVideoCallFullscreen) {
+          // Exit fullscreen when dialog closes
+          if (document.exitFullscreen) {
+            document.exitFullscreen()
+          }
+        }
+      }}>
+        <DialogContent 
+          ref={videoCallDialogRef}
+          className={`${
+            isVideoCallFullscreen 
+              ? 'w-screen h-screen max-w-none max-h-none m-0 rounded-none' 
+              : 'max-w-5xl max-h-[90vh]'
+          } p-0 transition-all duration-300`}
+        >
           <DialogHeader className="px-6 pt-6 pb-4">
-            <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
-              <Video className="h-5 w-5" />
-              Video Consultation - {selectedPatient?.name}
+            <DialogTitle className="text-[#0d5c75] font-poppins flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Video className="h-5 w-5" />
+                Video Consultation - {selectedPatient?.name}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleVideoCallFullscreen}
+                className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+                title={isVideoCallFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isVideoCallFullscreen ? (
+                  <>
+                    <Minimize className="h-4 w-4 mr-2" />
+                    Exit Fullscreen
+                  </>
+                ) : (
+                  <>
+                    <Maximize className="h-4 w-4 mr-2" />
+                    Fullscreen
+                  </>
+                )}
+              </Button>
             </DialogTitle>
           </DialogHeader>
-          <div className="px-6 pb-6">
+          <div className={`px-6 pb-6 ${
+            isVideoCallFullscreen ? 'h-[calc(100vh-8rem)]' : ''
+          }`}>
             {selectedPatient && (
               <VideoCall
                 roomName={`GCC-${getPatientCodeById(selectedPatient.id)}`}
                 patientName={selectedPatient.name}
                 onCallEnd={() => {
                   setIsVideoCallDialogOpen(false)
+                  if (isVideoCallFullscreen && document.exitFullscreen) {
+                    document.exitFullscreen()
+                  }
                   toast({
                     title: "Video Call Ended",
                     description: `Video consultation with ${selectedPatient.name} has ended`,
