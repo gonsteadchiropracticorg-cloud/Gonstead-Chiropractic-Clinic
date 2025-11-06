@@ -2386,7 +2386,20 @@ export default function AdminDashboard() {
                                 variant="outline"
                                 onClick={async () => {
                                   const newCount = Math.max(0, (patient.sessions_completed || 0) - 1)
-                                  await updatePatient(patient.id, { sessions_completed: newCount })
+                                  const updatedData = await updatePatient(patient.id, { sessions_completed: newCount })
+                                  
+                                  // Also update localStorage if patient exists there
+                                  try {
+                                    const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+                                    const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
+                                    if (localIndex !== -1) {
+                                      localPatients[localIndex].sessions_completed = newCount
+                                      localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
+                                    }
+                                  } catch (e) {
+                                    console.error("Error updating localStorage:", e)
+                                  }
+                                  
                                   await loadPatients()
                                   toast({
                                     title: "Session Decreased",
@@ -2403,10 +2416,26 @@ export default function AdminDashboard() {
                                 variant="outline"
                                 onClick={async () => {
                                   const newCount = (patient.sessions_completed || 0) + 1
-                                  await updatePatient(patient.id, { 
+                                  const lastVisit = new Date().toISOString()
+                                  
+                                  const updatedData = await updatePatient(patient.id, { 
                                     sessions_completed: newCount,
-                                    last_visit: new Date().toISOString()
+                                    last_visit: lastVisit
                                   })
+                                  
+                                  // Also update localStorage if patient exists there
+                                  try {
+                                    const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+                                    const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
+                                    if (localIndex !== -1) {
+                                      localPatients[localIndex].sessions_completed = newCount
+                                      localPatients[localIndex].last_visit = lastVisit
+                                      localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
+                                    }
+                                  } catch (e) {
+                                    console.error("Error updating localStorage:", e)
+                                  }
+                                  
                                   await loadPatients()
                                   toast({
                                     title: "✅ Session Added",
@@ -2452,7 +2481,21 @@ export default function AdminDashboard() {
                                       onClick={async (e) => {
                                         const input = e.currentTarget.parentElement?.querySelector('input')
                                         const newTotal = parseInt(input?.getAttribute('data-value') || input?.value || '8')
-                                        await updatePatient(patient.id, { total_sessions: newTotal })
+                                        
+                                        const updatedData = await updatePatient(patient.id, { total_sessions: newTotal })
+                                        
+                                        // Also update localStorage if patient exists there
+                                        try {
+                                          const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+                                          const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
+                                          if (localIndex !== -1) {
+                                            localPatients[localIndex].total_sessions = newTotal
+                                            localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
+                                          }
+                                        } catch (err) {
+                                          console.error("Error updating localStorage:", err)
+                                        }
+                                        
                                         await loadPatients()
                                         toast({
                                           title: "Total Sessions Updated",
