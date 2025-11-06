@@ -434,22 +434,60 @@ export default function AdminDashboard() {
         sessions_completed: 0,
         booking_source: "admin_dashboard" as const, // Mark as admin-created
       }
+      
+      console.log("[Mobile Debug] Starting patient creation...", { isMobile: window.innerWidth < 768 })
       const newPatientRecord = await createPatient(patientData)
+      console.log("[Mobile Debug] Patient created in Supabase:", newPatientRecord?.id)
       
       // Mark admin-created patients as viewed immediately (no red dot needed)
       if (newPatientRecord?.id) {
         setViewedPatients(prev => new Set([...prev, newPatientRecord.id]))
         
-        // Sync with localStorage for consistency across all components
-        const existingPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-        const updatedPatients = [newPatientRecord, ...existingPatients]
-        localStorage.setItem("gonstead_patients", JSON.stringify(updatedPatients))
+        // Mobile-compatible localStorage sync with error handling
+        let localStorageSaved = false
+        try {
+          // Check if localStorage is available (might be disabled on mobile)
+          if (typeof localStorage !== 'undefined') {
+            const existingPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+            const updatedPatients = [newPatientRecord, ...existingPatients]
+            localStorage.setItem("gonstead_patients", JSON.stringify(updatedPatients))
+            localStorageSaved = true
+            console.log("[Mobile Debug] Saved to localStorage successfully")
+          } else {
+            console.warn("[Mobile Debug] localStorage not available")
+          }
+        } catch (storageError) {
+          console.error("[Mobile Debug] localStorage error (mobile restriction?):", storageError)
+          // Continue execution - don't fail the entire operation
+        }
         
-        // Trigger medicalRecordsUpdated event for Medical History page to sync
-        window.dispatchEvent(new CustomEvent('medicalRecordsUpdated'))
+        // Always trigger event - medical history will fetch from Supabase if localStorage fails
+        try {
+          window.dispatchEvent(new CustomEvent('medicalRecordsUpdated', { 
+            detail: { 
+              patientId: newPatientRecord.id,
+              localStorageAvailable: localStorageSaved,
+              timestamp: new Date().toISOString()
+            } 
+          }))
+          console.log("[Mobile Debug] Event dispatched successfully")
+        } catch (eventError) {
+          console.error("[Mobile Debug] Event dispatch error:", eventError)
+        }
         
         // Audit: create
-        try { await addAuditLog({ action: 'create', entity_type: 'patient', entity_id: newPatientRecord.id, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { after: newPatientRecord } }) } catch {}
+        try { 
+          const adminEmail = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_email') : null
+          await addAuditLog({ 
+            action: 'create', 
+            entity_type: 'patient', 
+            entity_id: newPatientRecord.id, 
+            actor_email: adminEmail || undefined, 
+            source: 'admin_dashboard', 
+            reversible: true, 
+            meta: { after: newPatientRecord, localStorageSaved } 
+          }) 
+        } catch {}
         
         // DO NOT automatically create medical records - only patient records
         // Medical records should be created separately via Medical History page
@@ -469,13 +507,13 @@ export default function AdminDashboard() {
       })
       toast({
         title: "✅ Patient Successfully Added",
-        description: `${newPatient.name} has been registered. The record is now available in Medical History.`,
+        description: `${newPatient.name} has been registered and saved to database. Refresh Medical History to view.`,
       })
     } catch (error) {
-      console.error("Error adding patient:", error)
+      console.error("[Mobile Debug] Error adding patient:", error)
       toast({
         title: "Error",
-        description: "Failed to add patient. Please check your connection and try again.",
+        description: `Failed to add patient. ${error instanceof Error ? error.message : 'Please check your connection and try again.'}`,
         variant: "destructive",
       })
     }
