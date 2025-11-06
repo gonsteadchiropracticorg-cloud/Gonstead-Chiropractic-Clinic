@@ -4150,11 +4150,13 @@ Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTim
           ref={videoCallDialogRef}
           className={`${
             isVideoCallFullscreen 
-              ? 'w-screen h-screen max-w-none max-h-none m-0 rounded-none' 
-              : 'max-w-5xl max-h-[90vh]'
-          } p-0 transition-all duration-300`}
+              ? 'w-screen h-screen max-w-none max-h-none m-0 p-0 rounded-none' 
+              : 'max-w-6xl w-[95vw] max-h-[95vh] h-[90vh]'
+          } overflow-hidden transition-all duration-300`}
         >
-          <DialogHeader className="px-6 pt-6 pb-4">
+          <DialogHeader className={`px-6 pt-6 pb-4 ${
+            isVideoCallFullscreen ? 'absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm' : ''
+          }`}>
             <DialogTitle className="text-[#0d5c75] font-poppins flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Video className="h-5 w-5" />
@@ -4181,13 +4183,16 @@ Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTim
               </Button>
             </DialogTitle>
           </DialogHeader>
-          <div className={`px-6 pb-6 ${
-            isVideoCallFullscreen ? 'h-[calc(100vh-8rem)]' : ''
+          <div className={`${
+            isVideoCallFullscreen 
+              ? 'h-screen w-screen' 
+              : 'h-[calc(90vh-8rem)] px-6 pb-6'
           }`}>
             {selectedPatient && (
               <VideoCall
                 roomName={`GCC-${getPatientCodeById(selectedPatient.id)}`}
                 patientName={selectedPatient.name}
+                isFullscreen={isVideoCallFullscreen}
                 onCallEnd={() => {
                   setIsVideoCallDialogOpen(false)
                   if (isVideoCallFullscreen && document.exitFullscreen) {

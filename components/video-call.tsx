@@ -9,9 +9,10 @@ interface VideoCallProps {
   roomName: string
   patientName: string
   onCallEnd?: () => void
+  isFullscreen?: boolean
 }
 
-export function VideoCall({ roomName, patientName, onCallEnd }: VideoCallProps) {
+export function VideoCall({ roomName, patientName, onCallEnd, isFullscreen = false }: VideoCallProps) {
   const jitsiContainerRef = useRef<HTMLDivElement>(null)
   const [api, setApi] = useState<any>(null)
   const [isVideoOn, setIsVideoOn] = useState(true)
@@ -89,43 +90,52 @@ export function VideoCall({ roomName, patientName, onCallEnd }: VideoCallProps) 
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#238a7a] text-white">
-        <CardTitle className="flex items-center gap-2">
-          <Video className="h-5 w-5" />
-          Emergency Video Consultation - {patientName}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="relative">
-          <div ref={jitsiContainerRef} className="w-full h-96 bg-gray-900 rounded-b-lg" />
+    <div className={`w-full ${
+      isFullscreen ? 'h-full' : 'max-w-4xl mx-auto'
+    }`}>
+      <Card className="w-full h-full">
+        <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#238a7a] text-white">
+          <CardTitle className="flex items-center gap-2">
+            <Video className="h-5 w-5" />
+            Emergency Video Consultation - {patientName}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 h-[calc(100%-4rem)]">
+          <div className="relative w-full h-full">
+            <div 
+              ref={jitsiContainerRef} 
+              className={`w-full bg-gray-900 rounded-b-lg ${
+                isFullscreen ? 'h-full' : 'h-[32rem]'
+              }`}
+            />
 
-          {/* Custom Controls Overlay */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-            <Button
-              variant={isVideoOn ? "default" : "destructive"}
-              size="icon"
-              onClick={toggleVideo}
-              className="rounded-full"
-            >
-              {isVideoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-            </Button>
+            {/* Custom Controls Overlay */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+              <Button
+                variant={isVideoOn ? "default" : "destructive"}
+                size="icon"
+                onClick={toggleVideo}
+                className="rounded-full"
+              >
+                {isVideoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+              </Button>
 
-            <Button
-              variant={isAudioOn ? "default" : "destructive"}
-              size="icon"
-              onClick={toggleAudio}
-              className="rounded-full"
-            >
-              {isAudioOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-            </Button>
+              <Button
+                variant={isAudioOn ? "default" : "destructive"}
+                size="icon"
+                onClick={toggleAudio}
+                className="rounded-full"
+              >
+                {isAudioOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+              </Button>
 
-            <Button variant="destructive" size="icon" onClick={endCall} className="rounded-full">
-              <PhoneOff className="h-4 w-4" />
-            </Button>
+              <Button variant="destructive" size="icon" onClick={endCall} className="rounded-full">
+                <PhoneOff className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
