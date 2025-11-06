@@ -389,56 +389,158 @@ export interface StaffAccount {
 }
 
 
-// Database Functions with hybrid local + cloud storage
+// Database Functions with OFFLINE-FIRST architecture
+// Strategy: Save to localStorage first, then sync to Supabase in background
 export const createPatient = async (patientData: Omit<Patient, "id" | "created_at" | "updated_at">) => {
   try {
     const timestamp = new Date().toISOString()
+    const tempId = `patient_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    
     const patient = {
+      id: tempId,
       ...patientData,
       created_at: timestamp,
       updated_at: timestamp,
+      _syncStatus: 'pending', // Track sync status
     }
 
+    console.log('[Offline-First] Step 1: Saving to localStorage first...')
+    
+    // STEP 1: Save to localStorage FIRST (immediate, reliable)
+    if (typeof window !== 'undefined') {
+      try {
+        const existingPatients = JSON.parse(localStorage.getItem('gonstead_patients') || '[]')
+        const updatedPatients = [patient, ...existingPatients]
+        localStorage.setItem('gonstead_patients', JSON.stringify(updatedPatients))
+        console.log('[Offline-First] ✅ Saved to localStorage successfully')
+      } catch (storageError) {
+        console.error('[Offline-First] ❌ localStorage save failed:', storageError)
+        // Continue anyway - will try Supabase
+      }
+    }
+
+    // STEP 2: Sync to Supabase in background (non-blocking)
+    console.log('[Offline-First] Step 2: Syncing to Supabase in background...')
+    
+    // Don't await - run in background
+    syncToSupabase(patient).then(supabaseData => {
+      if (supabaseData) {
+        console.log('[Offline-First] ✅ Synced to Supabase successfully')
+        // Update localStorage with real Supabase ID
+        updateLocalStorageWithSupabaseId(tempId, supabaseData.id)
+      }
+    }).catch(syncError => {
+      console.warn('[Offline-First] ⚠️ Background sync to Supabase failed, will retry later:', syncError)
+      // Queue for retry
+      queueForRetry(patient)
+    })
+
+    // Return immediately with local data (don't wait for Supabase)
+    return patient
+    
+  } catch (error) {
+    console.error('[Offline-First] ❌ Critical error in createPatient:', error)
+    throw error
+  }
+}
+
+// Background sync to Supabase
+async function syncToSupabase(patient: any) {
+  try {
+    const { _syncStatus, ...patientData } = patient // Remove sync status before saving to DB
+    
     const { data, error } = await supabase
       .from("patients")
-      .insert(patient)
+      .insert(patientData)
       .select()
       .single()
 
     if (error) throw error
-
-    // Save to local IndexedDB for offline access
-    if (typeof window !== 'undefined') {
-      try {
-        const { localDB } = await import('./local-db')
-        await localDB.savePatient(data)
-      } catch (localError) {
-        console.warn('Failed to save to local cache:', localError)
-      }
-    }
-
     return data
   } catch (error) {
-    console.error("Create patient error:", error)
-    // Offline fallback: save to local only
-    if (typeof window !== 'undefined') {
+    console.error('[Offline-First] Supabase sync error:', error)
+    throw error
+  }
+}
+
+// Update localStorage with real Supabase ID after sync
+function updateLocalStorageWithSupabaseId(tempId: string, supabaseId: string) {
+  try {
+    if (typeof window === 'undefined') return
+    
+    const existingPatients = JSON.parse(localStorage.getItem('gonstead_patients') || '[]')
+    const updatedPatients = existingPatients.map((p: any) => {
+      if (p.id === tempId) {
+        return { ...p, id: supabaseId, _syncStatus: 'synced' }
+      }
+      return p
+    })
+    localStorage.setItem('gonstead_patients', JSON.stringify(updatedPatients))
+    console.log('[Offline-First] Updated localStorage with Supabase ID:', supabaseId)
+  } catch (error) {
+    console.error('[Offline-First] Failed to update localStorage with Supabase ID:', error)
+  }
+}
+
+// Queue failed syncs for retry
+function queueForRetry(patient: any) {
+  try {
+    if (typeof window === 'undefined') return
+    
+    const syncQueue = JSON.parse(localStorage.getItem('sync_queue') || '[]')
+    syncQueue.push({
+      type: 'create_patient',
+      data: patient,
+      timestamp: new Date().toISOString(),
+      retryCount: 0
+    })
+    localStorage.setItem('sync_queue', JSON.stringify(syncQueue))
+    console.log('[Offline-First] Queued for retry, queue length:', syncQueue.length)
+  } catch (error) {
+    console.error('[Offline-First] Failed to queue for retry:', error)
+  }
+}
+
+// Process sync queue (call this periodically or on page load)
+export async function processSyncQueue() {
+  try {
+    if (typeof window === 'undefined') return
+    
+    const syncQueue = JSON.parse(localStorage.getItem('sync_queue') || '[]')
+    if (syncQueue.length === 0) return
+    
+    console.log('[Offline-First] Processing sync queue, items:', syncQueue.length)
+    
+    const remainingQueue = []
+    
+    for (const item of syncQueue) {
       try {
-        const { localDB } = await import('./local-db')
-        const tempId = `temp_${Date.now()}`
-        const localPatient = {
-          id: tempId,
-          ...patientData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+        if (item.type === 'create_patient') {
+          const supabaseData = await syncToSupabase(item.data)
+          if (supabaseData) {
+            updateLocalStorageWithSupabaseId(item.data.id, supabaseData.id)
+            console.log('[Offline-First] ✅ Retried sync successful for:', supabaseData.id)
+          }
         }
-        await localDB.savePatient(localPatient)
-        await localDB.addToSyncQueue('create', 'patients', localPatient)
-        return localPatient
-      } catch (localError) {
-        console.error('Local fallback failed:', localError)
+      } catch (retryError) {
+        console.warn('[Offline-First] Retry failed for item, keeping in queue:', retryError)
+        item.retryCount = (item.retryCount || 0) + 1
+        
+        // Keep in queue if retry count < 5
+        if (item.retryCount < 5) {
+          remainingQueue.push(item)
+        } else {
+          console.error('[Offline-First] Max retries reached, dropping item:', item)
+        }
       }
     }
-    throw error
+    
+    // Update queue with remaining items
+    localStorage.setItem('sync_queue', JSON.stringify(remainingQueue))
+    console.log('[Offline-First] Sync queue processed, remaining:', remainingQueue.length)
+    
+  } catch (error) {
+    console.error('[Offline-First] Error processing sync queue:', error)
   }
 }
 

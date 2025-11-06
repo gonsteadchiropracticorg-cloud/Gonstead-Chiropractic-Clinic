@@ -230,6 +230,17 @@ export default function AdminDashboard() {
   useEffect(() => {
     checkAuthAndLoadData()
     
+    // Process pending sync queue on load (offline-first sync)
+    const processPendingSyncs = async () => {
+      try {
+        const { processSyncQueue } = await import('@/lib/supabase')
+        await processSyncQueue()
+      } catch (error) {
+        console.error('Failed to process sync queue:', error)
+      }
+    }
+    processPendingSyncs()
+    
     // Listen for new appointments from the booking form
     const handleNewAppointment = (event: CustomEvent) => {
       const newPatient = event.detail
