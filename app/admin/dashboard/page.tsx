@@ -66,6 +66,7 @@ const AdminServiceWorkerClient = dynamic(() => import('@/components/AdminService
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 import { SignatureCanvas } from "@/components/SignatureCanvas"
+import { VideoCall } from "@/components/video-call"
 import {
   Menubar,
   MenubarContent,
@@ -2583,19 +2584,20 @@ export default function AdminDashboard() {
                                     Rx
                                   </Button>
 
-                                  {/* Video Call Button */}
-                                  {patient.session_type === "video" && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => startVideoCall(patient)}
-                                      className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white text-xs w-full"
-                                      title="Start Video Call"
-                                    >
-                                      <Video className="h-3 w-3 mr-1" />
-                                      Call
-                                    </Button>
-                                  )}
+                                  {/* Video Call Button - Now available for ALL patients */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      startVideoCall(patient)
+                                      setExpandedActions(new Set())
+                                    }}
+                                    className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white text-xs w-full"
+                                    title="Start Video Call with Patient"
+                                  >
+                                    <Video className="h-3 w-3 mr-1" />
+                                    Video Call
+                                  </Button>
 
                                   {/* Money Management Button */}
                                   <Button
@@ -4077,33 +4079,29 @@ Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTim
         </DialogContent>
       </Dialog>
 
-      {/* Video Call Dialog */}
+      {/* Video Call Dialog with Jitsi Meet Integration */}
       <Dialog open={isVideoCallDialogOpen} onOpenChange={setIsVideoCallDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
+        <DialogContent className="max-w-5xl max-h-[90vh] p-0">
+          <DialogHeader className="px-6 pt-6 pb-4">
             <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
               <Video className="h-5 w-5" />
               Video Consultation - {selectedPatient?.name}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-gray-900 rounded-lg aspect-video flex items-center justify-center">
-              <div className="text-center text-white">
-                <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-semibold">Video Call Interface</p>
-                <p className="text-sm opacity-75">Integration with your preferred video platform</p>
-              </div>
-            </div>
-            <div className="flex justify-center gap-4">
-              <Button className="bg-green-600 hover:bg-green-700 text-white">
-                <Phone className="h-4 w-4 mr-2" />
-                Accept Call
-              </Button>
-              <Button variant="destructive">
-                <Phone className="h-4 w-4 mr-2" />
-                Decline Call
-              </Button>
-            </div>
+          <div className="px-6 pb-6">
+            {selectedPatient && (
+              <VideoCall
+                roomName={`GCC-${getPatientCodeById(selectedPatient.id)}`}
+                patientName={selectedPatient.name}
+                onCallEnd={() => {
+                  setIsVideoCallDialogOpen(false)
+                  toast({
+                    title: "Video Call Ended",
+                    description: `Video consultation with ${selectedPatient.name} has ended`,
+                  })
+                }}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>
