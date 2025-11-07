@@ -413,26 +413,87 @@ export default function AdminDashboard() {
 
   const handleUpdatePatientStatus = async (patientId: string, newStatus: Patient["status"]) => {
     try {
+      const patient = patients.find((p) => p.id === patientId)
+      if (!patient) {
+        toast({
+          title: "Error",
+          description: "Patient not found",
+          variant: "destructive",
+        })
+        return
+      }
+
       const updateData: any = {
         status: newStatus,
       }
 
-      // If status is completed, update sessions and last visit
-      if (newStatus === "completed") {
-        const patient = patients.find((p) => p.id === patientId)
-        updateData.sessions_completed = (patient?.sessions_completed || 0) + 1
+      // Only increment session when transitioning TO completed from another status
+      // This prevents double-incrementing if user selects "completed" multiple times
+      if (newStatus === "completed" && patient.status !== "completed") {
+        updateData.sessions_completed = (patient.sessions_completed || 0) + 1
         updateData.last_visit = new Date().toISOString()
       }
 
-      const prev = patients.find((p) => p.id === patientId)
+      const prev = { 
+        status: patient.status, 
+        sessions_completed: patient.sessions_completed, 
+        last_visit: patient.last_visit 
+      }
+      
+      // Update in Supabase
       await updatePatient(patientId, updateData)
+      
+      // Also update in localStorage if patient exists there
+      try {
+        const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+        const localIndex = localPatients.findIndex((p: Patient) => p.id === patientId)
+        if (localIndex !== -1) {
+          localPatients[localIndex] = {
+            ...localPatients[localIndex],
+            ...updateData,
+            updated_at: new Date().toISOString()
+          }
+          localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
+        }
+      } catch (e) {
+        console.error("Error updating localStorage:", e)
+      }
+      
       // Audit: update status
-      try { await addAuditLog({ action: 'update', entity_type: 'patient', entity_id: patientId, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before: { status: prev?.status, sessions_completed: prev?.sessions_completed, last_visit: prev?.last_visit }, after: { status: newStatus, sessions_completed: updateData.sessions_completed, last_visit: updateData.last_visit } } }) } catch {}
+      try { 
+        await addAuditLog({ 
+          action: 'update', 
+          entity_type: 'patient', 
+          entity_id: patientId, 
+          actor_email: localStorage.getItem('admin_email') || undefined, 
+          source: 'admin_dashboard', 
+          reversible: true, 
+          meta: { 
+            before: prev, 
+            after: { 
+              status: newStatus, 
+              sessions_completed: updateData.sessions_completed, 
+              last_visit: updateData.last_visit 
+            },
+            transitioned_to_completed: newStatus === "completed" && patient.status !== "completed"
+          } 
+        }) 
+      } catch {}
+      
       await loadPatients()
-      toast({
-        title: "✅ Status Successfully Updated",
-        description: `Patient status has been changed to ${newStatus.toUpperCase()} and records updated`,
-      })
+      
+      // Show different messages based on whether session was incremented
+      if (newStatus === "completed" && patient.status !== "completed") {
+        toast({
+          title: "✅ Status & Session Updated",
+          description: `Status changed to COMPLETED and session count incremented to ${updateData.sessions_completed}`,
+        })
+      } else {
+        toast({
+          title: "✅ Status Successfully Updated",
+          description: `Patient status has been changed to ${newStatus.toUpperCase()}`,
+        })
+      }
     } catch (error) {
       console.error("Error updating patient:", error)
       toast({
