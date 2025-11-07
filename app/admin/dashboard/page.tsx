@@ -118,7 +118,26 @@ export default function AdminDashboard() {
     urgency: "normal" as "normal" | "urgent" | "emergency",
     payment_method: "cash" as "cash" | "jazzcash" | "easypaisa",
     notes: "",
+    // Advanced mode fields
+    dateOfBirth: "",
+    profession: "",
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    symptoms: "",
+    previousTreatment: "",
+    emergencyContact: "",
+    emergencyPhone: "",
+    insurance: "",
   })
+  
+  // Add patient registration mode state
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false)
+  const [registrationStep, setRegistrationStep] = useState(1)
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([])
+  const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(undefined)
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
   
   // Prescription dialog state variables
   const [isPrescriptionDialogOpen, setIsPrescriptionDialogOpen] = useState(false)
@@ -519,9 +538,93 @@ export default function AdminDashboard() {
     }
   }
 
+  // Generate available time slots with 40-minute gaps
+  const generateTimeSlots = (date: Date) => {
+    const slots: string[] = []
+    const startHour = 8 // 8 AM
+    const endHour = 18 // 6 PM
+    const intervalMinutes = 40
+    
+    // Check if selected date is Sunday (0 = Sunday)
+    if (date.getDay() === 0) {
+      return [] // No slots on Sunday
+    }
+    
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += intervalMinutes) {
+        const totalMinutes = hour * 60 + minute
+        if (totalMinutes >= startHour * 60 && totalMinutes < endHour * 60) {
+          const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+          const period = hour >= 12 ? 'PM' : 'AM'
+          const formattedMinute = minute.toString().padStart(2, '0')
+          slots.push(`${displayHour}:${formattedMinute} ${period}`)
+        }
+      }
+    }
+    
+    // Filter out already booked slots for the selected date
+    const dateStr = date.toDateString()
+    const bookedSlots = patients
+      .filter(p => new Date(p.appointment_date).toDateString() === dateStr)
+      .map(p => {
+        const apptDate = new Date(p.appointment_date)
+        const hour = apptDate.getHours()
+        const minute = apptDate.getMinutes()
+        const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+        const period = hour >= 12 ? 'PM' : 'AM'
+        return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`
+      })
+    
+    return slots.filter(slot => !bookedSlots.includes(slot))
+  }
+  
+  // Update available slots when date changes for appointment booking
+  const handleAppointmentDateSelection = (date: Date | undefined) => {
+    setAppointmentDate(date)
+    if (date) {
+      const slots = generateTimeSlots(date)
+      setAvailableTimeSlots(slots)
+      if (slots.length === 0) {
+        toast({
+          title: date.getDay() === 0 ? "🚫 Clinic Closed on Sundays" : "📅 All Slots Booked",
+          description: date.getDay() === 0 
+            ? "Our clinic is closed on Sundays. Please select Monday-Saturday."
+            : "All appointment slots are booked for this date. Please select another date.",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
+  const combineDateAndSlot = (date: Date, slot: string): string => {
+    try {
+      const [time, period] = slot.split(' ')
+      const [hStr, mStr] = time.split(':')
+      let h = parseInt(hStr, 10)
+      if (period === 'PM' && h < 12) h += 12
+      if (period === 'AM' && h === 12) h = 0
+      const y = date.getFullYear()
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const d = String(date.getDate()).padStart(2, '0')
+      const hh = String(h).padStart(2, '0')
+      const mm = mStr.padStart(2, '0')
+      return `${y}-${m}-${d}T${hh}:${mm}`
+    } catch {
+      return ''
+    }
+  }
+
   const handleAddPatient = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      if (isAdvancedMode && !newPatient.appointment_date) {
+        toast({
+          title: "Select time slot",
+          description: "Please select a date and an available time slot.",
+          variant: "destructive",
+        })
+        return
+      }
       const patientData = {
         ...newPatient,
         status: "pending" as const,
@@ -599,6 +702,9 @@ export default function AdminDashboard() {
         payment_method: "cash",
         notes: "",
       })
+      setAppointmentDate(undefined)
+      setAvailableTimeSlots([])
+      setSelectedTimeSlot(null)
       toast({
         title: "✅ Patient Successfully Added",
         description: `${newPatient.name} has been registered and saved to database. Refresh Medical History to view.`,
@@ -1428,8 +1534,8 @@ export default function AdminDashboard() {
     return patients.filter((p) => new Date(p.appointment_date).toDateString() === targetDate)
   }
 
-  // Handle date selection from date picker
-  const handleDateSelection = (date: string) => {
+  // Handle date selection from date picker for filtering
+  const handleDatePickerSelection = (date: string) => {
     setSelectedDate(date)
     const appointmentsForDate = getAppointmentsForDate(date)
     setSelectedDateAppointments(appointmentsForDate)
@@ -1723,11 +1829,23 @@ export default function AdminDashboard() {
                       <span className="hidden md:inline ml-1">Add</span>
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="max-w-4xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2 text-sm sm:text-base">
-                        <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
-                        Add New Patient (Phone Call)
+                      <DialogTitle className="text-[#0d5c75] font-poppins flex items-center justify-between text-sm sm:text-base">
+                        <div className="flex items-center gap-2">
+                          <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+                          Add New Patient {isAdvancedMode ? '(Advanced Booking)' : '(Quick Registration)'}
+                        </div>
+                        {/* Mode Toggle Switch */}
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-medium ${ !isAdvancedMode ? 'text-[#2a9d8f]' : 'text-gray-400'}`}>Basic</span>
+                          <Switch
+                            checked={isAdvancedMode}
+                            onCheckedChange={setIsAdvancedMode}
+                            className="data-[state=checked]:bg-[#8b5cf6]"
+                          />
+                          <span className={`text-xs font-medium ${isAdvancedMode ? 'text-[#8b5cf6]' : 'text-gray-400'}`}>Advanced</span>
+                        </div>
                       </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleAddPatient} className="space-y-3 sm:space-y-4">
@@ -1801,15 +1919,69 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="appointment_date" className="text-sm">Appointment Date & Time *</Label>
-                        <Input
-                          id="appointment_date"
-                          type="datetime-local"
-                          value={newPatient.appointment_date}
-                          onChange={(e) => setNewPatient((prev) => ({ ...prev, appointment_date: e.target.value }))}
-                          required
-                          className="text-sm"
-                        />
+                        {isAdvancedMode ? (
+                          <div className="space-y-2">
+                            <Label htmlFor="appointment_date_date" className="text-sm">Appointment Date *</Label>
+                            <Input
+                              id="appointment_date_date"
+                              type="date"
+                              value={appointmentDate ? appointmentDate.toISOString().split('T')[0] : ''}
+                              onChange={(e) => {
+                                const d = e.target.value ? new Date(e.target.value) : undefined
+                                handleAppointmentDateSelection(d)
+                                setSelectedTimeSlot(null)
+                                setNewPatient((prev) => ({ ...prev, appointment_date: '' }))
+                              }}
+                              required
+                              className="text-sm"
+                            />
+                            {appointmentDate && appointmentDate.getDay() === 0 && (
+                              <p className="text-xs text-red-600">Clinic is closed on Sundays. Please choose another date.</p>
+                            )}
+                            {appointmentDate && (
+                              <div className="space-y-1">
+                                <Label className="text-xs">Available Time Slots</Label>
+                                {availableTimeSlots.length > 0 ? (
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                    {availableTimeSlots.map((slot) => (
+                                      <Button
+                                        key={slot}
+                                        size="sm"
+                                        variant={selectedTimeSlot === slot ? "default" : "outline"}
+                                        onClick={() => {
+                                          if (!appointmentDate) return
+                                          const dt = combineDateAndSlot(appointmentDate, slot)
+                                          setSelectedTimeSlot(slot)
+                                          setNewPatient((prev) => ({ ...prev, appointment_date: dt }))
+                                        }}
+                                        className={selectedTimeSlot === slot ? "bg-[#2a9d8f] text-white" : "text-xs"}
+                                      >
+                                        {slot}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-gray-500">No available slots for this date.</p>
+                                )}
+                              </div>
+                            )}
+                            {selectedTimeSlot && newPatient.appointment_date && (
+                              <p className="text-xs text-green-600">Selected: {new Date(newPatient.appointment_date).toLocaleDateString()} at {new Date(newPatient.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <div>
+                            <Label htmlFor="appointment_date" className="text-sm">Appointment Date & Time *</Label>
+                            <Input
+                              id="appointment_date"
+                              type="datetime-local"
+                              value={newPatient.appointment_date}
+                              onChange={(e) => setNewPatient((prev) => ({ ...prev, appointment_date: e.target.value }))}
+                              required
+                              className="text-sm"
+                            />
+                          </div>
+                        )}
                       </div>
                       <div>
                         <Label htmlFor="notes" className="text-sm">Notes</Label>
@@ -2049,7 +2221,7 @@ export default function AdminDashboard() {
                     <Input
                       type="date"
                       value={selectedDate}
-                      onChange={(e) => handleDateSelection(e.target.value)}
+                      onChange={(e) => handleDatePickerSelection(e.target.value)}
                       className={`text-sm ${isDarkMode ? "bg-gray-700 border-gray-600 text-white" : ""}`}
                     />
                   </div>
@@ -2064,7 +2236,7 @@ export default function AdminDashboard() {
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            handleDateSelection(option.date)
+                            handleDatePickerSelection(option.date)
                             setIsDatePickerOpen(false)
                           }}
                           className={`text-xs h-8 ${isDarkMode ? "border-gray-600 text-gray-300 hover:bg-gray-700" : ""}`}
