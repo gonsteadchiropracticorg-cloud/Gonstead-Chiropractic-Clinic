@@ -442,33 +442,45 @@ export default function AdminDashboard() {
         return
       }
 
-      const updateData: any = {
-        status: newStatus,
+      // Helper: derive status from session counts (0 => pending, 1..(total-1) => confirmed, >= total => completed)
+      const deriveStatus = (completed: number, total?: number): Patient["status"] => {
+        const t = total && total > 0 ? total : 8
+        if ((completed || 0) >= t) return "completed"
+        if ((completed || 0) <= 0) return "pending"
+        return "confirmed"
       }
 
+      const updateData: any = {}
+
+      const total = patient.total_sessions || 8
+      const prevCount = patient.sessions_completed || 0
+      let newCount = prevCount
       let incremented = false
-      // Only increment session when transitioning TO completed from another status
-      if (newStatus === "completed" && patient.status !== "completed") {
-        const total = patient.total_sessions || 8
-        const prevCount = patient.sessions_completed || 0
-        const capped = Math.min(total, prevCount + 1)
-        if (capped > prevCount) {
-          updateData.sessions_completed = capped
-          incremented = true
-        }
-        // still record last visit on completion transition
+
+      if (newStatus === "completed") {
+        // Treat 'completed' action as: one session has been completed now
+        newCount = Math.min(total, prevCount + 1)
+        incremented = newCount > prevCount
+        updateData.sessions_completed = newCount
         updateData.last_visit = new Date().toISOString()
+        updateData.status = deriveStatus(newCount, total)
+      } else if (newStatus === "cancelled") {
+        // Respect explicit cancellation
+        updateData.status = "cancelled"
+      } else {
+        // For 'pending' or 'confirmed' clicks, always align with counts automatically
+        updateData.status = deriveStatus(prevCount, total)
       }
 
-      const prev = { 
-        status: patient.status, 
-        sessions_completed: patient.sessions_completed, 
-        last_visit: patient.last_visit 
+      const prev = {
+        status: patient.status,
+        sessions_completed: patient.sessions_completed,
+        last_visit: patient.last_visit,
       }
-      
+
       // Update in Supabase
       await updatePatient(patientId, updateData)
-      
+
       // Also update in localStorage if patient exists there
       try {
         const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
@@ -477,55 +489,60 @@ export default function AdminDashboard() {
           localPatients[localIndex] = {
             ...localPatients[localIndex],
             ...updateData,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
           }
           localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
         }
       } catch (e) {
         console.error("Error updating localStorage:", e)
       }
-      
+
       // Audit: update status
-      try { 
-        await addAuditLog({ 
-          action: 'update', 
-          entity_type: 'patient', 
-          entity_id: patientId, 
-          actor_email: localStorage.getItem('admin_email') || undefined, 
-          source: 'admin_dashboard', 
-          reversible: true, 
-          meta: { 
-            before: prev, 
-            after: { 
-              status: newStatus, 
-              sessions_completed: updateData.sessions_completed, 
-              last_visit: updateData.last_visit 
+      try {
+        await addAuditLog({
+          action: 'update',
+          entity_type: 'patient',
+          entity_id: patientId,
+          actor_email: localStorage.getItem('admin_email') || undefined,
+          source: 'admin_dashboard',
+          reversible: true,
+          meta: {
+            before: prev,
+            after: {
+              status: updateData.status,
+              sessions_completed: updateData.sessions_completed,
+              last_visit: updateData.last_visit,
             },
-            transitioned_to_completed: newStatus === "completed" && patient.status !== "completed",
-            session_incremented: incremented
-          } 
-        }) 
+            action_requested: newStatus,
+            session_incremented: incremented,
+          },
+        })
       } catch {}
-      
+
       await loadPatients()
-      
-      // Show different messages based on whether session was incremented
-      if (newStatus === "completed" && patient.status !== "completed") {
+
+      // Toaster feedback
+      if (newStatus === "completed") {
         if (incremented) {
           toast({
-            title: "✅ Status & Session Updated",
-            description: `Status changed to COMPLETED and session count incremented to ${updateData.sessions_completed}`,
+            title: "✅ Session Recorded",
+            description: `Session ${newCount} of ${total} recorded. Status set to ${String(updateData.status).toUpperCase()}.`,
           })
         } else {
           toast({
-            title: "✅ Status Updated",
-            description: `Already at maximum sessions. Status changed to COMPLETED without increasing sessions.`,
+            title: "ℹ️ No Change",
+            description: `Already at maximum sessions (${total}). Status remains ${String(updateData.status).toUpperCase()}.`,
           })
         }
+      } else if (newStatus === "cancelled") {
+        toast({
+          title: "✅ Status Updated",
+          description: `Patient has been marked as CANCELLED`,
+        })
       } else {
         toast({
-          title: "✅ Status Successfully Updated",
-          description: `Patient status has been changed to ${newStatus.toUpperCase()}`,
+          title: "✅ Status Synchronized",
+          description: `Status set to ${String(updateData.status).toUpperCase()} based on session progress (${prevCount}/${total}).`,
         })
       }
     } catch (error) {
@@ -1507,16 +1524,25 @@ export default function AdminDashboard() {
     if (!editingPatient) return
 
     try {
+      // Auto-derive status from sessions before saving (unless explicitly cancelled)
+      const total = editingPatient.total_sessions || 8
+      const completed = editingPatient.sessions_completed || 0
+      const derivedStatus: Patient["status"] = editingPatient.status === 'cancelled'
+        ? 'cancelled'
+        : (completed >= total ? 'completed' : (completed <= 0 ? 'pending' : 'confirmed'))
+
+      const payload = { ...editingPatient, status: derivedStatus }
+
       const before = patients.find(p => p.id === editingPatient.id)
-      await updatePatient(editingPatient.id, editingPatient)
+      await updatePatient(editingPatient.id, payload)
       // Audit: update
-      try { await addAuditLog({ action: 'update', entity_type: 'patient', entity_id: editingPatient.id, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before, after: editingPatient } }) } catch {}
+      try { await addAuditLog({ action: 'update', entity_type: 'patient', entity_id: editingPatient.id, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before, after: payload } }) } catch {}
       await loadPatients()
       setIsEditPatientDialogOpen(false)
       setEditingPatient(null)
       toast({
         title: "Patient Updated",
-        description: "Patient information has been successfully updated",
+        description: `Saved. Status is now ${derivedStatus.toUpperCase()} based on ${completed}/${total} sessions.`,
       })
     } catch (error) {
       console.error("Error updating patient:", error)
