@@ -427,10 +427,17 @@ export default function AdminDashboard() {
         status: newStatus,
       }
 
+      let incremented = false
       // Only increment session when transitioning TO completed from another status
-      // This prevents double-incrementing if user selects "completed" multiple times
       if (newStatus === "completed" && patient.status !== "completed") {
-        updateData.sessions_completed = (patient.sessions_completed || 0) + 1
+        const total = patient.total_sessions || 8
+        const prevCount = patient.sessions_completed || 0
+        const capped = Math.min(total, prevCount + 1)
+        if (capped > prevCount) {
+          updateData.sessions_completed = capped
+          incremented = true
+        }
+        // still record last visit on completion transition
         updateData.last_visit = new Date().toISOString()
       }
 
@@ -475,7 +482,8 @@ export default function AdminDashboard() {
               sessions_completed: updateData.sessions_completed, 
               last_visit: updateData.last_visit 
             },
-            transitioned_to_completed: newStatus === "completed" && patient.status !== "completed"
+            transitioned_to_completed: newStatus === "completed" && patient.status !== "completed",
+            session_incremented: incremented
           } 
         }) 
       } catch {}
@@ -484,10 +492,17 @@ export default function AdminDashboard() {
       
       // Show different messages based on whether session was incremented
       if (newStatus === "completed" && patient.status !== "completed") {
-        toast({
-          title: "✅ Status & Session Updated",
-          description: `Status changed to COMPLETED and session count incremented to ${updateData.sessions_completed}`,
-        })
+        if (incremented) {
+          toast({
+            title: "✅ Status & Session Updated",
+            description: `Status changed to COMPLETED and session count incremented to ${updateData.sessions_completed}`,
+          })
+        } else {
+          toast({
+            title: "✅ Status Updated",
+            description: `Already at maximum sessions. Status changed to COMPLETED without increasing sessions.`,
+          })
+        }
       } else {
         toast({
           title: "✅ Status Successfully Updated",
@@ -2476,11 +2491,20 @@ export default function AdminDashboard() {
                                 size="sm"
                                 variant="outline"
                                 onClick={async () => {
-                                  const newCount = (patient.sessions_completed || 0) + 1
+                                  const total = patient.total_sessions || 8
+                                  const prev = patient.sessions_completed || 0
+                                  const capped = Math.min(total, prev + 1)
+                                  if (capped === prev) {
+                                    toast({
+                                      title: "Max Sessions Reached",
+                                      description: `${patient.name} is already at ${prev}/${total} sessions`,
+                                    })
+                                    return
+                                  }
                                   const lastVisit = new Date().toISOString()
                                   
-                                  const updatedData = await updatePatient(patient.id, { 
-                                    sessions_completed: newCount,
+                                  await updatePatient(patient.id, { 
+                                    sessions_completed: capped,
                                     last_visit: lastVisit
                                   })
                                   
@@ -2489,7 +2513,7 @@ export default function AdminDashboard() {
                                     const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
                                     const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
                                     if (localIndex !== -1) {
-                                      localPatients[localIndex].sessions_completed = newCount
+                                      localPatients[localIndex].sessions_completed = capped
                                       localPatients[localIndex].last_visit = lastVisit
                                       localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
                                     }
@@ -2500,7 +2524,7 @@ export default function AdminDashboard() {
                                   await loadPatients()
                                   toast({
                                     title: "✅ Session Added",
-                                    description: `${patient.name}: ${newCount}/${patient.total_sessions || 8} sessions`,
+                                    description: `${patient.name}: ${capped}/${total} sessions`,
                                   })
                                 }}
                                 className="h-6 w-6 p-0 border-green-600 text-green-600 hover:bg-green-50"
@@ -2543,7 +2567,13 @@ export default function AdminDashboard() {
                                         const input = e.currentTarget.parentElement?.querySelector('input')
                                         const newTotal = parseInt(input?.getAttribute('data-value') || input?.value || '8')
                                         
-                                        const updatedData = await updatePatient(patient.id, { total_sessions: newTotal })
+                                        await updatePatient(patient.id, { total_sessions: newTotal })
+                                        
+                                        // If sessions completed exceed new total, cap them
+                                        const currentCompleted = patient.sessions_completed || 0
+                                        if (currentCompleted > newTotal) {
+                                          await updatePatient(patient.id, { sessions_completed: newTotal })
+                                        }
                                         
                                         // Also update localStorage if patient exists there
                                         try {
@@ -2551,6 +2581,9 @@ export default function AdminDashboard() {
                                           const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
                                           if (localIndex !== -1) {
                                             localPatients[localIndex].total_sessions = newTotal
+                                            if ((localPatients[localIndex].sessions_completed || 0) > newTotal) {
+                                              localPatients[localIndex].sessions_completed = newTotal
+                                            }
                                             localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
                                           }
                                         } catch (err) {
@@ -2560,7 +2593,7 @@ export default function AdminDashboard() {
                                         await loadPatients()
                                         toast({
                                           title: "Total Sessions Updated",
-                                          description: `${patient.name} now has ${newTotal} total sessions prescribed`,
+                                          description: `${patient.name} now has ${newTotal} total sessions prescribed${currentCompleted > newTotal ? ' (completed sessions capped to match total)' : ''}`,
                                         })
                                         // Close dialog
                                         const closeBtn = e.currentTarget.parentElement?.parentElement?.querySelector('[aria-label="Close"]') as HTMLElement
