@@ -495,8 +495,10 @@ export default function AdminDashboard() {
         updateData.last_visit = new Date().toISOString()
         updateData.status = deriveStatus(newCount, total)
       } else if (newStatus === "cancelled") {
-        // Respect explicit cancellation
+        // Respect explicit cancellation and reset sessions to 0/0
         updateData.status = "cancelled"
+        updateData.sessions_completed = 0
+        updateData.total_sessions = 0
       } else {
         // For 'pending' or 'confirmed' clicks, always align with counts automatically
         updateData.status = deriveStatus(prevCount, total)
@@ -1561,7 +1563,11 @@ export default function AdminDashboard() {
         ? 'cancelled'
         : (completed >= total ? 'completed' : (completed <= 0 ? 'pending' : 'confirmed'))
 
-      const payload = { ...editingPatient, status: derivedStatus }
+      const payload = { 
+        ...editingPatient, 
+        status: derivedStatus,
+        ...(derivedStatus === 'cancelled' ? { total_sessions: 0, sessions_completed: 0 } : {})
+      }
 
       const before = patients.find(p => p.id === editingPatient.id)
       await updatePatient(editingPatient.id, payload)
@@ -2761,11 +2767,11 @@ export default function AdminDashboard() {
                             <div className="text-center">
                               <div className="flex items-center justify-center gap-1">
                                 <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                                  {patient.sessions_completed || 0}
+                                  {patient.status === "cancelled" ? 0 : (patient.sessions_completed || 0)}
                                 </div>
                                 <div className={`text-lg ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>/</div>
                                 <div className={`text-lg font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                  {patient.total_sessions || 8}
+                                  {patient.status === "cancelled" ? 0 : (patient.total_sessions || 8)}
                                 </div>
                               </div>
                               <div className="text-xs text-gray-500 mt-1">sessions</div>
@@ -2777,8 +2783,14 @@ export default function AdminDashboard() {
                                 size="sm"
                                 variant="outline"
                                 onClick={async () => {
+                                  if (patient.status === "cancelled") {
+                                    toast({ title: "Cannot modify sessions", description: "This patient is cancelled. Un-cancel to adjust sessions." })
+                                    return
+                                  }
+                                  const total = patient.total_sessions || 8
                                   const newCount = Math.max(0, (patient.sessions_completed || 0) - 1)
-                                  const updatedData = await updatePatient(patient.id, { sessions_completed: newCount })
+                                  const newStatus: Patient["status"] = newCount >= total ? "completed" : (newCount <= 0 ? "pending" : "confirmed")
+                                  await updatePatient(patient.id, { sessions_completed: newCount, status: newStatus })
                                   
                                   // Also update localStorage if patient exists there
                                   try {
@@ -2786,6 +2798,7 @@ export default function AdminDashboard() {
                                     const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
                                     if (localIndex !== -1) {
                                       localPatients[localIndex].sessions_completed = newCount
+                                      localPatients[localIndex].status = newStatus
                                       localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
                                     }
                                   } catch (e) {
@@ -2795,7 +2808,7 @@ export default function AdminDashboard() {
                                   await loadPatients()
                                   toast({
                                     title: "Session Decreased",
-                                    description: `${patient.name}: ${newCount}/${patient.total_sessions || 8} sessions`,
+                                    description: `${patient.name}: ${newCount}/${total} sessions • Status: ${newStatus.toUpperCase()}`,
                                   })
                                 }}
                                 className="h-6 w-6 p-0 border-red-500 text-red-600 hover:bg-red-50"
@@ -2807,6 +2820,10 @@ export default function AdminDashboard() {
                                 size="sm"
                                 variant="outline"
                                 onClick={async () => {
+                                  if (patient.status === "cancelled") {
+                                    toast({ title: "Cannot modify sessions", description: "This patient is cancelled. Un-cancel to adjust sessions." })
+                                    return
+                                  }
                                   const total = patient.total_sessions || 8
                                   const prev = patient.sessions_completed || 0
                                   const capped = Math.min(total, prev + 1)
@@ -2818,10 +2835,12 @@ export default function AdminDashboard() {
                                     return
                                   }
                                   const lastVisit = new Date().toISOString()
+                                  const newStatus: Patient["status"] = capped >= total ? "completed" : (capped <= 0 ? "pending" : "confirmed")
                                   
                                   await updatePatient(patient.id, { 
                                     sessions_completed: capped,
-                                    last_visit: lastVisit
+                                    last_visit: lastVisit,
+                                    status: newStatus
                                   })
                                   
                                   // Also update localStorage if patient exists there
@@ -2831,6 +2850,7 @@ export default function AdminDashboard() {
                                     if (localIndex !== -1) {
                                       localPatients[localIndex].sessions_completed = capped
                                       localPatients[localIndex].last_visit = lastVisit
+                                      localPatients[localIndex].status = newStatus
                                       localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
                                     }
                                   } catch (e) {
@@ -2840,7 +2860,7 @@ export default function AdminDashboard() {
                                   await loadPatients()
                                   toast({
                                     title: "✅ Session Added",
-                                    description: `${patient.name}: ${capped}/${total} sessions`,
+                                    description: `${patient.name}: ${capped}/${total} sessions • Status: ${newStatus.toUpperCase()}`,
                                   })
                                 }}
                                 className="h-6 w-6 p-0 border-green-600 text-green-600 hover:bg-green-50"
@@ -2882,14 +2902,15 @@ export default function AdminDashboard() {
                                       onClick={async (e) => {
                                         const input = e.currentTarget.parentElement?.querySelector('input')
                                         const newTotal = parseInt(input?.getAttribute('data-value') || input?.value || '8')
-                                        
-                                        await updatePatient(patient.id, { total_sessions: newTotal })
-                                        
-                                        // If sessions completed exceed new total, cap them
                                         const currentCompleted = patient.sessions_completed || 0
-                                        if (currentCompleted > newTotal) {
-                                          await updatePatient(patient.id, { sessions_completed: newTotal })
-                                        }
+                                        const finalCompleted = Math.min(currentCompleted, newTotal)
+                                        const newStatus: Patient["status"] = finalCompleted >= newTotal ? "completed" : (finalCompleted <= 0 ? "pending" : "confirmed")
+                                        
+                                        await updatePatient(patient.id, { 
+                                          total_sessions: newTotal,
+                                          sessions_completed: finalCompleted,
+                                          status: newStatus
+                                        })
                                         
                                         // Also update localStorage if patient exists there
                                         try {
@@ -2897,9 +2918,8 @@ export default function AdminDashboard() {
                                           const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
                                           if (localIndex !== -1) {
                                             localPatients[localIndex].total_sessions = newTotal
-                                            if ((localPatients[localIndex].sessions_completed || 0) > newTotal) {
-                                              localPatients[localIndex].sessions_completed = newTotal
-                                            }
+                                            localPatients[localIndex].sessions_completed = finalCompleted
+                                            localPatients[localIndex].status = newStatus
                                             localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
                                           }
                                         } catch (err) {
@@ -2909,7 +2929,7 @@ export default function AdminDashboard() {
                                         await loadPatients()
                                         toast({
                                           title: "Total Sessions Updated",
-                                          description: `${patient.name} now has ${newTotal} total sessions prescribed${currentCompleted > newTotal ? ' (completed sessions capped to match total)' : ''}`,
+                                          description: `${patient.name} now has ${newTotal} total sessions prescribed • Status: ${newStatus.toUpperCase()}`,
                                         })
                                         // Close dialog
                                         const closeBtn = e.currentTarget.parentElement?.parentElement?.querySelector('[aria-label="Close"]') as HTMLElement
@@ -3262,11 +3282,11 @@ export default function AdminDashboard() {
                       <p className="text-sm">
                         <span className="font-medium">Progress:</span> 
                         <span className={`ml-2 text-xl font-bold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>
-                          {selectedPatientDetail.sessions_completed || 0}
+                          {selectedPatientDetail.status === 'cancelled' ? 0 : (selectedPatientDetail.sessions_completed || 0)}
                         </span>
                         <span className="text-gray-500">/</span>
                         <span className="text-lg font-semibold text-gray-600">
-                          {selectedPatientDetail.total_sessions || 8}
+                          {selectedPatientDetail.status === 'cancelled' ? 0 : (selectedPatientDetail.total_sessions || 8)}
                         </span>
                         <span className="ml-1 text-sm text-gray-500">sessions</span>
                       </p>
@@ -3722,7 +3742,7 @@ export default function AdminDashboard() {
                   </p>
                   <p style={{ margin: "0", fontSize: "13px" }}>
                     <strong>Treatment Progress:</strong>{" "}
-                    <span style={{ 
+                      <span style={{ 
                       backgroundColor: "#22c55e", 
                       color: "white", 
                       padding: "2px 8px", 
@@ -3730,11 +3750,11 @@ export default function AdminDashboard() {
                       fontWeight: "bold",
                       marginLeft: "4px"
                     }}>
-                      {selectedPatient.sessions_completed || 0}/{selectedPatient.total_sessions || 8} Sessions
+                      {(selectedPatient.status === 'cancelled' ? 0 : (selectedPatient.sessions_completed || 0))}/{(selectedPatient.status === 'cancelled' ? 0 : (selectedPatient.total_sessions || 8))} Sessions
                     </span>
                     {" "}
                     <span style={{ color: "#f59e0b", fontWeight: "600", marginLeft: "8px" }}>
-                      ({Math.max(0, (selectedPatient.total_sessions || 8) - (selectedPatient.sessions_completed || 0))} Remaining)
+                      ({Math.max(0, (selectedPatient.status === 'cancelled' ? 0 : (selectedPatient.total_sessions || 8)) - (selectedPatient.status === 'cancelled' ? 0 : (selectedPatient.sessions_completed || 0)))} Remaining)
                     </span>
                   </p>
                 </div>
@@ -3788,12 +3808,12 @@ export default function AdminDashboard() {
                       <div style={{ 
                         backgroundColor: "#22c55e", 
                         height: "12px", 
-                        width: `${Math.min(100, Math.round(((selectedPatient.sessions_completed || 0) / (selectedPatient.total_sessions || 8)) * 100))}%`,
+                        width: `${Math.min(100, Math.round((((selectedPatient.status==='cancelled'?0:(selectedPatient.sessions_completed || 0)) / (selectedPatient.status==='cancelled'?1:(selectedPatient.total_sessions || 8))) * 100)))}%`,
                         transition: "width 0.3s ease"
                       }}></div>
                     </div>
                     <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#374151", textAlign: "center", fontWeight: "600" }}>
-                      Treatment Progress: {Math.min(100, Math.round(((selectedPatient.sessions_completed || 0) / (selectedPatient.total_sessions || 8)) * 100))}% Complete
+                      Treatment Progress: {Math.min(100, Math.round((((selectedPatient.status==='cancelled'?0:(selectedPatient.sessions_completed || 0)) / (selectedPatient.status==='cancelled'?1:(selectedPatient.total_sessions || 8))) * 100)))}% Complete
                     </p>
                   </div>
                 </div>
@@ -4355,13 +4375,13 @@ export default function AdminDashboard() {
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium">Treatment Progress</span>
                             <span className="text-sm text-[#22c55e] font-semibold">
-                              {Math.round(((selectedPatientHistory.sessions_completed || 0) / 8) * 100)}%
+                              {Math.round((((selectedPatientHistory.status==='cancelled'?0:(selectedPatientHistory.sessions_completed || 0)) / (selectedPatientHistory.status==='cancelled'?1:(selectedPatientHistory.total_sessions || 8))) * 100))}%
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${Math.round(((selectedPatientHistory.sessions_completed || 0) / 8) * 100)}%` }}
+                              style={{ width: `${Math.round((((selectedPatientHistory.status==='cancelled'?0:(selectedPatientHistory.sessions_completed || 0)) / (selectedPatientHistory.status==='cancelled'?1:(selectedPatientHistory.total_sessions || 8))) * 100))}%` }}
                             ></div>
                           </div>
                           <p className="text-xs text-gray-600 mt-2">

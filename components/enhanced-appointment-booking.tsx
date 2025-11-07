@@ -240,7 +240,7 @@ export function EnhancedAppointmentBooking() {
           : "Appointments not available during lunch break (1:00 PM - 2:00 PM).")
       }
       
-      // Check for conflicts with existing appointments
+      // Check for conflicts with existing appointments (client-side cache)
       const selectedTime = selectedDateTime.getTime()
       for (const appointment of bookedAppointments) {
         const appointmentTime = new Date(appointment.datetime).getTime()
@@ -248,6 +248,56 @@ export function EnhancedAppointmentBooking() {
         
         if (timeDiff < APPOINTMENT_GAP_MINUTES) {
           throw new Error(messages.tooClose[language])
+        }
+      }
+
+      // CRITICAL: Real-time database check to prevent race conditions
+      // Fetch latest appointments from database RIGHT before saving
+      const { data: latestAppointments, error: fetchError } = await supabase
+        .from('patients')
+        .select('appointment_date')
+        .not('appointment_date', 'is', null)
+        .order('appointment_date', { ascending: true })
+
+      if (fetchError) {
+        throw new Error(language === "ur" 
+          ? "ڈیٹا بیس سے اپائنٹمنٹس لوڈ کرنے میں خرابی" 
+          : "Failed to verify appointment availability. Please try again.")
+      }
+
+      // Check for conflicts with latest appointments (including concurrent bookings)
+      if (latestAppointments && latestAppointments.length > 0) {
+        for (const appointment of latestAppointments) {
+          const appointmentTime = new Date(appointment.appointment_date).getTime()
+          const timeDiff = Math.abs(selectedTime - appointmentTime) / (1000 * 60)
+          
+          // STRICT CHECK: Block if time difference is LESS than 40 minutes
+          // This includes: same time (0 min), 5 min, 10 min, 39 min, etc.
+          if (timeDiff < APPOINTMENT_GAP_MINUTES) {
+            // Format times for better error message
+            const bookedTime = new Date(appointment.appointment_date).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })
+            const yourTime = selectedDateTime.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })
+            
+            // Check if exact same time
+            if (timeDiff === 0) {
+              throw new Error(language === "ur" 
+                ? `❌ یہ وقت (${yourTime}) پہلے سے ہی بک ہے۔ براہ کرم کوئی اور وقت منتخب کریں۔`
+                : `❌ This exact time (${yourTime}) is already booked. Please select a different time.`)
+            }
+            
+            // Check if too close (but not same time)
+            throw new Error(language === "ur" 
+              ? `⚠️ آپ کا وقت (${yourTime}) کسی اور مریض کے وقت (${bookedTime}) سے بہت قریب ہے۔ کم از کم ${APPOINTMENT_GAP_MINUTES} منٹ کا فرق رکھیں۔`
+              : `⚠️ Your time (${yourTime}) is too close to another appointment (${bookedTime}). Please maintain at least ${APPOINTMENT_GAP_MINUTES} minutes gap.`)
+          }
         }
       }
 
