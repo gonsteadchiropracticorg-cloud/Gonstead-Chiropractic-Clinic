@@ -79,6 +79,18 @@ import {
   MenubarSeparator,
   MenubarTrigger,
 } from "@/components/ui/menubar"
+import { TreatmentNotes } from "@/components/treatment-notes"
+import {
+  checkAppointmentConflict,
+  getAvailableTimeSlots,
+  createAppointmentReminder,
+  saveReminder,
+  getReminders,
+  getUpcomingAppointmentsForReminders,
+  assessNoShowRisk,
+  generateWelcomeMessage,
+  generateFollowUpMessage,
+} from "@/lib/appointment-utils"
 
 export default function AdminDashboard() {
   const [patients, setPatients] = useState<Patient[]>([])
@@ -320,6 +332,15 @@ export default function AdminDashboard() {
           ? prev.emergencyPatients + 1 
           : prev.emergencyPatients
       }))
+      
+      // Auto-create 24h reminder for new appointment
+      try {
+        const reminder = createAppointmentReminder(newPatient, '24h')
+        saveReminder(reminder)
+      } catch (error) {
+        console.error('Failed to create reminder:', error)
+      }
+      
       toast({
         title: "📋 New Patient Registration",
         description: `${newPatient.name} has successfully scheduled an appointment for ${new Date(newPatient.appointment_date).toLocaleDateString()}`,
@@ -334,6 +355,37 @@ export default function AdminDashboard() {
       window.removeEventListener('newAppointment', handleNewAppointment as EventListener)
     }
   }, [])
+  
+  // Auto-reminder system: Check for upcoming appointments and create reminders
+  useEffect(() => {
+    const checkAndCreateReminders = () => {
+      try {
+        const upcomingAppointments = getUpcomingAppointmentsForReminders(patients, 24)
+        const existingReminders = getReminders()
+        
+        upcomingAppointments.forEach(patient => {
+          // Check if 24h reminder already exists
+          const has24hReminder = existingReminders.some(r => 
+            r.patientId === patient.id && r.type === '24h' && r.status === 'pending'
+          )
+          
+          if (!has24hReminder) {
+            const reminder = createAppointmentReminder(patient, '24h')
+            saveReminder(reminder)
+            console.log(`Auto-created 24h reminder for ${patient.name}`)
+          }
+        })
+      } catch (error) {
+        console.error('Error in reminder system:', error)
+      }
+    }
+    
+    // Check immediately and then every 5 minutes
+    checkAndCreateReminders()
+    const interval = setInterval(checkAndCreateReminders, 5 * 60 * 1000)
+    
+    return () => clearInterval(interval)
+  }, [patients])
 
   const checkAuthAndLoadData = async () => {
     try {
@@ -680,6 +732,17 @@ export default function AdminDashboard() {
           variant: "destructive",
         })
         return
+      }
+      
+      // 🚫 DOUBLE BOOKING PREVENTION: Check for conflicts before creating appointment
+      const conflict = checkAppointmentConflict(newPatient.appointment_date, patients)
+      if (conflict.hasConflict) {
+        toast({
+          title: "⚠️ Booking Conflict Detected",
+          description: conflict.message,
+          variant: "destructive",
+        })
+        return // Stop appointment creation
       }
       const patientData = {
         ...newPatient,
@@ -2563,7 +2626,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Patient Management */}
-        <Card className={`border-[#0d5c75]/20 shadow-xl ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
+        <Card className={`mt-8 border-[#0d5c75]/20 shadow-xl ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
           <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 font-poppins">
@@ -3414,6 +3477,17 @@ export default function AdminDashboard() {
                   <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Clinical Notes</h4>
                   <p className="text-sm bg-gray-50 p-3 rounded border">{selectedPatientDetail.notes || 'No complaints noted'}</p>
                 </div>
+              </CardContent>
+            </Card>
+            
+            {/* 📝 TREATMENT NOTES SECTION */}
+            <Card className="mt-6 border-[#2a9d8f]/20 shadow-xl">
+              <CardContent className="p-6">
+                <TreatmentNotes 
+                  patient={selectedPatientDetail} 
+                  onNotesUpdated={loadPatients}
+                  isDarkMode={isDarkMode}
+                />
               </CardContent>
             </Card>
           </div>
