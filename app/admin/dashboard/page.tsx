@@ -42,6 +42,7 @@ import {
   MoreVertical,
   ChevronDown,
   ChevronUp,
+  ChevronsUpDown,
   Activity,
   User as UserIcon,
   Maximize,
@@ -188,6 +189,10 @@ export default function AdminDashboard() {
   const [doctorSignature, setDoctorSignature] = useState<string | null>(null)
   const [isVideoCallFullscreen, setIsVideoCallFullscreen] = useState(false)
   const videoCallDialogRef = useRef<HTMLDivElement | null>(null)
+  
+  // Smart table sorting state (persisted)
+  type SortKey = 'name' | 'phone' | 'profession' | 'appointment_date' | 'status' | 'urgency' | 'session_type' | 'sessions'
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
 
   const router = useRouter()
   const pathname = usePathname()
@@ -252,6 +257,31 @@ export default function AdminDashboard() {
       localStorage.setItem('viewedPatients', JSON.stringify(viewedArray))
     }
   }, [viewedPatients])
+
+  // Load saved sort config on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('admin_patient_sort')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed && parsed.key && (parsed.direction === 'asc' || parsed.direction === 'desc')) {
+          setSortConfig(parsed)
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load saved sort config', e)
+    }
+  }, [])
+
+  // Persist sort config
+  useEffect(() => {
+    try {
+      if (sortConfig) localStorage.setItem('admin_patient_sort', JSON.stringify(sortConfig))
+      else localStorage.removeItem('admin_patient_sort')
+    } catch (e) {
+      console.warn('Failed to persist sort config', e)
+    }
+  }, [sortConfig])
 
   useEffect(() => {
     checkAuthAndLoadData()
@@ -1679,6 +1709,80 @@ export default function AdminDashboard() {
     return matchesSearch && matchesStatus && matchesUrgency && matchesTimePeriod
   })
 
+  // Smart professional sorting over filtered results
+  const userSortedPatients = React.useMemo(() => {
+    const list = [...filteredPatients]
+    if (!sortConfig) return list
+
+    const dir = sortConfig.direction === 'asc' ? 1 : -1
+
+    const statusRank: Record<Patient['status'], number> = { pending: 0, confirmed: 1, completed: 2, cancelled: 3 }
+    const urgencyRank: Record<NonNullable<Patient['urgency']>, number> = { normal: 0, urgent: 1, emergency: 2 }
+    const typeRank: Record<Patient['session_type'], number> = { in_clinic: 0, video: 1 }
+
+    const getVal = (p: Patient): number | string => {
+      switch (sortConfig.key) {
+        case 'name':
+          return (p.name || '').toLowerCase()
+        case 'phone':
+          return (p.phone || '').toLowerCase()
+        case 'profession':
+          return (p.profession || p.demographics?.profession || p.demographics?.occupation || '').toLowerCase()
+        case 'appointment_date':
+          return new Date(p.appointment_date).getTime() || 0
+        case 'status':
+          return statusRank[p.status]
+        case 'urgency':
+          return urgencyRank[p.urgency || 'normal']
+        case 'session_type':
+          return typeRank[p.session_type]
+        case 'sessions': {
+          const total = p.total_sessions || 8
+          const completed = p.sessions_completed || 0
+          const ratio = total > 0 ? completed / total : 0
+          // Use a composite number to stabilize sort: ratio with slight bias by total completed
+          return ratio + completed / 1000
+        }
+        default:
+          return 0
+      }
+    }
+
+    list.sort((a, b) => {
+      const va = getVal(a)
+      const vb = getVal(b)
+      if (typeof va === 'string' && typeof vb === 'string') {
+        const cmp = va.localeCompare(vb)
+        if (cmp !== 0) return cmp * dir
+      } else {
+        const na = Number(va)
+        const nb = Number(vb)
+        if (na !== nb) return (na < nb ? -1 : 1) * dir
+      }
+      // Tie-breakers: newest appointment first, then name asc
+      const dateCmp = new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime()
+      if (dateCmp !== 0) return dateCmp
+      return (a.name || '').localeCompare(b.name || '')
+    })
+
+    return list
+  }, [filteredPatients, sortConfig])
+
+  const toggleSort = (key: SortKey) => {
+    setSortConfig(prev => {
+      if (!prev || prev.key !== key) return { key, direction: 'asc' }
+      if (prev.direction === 'asc') return { key, direction: 'desc' }
+      return null // cycle off
+    })
+  }
+
+  const SortIndicator = ({ k }: { k: SortKey }) => {
+    if (!sortConfig || sortConfig.key !== k) return <ChevronsUpDown className="ml-1 h-3.5 w-3.5 opacity-60" />
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="ml-1 h-3.5 w-3.5" /> 
+      : <ChevronDown className="ml-1 h-3.5 w-3.5" />
+  }
+
   // Show loading screen while checking auth
   if (!authChecked || isLoading) {
     return (
@@ -2446,25 +2550,39 @@ export default function AdminDashboard() {
                   <TableHeader>
                     <TableRow className={`${isDarkMode ? "bg-gray-700" : "bg-[#F8F5F0]"}`}>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        Patient Info
+                        <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:opacity-80">
+                          Patient Info <SortIndicator k="name" />
+                        </button>
                       </TableHead>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        Contact
+                        <button onClick={() => toggleSort('phone')} className="flex items-center gap-1 hover:opacity-80">
+                          Contact <SortIndicator k="phone" />
+                        </button>
                       </TableHead>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        Profession
+                        <button onClick={() => toggleSort('profession')} className="flex items-center gap-1 hover:opacity-80">
+                          Profession <SortIndicator k="profession" />
+                        </button>
                       </TableHead>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        Appointment
+                        <button onClick={() => toggleSort('appointment_date')} className="flex items-center gap-1 hover:opacity-80">
+                          Appointment <SortIndicator k="appointment_date" />
+                        </button>
                       </TableHead>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        Status
+                        <button onClick={() => toggleSort('status')} className="flex items-center gap-1 hover:opacity-80">
+                          Status <SortIndicator k="status" />
+                        </button>
                       </TableHead>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        Type & Urgency
+                        <button onClick={() => toggleSort('urgency')} className="flex items-center gap-1 hover:opacity-80">
+                          Type & Urgency <SortIndicator k="urgency" />
+                        </button>
                       </TableHead>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        Sessions
+                        <button onClick={() => toggleSort('sessions')} className="flex items-center gap-1 hover:opacity-80">
+                          Sessions <SortIndicator k="sessions" />
+                        </button>
                       </TableHead>
                       <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
                         Actions
@@ -2472,7 +2590,7 @@ export default function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPatients.map((patient) => (
+                    {userSortedPatients.map((patient) => (
                       <TableRow
                         key={patient.id}
                         className={`${isDarkMode ? "hover:bg-gray-700 border-gray-600" : "hover:bg-[#F8F5F0]/50"}`}
