@@ -46,7 +46,8 @@ import {
   Activity,
   User as UserIcon,
   Maximize,
-  Minimize
+  Minimize,
+  X
 } from "lucide-react"
 import {
   getPatients,
@@ -193,6 +194,9 @@ export default function AdminDashboard() {
   // Smart table sorting state (persisted)
   type SortKey = 'name' | 'phone' | 'profession' | 'appointment_date' | 'status' | 'urgency' | 'session_type' | 'sessions'
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
+  
+  // Quick Wins: Last updated timestamp
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
   const router = useRouter()
   const pathname = usePathname()
@@ -427,6 +431,9 @@ export default function AdminDashboard() {
         emergencyPatients: mergedPatients.filter((p) => p.urgency === "emergency").length,
       }
       setStats(newStats)
+      
+      // Quick Win: Update last updated timestamp
+      setLastUpdated(new Date())
     } catch (error) {
       console.error("Dashboard: Error loading patients:", error)
       toast({
@@ -1788,6 +1795,78 @@ export default function AdminDashboard() {
       ? <ChevronUp className="ml-1 h-3.5 w-3.5" /> 
       : <ChevronDown className="ml-1 h-3.5 w-3.5" />
   }
+  
+  // Quick Win: Clear All Filters
+  const clearAllFilters = () => {
+    setSearchTerm("")
+    setFilterStatus("all")
+    setFilterUrgency("all")
+    setFilterTimePeriod("all")
+    setSortConfig(null)
+    toast({
+      title: "✨ Filters Cleared",
+      description: "All filters and search have been reset",
+    })
+  }
+  
+  // Quick Win: Export to CSV
+  const exportToCSV = () => {
+    try {
+      const csvHeaders = ['Patient Code', 'Name', 'Phone', 'Email', 'Profession', 'Appointment Date', 'Status', 'Urgency', 'Session Type', 'Sessions Completed', 'Total Sessions']
+      const csvRows = userSortedPatients.map(patient => [
+        getOrAssignPatientCode(patient),
+        patient.name,
+        patient.phone,
+        patient.email || 'N/A',
+        patient.profession || 'N/A',
+        new Date(patient.appointment_date).toLocaleString(),
+        patient.status,
+        patient.urgency || 'normal',
+        patient.session_type === 'in_clinic' ? 'In-Clinic' : 'Video',
+        patient.sessions_completed || 0,
+        patient.total_sessions || 8
+      ])
+      
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n')
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `patients_export_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast({
+        title: "📊 Export Successful",
+        description: `Exported ${userSortedPatients.length} patients to CSV`,
+      })
+    } catch (error) {
+      console.error('Export error:', error)
+      toast({
+        title: "❌ Export Failed",
+        description: "Failed to export data to CSV",
+        variant: "destructive",
+      })
+    }
+  }
+  
+  // Quick Win: Format relative time
+  const getRelativeTime = (date: Date) => {
+    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
+    if (seconds < 60) return 'Just now'
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`
+    const days = Math.floor(hours / 24)
+    return `${days} day${days > 1 ? 's' : ''} ago`
+  }
 
   // Show loading screen while checking auth
   if (!authChecked || isLoading) {
@@ -2486,10 +2565,22 @@ export default function AdminDashboard() {
         {/* Patient Management */}
         <Card className={`border-[#0d5c75]/20 shadow-xl ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
           <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
-            <CardTitle className="flex items-center gap-2 font-poppins">
-              <FileText className="h-5 w-5" />
-              Patient Records Management
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 font-poppins">
+                <FileText className="h-5 w-5" />
+                Patient Records Management
+              </CardTitle>
+              <div className="flex items-center gap-3">
+                {/* Quick Win: Patient Count */}
+                <div className="text-sm text-white/80">
+                  Showing <span className="font-bold text-white">{userSortedPatients.length}</span> of <span className="font-bold text-white">{patients.length}</span> patients
+                </div>
+                {/* Quick Win: Last Updated */}
+                <div className="text-xs text-white/60">
+                  Updated {getRelativeTime(lastUpdated)}
+                </div>
+              </div>
+            </div>
             <div className="flex flex-col md:flex-row gap-4 mt-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70" />
@@ -2535,6 +2626,28 @@ export default function AdminDashboard() {
                   <SelectItem value="year">This Year</SelectItem>
                 </SelectContent>
               </Select>
+              {/* Quick Win: Clear All Filters Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAllFilters}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                title="Clear all filters and search"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear Filters
+              </Button>
+              {/* Quick Win: Export to CSV Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToCSV}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                title="Export current view to CSV"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
