@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { addAuditLog, getAuditLogs, undoAuditLog, type AuditLog } from "@/lib/supabase"
+import { addAuditLog, getAuditLogs, undoAuditLog, type AuditLog, supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
-import { Activity, History, Filter, RotateCcw, RefreshCw, Search, ShieldAlert, UserCheck, Settings, Database, Download, Pin, PinOff, Copy } from "lucide-react"
+import { Activity, History, Filter, RotateCcw, RefreshCw, Search, ShieldAlert, UserCheck, Settings, Database, Download, Pin, PinOff, Copy, Bell, BarChart3 } from "lucide-react"
 import AdminSidebar from "@/components/AdminSidebar"
+import { AuditAnalytics } from "@/components/admin/audit-analytics"
 
 export default function AuditLogsPage() {
   const router = useRouter()
@@ -33,6 +34,7 @@ export default function AuditLogsPage() {
   const [pageSize, setPageSize] = useState<number>(50)
   const [pinned, setPinned] = useState<Set<string>>(new Set())
   const [annotations, setAnnotations] = useState<Record<string,string>>({})
+  const [showAnalytics, setShowAnalytics] = useState<boolean>(false)
 
   useEffect(() => {
     load()
@@ -43,7 +45,40 @@ export default function AuditLogsPage() {
       const a = JSON.parse(localStorage.getItem('audit_notes') || '{}') as Record<string,string>
       setAnnotations(a)
     } catch {}
-    // realtime via custom event + storage fallback
+    
+    // REALTIME: Set up Supabase realtime subscription for audit_logs table
+    const channel = supabase
+      .channel('audit_logs_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'audit_logs'
+        },
+        (payload) => {
+          console.log('[Realtime] New audit log:', payload.new)
+          const newLog = payload.new as AuditLog
+          setLogs(prev => [newLog, ...prev])
+          
+          // Show toast notification for important events
+          if (newLog.action === 'delete' || newLog.action === 'error') {
+            toast({
+              title: '🔔 New Activity',
+              description: `${newLog.action.toUpperCase()}: ${newLog.entity_type || 'system'} by ${newLog.actor_email || 'unknown'}`,
+              variant: newLog.action === 'error' ? 'destructive' : 'default'
+            })
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime] ✅ Successfully subscribed to audit_logs')
+        }
+      })
+    
+    // Fallback: Custom event listener for localStorage-based logs
     const onNew = (e: any) => {
       const entry: AuditLog = e.detail
       setLogs(prev => [entry, ...prev])
@@ -53,7 +88,10 @@ export default function AuditLogsPage() {
     }
     window.addEventListener('auditLogCreated', onNew as EventListener)
     window.addEventListener('storage', onStorage)
+    
     return () => {
+      // Cleanup: Unsubscribe from realtime channel
+      channel.unsubscribe()
       window.removeEventListener('auditLogCreated', onNew as EventListener)
       window.removeEventListener('storage', onStorage)
     }
@@ -197,6 +235,9 @@ export default function AuditLogsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => setShowAnalytics(!showAnalytics)} className={"text-gray-600 hover:text-emerald-700 " + (showAnalytics ? 'bg-emerald-50' : '')}>
+              <BarChart3 className="h-4 w-4 mr-2" /> Analytics
+            </Button>
             <Button variant="ghost" onClick={() => setAutoRefresh(!autoRefresh)} className={"text-gray-600 hover:text-emerald-700 " + (autoRefresh ? 'bg-emerald-50' : '')}>
               <RefreshCw className={`h-4 w-4 mr-2 ${autoRefresh ? 'animate-spin' : ''}`} /> {autoRefresh ? 'Auto' : 'Manual'}
             </Button>
@@ -218,6 +259,11 @@ export default function AuditLogsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Analytics Dashboard */}
+        {showAnalytics && (
+          <AuditAnalytics logs={logs} />
+        )}
+        
         {/* Quick Views */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {quickViews.map(q => {
