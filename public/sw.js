@@ -11,7 +11,7 @@ const FILES_TO_CACHE = [
   '/patient-portal',
   '/offline',
   '/manifest.json',
-'images/gonstead-chiropractic-logo-new.png'
+  '/images/gonstead-chiropractic-logo-new.png',
   '/images/gonstead-logo-new.png',
   // Add other critical assets
 ]

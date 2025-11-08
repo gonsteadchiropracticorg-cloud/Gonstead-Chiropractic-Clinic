@@ -1,8 +1,10 @@
 // Sync Manager - Keeps local IndexedDB and Supabase cloud in sync
 // Handles realtime updates, offline queue, and conflict resolution
 
-import { supabase } from './supabase'
+import { useState, useEffect } from 'react'
+import { supabase, createPatient } from './supabase'
 import { localDB } from './local-db'
+import { offlineStorage } from './offline-storage'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 interface SyncResult {

@@ -488,16 +488,76 @@ async function syncToSupabase(patient: any) {
   try {
     const { _syncStatus, ...patientData } = patient // Remove sync status before saving to DB
     
+    console.log('[Offline-First] Attempting to insert patient:', patientData.id)
+    console.log('[Offline-First] Patient data keys:', Object.keys(patientData))
+
+    // Only send columns that exist in the Supabase 'patients' table
+    const ALLOWED_PATIENT_COLUMNS = [
+      'id','name','phone','email','session_type','appointment_date','status','urgency','payment_method','notes','medical_history','sessions_completed','total_sessions','last_visit','created_at','updated_at','prescription_generated','prescription_count','last_prescription_date','booking_source'
+    ]
+    const dbPayload: any = {}
+    const dropped: string[] = []
+    for (const [k, v] of Object.entries(patientData)) {
+      if (ALLOWED_PATIENT_COLUMNS.includes(k)) dbPayload[k] = v
+      else dropped.push(k)
+    }
+    if (dropped.length) {
+      console.warn('[Offline-First] Dropping unsupported patient fields (not in DB schema):', dropped)
+    }
+    
+    // Check if Supabase client is initialized
+    if (!supabase) {
+      throw new Error('Supabase client not initialized')
+    }
+    
     const { data, error } = await supabase
       .from("patients")
-      .insert(patientData)
+      .insert(dbPayload)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('[Offline-First] Supabase insert error:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        fullError: JSON.stringify(error, null, 2)
+      })
+      throw new Error(`Supabase insert failed: ${error.message || 'Unknown error'} (${error.code || 'no code'})`)
+    }
+    
+    if (!data) {
+      throw new Error('No data returned from Supabase insert')
+    }
+    
     return data
   } catch (error) {
-    console.error('[Offline-First] Supabase sync error:', error)
+    // More detailed error logging
+    const errorDetails: any = {
+      type: typeof error,
+      constructor: error?.constructor?.name,
+      keys: error ? Object.keys(error) : [],
+    }
+    
+    if (error instanceof Error) {
+      errorDetails.message = error.message
+      errorDetails.stack = error.stack
+      errorDetails.name = error.name
+    }
+    
+    // Try to extract Supabase-specific error info
+    if (error && typeof error === 'object') {
+      const err = error as any
+      if (err.message) errorDetails.errorMessage = err.message
+      if (err.code) errorDetails.errorCode = err.code
+      if (err.details) errorDetails.errorDetails = err.details
+      if (err.hint) errorDetails.errorHint = err.hint
+    }
+    
+    console.error('[Offline-First] Supabase sync error:', errorDetails)
+    console.error('[Offline-First] Raw error:', error)
+    
     throw error
   }
 }

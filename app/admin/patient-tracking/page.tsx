@@ -279,16 +279,19 @@ export default function PatientTrackingPage() {
   }
 
   const getPrescriptionStatus = (prescription: PrescriptionRecord): { label: string; color: string; icon: any } => {
-    // Check if prescription is saved in localStorage
-    const isSaved = prescription.status === 'saved' || prescription.status === 'active'
-    const isSynced = prescription.isSynced !== false
+    // Check if prescription has been explicitly saved (has savedAt timestamp)
+    const hasBeenSaved = prescription.status === 'saved' && prescription.savedAt
+    const isSynced = prescription.isSynced === true
+    const isActive = prescription.status === 'active' // Generated but not manually saved
     
-    if (isSaved && isSynced) {
+    if (hasBeenSaved && isSynced) {
       return { label: 'Saved & Synced', color: 'bg-green-100 text-green-800 border-green-300', icon: CheckCheck }
-    } else if (isSaved) {
-      return { label: 'Saved', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: Save }
+    } else if (hasBeenSaved) {
+      return { label: 'Saved Locally', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: Save }
+    } else if (isActive) {
+      return { label: 'Generated', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: AlertTriangle }
     } else {
-      return { label: 'Not Saved', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: AlertTriangle }
+      return { label: 'Not Saved', color: 'bg-gray-100 text-gray-800 border-gray-300', icon: AlertTriangle }
     }
   }
 
@@ -831,8 +834,8 @@ Exported from Gonstead Chiropractic Patient Tracking System
                                 
                                 {/* Action Buttons */}
                                 <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-blue-200">
-                                  {/* Save Button */}
-                                  {status.label === 'Not Saved' && (
+                                  {/* Save Button - show for Generated or Not Saved prescriptions */}
+                                  {(status.label === 'Generated' || status.label === 'Not Saved') && (
                                     <Button
                                       size="sm"
                                       onClick={() => handleSavePrescription(prescription)}

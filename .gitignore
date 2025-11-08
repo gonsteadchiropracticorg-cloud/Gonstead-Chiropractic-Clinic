@@ -27,3 +27,5 @@ next-env.d.ts
 *.exe
 debug.log
 .vercel
+
+SUPABASE_CREDENTIALS.md
