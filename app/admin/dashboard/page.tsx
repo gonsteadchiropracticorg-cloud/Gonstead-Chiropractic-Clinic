@@ -1738,11 +1738,93 @@ export default function AdminDashboard() {
   })
 
   const filteredPatients = sortedPatients.filter((patient) => {
-    const matchesSearch =
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.phone.includes(searchTerm) ||
-      patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    
+    // Enhanced comprehensive search across all patient fields, including code and date/time
+    const q = searchTerm.toLowerCase().trim()
+
+    // Pre-compute common date/time strings for matching
+    const appt = new Date(patient.appointment_date)
+    const apptISO = (patient.appointment_date || '').toLowerCase()
+    const apptDateOnly = !isNaN(appt.getTime()) ? appt.toISOString().slice(0, 10) : '' // YYYY-MM-DD
+    const apptHumanDate = !isNaN(appt.getTime()) ? appt.toDateString().toLowerCase() : '' // e.g., sat nov 08 2025
+    const apptHumanDateShort = !isNaN(appt.getTime()) ? appt.toLocaleDateString().toLowerCase() : ''
+    const apptHumanTime12 = !isNaN(appt.getTime()) ? appt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase() : ''
+    const apptHumanTime24 = !isNaN(appt.getTime()) ? `${String(appt.getHours()).padStart(2,'0')}:${String(appt.getMinutes()).padStart(2,'0')}` : ''
+
+    const lastVisit = patient.last_visit ? new Date(patient.last_visit) : null
+    const lastVisitISO = (patient.last_visit || '').toLowerCase()
+    const lastVisitDateOnly = lastVisit && !isNaN(lastVisit.getTime()) ? lastVisit.toISOString().slice(0, 10) : ''
+    const lastVisitHuman = lastVisit && !isNaN(lastVisit.getTime()) ? lastVisit.toDateString().toLowerCase() : ''
+
+    const createdISO = (patient.created_at || '').toLowerCase()
+    const updatedISO = (patient.updated_at || '').toLowerCase()
+
+    const lastRxISO = (patient.last_prescription_date || '').toLowerCase()
+
+    // Generated human code used in UI (GCC-...-YYYYMM-####)
+    const code = getOrAssignPatientCode(patient).toLowerCase()
+
+    const matchesSearch = q ? (
+      // Codes and IDs
+      code.includes(q) ||
+      (patient.id || '').toLowerCase().includes(q) ||
+
+      // Basic info
+      (patient.name || '').toLowerCase().includes(q) ||
+      (patient.phone || '').toLowerCase().includes(q) ||
+      (patient.email || '').toLowerCase().includes(q) ||
+
+      // Session and appointment info
+      (patient.session_type || '').toLowerCase().includes(q) ||
+      (patient.status || '').toLowerCase().includes(q) ||
+      (patient.urgency || '').toLowerCase().includes(q) ||
+      (patient.payment_method || '').toLowerCase().includes(q) ||
+
+      // Appointment date/time (raw + human + parts)
+      apptISO.includes(q) ||
+      apptDateOnly.includes(q) ||
+      apptHumanDate.includes(q) ||
+      apptHumanDateShort.includes(q) ||
+      apptHumanTime12.includes(q) ||
+      apptHumanTime24.includes(q) ||
+
+      // Medical and treatment info
+      (patient.notes || '').toLowerCase().includes(q) ||
+      (patient.medical_history || '').toLowerCase().includes(q) ||
+      (patient.profession || '').toLowerCase().includes(q) ||
+
+      // Demographics (nested fields)
+      (patient.demographics?.age != null ? String(patient.demographics.age) : '').includes(q) ||
+      (patient.demographics?.gender || '').toLowerCase().includes(q) ||
+      (patient.demographics?.occupation || patient.demographics?.profession || '').toLowerCase().includes(q) ||
+      (patient.demographics?.emergency_contact || '').toLowerCase().includes(q) ||
+
+      // Treatment plan (nested fields)
+      (patient.treatment_plan?.diagnosis || '').toLowerCase().includes(q) ||
+      (Array.isArray(patient.treatment_plan?.goals) ? patient.treatment_plan!.goals.some(goal => String(goal).toLowerCase().includes(q)) : false) ||
+      (patient.treatment_plan?.progress || '').toLowerCase().includes(q) ||
+
+      // Prescription info (nested fields)
+      (Array.isArray(patient.prescription?.medications) ? patient.prescription!.medications.some(med => String(med).toLowerCase().includes(q)) : false) ||
+      (patient.prescription?.instructions || '').toLowerCase().includes(q) ||
+      (patient.prescription?.follow_up_date || '').toLowerCase().includes(q) ||
+      (patient.last_prescription_id || '').toLowerCase().includes(q) ||
+
+      // Session counts
+      String(patient.sessions_completed ?? '').includes(q) ||
+      String(patient.total_sessions ?? '').includes(q) ||
+
+      // Other dates/timestamps
+      lastVisitISO.includes(q) ||
+      lastVisitDateOnly.includes(q) ||
+      lastVisitHuman.includes(q) ||
+      createdISO.includes(q) ||
+      updatedISO.includes(q) ||
+      lastRxISO.includes(q) ||
+
+      // Booking source
+      (patient.booking_source || '').toLowerCase().includes(q)
+    ) : true
+
     // Handle status filters
     let matchesStatus = true
     if (filterStatus === "today") {
@@ -1757,16 +1839,16 @@ export default function AdminDashboard() {
     } else if (filterStatus !== "all") {
       matchesStatus = patient.status === filterStatus
     }
-    
+
     const matchesUrgency = filterUrgency === "all" || patient.urgency === filterUrgency
-    
+
     // Handle time period filters
     let matchesTimePeriod = true
     if (filterTimePeriod !== "all") {
       const appointmentDate = new Date(patient.appointment_date)
       const now = new Date()
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      
+
       if (filterTimePeriod === "today") {
         matchesTimePeriod = appointmentDate.toDateString() === today.toDateString()
       } else if (filterTimePeriod === "week") {
@@ -1781,7 +1863,7 @@ export default function AdminDashboard() {
         matchesTimePeriod = appointmentDate.getFullYear() === now.getFullYear()
       }
     }
-    
+
     return matchesSearch && matchesStatus && matchesUrgency && matchesTimePeriod
   })
 
@@ -2648,7 +2730,7 @@ export default function AdminDashboard() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70" />
                 <Input
-                  placeholder="Search patients by name, phone, or email..."
+                  placeholder="Search by name, phone, email, patient code, notes, or date/time"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/70"
