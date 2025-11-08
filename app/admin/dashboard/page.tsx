@@ -80,6 +80,7 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar"
 import { TreatmentNotes } from "@/components/treatment-notes"
+import { PatientGrowthAnalytics } from "@/components/patient-growth-analytics-compact"
 import {
   checkAppointmentConflict,
   getAvailableTimeSlots,
@@ -198,6 +199,7 @@ export default function AdminDashboard() {
   const [isPatientHistoryDialogOpen, setIsPatientHistoryDialogOpen] = useState(false)
   const [currentPrescriptionId, setCurrentPrescriptionId] = useState<string>('')
   const detailsRef = useRef<HTMLDivElement | null>(null)
+  const [isGrowthAnalyticsOpen, setIsGrowthAnalyticsOpen] = useState(false)
   const [selectedPatientDetail, setSelectedPatientDetail] = useState<Patient | null>(null)
   const [doctorSignature, setDoctorSignature] = useState<string | null>(null)
   const [isVideoCallFullscreen, setIsVideoCallFullscreen] = useState(false)
@@ -2502,7 +2504,22 @@ export default function AdminDashboard() {
               <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
                 Total Patients
               </CardTitle>
-              <Users className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`} />
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsGrowthAnalyticsOpen(true)
+                  }}
+                  className={`${isDarkMode ? "hover:bg-gray-700" : "hover:bg-blue-100"} h-7 w-7 p-0 rounded-full`}
+                  title="View Patient Growth Analytics"
+                  aria-label="View Patient Growth Analytics"
+                >
+                  <Activity className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`} />
+                </Button>
+                <Users className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`} />
+              </div>
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
@@ -4953,6 +4970,14 @@ Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTim
       
       {/* Admin App Install Prompt - Only shows when on admin routes */}
       <AdminServiceWorkerClient />
+      
+      {/* Patient Growth Analytics Dialog */}
+      <PatientGrowthAnalytics 
+        patients={patients}
+        isDarkMode={isDarkMode}
+        isOpen={isGrowthAnalyticsOpen}
+        onClose={() => setIsGrowthAnalyticsOpen(false)}
+      />
     </React.Fragment>
   )
 }
