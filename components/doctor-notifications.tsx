@@ -20,6 +20,7 @@ import {
   MessageCircle
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { professionalVoiceNotification } from "@/lib/professional-voice-notification"
 
 export interface NotificationData {
   id: string
@@ -66,6 +67,14 @@ export function DoctorNotifications({
 }: DoctorNotificationProps) {
   const [activeNotifications, setActiveNotifications] = useState<ActiveNotification[]>([])
   const [soundEnabled, setSoundEnabled] = useState(settings.enableSound)
+  const [voiceEnabled, setVoiceEnabled] = useState(true)
+
+  // Load voice settings on mount
+  useEffect(() => {
+    professionalVoiceNotification.loadSettings()
+    const voiceSettings = professionalVoiceNotification.getSettings()
+    setVoiceEnabled(voiceSettings.enabled)
+  }, [])
 
   // Auto-show notifications
   useEffect(() => {
@@ -111,6 +120,20 @@ export function DoctorNotifications({
 
     // Play notification sound
     playNotificationSound(notification.type)
+
+    // Speak notification with professional voice
+    if (voiceEnabled) {
+      professionalVoiceNotification.speak({
+        patientName: notification.patientName,
+        type: notification.type,
+        urgency: notification.urgency,
+        message: notification.message || "",
+        appointmentTime: notification.appointmentTime,
+        sessionType: notification.sessionType
+      }).catch(error => {
+        console.error("Voice notification error:", error)
+      })
+    }
 
     setActiveNotifications(prev => {
       const filtered = prev.filter(n => n.id !== notification.id)
