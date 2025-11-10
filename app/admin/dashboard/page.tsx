@@ -81,6 +81,7 @@ import {
 } from "@/components/ui/menubar"
 import { TreatmentNotes } from "@/components/treatment-notes"
 import { PatientGrowthAnalytics } from "@/components/patient-growth-analytics-compact"
+import { BookNextAppointment } from "@/components/book-next-appointment"
 import {
   checkAppointmentConflict,
   getAvailableTimeSlots,
@@ -204,6 +205,10 @@ export default function AdminDashboard() {
   const [doctorSignature, setDoctorSignature] = useState<string | null>(null)
   const [isVideoCallFullscreen, setIsVideoCallFullscreen] = useState(false)
   const videoCallDialogRef = useRef<HTMLDivElement | null>(null)
+  
+  // Book Next Appointment Dialog State
+  const [isBookNextAppointmentOpen, setIsBookNextAppointmentOpen] = useState(false)
+  const [patientForNextAppointment, setPatientForNextAppointment] = useState<Patient | null>(null)
   
   // Smart table sorting state (persisted)
   type SortKey = 'name' | 'phone' | 'profession' | 'appointment_date' | 'status' | 'urgency' | 'session_type' | 'sessions'
@@ -648,44 +653,14 @@ export default function AdminDashboard() {
     }
   }
 
-  // Generate available time slots with 40-minute gaps
+  // Generate available time slots with 40-minute gaps (using shared utils with conflict guards)
   const generateTimeSlots = (date: Date) => {
-    const slots: string[] = []
-    const startHour = 8 // 8 AM
-    const endHour = 18 // 6 PM
-    const intervalMinutes = 40
-    
-    // Check if selected date is Sunday (0 = Sunday)
-    if (date.getDay() === 0) {
-      return [] // No slots on Sunday
+    try {
+      return getAvailableTimeSlots(date, patients, { start: 8, end: 18 })
+    } catch (e) {
+      console.error('Failed to compute available slots:', e)
+      return []
     }
-    
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += intervalMinutes) {
-        const totalMinutes = hour * 60 + minute
-        if (totalMinutes >= startHour * 60 && totalMinutes < endHour * 60) {
-          const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
-          const period = hour >= 12 ? 'PM' : 'AM'
-          const formattedMinute = minute.toString().padStart(2, '0')
-          slots.push(`${displayHour}:${formattedMinute} ${period}`)
-        }
-      }
-    }
-    
-    // Filter out already booked slots for the selected date
-    const dateStr = date.toDateString()
-    const bookedSlots = patients
-      .filter(p => new Date(p.appointment_date).toDateString() === dateStr)
-      .map(p => {
-        const apptDate = new Date(p.appointment_date)
-        const hour = apptDate.getHours()
-        const minute = apptDate.getMinutes()
-        const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
-        const period = hour >= 12 ? 'PM' : 'AM'
-        return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`
-      })
-    
-    return slots.filter(slot => !bookedSlots.includes(slot))
   }
   
   // Update available slots when date changes for appointment booking
@@ -1440,6 +1415,129 @@ export default function AdminDashboard() {
         { label: 'Session Progress', value: `${patient.sessions_completed || 0} of ${patient.total_sessions || 8} completed` },
         { label: 'Session Type', value: patient.session_type === 'in_clinic' ? 'In-Clinic' : 'Video Consultation' },
       ])
+
+      // Next Appointment Section (if available)
+      if (patient.next_appointment_date) {
+        const nextAppt = new Date(patient.next_appointment_date)
+        const nextApptDate = nextAppt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        const nextApptTime = nextAppt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+        const nextApptDay = nextAppt.toLocaleDateString('en-US', { weekday: 'long' })
+        
+        drawInfoTable('NEXT APPOINTMENT SCHEDULED', [
+          { label: 'Date', value: nextApptDate },
+          { label: 'Time', value: nextApptTime },
+          { label: 'Day of Week', value: nextApptDay },
+          { label: 'Notes', value: patient.next_appointment_notes || 'Follow-up appointment' },
+          { label: 'Booked On', value: patient.next_appointment_booked_at ? new Date(patient.next_appointment_booked_at).toLocaleDateString() : '—' },
+        ])
+      }
+
+      // Appointment History Section (if available) - Enhanced with Session Numbers & Timestamps
+      if (patient.appointment_history && patient.appointment_history.length > 0) {
+        section('APPOINTMENT HISTORY (ALL SESSIONS)')
+        
+        const tableWidth = pageWidth - margin * 2
+        const colWidths = [tableWidth * 0.08, tableWidth * 0.20, tableWidth * 0.18, tableWidth * 0.12, tableWidth * 0.10, tableWidth * 0.18, tableWidth * 0.14]
+        const cellPadding = 2
+        const rowHeight = 10
+        
+        // Table header
+        pdf.setFillColor(13, 92, 117)
+        pdf.setTextColor(255, 255, 255)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(8)
+        
+        const headers = ['#', 'Date', 'Time & Day', 'Type', 'Status', 'Completed At', 'Notes']
+        let xPos = margin
+        headers.forEach((header, idx) => {
+          pdf.rect(xPos, y, colWidths[idx], rowHeight, 'F')
+          pdf.text(header, xPos + cellPadding, y + rowHeight / 2 + 1.5)
+          xPos += colWidths[idx]
+        })
+        y += rowHeight
+        
+        // Table rows
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(7.5)
+        patient.appointment_history.slice(0, 10).forEach((appt, idx) => {
+          const apptDate = new Date(appt.appointment_date)
+          const dateStr = apptDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          const timeStr = apptDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+          const dayStr = apptDate.toLocaleDateString('en-US', { weekday: 'short' })
+          
+          // Session completion timestamp
+          const completedAtStr = appt.completed_at 
+            ? new Date(appt.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + 
+              new Date(appt.completed_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+            : '—'
+          
+          // Alternating row background
+          if (idx % 2 === 0) {
+            pdf.setFillColor(249, 250, 251)
+            pdf.rect(margin, y, tableWidth, rowHeight, 'F')
+          }
+          
+          // Row data
+          pdf.setTextColor(31, 41, 55)
+          xPos = margin
+          
+          // Session number column
+          const sessionNum = appt.session_number || (idx + 1)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text(`#${sessionNum}`, xPos + cellPadding, y + rowHeight / 2 + 1.5)
+          pdf.setFont('helvetica', 'normal')
+          pdf.setDrawColor(220, 220, 220)
+          pdf.line(xPos, y, xPos, y + rowHeight)
+          xPos += colWidths[0]
+          
+          // Date column
+          pdf.text(dateStr, xPos + cellPadding, y + rowHeight / 2 + 1.5)
+          pdf.line(xPos, y, xPos, y + rowHeight)
+          xPos += colWidths[1]
+          
+          // Time & Day column
+          pdf.text(`${timeStr} (${dayStr})`, xPos + cellPadding, y + rowHeight / 2 + 1.5)
+          pdf.line(xPos, y, xPos, y + rowHeight)
+          xPos += colWidths[2]
+          
+          // Session Type column
+          const sessionType = appt.session_type === 'in_clinic' ? 'Clinic' : 'Video'
+          pdf.text(sessionType, xPos + cellPadding, y + rowHeight / 2 + 1.5)
+          pdf.line(xPos, y, xPos, y + rowHeight)
+          xPos += colWidths[3]
+          
+          // Status column
+          pdf.setFont('helvetica', 'bold')
+          pdf.text(appt.status.toUpperCase(), xPos + cellPadding, y + rowHeight / 2 + 1.5)
+          pdf.setFont('helvetica', 'normal')
+          pdf.line(xPos, y, xPos, y + rowHeight)
+          xPos += colWidths[4]
+          
+          // Completed At column
+          pdf.setFontSize(7)
+          pdf.text(completedAtStr, xPos + cellPadding, y + rowHeight / 2 + 1.5)
+          pdf.setFontSize(7.5)
+          pdf.line(xPos, y, xPos, y + rowHeight)
+          xPos += colWidths[5]
+          
+          // Notes column
+          const notes = appt.notes ? pdf.splitTextToSize(appt.notes, colWidths[6] - cellPadding * 2) : ['—']
+          pdf.text(Array.isArray(notes) ? notes[0] : notes, xPos + cellPadding, y + rowHeight / 2 + 1.5)
+          pdf.line(xPos, y, xPos, y + rowHeight)
+          
+          // Bottom border
+          pdf.line(margin, y + rowHeight, margin + tableWidth, y + rowHeight)
+          y += rowHeight
+        })
+        
+        // Outer table border
+        pdf.setDrawColor(180, 180, 180)
+        pdf.setLineWidth(0.4)
+        pdf.rect(margin, y - (patient.appointment_history.slice(0, 10).length * rowHeight) - rowHeight, tableWidth, (patient.appointment_history.slice(0, 10).length + 1) * rowHeight, 'S')
+        
+        y += 3
+        strong()
+      }
 
       section('CHIEF COMPLAINT')
       const notes = pdf.splitTextToSize(patient.notes || 'No complaints noted.', pageWidth - margin * 2)
@@ -3404,6 +3502,24 @@ export default function AdminDashboard() {
                                     Video Call
                                   </Button>
 
+                                  {/* Book Next Appointment Button */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Get fresh patient data
+                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                      setPatientForNextAppointment(currentPatientData)
+                                      setIsBookNextAppointmentOpen(true)
+                                      setExpandedActions(new Set())
+                                    }}
+                                    className="border-[#10b981] text-[#10b981] hover:bg-[#10b981] hover:text-white text-xs w-full"
+                                    title="Book Next Appointment for Patient"
+                                  >
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    Next Appt
+                                  </Button>
+
                                   {/* Money Management Button */}
                                   <Button
                                     size="sm"
@@ -3572,6 +3688,76 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
+                
+                {/* Next Appointment Section - Professional Display */}
+                {selectedPatientDetail.next_appointment_date && (
+                  <div className="mt-6">
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 rounded-lg shadow-md">
+                      <div className="flex items-start gap-4">
+                        <div className="bg-green-500 rounded-full p-3 flex-shrink-0">
+                          <Calendar className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-green-800 text-lg mb-3 flex items-center gap-2">
+                            📅 Next Appointment Scheduled
+                            <Badge className="bg-green-600 text-white text-xs">Confirmed</Badge>
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-green-600" />
+                                <div>
+                                  <p className="text-xs text-gray-600 font-medium">Date</p>
+                                  <p className="text-sm font-bold text-gray-900">
+                                    {new Date(selectedPatientDetail.next_appointment_date).toLocaleDateString('en-US', { 
+                                      weekday: 'long', 
+                                      year: 'numeric', 
+                                      month: 'long', 
+                                      day: 'numeric' 
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-green-600" />
+                                <div>
+                                  <p className="text-xs text-gray-600 font-medium">Time</p>
+                                  <p className="text-sm font-bold text-gray-900">
+                                    {new Date(selectedPatientDetail.next_appointment_date).toLocaleTimeString('en-US', { 
+                                      hour: '2-digit', 
+                                      minute: '2-digit',
+                                      hour12: true 
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div>
+                                <p className="text-xs text-gray-600 font-medium mb-1">Appointment Notes</p>
+                                <p className="text-sm text-gray-800 bg-white/60 p-2 rounded border border-green-200">
+                                  {selectedPatientDetail.next_appointment_notes || 'Follow-up appointment'}
+                                </p>
+                              </div>
+                              {selectedPatientDetail.next_appointment_booked_at && (
+                                <div className="text-xs text-gray-500">
+                                  Booked on: {new Date(selectedPatientDetail.next_appointment_booked_at).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-green-200">
+                            <p className="text-xs text-gray-600 flex items-center gap-1">
+                              <CheckCircle className="h-3 w-3 text-green-600" />
+                              Reminder: Patient will receive notification 24 hours before appointment
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="mt-4">
                   <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Clinical Notes</h4>
                   <p className="text-sm bg-gray-50 p-3 rounded border">{selectedPatientDetail.notes || 'No complaints noted'}</p>
@@ -4978,6 +5164,24 @@ Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTim
         isOpen={isGrowthAnalyticsOpen}
         onClose={() => setIsGrowthAnalyticsOpen(false)}
       />
+
+      {/* Book Next Appointment Dialog */}
+      {patientForNextAppointment && (
+        <BookNextAppointment
+          patient={patientForNextAppointment}
+          allPatients={patients}
+          isOpen={isBookNextAppointmentOpen}
+          onClose={() => {
+            setIsBookNextAppointmentOpen(false)
+            setPatientForNextAppointment(null)
+          }}
+          onSuccess={() => {
+            // Refresh patient list
+            loadPatients()
+          }}
+          isDarkMode={isDarkMode}
+        />
+      )}
     </React.Fragment>
   )
 }

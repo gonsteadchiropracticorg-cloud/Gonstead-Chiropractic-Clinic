@@ -67,13 +67,39 @@ export function DoctorNotifications({
 }: DoctorNotificationProps) {
   const [activeNotifications, setActiveNotifications] = useState<ActiveNotification[]>([])
   const [soundEnabled, setSoundEnabled] = useState(settings.enableSound)
-  const [voiceEnabled, setVoiceEnabled] = useState(true)
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [voiceInitialized, setVoiceInitialized] = useState(false)
 
   // Load voice settings on mount
   useEffect(() => {
-    professionalVoiceNotification.loadSettings()
-    const voiceSettings = professionalVoiceNotification.getSettings()
-    setVoiceEnabled(voiceSettings.enabled)
+    if (typeof window !== 'undefined') {
+      professionalVoiceNotification.loadSettings()
+      const voiceSettings = professionalVoiceNotification.getSettings()
+      setVoiceEnabled(voiceSettings.enabled)
+      
+      // Auto-initialize voice on first user interaction
+      const initializeVoice = () => {
+        if (!voiceInitialized && voiceSettings.enabled) {
+          // Trigger a silent test to initialize the speech synthesis
+          if (window.speechSynthesis) {
+            window.speechSynthesis.cancel()
+            const utterance = new SpeechSynthesisUtterance("")
+            utterance.volume = 0
+            window.speechSynthesis.speak(utterance)
+            setVoiceInitialized(true)
+          }
+        }
+      }
+      
+      // Listen for first user interaction
+      document.addEventListener('click', initializeVoice, { once: true })
+      document.addEventListener('keydown', initializeVoice, { once: true })
+      
+      return () => {
+        document.removeEventListener('click', initializeVoice)
+        document.removeEventListener('keydown', initializeVoice)
+      }
+    }
   }, [])
 
   // Auto-show notifications

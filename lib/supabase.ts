@@ -349,6 +349,16 @@ export interface Patient {
     instructions?: string
     follow_up_date?: string
   }
+  // Next appointment tracking for multi-appointment patients
+  next_appointment_date?: string
+  next_appointment_notes?: string
+  next_appointment_booked_at?: string
+  appointment_history?: Array<{
+    appointment_date: string
+    session_type: string
+    status: string
+    notes?: string
+  }>
 }
 
 export interface AdminUser {
