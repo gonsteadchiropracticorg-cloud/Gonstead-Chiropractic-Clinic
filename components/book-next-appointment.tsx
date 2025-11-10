@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Switch } from "@/components/ui/switch"
+import { Calendar, Clock, AlertCircle, CheckCircle2, CalendarDays, Video, MapPin, Bell, Repeat, Info, TrendingUp, AlertTriangle } from "lucide-react"
 import { type Patient, updatePatient } from "@/lib/supabase"
-import { checkAppointmentConflict, getAvailableTimeSlots } from "@/lib/appointment-utils"
+import { checkAppointmentConflict, getAvailableTimeSlots, createAppointmentReminder, saveReminder } from "@/lib/appointment-utils"
 import { useToast } from "@/hooks/use-toast"
 
 interface BookNextAppointmentProps {
@@ -36,6 +39,11 @@ export function BookNextAppointment({
   const [notes, setNotes] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
   const [conflictWarning, setConflictWarning] = useState<string>("")
+  const [showPreview, setShowPreview] = useState(false)
+  const [autoReminder, setAutoReminder] = useState(true)
+  const [recurringMode, setRecurringMode] = useState(false)
+  const [recurringCount, setRecurringCount] = useState(1)
+  const [recurringInterval, setRecurringInterval] = useState<'weekly' | 'biweekly'>('weekly')
 
   // Generate next 30 days for date selection (excluding Sundays)
   const getAvailableDates = () => {
