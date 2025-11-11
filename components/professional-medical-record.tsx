@@ -271,7 +271,7 @@ export function ProfessionalMedicalRecord({ record, onPrint }: ProfessionalMedic
               Dr. Bashir Khan - Gonstead Specialist
             </p>
             <div className="print-contact text-sm text-white/80">
-              <p>Near Police Station, Tehsil Road, Nowshera</p>
+              <p>Near Peshawar Model School, Tehsil Road, Nowshera</p>
               <p>📞 +92 304 699 6267 | 🌐 gonsteadclinic.com</p>
             </div>
           </div>

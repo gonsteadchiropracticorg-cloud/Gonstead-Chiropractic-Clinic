@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     custom_fields JSONB DEFAULT '{}',
     doctor_name VARCHAR(255) DEFAULT 'DR. BASHIR KHAN',
     clinic_name VARCHAR(255) DEFAULT 'GONSTEAD CHIROPRACTIC CLINIC',
-    clinic_address TEXT DEFAULT 'Near Police Station, Tehsil Road, Nowshera, KPK',
+    clinic_address TEXT DEFAULT 'Near Peshawar Model School, Tehsil Road, Nowshera, KPK',
     clinic_phone VARCHAR(20) DEFAULT '+923046996267',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -414,7 +414,7 @@ ON CONFLICT (email) DO UPDATE SET
 INSERT INTO clinic_settings (setting_key, setting_value, setting_type, description, is_public) VALUES 
 ('clinic_location', '{
     "name": "Gonstead Chiropractic Clinic - Dr. Bashir",
-    "address": "Near Police Station, Tehsil Road, Nowshera, Pakistan",
+    "address": "Near Peshawar Model School, Tehsil Road, Nowshera, Pakistan",
     "coordinates": {"lat": 34.01533, "lng": 71.97788},
     "google_maps_url": "https://maps.app.goo.gl/8pJ9o2hCPtGY3XtD9",
     "city": "Nowshera",

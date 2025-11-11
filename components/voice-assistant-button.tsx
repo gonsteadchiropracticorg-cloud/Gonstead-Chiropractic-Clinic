@@ -19,11 +19,11 @@ export function VoiceAssistantButton() {
     
     Meet Dr. Bashir Khan: He is a certified Gonstead specialist with over 15 years of experience in chiropractic care. He has successfully treated over 2000 patients with a 99% success rate. Dr. Khan specializes in precise spinal analysis, disc herniation treatment, postural correction, and sports injury rehabilitation. His philosophy centers on providing personalized, precise care that addresses the root cause of spinal dysfunction.
     
-    Our clinic location: We are conveniently located near Police Station on Tehsil Road in Nowshera, Khyber Pakhtunkhwa. We're open Monday through Saturday from 9 AM to 6 PM, with emergency appointments available on Sundays. You can easily find us with ample parking available. Our modern facility is equipped with the latest diagnostic and treatment equipment for your comfort and care.
+    Our clinic location: We are conveniently located Near Peshawar Model School on Tehsil Road in Nowshera, Khyber Pakhtunkhwa. We're open Monday through Saturday from 9 AM to 6 PM, with emergency appointments available on Sundays. You can easily find us with ample parking available. Our modern facility is equipped with the latest diagnostic and treatment equipment for your comfort and care.
     
     Booking appointments: You can book online through our website, call us at +92 304 699 6267, or use our WhatsApp booking service. We offer both in-clinic Gonstead adjustments and video consultations. Initial consultations are 2000 Pakistani Rupees, with follow-up sessions at 1500 Pakistani Rupees. We accept cash, JazzCash, and EasyPaisa payments, and insurance coverage may apply.
     
-    Contact information: You can reach us at +92 304 699 6267 for appointments and inquiries. Our email is gonsteadchiropractic.org@gmail.com. We're located near Police Station, Tehsil Road, Nowshera, KPK. For emergencies, please call our emergency line immediately. We also offer WhatsApp booking and consultations for your convenience.
+    Contact information: You can reach us at +92 304 699 6267 for appointments and inquiries. Our email is gonsteadchiropractic.org@gmail.com. We're located Near Peshawar Model School, Tehsil Road, Nowshera, KPK. For emergencies, please call our emergency line immediately. We also offer WhatsApp booking and consultations for your convenience.
     
     Thank you for choosing Gonstead Chiropractic Clinic for your spinal health needs.
   `

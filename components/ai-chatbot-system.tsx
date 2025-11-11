@@ -188,7 +188,7 @@ export function AIChatbotSystem() {
       
       Key Information:
       - Dr. Bashir is a Gonstead Certified Specialist Level V
-      - Clinic location: Near Police Station, Tehsil Road, Nowshera
+      - Clinic location: Near Peshawar Model School, Tehsil Road, Nowshera
       - Phone: +92 304 699 6267
       - Email: gonsteadchiropractic.org@gmail.com
       - Hours: Mon-Fri 8AM-6PM, Sat 9AM-3PM, Sun Closed
@@ -229,7 +229,7 @@ const data = await response.json()
       return aiResponse
     } catch (error) {
       console.error("OpenRouter API Error:", error)
-      return "I'm experiencing some technical difficulties. Please contact Dr. Bashir directly at +92 304 699 6267 or visit our clinic near Police Station, Tehsil Road, Nowshera."
+      return "I'm experiencing some technical difficulties. Please contact Dr. Bashir directly at +92 304 699 6267 or visit our clinic Near Peshawar Model School, Tehsil Road, Nowshera."
     }
   }
 

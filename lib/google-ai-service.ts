@@ -88,7 +88,7 @@ export class GoogleAIService {
 CLINIC INFORMATION:
 - Clinic: Gonstead Chiropractic Clinic
 - Doctor: Dr. Bashir Khan
-- Location: Near Police Station, Tehsil Road, Nowshera, KPK
+- Location: Near Peshawar Model School, Tehsil Road, Nowshera, KPK
 - Phone: +92 304 699 6267
 - Email: gonsteadchiropractic.org@gmail.com
 - Specialization: Gonstead Technique (precise spinal analysis and targeted adjustments)

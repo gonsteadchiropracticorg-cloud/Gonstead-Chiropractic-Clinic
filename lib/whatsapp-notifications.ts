@@ -34,7 +34,7 @@ ${sessionEmoji} *Type:* ${appointment.sessionType === "in_clinic" ? "In-Clinic T
 ${appointment.notes ? `📝 *Notes:* ${appointment.notes}` : ""}
 
 🏥 *Gonstead Chiropractic Clinic*
-📍 Near Police Station, Tehsil Road, Nowshera
+📍 Near Peshawar Model School, Tehsil Road, Nowshera
 📞 +92 304 699 6267
 
 Please confirm the appointment and prepare for the session.`

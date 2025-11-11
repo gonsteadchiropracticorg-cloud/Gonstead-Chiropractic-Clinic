@@ -203,7 +203,7 @@ export function EnhancedLoadingPage({
             Powered by Gonstead Chiropractic Management System
           </p>
           <p className="text-xs text-[#0d5c75] font-bold mt-1">
-            Near Police Station, Tehsil Road, Nowshera • +92 304 699 6267
+            Near Peshawar Model School, Tehsil Road, Nowshera • +92 304 699 6267
           </p>
         </div>
       </div>

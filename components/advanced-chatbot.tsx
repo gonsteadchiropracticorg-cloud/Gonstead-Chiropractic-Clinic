@@ -2231,7 +2231,7 @@ Dear ${bookingData.name}, your appointment has been successfully booked!
 ✅ What's Next:
 • You'll receive a WhatsApp confirmation shortly
 • Our team will contact you to confirm the exact time
-• For clinic visits: Near Police Station, Tehsil Road, Nowshera
+• For clinic visits: Near Peshawar Model School, Tehsil Road, Nowshera
 
 📞 Contact: +92 304 699 6267
 

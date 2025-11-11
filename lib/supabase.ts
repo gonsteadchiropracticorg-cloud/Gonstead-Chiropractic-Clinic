@@ -760,7 +760,7 @@ export const getClinicSettings = async () => {
       data: {
         id: "1",
         clinic_name: "Gonstead Chiropractic Clinic",
-        address: "Near Police Station, Tehsil Road, Nowshera",
+        address: "Near Peshawar Model School, Tehsil Road, Nowshera",
         phone: "+92 304 699 6267",
         email: "info@gonsteadchiropractic.com",
         coordinates: { lat: 34.01, lng: 71.9809 },

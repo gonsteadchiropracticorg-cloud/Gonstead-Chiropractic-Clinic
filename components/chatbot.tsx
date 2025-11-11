@@ -92,7 +92,7 @@ export function ChatBot() {
         responseText =
           language === "ur"
             ? "گونسٹیڈ کائروپریکٹک کلینک\nپولیس سٹیشن کے قریب، تحصیل روڈ، نوشہرہ\nفون: +92 304 6996267"
-            : "Gonstead Chiropractic Clinic\nNear Police Station, Tehsil Road, Nowshera\nPhone: +92 304 6996267"
+            : "Gonstead Chiropractic Clinic\nNear Peshawar Model School, Tehsil Road, Nowshera\nPhone: +92 304 6996267"
         break
       case "services":
         responseText =

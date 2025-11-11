@@ -88,7 +88,7 @@ export function LocationModule() {
           <p className="text-[#F8F5F0] text-sm font-open-sans">
             {language === "ur"
               ? "پولیس سٹیشن کے قریب، تحصیل روڈ، نوشہرہ"
-              : "Near Police Station, Tehsil Road, Nowshera"}
+              : "Near Peshawar Model School, Tehsil Road, Nowshera"}
           </p>
         </CardHeader>
 

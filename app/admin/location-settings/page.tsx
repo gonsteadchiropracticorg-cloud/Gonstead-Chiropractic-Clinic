@@ -61,7 +61,7 @@ export default function LocationSettingsPage() {
   const [settings, setSettings] = useState<LocationSettings>({
     clinic_location: {
       name: "Gonstead Chiropractic Clinic - Dr. Bashir",
-      address: "Near Police Station, Tehsil Road, Nowshera, Pakistan",
+      address: "Near Peshawar Model School, Tehsil Road, Nowshera, Pakistan",
       coordinates: { lat: 34.01533, lng: 71.97788 },
       google_maps_url: "https://maps.app.goo.gl/8pJ9o2hCPtGY3XtD9",
       google_maps_embed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3307.4614046736474!2d71.97788!3d34.01533!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38d917b90f9b6ce9%3A0x93c2e9e4a56d3a0d!2sGonstead%20Chiropractic%20Clinic%20-%20Dr.%20Bashir!5e0!3m2!1sen!2s!4v1717687854793!5m2!1sen!2s",

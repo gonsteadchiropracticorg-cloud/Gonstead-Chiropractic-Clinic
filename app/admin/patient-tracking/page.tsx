@@ -385,7 +385,7 @@ CLINIC INFORMATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Dr. Bashir Khan, DCP
 Gonstead Certified Chiropractic Specialist
-Near Police Station, Tehsil Road, Nowshera
+Near Peshawar Model School, Tehsil Road, Nowshera
 Phone: +92 304 699 6267
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -447,7 +447,7 @@ Exported from Gonstead Chiropractic Patient Tracking System
         clinic: {
           name: 'Gonstead Chiropractic Clinic',
           doctor: 'Dr. Bashir Khan',
-          address: 'Near Police Station, Tehsil Road, Nowshera',
+          address: 'Near Peshawar Model School, Tehsil Road, Nowshera',
           phone: '+92 304 699 6267'
         }
       }

@@ -113,7 +113,7 @@ export default function AdminDashboard() {
   const [patientCount, setPatientCount] = useState(0)
   const [authChecked, setAuthChecked] = useState(false)
   const [clinicLocation, setClinicLocation] = useState({
-    address: "Near Police Station, Tehsil Road, Nowshera",
+    address: "Near Peshawar Model School, Tehsil Road, Nowshera",
     coordinates: { lat: 34.0153, lng: 71.9804 },
     mapUrl: "https://maps.app.goo.gl/8pJ9o2hCPtGY3XtD9",
   })
@@ -1280,7 +1280,7 @@ export default function AdminDashboard() {
       pdf.setFontSize(11)
       pdf.setFont('helvetica', 'normal')
       pdf.text('Dr. Bashir Khan — Gonstead Certified Specialist', pageWidth / 2 + 6, 19.5, { align: 'center' })
-      pdf.text('Near Police Station, Tehsil Road, Nowshera  •  +92 304 699 6267', pageWidth / 2 + 6, 26, { align: 'center' })
+      pdf.text('Near Peshawar Model School, Tehsil Road, Nowshera  •  +92 304 699 6267', pageWidth / 2 + 6, 26, { align: 'center' })
 
       // Report ribbon
       pdf.setFillColor(227, 252, 236)
@@ -4940,7 +4940,7 @@ DOCTOR SIGNATURE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Dr. Bashir Khan, DCP
 Gonstead Certified Chiropractic Specialist
-Near Police Station, Tehsil Road, Nowshera
+Near Peshawar Model School, Tehsil Road, Nowshera
 +92 304 699 6267
 
 Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
