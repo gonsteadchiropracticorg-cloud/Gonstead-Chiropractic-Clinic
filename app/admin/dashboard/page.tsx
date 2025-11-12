@@ -210,6 +210,11 @@ export default function AdminDashboard() {
   const [isBookNextAppointmentOpen, setIsBookNextAppointmentOpen] = useState(false)
   const [patientForNextAppointment, setPatientForNextAppointment] = useState<Patient | null>(null)
   
+  // Cancellation Confirmation Dialog State
+  const [isCancelConfirmDialogOpen, setIsCancelConfirmDialogOpen] = useState(false)
+  const [patientToCancel, setPatientToCancel] = useState<Patient | null>(null)
+  const [expandedCancelSection, setExpandedCancelSection] = useState<'patient' | 'impact' | 'recovery' | null>(null)
+  
   // Smart table sorting state (persisted)
   type SortKey = 'name' | 'phone' | 'profession' | 'appointment_date' | 'status' | 'urgency' | 'session_type' | 'sessions'
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
@@ -3082,34 +3087,53 @@ export default function AdminDashboard() {
                         </TableCell>
                         <TableCell>
                           <div className="space-y-2">
-                            <Badge
-                              variant={
-                                patient.status === "completed"
-                                  ? "default"
-                                  : patient.status === "confirmed"
-                                    ? "secondary"
-                                    : patient.status === "cancelled"
-                                      ? "destructive"
-                                      : "outline"
-                              }
-                              className="text-xs"
-                            >
-                              {patient.status}
-                            </Badge>
-                            <Select
-                              value={patient.status}
-                              onValueChange={(value: Patient["status"]) => handleUpdatePatientStatus(patient.id, value)}
-                            >
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="confirmed">Confirmed</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            {/* Current Status Badge - Always visible */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-600 font-medium">Status:</span>
+                              <Badge
+                                variant={
+                                  patient.status === "completed"
+                                    ? "default"
+                                    : patient.status === "confirmed"
+                                      ? "secondary"
+                                      : patient.status === "cancelled"
+                                        ? "destructive"
+                                        : "outline"
+                                }
+                                className="text-xs font-semibold"
+                              >
+                                {patient.status.toUpperCase()}
+                              </Badge>
+                            </div>
+                            
+                            {/* Cancel Appointment Button - Only show if not already cancelled */}
+                            {patient.status !== "cancelled" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setPatientToCancel(patient)
+                                  setIsCancelConfirmDialogOpen(true)
+                                }}
+                                className="h-7 text-xs border-red-500 text-red-600 hover:bg-red-50 w-full"
+                              >
+                                <X className="h-3 w-3 mr-1" />
+                                Cancel Appointment
+                              </Button>
+                            )}
+                            
+                            {/* Show restore option if cancelled */}
+                            {patient.status === "cancelled" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdatePatientStatus(patient.id, "pending")}
+                                className="h-7 text-xs border-green-500 text-green-600 hover:bg-green-50 w-full"
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Restore Appointment
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -4889,83 +4913,6 @@ export default function AdminDashboard() {
                 >
                   Close
                 </Button>
-                <Button 
-                  className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white"
-                  onClick={() => {
-                    // Generate and download detailed patient history report
-                    const historyReport = `
-╔══════════════════════════════════════════════════════════════════╗
-║                 GONSTEAD CHIROPRACTIC CLINIC                        ║
-║                COMPREHENSIVE PATIENT HISTORY REPORT                 ║
-║                  Dr. Bashir Khan - Gonstead Certified               ║
-╚══════════════════════════════════════════════════════════════════╝
-
-PATIENT: ${selectedPatientHistory.name}
-PATIENT CODE: ${getPatientCodeById(selectedPatientHistory.id)}
-GENERATED: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CONTACT INFORMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Name: ${selectedPatientHistory.name}
-Phone: ${selectedPatientHistory.phone}
-Email: ${selectedPatientHistory.email || 'Not provided'}
-Patient Code: ${getPatientCodeById(selectedPatientHistory.id)}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TREATMENT STATISTICS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Total Sessions Completed: ${selectedPatientHistory.sessions_completed || 0}
-First Visit: ${new Date(selectedPatientHistory.appointment_date).toLocaleDateString()}
-Last Visit: ${selectedPatientHistory.last_visit ? new Date(selectedPatientHistory.last_visit).toLocaleDateString() : 'No visits yet'}
-Current Status: ${selectedPatientHistory.status.toUpperCase()}
-Session Type: ${selectedPatientHistory.session_type === 'in_clinic' ? 'In-Clinic Gonstead Adjustment' : 'Video Consultation'}
-Urgency Level: ${selectedPatientHistory.urgency.toUpperCase()}
-Payment Method: ${selectedPatientHistory.payment_method.toUpperCase()}
-Prescription Generated: ${selectedPatientHistory.prescription_generated ? 'Yes (' + (selectedPatientHistory.prescription_count || 0) + ')' : 'No'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CHIEF COMPLAINT & CLINICAL NOTES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${selectedPatientHistory.notes || 'No specific complaints noted. General chiropractic consultation requested.'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TREATMENT PROGRESS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Progress: ${Math.round(((selectedPatientHistory.sessions_completed || 0) / 8) * 100)}% Complete
-Treatment Plan: ${selectedPatientHistory.treatment_plan?.progress || 'Patient responding well to Gonstead chiropractic treatment.'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DOCTOR SIGNATURE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Dr. Bashir Khan, DCP
-Gonstead Certified Chiropractic Specialist
-Near Peshawar Model School, Tehsil Road, Nowshera
-+92 304 699 6267
-
-Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                    END OF PATIENT HISTORY REPORT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                    `
-                    
-                    const blob = new Blob([historyReport], { type: 'text/plain' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = `${selectedPatientHistory.name.replace(/\s+/g, '_')}_complete_history_${new Date().toISOString().split('T')[0]}.txt`
-                    a.click()
-                    URL.revokeObjectURL(url)
-                    
-                    toast({
-                      title: '📄 History Report Downloaded',
-                      description: `Complete patient history for ${selectedPatientHistory.name} has been saved.`
-                    })
-                  }}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download History Report
-                </Button>
               </div>
             </div>
           )}
@@ -5182,6 +5129,383 @@ Report Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTim
           isDarkMode={isDarkMode}
         />
       )}
+
+      {/* Professional Medical-Grade Cancellation Confirmation Dialog */}
+      <Dialog open={isCancelConfirmDialogOpen} onOpenChange={setIsCancelConfirmDialogOpen}>
+        <DialogContent className="max-w-2xl overflow-hidden p-0 border-0 shadow-2xl max-h-[90vh] overflow-y-auto">
+          {/* Premium Header with Gradient */}
+          <div className="relative bg-gradient-to-br from-red-600 via-red-500 to-orange-600 text-white p-6 pb-8">
+            {/* Animated Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-yellow-200 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+            
+            {/* Header Content */}
+            <div className="relative z-10">
+              <div className="flex items-start gap-4">
+                {/* Animated Warning Icon */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-white/30 rounded-full animate-ping"></div>
+                  <div className="relative bg-white/20 backdrop-blur-sm rounded-full p-3 border-2 border-white/40">
+                    <AlertTriangle className="h-8 w-8 text-white drop-shadow-lg" />
+                  </div>
+                </div>
+                
+                {/* Title Section */}
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold font-poppins mb-2 tracking-tight drop-shadow-md">
+                    Appointment Cancellation Confirmation
+                  </h2>
+                  <p className="text-red-100 text-sm font-medium">
+                    This action requires careful consideration • Review details below
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Decorative Wave */}
+            <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-b from-transparent to-white"></div>
+          </div>
+          
+          {patientToCancel && (
+            <div className="p-4 md:p-6 space-y-4 md:space-y-5 bg-gradient-to-b from-gray-50 to-white">
+              {/* Collapsible Section 1: Patient Information Card - Premium Design */}
+              <div className="relative overflow-hidden rounded-xl border-2 border-red-200 bg-white shadow-lg transition-all duration-300">
+                {/* Collapsible Header - Clickable */}
+                <button
+                  onClick={() => setExpandedCancelSection(expandedCancelSection === 'patient' ? null : 'patient')}
+                  className="w-full text-left p-4 md:p-5 hover:bg-red-50/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-300 rounded-t-xl"
+                  aria-expanded={expandedCancelSection === 'patient'}
+                  aria-controls="patient-info-section"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center border-2 border-red-300 shadow-inner">
+                          <Users className="h-6 w-6 md:h-7 md:w-7 text-red-600" />
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+                          Patient Information
+                          {patientToCancel.urgency === 'emergency' && (
+                            <Badge className="bg-red-600 text-white text-xs">EMERGENCY</Badge>
+                          )}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">{patientToCancel.name}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {expandedCancelSection === 'patient' && (
+                        <Badge className="bg-green-500 text-white text-xs hidden md:inline-flex">EXPANDED</Badge>
+                      )}
+                      {expandedCancelSection === 'patient' ? (
+                        <ChevronUp className="h-5 w-5 text-red-600 transition-transform duration-200" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-gray-400 transition-transform duration-200" />
+                      )}
+                    </div>
+                  </div>
+                </button>
+                {/* Collapsible Content - Patient Details */}
+                <div 
+                  id="patient-info-section"
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    expandedCancelSection === 'patient' || expandedCancelSection === null 
+                      ? 'max-h-[500px] opacity-100' 
+                      : 'max-h-0 opacity-0'
+                  }`}
+                  aria-hidden={expandedCancelSection !== 'patient' && expandedCancelSection !== null}
+                >
+                  {/* Status Ribbon */}
+                  <div className="relative">
+                    <div className="absolute top-0 right-0 bg-gradient-to-br from-red-600 to-red-700 text-white px-3 md:px-4 py-1 text-xs font-bold tracking-wider shadow-md" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 20% 100%)' }}>
+                      CRITICAL ACTION
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 md:p-5 pt-8 md:pt-10">
+                    <div className="flex flex-col md:flex-row md:items-start gap-4">
+                      {/* Patient Avatar/Icon - Hidden on mobile when collapsed */}
+                      <div className="flex-shrink-0 hidden md:block">
+                        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center border-2 border-red-300 shadow-inner">
+                          <Users className="h-7 w-7 md:h-8 md:w-8 text-red-600" />
+                        </div>
+                      </div>
+                      
+                      {/* Patient Details */}
+                      <div className="flex-1">
+                        <div className="mb-3">
+                          <h3 className="text-base md:text-lg font-bold text-gray-900 mb-1 flex items-center gap-2 flex-wrap">
+                            {patientToCancel.name}
+                            {patientToCancel.urgency === 'emergency' && (
+                              <Badge className="bg-red-600 text-white text-xs">EMERGENCY</Badge>
+                            )}
+                            {patientToCancel.urgency === 'urgent' && (
+                              <Badge className="bg-orange-500 text-white text-xs">URGENT</Badge>
+                            )}
+                          </h3>
+                          <p className="text-xs text-gray-500 font-mono">Patient Code: {getOrAssignPatientCode(patientToCancel)}</p>
+                        </div>
+                        
+                        {/* Information Grid - Responsive */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Phone className="h-3.5 w-3.5 text-[#0d5c75]" />
+                              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Contact</p>
+                            </div>
+                            <p className="text-sm font-medium text-gray-900 break-all">{patientToCancel.phone}</p>
+                            {patientToCancel.email && (
+                              <p className="text-xs text-gray-600 mt-1 flex items-center gap-1 break-all">
+                                <Mail className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">{patientToCancel.email}</span>
+                              </p>
+                            )}
+                          </div>
+                          
+                          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Calendar className="h-3.5 w-3.5 text-[#0d5c75]" />
+                              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Appointment</p>
+                            </div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {new Date(patientToCancel.appointment_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {new Date(patientToCancel.appointment_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          
+                          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Activity className="h-3.5 w-3.5 text-[#0d5c75]" />
+                              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Session Type</p>
+                            </div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {patientToCancel.session_type === 'in_clinic' ? 'In-Clinic Visit' : 'Video Consultation'}
+                            </p>
+                          </div>
+                          
+                          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle className="h-3.5 w-3.5 text-[#0d5c75]" />
+                              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Progress</p>
+                            </div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {patientToCancel.sessions_completed || 0}/{patientToCancel.total_sessions || 8} Sessions
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Collapsible Section 2: Cancellation Impact Analysis */}
+              <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl shadow-md transition-all duration-300">
+                {/* Collapsible Header - Clickable */}
+                <button
+                  onClick={() => setExpandedCancelSection(expandedCancelSection === 'impact' ? null : 'impact')}
+                  className="w-full text-left p-4 md:p-5 hover:bg-orange-100/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300 rounded-t-xl"
+                  aria-expanded={expandedCancelSection === 'impact'}
+                  aria-controls="impact-analysis-section"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 bg-orange-500 rounded-full p-2">
+                        <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm md:text-base font-bold text-orange-900">Cancellation Impact Analysis</h4>
+                        <p className="text-xs text-orange-700 mt-1">Review the following changes</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {expandedCancelSection === 'impact' && (
+                        <Badge className="bg-green-500 text-white text-xs hidden md:inline-flex">EXPANDED</Badge>
+                      )}
+                      {expandedCancelSection === 'impact' ? (
+                        <ChevronUp className="h-5 w-5 text-orange-600 transition-transform duration-200" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-gray-400 transition-transform duration-200" />
+                      )}
+                    </div>
+                  </div>
+                </button>
+                
+                {/* Collapsible Content - Impact Analysis */}
+                <div 
+                  id="impact-analysis-section"
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    expandedCancelSection === 'impact' || expandedCancelSection === null 
+                      ? 'max-h-[500px] opacity-100' 
+                      : 'max-h-0 opacity-0'
+                  }`}
+                  aria-hidden={expandedCancelSection !== 'impact' && expandedCancelSection !== null}
+                >
+                  <div className="p-4 md:p-5 pt-0 space-y-3">
+                  {/* Impact Items */}
+                  <div className="flex items-start gap-3 bg-white/60 rounded-lg p-3 border border-orange-200">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                        <X className="h-4 w-4 text-red-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">Appointment Status Change</p>
+                      <p className="text-xs text-gray-600 mt-1">Status will be updated from <Badge variant="secondary" className="text-xs mx-1">{patientToCancel.status.toUpperCase()}</Badge> to <Badge variant="destructive" className="text-xs mx-1">CANCELLED</Badge></p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 bg-white/60 rounded-lg p-3 border border-orange-200">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                        <Activity className="h-4 w-4 text-red-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">Session Counter Reset</p>
+                      <p className="text-xs text-gray-600 mt-1">Session progress will be reset from <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">{patientToCancel.sessions_completed || 0}/{patientToCancel.total_sessions || 8}</span> to <span className="font-mono bg-red-100 px-2 py-0.5 rounded text-red-700">0/0</span></p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 bg-white/60 rounded-lg p-3 border border-orange-200">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Clock className="h-4 w-4 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">Time Slot Release</p>
+                      <p className="text-xs text-gray-600 mt-1">The appointment time slot will become available for other patients to book</p>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Collapsible Section 3: Recovery & Next Steps */}
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl shadow-md transition-all duration-300">
+                {/* Collapsible Header - Clickable */}
+                <button
+                  onClick={() => setExpandedCancelSection(expandedCancelSection === 'recovery' ? null : 'recovery')}
+                  className="w-full text-left p-4 md:p-5 hover:bg-blue-100/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-t-xl"
+                  aria-expanded={expandedCancelSection === 'recovery'}
+                  aria-controls="recovery-steps-section"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 bg-blue-500 rounded-full p-2">
+                        <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm md:text-base font-bold text-blue-900">Recovery & Next Steps</h4>
+                        <p className="text-xs text-blue-700 mt-1">Post-cancellation options</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {expandedCancelSection === 'recovery' && (
+                        <Badge className="bg-green-500 text-white text-xs hidden md:inline-flex">EXPANDED</Badge>
+                      )}
+                      {expandedCancelSection === 'recovery' ? (
+                        <ChevronUp className="h-5 w-5 text-blue-600 transition-transform duration-200" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-gray-400 transition-transform duration-200" />
+                      )}
+                    </div>
+                  </div>
+                </button>
+                
+                {/* Collapsible Content - Recovery Steps */}
+                <div 
+                  id="recovery-steps-section"
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    expandedCancelSection === 'recovery' || expandedCancelSection === null 
+                      ? 'max-h-[500px] opacity-100' 
+                      : 'max-h-0 opacity-0'
+                  }`}
+                  aria-hidden={expandedCancelSection !== 'recovery' && expandedCancelSection !== null}
+                >
+                  <div className="p-4 md:p-5 pt-0 space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Reversible Action:</span> You can restore this appointment later using the <span className="font-mono bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Restore Appointment</span> button</p>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Patient Notification:</span> Remember to inform the patient about the cancellation via phone call, SMS, or email</p>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Documentation:</span> Consider adding a note in the patient's record explaining the reason for cancellation</p>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Rescheduling:</span> Patient can book a new appointment through the online booking system or by calling the clinic</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Professional Action Buttons */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-4 pt-3 md:pt-4 border-t-2 border-gray-200">
+                {/* Safe Action - Keep Appointment */}
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    setIsCancelConfirmDialogOpen(false)
+                    setPatientToCancel(null)
+                    setExpandedCancelSection(null)
+                  }}
+                  className="w-full md:flex-1 border-2 border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
+                >
+                  <CheckCircle className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                  <span className="text-sm md:text-base">Keep Appointment Active</span>
+                </Button>
+                
+                {/* Destructive Action - Confirm Cancellation */}
+                <Button 
+                  type="button" 
+                  variant="destructive"
+                  size="lg"
+                  onClick={() => {
+                    if (patientToCancel) {
+                      handleUpdatePatientStatus(patientToCancel.id, "cancelled")
+                      setIsCancelConfirmDialogOpen(false)
+                      setPatientToCancel(null)
+                      setExpandedCancelSection(null)
+                      
+                      // Enhanced success feedback
+                      toast({
+                        title: "✓ Appointment Cancelled Successfully",
+                        description: `${patientToCancel.name}'s appointment has been cancelled. Remember to notify the patient.`,
+                      })
+                    }
+                  }}
+                  className="w-full md:flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 font-semibold transition-all duration-200 shadow-md hover:shadow-xl"
+                >
+                  <X className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                  <span className="text-sm md:text-base">Confirm Cancellation</span>
+                </Button>
+              </div>
+              
+              {/* Footer Note */}
+              <div className="text-center pt-2">
+                <p className="text-xs text-gray-500 px-2">
+                  🔒 This action is logged and tracked for audit purposes
+                  <span className="hidden md:inline"> • Patient ID: {getOrAssignPatientCode(patientToCancel)}</span>
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </React.Fragment>
   )
 }
