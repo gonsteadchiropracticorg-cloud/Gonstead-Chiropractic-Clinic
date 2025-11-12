@@ -40,6 +40,20 @@ export function ChatBot() {
       console.error('Voice synthesis error:', error)
     }
   }
+  
+  // Clean response text - remove markdown formatting and excessive emojis
+  const cleanResponse = (text: string): string => {
+    return text
+      .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove **bold**
+      .replace(/\*([^*]+)\*/g, '$1')     // Remove *italic*
+      .replace(/#{1,6}\s/g, '')           // Remove # headers
+      .replace(/^[\u{1F300}-\u{1F9FF}]\s*/gu, '') // Remove leading emojis
+      .replace(/\n{3,}/g, '\n\n')        // Max 2 newlines
+      .replace(/^•\s/gm, '')              // Remove bullet points
+      .replace(/^✓\s/gm, '')              // Remove checkmarks
+      .replace(/^-\s/gm, '')              // Remove dashes
+      .trim()
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -185,11 +199,12 @@ export function ChatBot() {
             const chunk = decoder.decode(value, { stream: true })
             botResponse += chunk
             
-            // Update the bot message in real-time
+            // Update the bot message in real-time with cleaned text
+            const cleanedText = cleanResponse(botResponse)
             setMessages((prev) => 
               prev.map((msg) => 
                 msg.id === botMessageId 
-                  ? { ...msg, text: botResponse }
+                  ? { ...msg, text: cleanedText }
                   : msg
               )
             )
@@ -204,10 +219,11 @@ export function ChatBot() {
         // Non-streaming response (fallback)
         const data = await response.json()
         const botResponse = data.text || 'No response received'
+        const cleanedText = cleanResponse(botResponse)
         
         setMessages((prev) => [...prev, {
           id: (Date.now() + 1).toString(),
-          text: botResponse,
+          text: cleanedText,
           sender: "bot",
           timestamp: new Date(),
         }])

@@ -228,21 +228,19 @@ const findBestMatch = (query: string, keywords: string[]): boolean => {
 }
 
 export const generateKnowledgeResponse = (query: string): string => {
-  const lowerQuery = query.toLowerCase()
-  
-  // Gonstead Technique questions - Enhanced
-  if (findBestMatch(query, ['gonstead', 'technique', 'method', 'system', 'approach', 'gonsted', 'gonsted technique'])) {
-    return `🏥 **GONSTEAD TECHNIQUE EXPERTISE**\n\n${chatbotKnowledgeBase.gonstead.definition}\n\n✨ **What makes Gonstead special:**\n${chatbotKnowledgeBase.gonstead.advantages.map(advantage => `• ${advantage}`).join('\n')}\n\n🎯 **The Five Gonstead Criteria:**\n${chatbotKnowledgeBase.gonstead.fiveCriteria.map(criteria => `• ${criteria}`).join('\n')}\n\nDr. Bashir Khan specializes exclusively in this precise method. Would you like to know more about how it can help your specific condition?`
+  // Gonstead Technique
+  if (findBestMatch(query, ['gonstead', 'technique', 'method'])) {
+    return `The Gonstead Technique is a comprehensive system for analyzing and adjusting the spine. It uses five criteria: X-ray analysis, instrumentation, static palpation, motion palpation, and visual examination. This precise method identifies exact problems and provides targeted corrections. Dr. Bashir Khan specializes in this technique. Would you like to know how it can help your condition?`
   }
   
-  // Safety questions - Enhanced
-  if (findBestMatch(query, ['safe', 'safety', 'dangerous', 'risk', 'risks', 'harm', 'side effect', 'adverse'])) {
-    return `🛡️ **SAFETY FIRST - GONSTEAD CHIROPRACTIC**\n\n${chatbotKnowledgeBase.commonQuestions.safety}\n\n✅ **Our Safety Measures:**\n• Comprehensive pre-treatment examination\n• State-of-the-art diagnostic equipment\n• Precise Gonstead analysis before any adjustment\n• Dr. Khan's 7+ years of specialized experience\n• Gentle, specific adjustments - no forceful manipulation\n• Emergency protocols in place\n\nSerious adverse events occur in less than 1 in 100,000 treatments. Your safety is our top priority!`
+  // Safety
+  if (findBestMatch(query, ['safe', 'safety', 'dangerous', 'risk'])) {
+    return `Yes, the Gonstead Technique is extremely safe when performed by a qualified professional. We use comprehensive pre-treatment examination, state-of-the-art equipment, and precise analysis before any adjustment. Dr. Khan has 7+ years of experience. Serious adverse events are extremely rare (less than 1 in 100,000 treatments).`
   }
   
-  // Pain questions - Enhanced 
-  if (findBestMatch(query, ['hurt', 'pain', 'painful', 'sore', 'ache', 'discomfort', 'does it hurt', 'will it hurt'])) {
-    return `💆 **COMFORT & PAIN MANAGEMENT**\n\n${chatbotKnowledgeBase.commonQuestions.pain}\n\n🌟 **What to expect:**\n• Most patients find treatment relaxing and relieving\n• You may hear a "pop" - this is just gas releasing from joints\n• No forceful twisting or cracking\n• Dr. Khan uses gentle, precise Gonstead techniques\n• Some mild soreness possible for 24-48 hours (like after exercise)\n• Ice application recommendations provided\n\n💬 **Patient feedback:** "I was surprised how gentle and comfortable the treatment was!"\n\nWould you like to know about our pain management approach for your specific condition?`
+  // Pain/hurt
+  if (findBestMatch(query, ['hurt', 'pain', 'painful', 'sore'])) {
+    return `Most patients find treatment comfortable and relieving. You may hear a "pop" sound, but it's not painful - just gas releasing from joints. Dr. Khan uses gentle techniques with no forceful manipulation. Some mild soreness is possible for 24-48 hours, similar to after exercise.`
   }
   
   // Doctor questions - Enhanced
