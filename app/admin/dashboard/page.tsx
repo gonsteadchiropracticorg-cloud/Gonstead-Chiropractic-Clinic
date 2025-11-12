@@ -3,6 +3,7 @@
 import React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { useTheme } from "@/components/theme-provider"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -109,7 +110,8 @@ export default function AdminDashboard() {
   const [filterUrgency, setFilterUrgency] = useState<string>("all")
   const [filterTimePeriod, setFilterTimePeriod] = useState<string>("all")
   const [isLoading, setIsLoading] = useState(true)
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const isDarkMode = theme === "dark"
   const [currentTime, setCurrentTime] = useState(new Date())
   const [patientCount, setPatientCount] = useState(0)
   const [authChecked, setAuthChecked] = useState(false)
@@ -2701,7 +2703,7 @@ export default function AdminDashboard() {
                 </div>
                 <Switch
                   checked={isDarkMode}
-                  onCheckedChange={setIsDarkMode}
+                  onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
                   className="data-[state=checked]:bg-gray-600 scale-75 sm:scale-100"
                 />
                 <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-blue-100" : "bg-gray-200"} transition-all duration-300`}>

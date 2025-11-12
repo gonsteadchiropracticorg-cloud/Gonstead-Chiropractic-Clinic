@@ -3,7 +3,7 @@
   "short_name": "Gonstead Chiropractic",
   "description": "Expert Gonstead chiropractic care with advanced machine-assisted treatment in Nowshera, Pakistan",
   "start_url": "/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#f4f1de",
   "theme_color": "#2a9d8f",
   "orientation": "portrait-primary",

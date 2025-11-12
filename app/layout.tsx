@@ -68,8 +68,7 @@ export const metadata: Metadata = {
     shortcut: "/images/gonstead-logo-new.ico",
     apple: [{ url: "/images/gonstead-chiropractic-logo-new.png", sizes: "180x180", type: "image/png" }],
   },
-  manifest: "/manifest.json",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -84,10 +83,8 @@ export default function RootLayout({
         <link rel="icon" href="/images/gonstead-logo-new.ico" />
         <link rel="apple-touch-icon" href="/images/gonstead-chiropractic-logo-new.png" />
         <meta name="theme-color" content="#0d5c75" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Gonstead Chiropractic" />
+        <meta name="mobile-web-app-capable" content="no" />
+        <meta name="apple-mobile-web-app-capable" content="no" />
       </head>
       <body className={`${openSans.className} antialiased`} suppressHydrationWarning>
         <ErrorBoundary>
