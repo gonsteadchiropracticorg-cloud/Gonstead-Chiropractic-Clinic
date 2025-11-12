@@ -16,7 +16,7 @@
 
 *Complete digital ecosystem for chiropractic practice with advanced patient care, AI diagnostics, and enterprise security*
 
-[🚀 Live Demo](https://gonstead-chiropractic.vercel.app) • [📖 Full Documentation](./docs/README.md) • [💻 Quick Start](#-quick-start) • [🔄 Updates](#-keeping-your-system-updated)
+[🚀 Live Demo](https://gonstead-chiropractic.vercel.app) • [📖 Full Documentation](./docs/README.md) • [📊 System Flowcharts](./FLOWCHARTS.md) • [💻 Quick Start](#-quick-start) • [🔄 Updates](#-keeping-your-system-updated)
 
 </div>
 
@@ -459,10 +459,16 @@ pm2 startup
 - Authentication & authorization
 
 ### Architecture Diagrams
-- System architecture overview
-- Data flow diagrams
-- Security layer visualization
-- Component structure
+- 📊 **[Complete System Flowcharts](./FLOWCHARTS.md)** - Visual documentation of all workflows
+  - System architecture overview
+  - Authentication & authorization flows
+  - Patient management workflows
+  - Appointment booking process
+  - AI chatbot conversation flow
+  - Payment processing integration
+  - Security & bot protection layers
+  - Real-time data synchronization
+  - Database schema & relationships
 
 ---
 
