@@ -80,6 +80,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${openSans.variable}`}>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
         <link rel="icon" href="/images/gonstead-logo-new.ico" />
         <link rel="apple-touch-icon" href="/images/gonstead-chiropractic-logo-new.png" />
         <meta name="theme-color" content="#0d5c75" />
