@@ -321,15 +321,15 @@ export function BookNextAppointment({
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`max-w-2xl ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
-        <DialogHeader>
+      <DialogContent className={`max-w-2xl max-h-[95vh] overflow-y-auto ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+        <DialogHeader className="sticky top-0 z-10 pb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}">
           <DialogTitle className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'} flex items-center gap-2`}>
             <Calendar className="h-6 w-6" />
             Book Next Appointment
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-6 mt-4 pb-4">
           {/* Patient Info Banner */}
           <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} border ${isDarkMode ? 'border-gray-600' : 'border-blue-200'}`}>
             <div className="flex items-center justify-between">
@@ -440,8 +440,8 @@ export function BookNextAppointment({
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          {/* Action Buttons - Sticky Footer */}
+          <div className={`flex gap-3 pt-4 pb-2 sticky bottom-0 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} mt-6 -mx-6 px-6`}>
             <Button
               type="button"
               variant="outline"
@@ -466,7 +466,7 @@ export function BookNextAppointment({
 
     {/* Success Dialog with PDF Download Option */}
     <Dialog open={showSuccessDialog} onOpenChange={handleCloseSuccess}>
-      <DialogContent className={`max-w-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+      <DialogContent className={`max-w-md max-h-[90vh] overflow-y-auto ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
         <DialogHeader>
           <DialogTitle className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'} flex items-center gap-2`}>
             <CheckCircle2 className="h-6 w-6 text-green-500" />
@@ -474,7 +474,7 @@ export function BookNextAppointment({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-6 mt-4 pb-4">
           {/* Success Message */}
           <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-green-900/20' : 'bg-green-50'} border ${isDarkMode ? 'border-green-800' : 'border-green-200'}`}>
             <p className={`text-sm ${isDarkMode ? 'text-green-200' : 'text-green-800'}`}>
