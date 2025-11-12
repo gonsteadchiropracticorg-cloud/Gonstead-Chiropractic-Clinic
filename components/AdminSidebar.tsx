@@ -183,6 +183,7 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
     if (href) {
       console.log('AdminSidebar: Navigating to:', href)
       router.push(href)
+      // Auto-close sidebar after navigation for better UX
       onClose()
     }
   }
@@ -232,9 +233,9 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
 
   return (
     <>
-      {/* Backdrop with smooth fade */}
+      {/* Backdrop with smooth fade - applies to entire dashboard on all screen sizes */}
       <div 
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -388,8 +389,7 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
                       } else if (item.href) {
                         console.log('AdminSidebar: Direct navigation to:', item.href)
                         handleNavigation(item.href)
-                        // Auto-close sidebar on navigation for better UX
-                        onClose()
+                        // Sidebar will auto-close via handleNavigation
                       }
                     }}
                     className={`
