@@ -459,16 +459,363 @@ pm2 startup
 - Authentication & authorization
 
 ### Architecture Diagrams
-- 📊 **[Complete System Flowcharts](./FLOWCHARTS.md)** - Visual documentation of all workflows
-  - System architecture overview
-  - Authentication & authorization flows
-  - Patient management workflows
-  - Appointment booking process
-  - AI chatbot conversation flow
-  - Payment processing integration
-  - Security & bot protection layers
-  - Real-time data synchronization
-  - Database schema & relationships
+
+Below are fully functional Mermaid flowcharts embedded directly in this README. GitHub renders these diagrams natively.
+
+#### 1) High-Level System Architecture
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        WEB[Web Browser]
+        MOB[Mobile Device]
+        DESK[Desktop App]
+    end
+    
+    subgraph "CDN & Edge"
+        VERCEL[Vercel Edge Network]
+        CDN[Static Assets CDN]
+    end
+    
+    subgraph "Application Layer"
+        NEXT[Next.js 15 App]
+        API[API Routes]
+        SSR[Server-Side Rendering]
+        ISR[Incremental Static Regeneration]
+    end
+    
+    subgraph "Services Layer"
+        AUTH[Authentication Service]
+        PAYMENT[Payment Service - Stripe]
+        EMAIL[Email Service - Nodemailer]
+        AI[AI Chatbot Service]
+        ANALYTICS[Analytics Service]
+    end
+    
+    subgraph "Data Layer"
+        SUPABASE[Supabase PostgreSQL]
+        STORAGE[Supabase Storage]
+        CACHE[Redis Cache]
+    end
+    
+    subgraph "External Services"
+        STRIPE[Stripe API]
+        SMTP[Email SMTP]
+        OPENAI[OpenAI/Gemini API]
+    end
+    
+    WEB --> VERCEL
+    MOB --> VERCEL
+    DESK --> VERCEL
+    
+    VERCEL --> NEXT
+    CDN --> NEXT
+    
+    NEXT --> API
+    NEXT --> SSR
+    NEXT --> ISR
+    
+    API --> AUTH
+    API --> PAYMENT
+    API --> EMAIL
+    API --> AI
+    API --> ANALYTICS
+    
+    AUTH --> SUPABASE
+    PAYMENT --> STRIPE
+    EMAIL --> SMTP
+    AI --> OPENAI
+    
+    SUPABASE --> STORAGE
+    SUPABASE --> CACHE
+```
+
+#### 2) Authentication: Login & RBAC
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Middleware
+    participant Auth
+    participant Supabase
+    participant DB
+    User->>Frontend: Enter credentials
+    Frontend->>Auth: POST /api/auth/login
+    Auth->>Supabase: Verify user
+    Supabase->>DB: Query user
+    DB-->>Supabase: User data
+    alt success
+      Supabase-->>Auth: Session/JWT
+      Auth-->>Frontend: Token + user
+      Frontend-->>User: Redirect to dashboard
+    else failure
+      Supabase-->>Auth: Invalid
+      Auth-->>Frontend: Error
+      Frontend-->>User: Show error
+    end
+```
+
+```mermaid
+graph TD
+    A[Authenticated] --> B{Role?}
+    B -->|Admin| C[Admin Dashboard]
+    B -->|Doctor| D[Doctor Portal]
+    B -->|Patient| E[Patient Portal]
+    B -->|Staff| F[Staff Tools]
+    C --> C1[Patients, Finance, Settings, Audits]
+    D --> D1[Records, Rx, Appointments, Notes]
+    E --> E1[My Records, Appointments, Prescriptions]
+    F --> F1[Scheduling, Intake]
+```
+
+#### 3) Appointment Booking (Public/Portal)
+```mermaid
+flowchart TD
+    START([Start Booking]) --> AUTH{Logged in?}
+    AUTH -->|No| LOGIN[Login]
+    AUTH -->|Yes| PICK_DATE[Pick Date]
+    PICK_DATE --> EXCL{Sunday?}
+    EXCL -->|Yes| PICK_DATE
+    EXCL -->|No| SLOTS[Get Available Slots]
+    SLOTS --> DB[(Query Appointments)]
+    DB --> CALC[Compute 8am-6pm availability]
+    CALC --> SHOW[Show Slots]
+    SHOW --> PICK_TIME[Pick Time]
+    PICK_TIME --> TYPE{Session Type}
+    TYPE -->|Clinic| T1[Set In-Clinic]
+    TYPE -->|Video| T2[Set Video]
+    T1 --> CONFLICT{Conflict?}
+    T2 --> CONFLICT
+    CONFLICT -->|Yes| WARN[Show Conflict]
+    WARN --> PICK_TIME
+    CONFLICT -->|No| DETAILS[Enter Details]
+    DETAILS --> VALID{Valid?}
+    VALID -->|No| ERR[Fix Errors]
+    ERR --> DETAILS
+    VALID --> SAVE[(Create Appointment)]
+    SAVE --> CONFIRM[Email/SMS + Reminder]
+    CONFIRM --> DONE([Complete])
+```
+
+#### 4) Next Appointment (Admin follow-up)
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant UI
+    participant API
+    participant DB
+    participant PDF
+    Admin->>UI: Click Next Appointment
+    UI->>API: Check slot availability
+    API->>DB: Query existing
+    DB-->>API: No conflict
+    UI->>API: Confirm booking
+    API->>DB: Update patient (date, history, sessions)
+    DB-->>API: OK
+    API->>PDF: Generate confirmation
+    PDF-->>API: PDF URL
+    API-->>UI: Success + PDF
+```
+
+#### 5) Patient Registration & Data Flow
+```mermaid
+flowchart TD
+    START([New Patient]) --> SRC{Source}
+    SRC -->|Admin| A[Admin form]
+    SRC -->|Public| P[Online form]
+    SRC -->|Walk-in| W[Staff entry]
+    A --> V
+    P --> V
+    W --> V
+    V[Validate & Sanitize] --> DUP{Duplicate?}
+    DUP -->|Yes| M{Merge or New}
+    M -->|Merge| U[Update]
+    M -->|New| CODE[Generate patient code]
+    DUP -->|No| CODE
+    U --> SAVE
+    CODE --> SAVE[(Save DB)]
+    SAVE --> PORTAL[Create Portal Access]
+    PORTAL --> NOTIFY[Notify + Welcome]
+    NOTIFY --> END([Done])
+```
+
+#### 6) Prescription Generation
+```mermaid
+sequenceDiagram
+    participant Doctor
+    participant UI
+    participant API
+    participant DB
+    participant PDF
+    participant Email
+    Doctor->>UI: Open Rx form
+    UI->>API: Submit Rx
+    API->>API: Validate (interactions, dosage)
+    alt valid
+      API->>DB: Save Rx
+      DB-->>API: Rx ID
+      API->>PDF: Create PDF (QR, branding)
+      PDF-->>API: PDF URL
+      API->>Email: Send to patient
+      Email-->>Doctor: Sent
+      API-->>UI: Success + link
+    else invalid
+      API-->>UI: Errors
+    end
+```
+
+#### 7) Admin Dashboard Data & Realtime
+```mermaid
+flowchart TD
+    OPEN([Open Dashboard]) --> LOAD[Parallel Load]
+    LOAD --> P[(Patients)]
+    LOAD --> A[(Appointments)]
+    LOAD --> M[(Metrics)]
+    LOAD --> F[(Finance)]
+    P --> RENDER[Render]
+    A --> RENDER
+    M --> RENDER
+    F --> RENDER
+    RENDER --> RT[Subscribe Realtime]
+    RT --> CHG{Data change?}
+    CHG -->|Yes| REFRESH[Update UI]
+    CHG -->|No| WAIT[Idle]
+    REFRESH --> RT
+    WAIT --> RT
+```
+
+#### 8) AI Chatbot Flow (Streaming + Fallbacks)
+```mermaid
+flowchart TD
+    START([Open Chat]) --> INPUT[User message]
+    INPUT --> SAN[Sanitize]
+    SAN --> INJ{Injection?}
+    INJ -->|Yes| BLOCK[Reject]
+    INJ -->|No| RATE{Rate OK?}
+    RATE -->|No| RL[429 Wait]
+    RATE -->|Yes| CTX[Build Clinic + FAQ + History]
+    CTX --> STREAM{Streaming?}
+    STREAM -->|Yes| OR[OpenRouter stream]
+    STREAM -->|No| XAI[xAI]
+    XAI --> XS{Success?}
+    XS -->|No| GEM[Gemini]
+    GEM --> GS{Success?}
+    GS -->|No| KB[Knowledge Base]
+    OR --> CLEAN[Clean markdown/emojis]
+    XAI --> CLEAN
+    GEM --> CLEAN
+    KB --> CLEAN
+    CLEAN --> DISP[Display + Voice (opt)]
+```
+
+#### 9) Payment Processing (Stripe)
+```mermaid
+sequenceDiagram
+    participant Patient
+    participant UI
+    participant API
+    participant Stripe
+    participant DB
+    participant Email
+    Patient->>UI: Enter card details
+    UI->>API: Create payment intent
+    API->>Stripe: Create intent
+    Stripe-->>API: client_secret
+    API-->>UI: client_secret
+    UI->>Stripe: Confirm payment
+    alt success
+      Stripe-->>UI: Succeeded
+      UI->>API: Confirm
+      API->>DB: Record payment
+      API->>Email: Send receipt
+      API-->>UI: Success
+    else failure
+      Stripe-->>UI: Failed
+      UI->>API: Report failure
+      API->>DB: Log failed attempt
+    end
+```
+
+#### 10) Email Notification Flow
+```mermaid
+flowchart TD
+    TRIG([Trigger]) --> TYPE{Type}
+    TYPE -->|Appointment| AP
+    TYPE -->|Prescription| RX
+    TYPE -->|Payment| PAY
+    TYPE -->|Reminder| REM
+    TYPE -->|Cancel| CAN
+    AP --> TPL[Build template]
+    RX --> TPL
+    PAY --> TPL
+    REM --> TPL
+    CAN --> TPL
+    TPL --> ATT{Attach PDF?}
+    ATT -->|Yes| ADD[Attach file]
+    ATT -->|No| QUEUE
+    ADD --> QUEUE[Queue]
+    QUEUE --> SMTP[Send via SMTP]
+    SMTP --> RES{Delivered?}
+    RES -->|Yes| LOG[Log sent]
+    RES -->|No| RETRY{<3 tries?}
+    RETRY -->|Yes| WAIT[30s] --> SMTP
+    RETRY -->|No| FAIL[Log failed + notify]
+```
+
+#### 11) Security & Bot Protection
+```mermaid
+flowchart TD
+    REQ([Request]) --> UA{Bot UA?}
+    UA -->|Yes| B403[403 Block]
+    UA -->|No| RATE{Rate limit}
+    RATE -->|Exceeded| B429[429 Block]
+    RATE -->|OK| SEQ{<100ms seq?}
+    SEQ -->|Yes| BSUS[Block suspicious]
+    SEQ -->|No| VALID[Input validation + schema]
+    VALID --> AUTH{Auth required?}
+    AUTH -->|No| PROC[Process]
+    AUTH -->|Yes| JWT{Valid token?}
+    JWT -->|No| B401[401]
+    JWT -->|Yes| RBAC{Permitted?}
+    RBAC -->|No| B403b[403]
+    RBAC -->|Yes| PROC
+    PROC --> AUDIT[Audit log]
+```
+
+#### 12) Analytics Pipeline
+```mermaid
+flowchart LR
+    A[User Actions] --> T[Track Events]
+    B[API Requests] --> T
+    C[DB Queries] --> P[Perf Monitor]
+    D[Errors] --> E[Error Logger]
+    T --> AGG[Aggregate]
+    P --> MET[Metrics]
+    E --> ANOM[Anomaly Detect]
+    AGG --> TS[(Time-Series DB)]
+    MET --> AD[(Analytics DB)]
+    ANOM --> LOG[(Log Storage)]
+    TS --> DASH[Admin Dashboard]
+    AD --> CHARTS[Charts]
+    LOG --> REPORTS[Error Reports]
+```
+
+#### 13) Database ERD (Core Tables)
+```mermaid
+erDiagram
+    PATIENTS ||--o{ APPOINTMENTS : has
+    PATIENTS ||--o{ PRESCRIPTIONS : receives
+    PATIENTS ||--o{ PAYMENTS : makes
+    PATIENTS ||--o{ MEDICAL_HISTORY : has
+    PATIENTS ||--o{ AUDIT_LOGS : generates
+    APPOINTMENTS ||--|| APPOINTMENT_HISTORY : records
+    APPOINTMENTS }o--|| STAFF : assigned_to
+    PRESCRIPTIONS ||--o{ PRESCRIPTION_ITEMS : contains
+    STAFF ||--o{ AUDIT_LOGS : performs
+    STAFF ||--|| ROLES : has
+    ROLES ||--o{ PERMISSIONS : grants
+```
+
+> For printable and dedicated documentation, see the full set in FLOWCHARTS.md.
 
 ---
 
