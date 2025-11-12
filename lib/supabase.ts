@@ -515,6 +515,12 @@ async function syncToSupabase(patient: any) {
       console.warn('[Offline-First] Dropping unsupported patient fields (not in DB schema):', dropped)
     }
     
+    // CRITICAL: Ensure payment_method is always set (NOT NULL constraint in DB)
+    if (!dbPayload.payment_method || dbPayload.payment_method === '') {
+      dbPayload.payment_method = 'cash' // Default to 'cash' if missing
+      console.warn('[Offline-First] ⚠️ payment_method was null/empty, defaulted to "cash"')
+    }
+    
     // Check if Supabase client is initialized
     if (!supabase) {
       throw new Error('Supabase client not initialized')
@@ -527,14 +533,16 @@ async function syncToSupabase(patient: any) {
       .single()
 
     if (error) {
-      console.error('[Offline-First] Supabase insert error:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-        fullError: JSON.stringify(error, null, 2)
-      })
-      throw new Error(`Supabase insert failed: ${error.message || 'Unknown error'} (${error.code || 'no code'})`)
+      // Handle empty error objects
+      const errorInfo = {
+        message: error?.message || 'No error message',
+        details: error?.details || 'No details',
+        hint: error?.hint || 'No hint',
+        code: error?.code || 'no code',
+        fullError: error ? JSON.stringify(error, null, 2) : '{}'
+      }
+      console.error('[Offline-First] Supabase insert error:', errorInfo)
+      throw new Error(`Supabase insert failed: ${errorInfo.message} (${errorInfo.code})`)
     }
     
     if (!data) {
@@ -596,10 +604,16 @@ function queueForRetry(patient: any) {
   try {
     if (typeof window === 'undefined') return
     
+    // CRITICAL FIX: Ensure payment_method is set before queueing
+    const patientWithDefaults = {
+      ...patient,
+      payment_method: patient.payment_method || 'cash' // Default to 'cash' if missing
+    }
+    
     const syncQueue = JSON.parse(localStorage.getItem('sync_queue') || '[]')
     syncQueue.push({
       type: 'create_patient',
-      data: patient,
+      data: patientWithDefaults,
       timestamp: new Date().toISOString(),
       retryCount: 0
     })
@@ -625,9 +639,14 @@ export async function processSyncQueue() {
     for (const item of syncQueue) {
       try {
         if (item.type === 'create_patient') {
-          const supabaseData = await syncToSupabase(item.data)
+          // CRITICAL FIX: Ensure payment_method is set before syncing
+          const patientWithDefaults = {
+            ...item.data,
+            payment_method: item.data?.payment_method || 'cash' // Default to 'cash' if missing
+          }
+          const supabaseData = await syncToSupabase(patientWithDefaults)
           if (supabaseData) {
-            updateLocalStorageWithSupabaseId(item.data.id, supabaseData.id)
+            updateLocalStorageWithSupabaseId(patientWithDefaults.id, supabaseData.id)
             console.log('[Offline-First] ✅ Retried sync successful for:', supabaseData.id)
           }
         }

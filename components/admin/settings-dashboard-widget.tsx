@@ -193,13 +193,6 @@ export function SettingsDashboardWidget() {
               Settings
             </Button>
           </Link>
-          
-          <Link href="/admin/import-export" className="flex-1">
-            <Button variant="outline" className="w-full border-blue-500 text-blue-700">
-              <Bell className="h-4 w-4 mr-2" />
-              Import/Export
-            </Button>
-          </Link>
         </div>
 
         {/* Quick Stats */}

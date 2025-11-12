@@ -120,7 +120,6 @@ const sidebarItems: MenuItem[] = [
     children: [
       { id: "settings", title: "Basic Settings", href: "/admin/settings", icon: Settings },
       { id: "location-settings", title: "Location & Maps", href: "/admin/location-settings", icon: MapPin },
-      { id: "import-export", title: "Import/Export", href: "/admin/import-export", icon: Database },
       { id: "audit-logs", title: "Audit Logs", href: "/admin/audit-logs", icon: Activity },
       { id: "staff-access", title: "Staff Access", href: "/admin/staff-access", icon: UserCheck },
     ]
@@ -308,7 +307,7 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
                     width={44}
                     height={44}
                     className="object-cover w-full h-full"
-                    style={{ objectPosition: '60% center' }}
+                    style={{ objectPosition: '65% center' }}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';

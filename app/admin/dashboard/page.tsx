@@ -18,6 +18,7 @@ import {
   Users,
   FileText,
   Download,
+  Upload,
   Eye,
   Phone,
   Trash2,
@@ -2059,6 +2060,131 @@ export default function AdminDashboard() {
     })
   }
   
+  // Quick Win: Import from CSV
+  const importFromCSV = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.csv'
+    input.style.display = 'none'
+    
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
+      if (!file) return
+      
+      try {
+        const text = await file.text()
+        const lines = text.split('\n').filter(line => line.trim())
+        
+        if (lines.length < 2) {
+          throw new Error('CSV file is empty or invalid')
+        }
+        
+        // Parse CSV (skip header row)
+        const headers = lines[0].split(',').map(h => h.trim().replace(/\"/g, ''))
+        const importedData = []
+        
+        // Helpers to normalize values
+        const normalizeStatus = (v: string | undefined) => {
+          const val = (v || '').toLowerCase().trim()
+          if (["pending", "confirmed", "completed", "cancelled"].includes(val)) return val
+          // map common variants
+          if (["complete", "done"].includes(val)) return "completed"
+          if (["cancel", "canceled"].includes(val)) return "cancelled"
+          return "pending"
+        }
+        const normalizeUrgency = (v: string | undefined) => {
+          const val = (v || '').toLowerCase().trim()
+          if (["normal", "urgent", "emergency"].includes(val)) return val
+          return "normal"
+        }
+        const normalizePayment = (v: string | undefined) => {
+          const val = (v || '').toLowerCase().trim()
+          if (["cash", "jazzcash", "easypaisa"].includes(val)) return val
+          return "cash"
+        }
+        
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',').map(v => v.trim().replace(/\"/g, ''))
+          if (values.length < 3) continue // Skip invalid rows
+          
+          // Columns (by current export format):
+          // 0: Patient Code, 1: Name, 2: Phone, 3: Email, 4: Profession, 5: Appointment Date,
+          // 6: Status, 7: Urgency, 8: Session Type, 9: Sessions Completed, 10: Total Sessions, 11: Payment Method (optional)
+          const rawDate = values[5]
+          const parsedDate = rawDate ? new Date(rawDate) : null
+          const appointmentISO = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString()
+          
+          const rawStatus = normalizeStatus(values[6]) as any
+          const rawUrgency = normalizeUrgency(values[7]) as any
+          const rawSessionType = (values[8] || '').toLowerCase().includes('video') ? 'video' : 'in_clinic'
+          const rawPayment = normalizePayment(values[11])
+          
+          const sessionsCompleted = Number.isFinite(parseInt(values[9])) ? parseInt(values[9]) : 0
+          const totalSessions = Number.isFinite(parseInt(values[10])) ? parseInt(values[10]) : 8
+          
+          const patientData: any = {
+            name: values[1] || '',
+            phone: values[2] || '',
+            email: values[3] && values[3] !== 'N/A' ? values[3] : null,
+            profession: values[4] && values[4] !== 'N/A' ? values[4] : null,
+            appointment_date: appointmentISO,
+            status: rawStatus,
+            urgency: rawUrgency,
+            session_type: rawSessionType,
+            sessions_completed: sessionsCompleted,
+            total_sessions: totalSessions,
+            payment_method: rawPayment, // ensure NOT NULL in DB
+            booking_source: 'admin_dashboard',
+            patient_code: values[0] || null,
+          }
+          
+          if (patientData.name && patientData.phone) {
+            importedData.push(patientData)
+          }
+        }
+        
+        if (importedData.length === 0) {
+          throw new Error('No valid patient records found in CSV')
+        }
+        
+        // Import patients to database
+        let successCount = 0
+        let failCount = 0
+        
+        for (const patientData of importedData) {
+          try {
+            await createPatient(patientData)
+            successCount++
+          } catch (error) {
+            console.error('Failed to import patient:', patientData.name, error)
+            failCount++
+          }
+        }
+        
+        // Refresh patient list
+        await loadPatients()
+        
+        toast({
+          title: "📥 Import Complete",
+          description: `Successfully imported ${successCount} patients. ${failCount > 0 ? `Failed: ${failCount}` : ''}`,
+        })
+      } catch (error) {
+        console.error('Import error:', error)
+        toast({
+          title: "❌ Import Failed",
+          description: error instanceof Error ? error.message : "Failed to import CSV file",
+          variant: "destructive",
+        })
+      } finally {
+        document.body.removeChild(input)
+      }
+    }
+    
+    document.body.appendChild(input)
+    input.click()
+  }
+  
   // Quick Win: Export to CSV
   const exportToCSV = () => {
     try {
@@ -2902,6 +3028,17 @@ export default function AdminDashboard() {
                 <X className="h-4 w-4 mr-2" />
                 Clear Filters
               </Button>
+              {/* Quick Win: Import from CSV Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={importFromCSV}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                title="Import patient data from CSV file"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Import CSV
+              </Button>
               {/* Quick Win: Export to CSV Button */}
               <Button
                 variant="outline"
@@ -3081,7 +3218,7 @@ export default function AdminDashboard() {
                               {new Date(patient.appointment_date).toLocaleTimeString()}
                             </div>
                             <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                              Payment: {patient.payment_method.toUpperCase()}
+                              Payment: {(patient.payment_method || 'cash').toUpperCase()}
                             </div>
                           </div>
                         </TableCell>
@@ -4659,7 +4796,7 @@ export default function AdminDashboard() {
                             {selectedPatientHistory.urgency.toUpperCase()}
                           </Badge>
                         </p>
-                        <p><span className="font-medium">Payment:</span> {selectedPatientHistory.payment_method.toUpperCase()}</p>
+                        <p><span className="font-medium">Payment:</span> {(selectedPatientHistory.payment_method || 'cash').toUpperCase()}</p>
                         <p><span className="font-medium">Prescription Generated:</span> 
                           {selectedPatientHistory.prescription_generated ? 
                             <Badge variant="default" className="ml-2">✓ Yes ({selectedPatientHistory.prescription_count || 0})</Badge> : 

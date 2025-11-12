@@ -62,10 +62,26 @@ export async function generateAppointmentConfirmationPDF(data: AppointmentConfir
 
   // Add Clinic Logo (left side)
   try {
-    // Using public path - you can replace with actual logo path
+    // Load actual clinic logo
     const logoPath = '/images/gonstead-chiropractic-logo-new.png'
-    // Logo placeholder - in production, load actual image
-    // For now, we'll add a circular placeholder
+    const logoImg = new Image()
+    logoImg.src = logoPath
+    
+    // Add logo image to PDF
+    await new Promise<void>((resolve, reject) => {
+      logoImg.onload = () => {
+        try {
+          pdf.addImage(logoImg, 'PNG', 12, 10, 20, 20, undefined, 'FAST')
+          resolve()
+        } catch (err) {
+          reject(err)
+        }
+      }
+      logoImg.onerror = () => reject(new Error('Failed to load logo'))
+    })
+  } catch (error) {
+    console.error('Error adding logo:', error)
+    // Fallback to text-based logo placeholder
     pdf.setFillColor(...white)
     pdf.circle(20, 20, 8, 'F')
     pdf.setFillColor(...primaryColor)
@@ -73,8 +89,6 @@ export async function generateAppointmentConfirmationPDF(data: AppointmentConfir
     pdf.setFont('helvetica', 'bold')
     pdf.setTextColor(...white)
     pdf.text('GC', 20, 21.5, { align: 'center' })
-  } catch (error) {
-    console.error('Error adding logo:', error)
   }
 
   // Clinic Name (centered)
@@ -91,6 +105,29 @@ export async function generateAppointmentConfirmationPDF(data: AppointmentConfir
   // Contact info header
   pdf.setFontSize(7.5)
   pdf.text(`Phone: ${clinicInfo.phone} | Email: ${clinicInfo.email} | Web: ${clinicInfo.website}`, 105, 31, { align: 'center' })
+
+  // Small QR code in header (top-right) linking to Google Maps
+  try {
+    const headerQrSize = 22 // mm
+    const headerQrX = 210 - 12 - headerQrSize // 12mm right margin
+    const headerQrY = 9 // below top edge inside header
+    const headerQrDataUrl = await QRCode.toDataURL(clinicInfo.mapUrl, {
+      width: 300,
+      margin: 1,
+      color: { dark: '#ffffff', light: '#0d5c75' } // invert for header contrast
+    })
+    // White background for QR for clarity
+    pdf.setFillColor(255, 255, 255)
+    pdf.roundedRect(headerQrX - 2, headerQrY - 2, headerQrSize + 4, headerQrSize + 4, 2, 2, 'F')
+    pdf.addImage(headerQrDataUrl, 'PNG', headerQrX, headerQrY, headerQrSize, headerQrSize)
+    // Caption under QR (inside header)
+    pdf.setFontSize(6.5)
+    pdf.setTextColor(255, 255, 255)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text('Maps QR', headerQrX + headerQrSize / 2, headerQrY + headerQrSize + 5, { align: 'center' })
+  } catch (e) {
+    console.error('Header QR render failed:', e)
+  }
 
   currentY = 48
 
@@ -110,7 +147,10 @@ export async function generateAppointmentConfirmationPDF(data: AppointmentConfir
   pdf.setTextColor(...darkGray)
   pdf.setFontSize(10)
   pdf.setFont('helvetica', 'bold')
-  pdf.text(`Reference No: ${referenceNumber}`, 105, currentY, { align: 'center' })
+  // Left: Reference number; Right: Patient ID (prominent)
+  pdf.text(`Reference No: ${referenceNumber}`, 20, currentY, { align: 'left' })
+  const patientIdDisplay = patient.patient_code || (patient.id ? patient.id.substring(0, 8).toUpperCase() : 'N/A')
+  pdf.text(`Patient ID: ${patientIdDisplay}`, 195, currentY, { align: 'right' })
 
   currentY += 15
 
@@ -176,6 +216,13 @@ export async function generateAppointmentConfirmationPDF(data: AppointmentConfir
   currentY = drawInfoBlock(pdf, locationInfo, currentY, 15, darkGray, lightGray)
   currentY += 5
 
+  // Clickable Google Maps link below location info (visible even without QR)
+  pdf.setFontSize(9)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(...primaryColor)
+  pdf.textWithLink('Open in Google Maps', 20, currentY, { url: clinicInfo.mapUrl })
+  currentY += 8
+
 
   // ============================================
   // PRE-VISIT INSTRUCTIONS
@@ -211,54 +258,6 @@ export async function generateAppointmentConfirmationPDF(data: AppointmentConfir
   currentY += 5
 
   // ============================================
-  // QR CODE SECTION (Appointment + Map)
-  // ============================================
-  try {
-    // Ensure there's enough space; if not, move to a new page for a clean layout
-    const qrBoxSize = 40
-    const requiredSpace = qrBoxSize + 25 // QR size + captions and link
-    if (currentY + requiredSpace > 260) {
-      pdf.addPage()
-      currentY = 20
-    }
-
-    // Generate QR code with DIRECT Google Maps link (primary)
-    const qrData = clinicInfo.mapUrl
-    const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
-      width: 400,
-      margin: 2,
-      color: { dark: '#0d5c75', light: '#ffffff' }
-    })
-
-    // Draw QR code box
-    const qrBoxX = 15
-    const qrBoxY = currentY
-
-    pdf.setDrawColor(...primaryColor)
-    pdf.setLineWidth(0.5)
-    pdf.rect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize)
-    pdf.addImage(qrCodeDataUrl, 'PNG', qrBoxX + 2, qrBoxY + 2, qrBoxSize - 4, qrBoxSize - 4)
-
-    // QR code description
-    pdf.setFontSize(8)
-    pdf.setTextColor(...darkGray)
-    pdf.setFont('helvetica', 'italic')
-    pdf.text('Scan to open clinic location', qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 4, { align: 'center' })
-
-    // Map link (clickable)
-    const mapLinkX = qrBoxX + qrBoxSize + 10
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(...primaryColor)
-    pdf.textWithLink('Open in Google Maps', mapLinkX, qrBoxY + 10, { url: clinicInfo.mapUrl })
-
-    currentY += qrBoxSize + 20
-  } catch (error) {
-    console.error('Error generating QR code:', error)
-    currentY += 5
-  }
-
-  // ============================================
   // CANCELLATION POLICY
   // ============================================
   drawSectionHeader(pdf, 'CANCELLATION & RESCHEDULING POLICY', currentY, primaryColor, accentColor)
@@ -279,25 +278,6 @@ export async function generateAppointmentConfirmationPDF(data: AppointmentConfir
   })
 
   currentY += 6
-
-  // ============================================
-  // IMPORTANT NOTICE BOX
-  // ============================================
-  pdf.setFillColor(254, 243, 199) // Light yellow
-  pdf.setDrawColor(245, 158, 11) // Amber
-  pdf.setLineWidth(0.5)
-  pdf.roundedRect(15, currentY, 180, 18, 2, 2, 'FD')
-
-  pdf.setFontSize(9)
-  pdf.setTextColor(146, 64, 14) // Amber-900
-  pdf.setFont('helvetica', 'bold')
-  pdf.text('IMPORTANT', 20, currentY + 6)
-  pdf.setFontSize(8.5)
-  pdf.setFont('helvetica', 'normal')
-  const importantLines = pdf.splitTextToSize('Please bring a valid ID and your insurance card (if applicable) to your appointment.', 165)
-  pdf.text(importantLines, 20, currentY + 12)
-
-  currentY += 22
 
   // ============================================
   // FOOTER
