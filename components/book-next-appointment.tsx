@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { Calendar, Clock, AlertCircle, CheckCircle2, CalendarDays, Video, MapPin, Bell, Repeat, Info, TrendingUp, AlertTriangle } from "lucide-react"
+import { Calendar, Clock, AlertCircle, CheckCircle2, CalendarDays, Video, MapPin, Bell, Repeat, Info, TrendingUp, AlertTriangle, Download } from "lucide-react"
 import { type Patient, updatePatient } from "@/lib/supabase"
 import { checkAppointmentConflict, getAvailableTimeSlots, createAppointmentReminder, saveReminder } from "@/lib/appointment-utils"
 import { useToast } from "@/hooks/use-toast"
+import { generateAppointmentConfirmationPDF } from "@/lib/pdf-appointment-confirmation"
 
 interface BookNextAppointmentProps {
   patient: Patient
@@ -44,6 +45,11 @@ export function BookNextAppointment({
   const [recurringMode, setRecurringMode] = useState(false)
   const [recurringCount, setRecurringCount] = useState(1)
   const [recurringInterval, setRecurringInterval] = useState<'weekly' | 'biweekly'>('weekly')
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [bookedAppointmentData, setBookedAppointmentData] = useState<{
+    date: string
+    time: string
+  } | null>(null)
 
   // Generate next 30 days for date selection (excluding Sundays)
   const getAvailableDates = () => {
@@ -236,13 +242,38 @@ export function BookNextAppointment({
         console.error("Error updating localStorage:", e)
       }
 
+      // Store appointment data for PDF generation
+      setBookedAppointmentData({
+        date: nextAppointmentDate,
+        time: selectedTime
+      })
+      
+      // Auto-generate and download confirmation PDF immediately
+      try {
+        await generateAppointmentConfirmationPDF({
+          patient: { ...patient, ...currentPatientUpdates },
+          appointmentDate: nextAppointmentDate,
+          appointmentTime: selectedTime,
+          sessionType: sessionType,
+          notes: notes || undefined
+        })
+        toast({
+          title: "📄 Confirmation PDF Downloaded",
+          description: `Appointment confirmation for ${patient.name} has been downloaded.`,
+        })
+      } catch (e) {
+        console.error('Auto PDF generation failed, user can download manually:', e)
+      }
+      
+      // Show success dialog with PDF download option (fallback/manual)
+      setShowSuccessDialog(true)
+      
       toast({
         title: "✅ Appointment Updated & Session Recorded",
         description: `${patient.name}'s appointment moved to ${new Date(nextAppointmentDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${selectedTime}. Session ${newSessionsCompleted}/${totalSessions} completed.`,
       })
 
       if (onSuccess) onSuccess()
-      onClose()
     } catch (error) {
       console.error("Error booking next appointment:", error)
       toast({
@@ -255,7 +286,40 @@ export function BookNextAppointment({
     }
   }
 
+  const handleDownloadConfirmation = async () => {
+    if (!bookedAppointmentData) return
+
+    try {
+      await generateAppointmentConfirmationPDF({
+        patient: patient,
+        appointmentDate: bookedAppointmentData.date,
+        appointmentTime: bookedAppointmentData.time,
+        sessionType: sessionType,
+        notes: notes || undefined
+      })
+
+      toast({
+        title: "📄 PDF Downloaded",
+        description: "Appointment confirmation has been downloaded successfully.",
+      })
+    } catch (error) {
+      console.error("Error generating PDF:", error)
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleCloseSuccess = () => {
+    setShowSuccessDialog(false)
+    setBookedAppointmentData(null)
+    onClose()
+  }
+
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={`max-w-2xl ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
         <DialogHeader>
@@ -399,6 +463,76 @@ export function BookNextAppointment({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Success Dialog with PDF Download Option */}
+    <Dialog open={showSuccessDialog} onOpenChange={handleCloseSuccess}>
+      <DialogContent className={`max-w-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+        <DialogHeader>
+          <DialogTitle className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'} flex items-center gap-2`}>
+            <CheckCircle2 className="h-6 w-6 text-green-500" />
+            Appointment Confirmed!
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 mt-4">
+          {/* Success Message */}
+          <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-green-900/20' : 'bg-green-50'} border ${isDarkMode ? 'border-green-800' : 'border-green-200'}`}>
+            <p className={`text-sm ${isDarkMode ? 'text-green-200' : 'text-green-800'}`}>
+              Your next appointment has been successfully scheduled. Would you like to download a confirmation document?
+            </p>
+          </div>
+
+          {/* Appointment Summary */}
+          {bookedAppointmentData && (
+            <div className="space-y-2">
+              <div className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <Calendar className="h-4 w-4" />
+                <span>
+                  {new Date(bookedAppointmentData.date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </span>
+              </div>
+              <div className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <Clock className="h-4 w-4" />
+                <span>{bookedAppointmentData.time}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Download Button */}
+          <div className="space-y-3">
+            <Button
+              onClick={handleDownloadConfirmation}
+              className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c] text-white flex items-center justify-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download Confirmation PDF
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={handleCloseSuccess}
+              className="w-full"
+            >
+              Close
+            </Button>
+          </div>
+
+          {/* Info Note */}
+          <div className={`flex items-start gap-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} p-3 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <p>
+              The confirmation PDF includes appointment details, clinic location with QR code, pre-visit instructions, and cancellation policy.
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
 
