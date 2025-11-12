@@ -130,49 +130,107 @@ export function ChatBot() {
     }
 
     setMessages((prev) => [...prev, userMessage])
+    const messageText = inputValue
     setInputValue("")
     setIsTyping(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      let botResponse = ""
-      const input = inputValue.toLowerCase()
-
-      if (input.includes("appointment") || input.includes("book") || input.includes("اپائنٹمنٹ")) {
+    try {
+      // Check for appointment keywords and open form
+      if (messageText.toLowerCase().includes("appointment") || 
+          messageText.toLowerCase().includes("book") || 
+          messageText.includes("اپائنٹمنٹ")) {
         setShowBookingForm(true)
-        botResponse =
-          language === "ur"
-            ? "میں آپ کے لیے اپائنٹمنٹ بکنگ فارم کھول رہا ہوں۔ براہ کرم تفصیلات بھریں۔"
-            : "I'm opening the appointment booking form for you. Please fill in your details."
-      } else if (input.includes("pain") || input.includes("درد")) {
-        botResponse =
-          language === "ur"
-            ? "درد کے لیے فوری مدد چاہیے؟ گونسٹیڈ تکنیک سے ہم مؤثر علاج فراہم کرتے ہیں۔"
-            : "Need immediate help with pain? We provide effective treatment using Gonstead technique."
-      } else {
-        botResponse =
-          language === "ur"
-            ? "شکریہ آپ کے پیغام کا۔ مزید معلومات کے لیے +92 304 6996267 پر رابطہ کریں۔"
-            : "Thank you for your message. For more information, contact +92 304 6996267."
       }
 
-      const response: Message = {
+      // Call real API with streaming
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: messageText,
+          stream: true,
+          history: messages.slice(-6).map(m => ({ sender: m.sender, text: m.text }))
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Network error' }))
+        throw new Error(errorData.error || `HTTP ${response.status}`)
+      }
+
+      // Handle streaming response
+      const contentType = response.headers.get('content-type')
+      if (contentType?.includes('text/plain')) {
+        // Streaming response
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        let botResponse = ""
+        
+        const botMessageId = (Date.now() + 1).toString()
+        setIsTyping(false)
+        
+        // Add initial empty bot message
+        setMessages((prev) => [...prev, {
+          id: botMessageId,
+          text: "",
+          sender: "bot",
+          timestamp: new Date(),
+        }])
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            
+            const chunk = decoder.decode(value, { stream: true })
+            botResponse += chunk
+            
+            // Update the bot message in real-time
+            setMessages((prev) => 
+              prev.map((msg) => 
+                msg.id === botMessageId 
+                  ? { ...msg, text: botResponse }
+                  : msg
+              )
+            )
+          }
+        }
+        
+        // Speak the complete response if voice is enabled
+        if (isVoiceEnabled && botResponse) {
+          setTimeout(() => speakMessage(botResponse), 500)
+        }
+      } else {
+        // Non-streaming response (fallback)
+        const data = await response.json()
+        const botResponse = data.text || 'No response received'
+        
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 1).toString(),
+          text: botResponse,
+          sender: "bot",
+          timestamp: new Date(),
+        }])
+        setIsTyping(false)
+        
+        if (isVoiceEnabled) {
+          setTimeout(() => speakMessage(botResponse), 500)
+        }
+      }
+    } catch (error) {
+      console.error('Chat error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get response'
+      
+      setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
-        text: botResponse,
+        text: language === "ur" 
+          ? `خرابی: ${errorMessage}. براہ کرم دوبارہ کوشش کریں۔`
+          : `Error: ${errorMessage}. Please try again.`,
         sender: "bot",
         timestamp: new Date(),
-      }
-
-      setMessages((prev) => [...prev, response])
+      }])
       setIsTyping(false)
-      
-      // Speak the bot response if voice is enabled
-      if (isVoiceEnabled) {
-        setTimeout(() => {
-          speakMessage(botResponse)
-        }, 2000)
-      }
-    }, 1500)
+    }
   }
 
   return (
