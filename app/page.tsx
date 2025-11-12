@@ -398,8 +398,37 @@ const HomePageContent = memo(() => {
                   </div>
                   
 
+                  {/* Clinic Hours - Prominent Display */}
+                  <div className="mt-8 mb-6">
+                    <div className="bg-gradient-to-r from-blue-500/20 via-cyan-500/20 to-teal-500/20 backdrop-blur-sm border border-blue-400/30 rounded-2xl p-5 sm:p-6 shadow-xl">
+                      <div className="flex items-center justify-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center shadow-lg">
+                          <Clock className="h-5 w-5 text-white" />
+                        </div>
+                        <h3 className="text-xl sm:text-2xl font-bold text-white font-poppins">Clinic Hours</h3>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/20">
+                          <span className="text-blue-100 font-medium text-sm sm:text-base">Monday - Saturday</span>
+                          <span className="text-white font-bold text-sm sm:text-base">9:00 AM - 6:00 PM</span>
+                        </div>
+                        <div className="flex items-center justify-between bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/20">
+                          <span className="text-blue-100 font-medium text-sm sm:text-base">Sunday</span>
+                          <span className="text-cyan-300 font-bold text-sm sm:text-base flex items-center gap-2">
+                            <Activity className="h-4 w-4" />
+                            Emergency Only
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center gap-2 pt-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                          <span className="text-green-300 text-sm font-medium">Currently Open</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Professional Stats */}
-                  <div className="grid grid-cols-3 gap-6 pt-8 border-t border-blue-400/20">
+                  <div className="grid grid-cols-3 gap-6 pt-6 border-t border-blue-400/20">
                     <div className="text-center group">
                       <div className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-cyan-400 mb-2 group-hover:scale-110 transition-transform">2000+</div>
                       <div className="text-sm sm:text-base text-blue-200 font-medium">{t("hero.patients.healed")}</div>

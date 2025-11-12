@@ -297,9 +297,9 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
               </Button>
             </div>
             
-            {/* Doctor Info Card - Compact on mobile */}
+            {/* Doctor Info Card - Compact on mobile with right-shifted profile */}
             <div className="bg-white/15 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 shadow-inner">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 pl-2 sm:pl-3">
                 <div className="w-9 h-9 sm:w-11 sm:h-11 bg-white/30 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/40">
                   <Image
                     src="/images/dr-bashir-photo.jpeg"
@@ -387,6 +387,8 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
                       } else if (item.href) {
                         console.log('AdminSidebar: Direct navigation to:', item.href)
                         handleNavigation(item.href)
+                        // Auto-close sidebar on navigation for better UX
+                        onClose()
                       }
                     }}
                     className={`
