@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { addAuditLog, getAuditLogs, undoAuditLog, type AuditLog, supabase } from "@/lib/supabase"
+import { addAuditLog, getAuditLogs, undoAuditLog, deleteAuditLog, clearAuditLogs, type AuditLog, supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
-import { Activity, History, Filter, RotateCcw, RefreshCw, Search, ShieldAlert, UserCheck, Settings, Database, Download, Pin, PinOff, Copy, Bell, BarChart3 } from "lucide-react"
+import { Activity, History, Filter, RotateCcw, RefreshCw, Search, ShieldAlert, UserCheck, Settings, Database, Download, Pin, PinOff, Copy, Bell, BarChart3, Trash2, AlertTriangle } from "lucide-react"
 import AdminSidebar from "@/components/AdminSidebar"
 import { AuditAnalytics } from "@/components/admin/audit-analytics"
 
@@ -35,6 +35,8 @@ export default function AuditLogsPage() {
   const [pinned, setPinned] = useState<Set<string>>(new Set())
   const [annotations, setAnnotations] = useState<Record<string,string>>({})
   const [showAnalytics, setShowAnalytics] = useState<boolean>(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState<boolean>(false)
 
   useEffect(() => {
     load()
@@ -204,6 +206,28 @@ export default function AuditLogsPage() {
     try { await navigator.clipboard.writeText(id); toast({ title: 'Copied', description: 'Log ID copied.' }) } catch {}
   }
 
+  const handleDelete = async (id: string) => {
+    const res = await deleteAuditLog(id)
+    if (res.ok) {
+      toast({ title: 'Deleted', description: 'Audit log deleted successfully.' })
+      await load()
+    } else {
+      toast({ title: 'Delete failed', description: String(res.error || 'Unknown error'), variant: 'destructive' })
+    }
+    setDeleteConfirmId(null)
+  }
+
+  const handleClearAll = async () => {
+    const res = await clearAuditLogs()
+    if (res.ok) {
+      toast({ title: 'Cleared', description: 'All audit logs cleared successfully.' })
+      await load()
+    } else {
+      toast({ title: 'Clear failed', description: String(res.error || 'Unknown error'), variant: 'destructive' })
+    }
+    setShowClearAllConfirm(false)
+  }
+
   const exportJSON = () => {
     const blob = new Blob([JSON.stringify(filtered, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -249,6 +273,9 @@ export default function AuditLogsPage() {
             </Button>
             <Button variant="ghost" onClick={exportCSV} className="text-gray-600 hover:text-emerald-700">
               <Download className="h-4 w-4 mr-2" /> CSV
+            </Button>
+            <Button variant="ghost" onClick={() => setShowClearAllConfirm(true)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              <Trash2 className="h-4 w-4 mr-2" /> Clear All
             </Button>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -377,7 +404,7 @@ export default function AuditLogsPage() {
                   <TableHead>Actor</TableHead>
                   <TableHead>ID</TableHead>
                   <TableHead>Details</TableHead>
-                  <TableHead className="w-[100px]">Undo</TableHead>
+                  <TableHead className="w-[140px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -404,9 +431,12 @@ export default function AuditLogsPage() {
                         <Button variant="ghost" size="sm" onClick={()=>copyId(log.id)} className="text-gray-500"><Copy className="h-4 w-4"/></Button>
                         <Button variant="ghost" size="sm" onClick={()=>togglePin(log.id)} className="text-gray-500">{pinned.has(log.id) ? <PinOff className="h-4 w-4"/> : <Pin className="h-4 w-4"/>}</Button>
                       </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" disabled={!log.reversible} onClick={() => handleUndo(log)} className="text-red-600 disabled:text-gray-300">
+                      <TableCell className="space-x-1">
+                        <Button variant="ghost" size="sm" disabled={!log.reversible} onClick={() => handleUndo(log)} className="text-blue-600 disabled:text-gray-300" title="Undo">
                           <RotateCcw className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(log.id)} className="text-red-600 hover:bg-red-50" title="Delete">
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -473,6 +503,61 @@ export default function AuditLogsPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Audit Log?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Are you sure you want to delete this audit log? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Clear All Confirmation Dialog */}
+      <Dialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Clear All Audit Logs?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Are you sure you want to clear <strong>all</strong> audit logs? This will permanently delete {logs.length} log{logs.length !== 1 ? 's' : ''} and cannot be undone.
+            </p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-800 font-medium">⚠️ Warning: This action is irreversible!</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowClearAllConfirm(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleClearAll}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear All Logs
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

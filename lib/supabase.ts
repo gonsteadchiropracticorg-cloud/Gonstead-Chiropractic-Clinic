@@ -1010,6 +1010,72 @@ export const getAuditLogs = async () => {
 }
 
 
+// Delete a single audit log
+export const deleteAuditLog = async (id: string) => {
+  try {
+    const { error } = await supabase.from('audit_logs').delete().eq('id', id)
+    if (error) throw error
+    
+    // Also remove from localStorage fallback
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('audit_logs') || '[]'
+        const parsed: AuditLog[] = JSON.parse(raw)
+        const filtered = parsed.filter(log => log.id !== id)
+        localStorage.setItem('audit_logs', JSON.stringify(filtered))
+        window.dispatchEvent(new CustomEvent('auditLogDeleted', { detail: { id } }))
+      } catch {}
+    }
+    
+    return { ok: true, error: null }
+  } catch (e) {
+    // Fallback to localStorage only
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('audit_logs') || '[]'
+        const parsed: AuditLog[] = JSON.parse(raw)
+        const filtered = parsed.filter(log => log.id !== id)
+        localStorage.setItem('audit_logs', JSON.stringify(filtered))
+        window.dispatchEvent(new CustomEvent('auditLogDeleted', { detail: { id } }))
+        return { ok: true, error: null }
+      } catch (err) {
+        return { ok: false, error: err }
+      }
+    }
+    return { ok: false, error: e }
+  }
+}
+
+// Clear all audit logs (reset)
+export const clearAuditLogs = async () => {
+  try {
+    const { error } = await supabase.from('audit_logs').delete().neq('id', '')
+    if (error) throw error
+    
+    // Also clear localStorage fallback
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('audit_logs', '[]')
+        window.dispatchEvent(new CustomEvent('auditLogsCleared'))
+      } catch {}
+    }
+    
+    return { ok: true, error: null }
+  } catch (e) {
+    // Fallback to localStorage only
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('audit_logs', '[]')
+        window.dispatchEvent(new CustomEvent('auditLogsCleared'))
+        return { ok: true, error: null }
+      } catch (err) {
+        return { ok: false, error: err }
+      }
+    }
+    return { ok: false, error: e }
+  }
+}
+
 // Best-effort undo for common actions
 export const undoAuditLog = async (log: AuditLog) => {
   if (!log.reversible) return { ok: false, error: 'Not reversible' }

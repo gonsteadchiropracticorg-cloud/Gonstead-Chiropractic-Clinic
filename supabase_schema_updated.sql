@@ -273,6 +273,10 @@ DROP POLICY IF EXISTS "Allow select for all" ON audit_logs;
 CREATE POLICY "Allow select for all" ON audit_logs
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Allow delete for all" ON audit_logs;
+CREATE POLICY "Allow delete for all" ON audit_logs
+  FOR DELETE USING (true);
+
 -- Staff Accounts Policies
 DROP POLICY IF EXISTS "Allow all for anon" ON staff_accounts;
 CREATE POLICY "Allow all for anon" ON staff_accounts
