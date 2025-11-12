@@ -307,6 +307,7 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
                     width={44}
                     height={44}
                     className="object-cover w-full h-full"
+                    style={{ objectPosition: '60% center' }}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
