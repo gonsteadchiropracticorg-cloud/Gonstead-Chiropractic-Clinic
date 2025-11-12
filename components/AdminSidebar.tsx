@@ -297,13 +297,9 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
               </Button>
             </div>
             
-            {/* Doctor Info Card - Profile picture moved to right side */}
+            {/* Doctor Info Card - Compact on mobile with right-shifted profile */}
             <div className="bg-white/15 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 shadow-inner">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] sm:text-xs font-bold text-white truncate leading-tight">Dr. Bashir Khan</p>
-                  <p className="text-[9px] sm:text-[10px] text-white/80 leading-tight">Gonstead Specialist</p>
-                </div>
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 pl-2 sm:pl-3">
                 <div className="w-9 h-9 sm:w-11 sm:h-11 bg-white/30 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/40">
                   <Image
                     src="/images/dr-bashir-photo.jpeg"
@@ -321,6 +317,10 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
                   <div className="fallback-icon w-full h-full items-center justify-center" style={{ display: 'none' }}>
                     <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                   </div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] sm:text-xs font-bold text-white truncate leading-tight">Dr. Bashir Khan</p>
+                  <p className="text-[9px] sm:text-[10px] text-white/80 leading-tight">Gonstead Specialist</p>
                 </div>
               </div>
               <div className="flex items-center justify-between text-[10px] sm:text-xs text-white/70">
