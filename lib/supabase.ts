@@ -1,14 +1,13 @@
 import { createClient } from "@supabase/supabase-js"
 
-// Get environment variables - fail early if not set
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  throw new Error(
-    'Missing Supabase environment variables. Please check your .env file.'
-  )
-}
+// Get environment variables - allow build to proceed, fail at runtime if needed
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Validate at runtime, not build time
+if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
+  console.error('Missing Supabase environment variables. Please check your .env file.')
+}
 
 // Create Supabase client with proper configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
