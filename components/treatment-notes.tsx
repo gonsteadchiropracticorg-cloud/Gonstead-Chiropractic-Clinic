@@ -7,9 +7,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { FileText, Plus, Clock, CheckCircle, Edit3, Trash2 } from 'lucide-react'
+import { FileText, Plus, Clock, CheckCircle, Edit3, Trash2, Image as ImageIcon, X, Upload, ZoomIn } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import type { Patient } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+import Image from 'next/image'
+
+interface ImageAttachment {
+  id: string
+  url: string
+  fileName: string
+  uploadedAt: string
+  size: number
+}
 
 interface TreatmentNote {
   id: string
@@ -21,6 +31,7 @@ interface TreatmentNote {
   diagnosis: string
   treatmentProvided: string
   nextSteps: string
+  images?: ImageAttachment[]
   createdBy: string
   createdAt: string
 }
@@ -41,7 +52,17 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
     treatmentProvided: '',
     nextSteps: ''
   })
+  const [selectedImages, setSelectedImages] = useState<File[]>([])
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [viewingImage, setViewingImage] = useState<string | null>(null)
   const { toast } = useToast()
+  
+  // Initialize Supabase client
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   // Load notes from localStorage on mount
   useEffect(() => {
@@ -61,9 +82,101 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
     }
   }
 
-  const saveNote = () => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const validFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/')
+      const isUnder5MB = file.size <= 5 * 1024 * 1024
+      if (!isImage) {
+        toast({ title: 'Invalid file', description: `${file.name} is not an image`, variant: 'destructive' })
+      }
+      if (!isUnder5MB) {
+        toast({ title: 'File too large', description: `${file.name} exceeds 5MB`, variant: 'destructive' })
+      }
+      return isImage && isUnder5MB
+    })
+    
+    if (validFiles.length > 0) {
+      setSelectedImages(prev => [...prev, ...validFiles])
+      // Create preview URLs
+      validFiles.forEach(file => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setImagePreviewUrls(prev => [...prev, reader.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
+    }
+  }
+  
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index))
+    setImagePreviewUrls(prev => prev.filter((_, i) => i !== index))
+  }
+  
+  const uploadImages = async (): Promise<ImageAttachment[]> => {
+    if (selectedImages.length === 0) return []
+    
+    setIsUploading(true)
+    const uploadedImages: ImageAttachment[] = []
+    
     try {
+      for (const file of selectedImages) {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${patient.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+        
+        const { data, error } = await supabase.storage
+          .from('treatment-notes')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          })
+        
+        if (error) {
+          console.error('Upload error:', error)
+          toast({
+            title: 'Upload failed',
+            description: `Failed to upload ${file.name}`,
+            variant: 'destructive'
+          })
+          continue
+        }
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('treatment-notes')
+          .getPublicUrl(fileName)
+        
+        uploadedImages.push({
+          id: `IMG${Date.now()}${Math.random().toString(36).substring(7)}`,
+          url: publicUrl,
+          fileName: file.name,
+          uploadedAt: new Date().toISOString(),
+          size: file.size
+        })
+      }
+      
+      return uploadedImages
+    } catch (error) {
+      console.error('Error during upload:', error)
+      toast({
+        title: 'Upload error',
+        description: 'An error occurred while uploading images',
+        variant: 'destructive'
+      })
+      return uploadedImages
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const saveNote = async () => {
+    try {
+      setIsUploading(true)
       const sessionNumber = (patient.sessions_completed || 0) + 1
+      
+      // Upload images first
+      const uploadedImages = await uploadImages()
+      
       const note: TreatmentNote = {
         id: `TN${Date.now()}`,
         patientId: patient.id,
@@ -74,6 +187,7 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
         diagnosis: newNote.diagnosis,
         treatmentProvided: newNote.treatmentProvided,
         nextSteps: newNote.nextSteps,
+        images: uploadedImages,
         createdBy: localStorage.getItem('admin_email') || 'Admin',
         createdAt: new Date().toISOString()
       }
@@ -86,13 +200,15 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
 
       // Reset form
       setNewNote({ notes: '', diagnosis: '', treatmentProvided: '', nextSteps: '' })
+      setSelectedImages([])
+      setImagePreviewUrls([])
       setIsAddDialogOpen(false)
       loadNotes()
       onNotesUpdated?.()
 
       toast({
         title: "✅ Treatment Note Saved",
-        description: `Session ${sessionNumber} note added successfully`
+        description: `Session ${sessionNumber} note with ${uploadedImages.length} image(s) added successfully`
       })
     } catch (error) {
       console.error('Error saving treatment note:', error)
@@ -101,6 +217,8 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
         description: "Failed to save treatment note",
         variant: "destructive"
       })
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -188,12 +306,85 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
                   className="min-h-[80px]"
                 />
               </div>
+              
+              {/* Image Upload Section */}
+              <div className="border-t pt-4">
+                <Label className="flex items-center gap-2 mb-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Attach Images (X-rays, Diagrams, Photos)
+                </Label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Upload images to document visual findings, X-rays, posture diagrams, or treatment progress. Max 5MB per image.
+                </p>
+                
+                <div className="space-y-3">
+                  {/* File Input Button */}
+                  <div>
+                    <input
+                      type="file"
+                      id="image-upload"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                    <label htmlFor="image-upload">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full border-dashed border-2 hover:border-[#2a9d8f] hover:bg-[#2a9d8f]/5"
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Choose Images to Upload
+                      </Button>
+                    </label>
+                  </div>
+                  
+                  {/* Image Previews */}
+                  {imagePreviewUrls.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3">
+                      {imagePreviewUrls.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <div className="aspect-square rounded-lg border-2 border-gray-200 overflow-hidden">
+                            <Image
+                              src={url}
+                              alt={`Preview ${index + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeImage(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <p className="text-xs text-gray-500 mt-1 truncate">
+                            {selectedImages[index]?.name}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isUploading}>
                   Cancel
                 </Button>
-                <Button onClick={saveNote} className="bg-[#0d5c75] hover:bg-[#0a4a5c]">
-                  Save Note
+                <Button onClick={saveNote} className="bg-[#0d5c75] hover:bg-[#0a4a5c]" disabled={isUploading}>
+                  {isUploading ? (
+                    <>
+                      <Upload className="h-4 w-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    'Save Note'
+                  )}
                 </Button>
               </div>
             </div>
@@ -277,6 +468,40 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
                     </p>
                   </div>
                 )}
+                
+                {/* Image Gallery */}
+                {note.images && note.images.length > 0 && (
+                  <div className="border-t pt-3">
+                    <h4 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'} mb-2 flex items-center gap-2`}>
+                      <ImageIcon className="h-4 w-4" />
+                      Attached Images ({note.images.length})
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {note.images.map((image) => (
+                        <div key={image.id} className="relative group">
+                          <div 
+                            className="aspect-square rounded-lg border-2 border-gray-200 overflow-hidden cursor-pointer hover:border-[#2a9d8f] transition-colors"
+                            onClick={() => setViewingImage(image.url)}
+                          >
+                            <Image
+                              src={image.url}
+                              alt={image.fileName}
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform"
+                            />
+                          </div>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                            <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1 truncate" title={image.fileName}>
+                            {image.fileName}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} pt-2 border-t`}>
                   Created by {note.createdBy} on {new Date(note.createdAt).toLocaleString()}
                 </div>
@@ -285,6 +510,25 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
           ))
         )}
       </div>
+      
+      {/* Image Viewer Dialog */}
+      <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="text-[#0d5c75]">Image Viewer</DialogTitle>
+          </DialogHeader>
+          {viewingImage && (
+            <div className="relative w-full h-[70vh]">
+              <Image
+                src={viewingImage}
+                alt="Full size view"
+                fill
+                className="object-contain"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
