@@ -22,7 +22,7 @@ flowchart TD
     XAI --> CLEAN
     GEM --> CLEAN
     KB --> CLEAN
-    CLEAN --> DISP[Display + Voice (opt)]
+    CLEAN --> DISP[Display + Voice optional]
 ```
 
 ## Description
