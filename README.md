@@ -16,7 +16,7 @@
 
 *Complete digital ecosystem for chiropractic practice with advanced patient care, AI diagnostics, and enterprise security*
 
-[🚀 Live Demo](https://gonstead-chiropractic.vercel.app) • [📖 Full Documentation](./docs/README.md) • [📊 System Flowcharts](./FLOWCHARTS.md) • [💻 Quick Start](#-quick-start) • [🔄 Updates](#-keeping-your-system-updated)
+[🚀 Live Demo](https://gonstead-chiropractic.vercel.app) • [📖 Full Documentation](./docs/README.md) • [📊 System Diagrams](./docs/diagrams/README.md) • [💻 Quick Start](#-quick-start) • [🔄 Updates](#-keeping-your-system-updated)
 
 </div>
 
@@ -460,7 +460,9 @@ pm2 startup
 
 ### Architecture Diagrams
 
-Below are fully functional Mermaid flowcharts embedded directly in this README. GitHub renders these diagrams natively.
+Below are sample Mermaid flowcharts embedded directly in this README. For the complete collection with detailed documentation, see the **[📊 System Diagrams Directory](./docs/diagrams/README.md)**.
+
+**Available diagrams**: System Architecture, Authentication, Appointment Booking, Patient Registration, Prescriptions, Payments, AI Chatbot, Security, Analytics, Database ERD, and more.
 
 #### 1) High-Level System Architecture
 ```mermaid
