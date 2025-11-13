@@ -55,6 +55,7 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
   const [selectedImages, setSelectedImages] = useState<File[]>([])
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
   const [viewingNote, setViewingNote] = useState<TreatmentNote | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
@@ -84,8 +85,7 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
     }
   }
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
+  const validateAndAddFiles = (files: File[]) => {
     const validFiles = files.filter(file => {
       const isImage = file.type.startsWith('image/')
       const isUnder5MB = file.size <= 5 * 1024 * 1024
@@ -97,19 +97,34 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
       }
       return isImage && isUnder5MB
     })
-    
     if (validFiles.length > 0) {
       setSelectedImages(prev => [...prev, ...validFiles])
-      // Create preview URLs
       validFiles.forEach(file => {
         const reader = new FileReader()
-        reader.onloadend = () => {
-          setImagePreviewUrls(prev => [...prev, reader.result as string])
-        }
+        reader.onloadend = () => setImagePreviewUrls(prev => [...prev, reader.result as string])
         reader.readAsDataURL(file)
       })
     }
   }
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    validateAndAddFiles(files)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setDragActive(false)
+    const files = Array.from(e.dataTransfer.files || [])
+    validateAndAddFiles(files)
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setDragActive(true)
+  }
+
+  const handleDragLeave = () => setDragActive(false)
   
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index))
@@ -270,48 +285,53 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
               Add Note
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="sm:max-w-2xl w-[95vw]">
             <DialogHeader>
               <DialogTitle className="text-[#0d5c75]">
                 Add Treatment Note - Session {(patient.sessions_completed || 0) + 1}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div>
-                <Label>Clinical Notes</Label>
-                <Textarea
-                  value={newNote.notes}
-                  onChange={(e) => setNewNote({ ...newNote, notes: e.target.value })}
-                  placeholder="Document observations, patient feedback, etc."
-                  className="min-h-[100px]"
-                />
-              </div>
-              <div>
-                <Label>Diagnosis / Assessment</Label>
-                <Textarea
-                  value={newNote.diagnosis}
-                  onChange={(e) => setNewNote({ ...newNote, diagnosis: e.target.value })}
-                  placeholder="Current diagnosis and assessment findings"
-                  className="min-h-[80px]"
-                />
-              </div>
-              <div>
-                <Label>Treatment Provided</Label>
-                <Textarea
-                  value={newNote.treatmentProvided}
-                  onChange={(e) => setNewNote({ ...newNote, treatmentProvided: e.target.value })}
-                  placeholder="Adjustments, techniques used, etc."
-                  className="min-h-[80px]"
-                />
-              </div>
-              <div>
-                <Label>Next Steps / Recommendations</Label>
-                <Textarea
-                  value={newNote.nextSteps}
-                  onChange={(e) => setNewNote({ ...newNote, nextSteps: e.target.value })}
-                  placeholder="Follow-up plan, home care instructions, etc."
-                  className="min-h-[80px]"
-                />
+              {/* Form fields */}
+              <div className="grid grid-cols-1 gap-4">
+                <div className="col-span-1">
+                  <Label>Clinical Notes</Label>
+                  <Textarea
+                    value={newNote.notes}
+                    onChange={(e) => setNewNote({ ...newNote, notes: e.target.value })}
+                    placeholder="Document observations, patient feedback, etc."
+                    className="min-h-[120px]"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Diagnosis / Assessment</Label>
+                    <Textarea
+                      value={newNote.diagnosis}
+                      onChange={(e) => setNewNote({ ...newNote, diagnosis: e.target.value })}
+                      placeholder="Current diagnosis and assessment findings"
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div>
+                    <Label>Treatment Provided</Label>
+                    <Textarea
+                      value={newNote.treatmentProvided}
+                      onChange={(e) => setNewNote({ ...newNote, treatmentProvided: e.target.value })}
+                      placeholder="Adjustments, techniques used, etc."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Next Steps / Recommendations</Label>
+                    <Textarea
+                      value={newNote.nextSteps}
+                      onChange={(e) => setNewNote({ ...newNote, nextSteps: e.target.value })}
+                      placeholder="Follow-up plan, home care instructions, etc."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                </div>
               </div>
               
               {/* Image Upload Section */}
@@ -325,32 +345,37 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
                 </p>
                 
                 <div className="space-y-3">
-                  {/* File Input Button */}
-                  <div>
-                    <input
-                      type="file"
-                      id="image-upload"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                      className="hidden"
-                    />
-                    <label htmlFor="image-upload">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full border-dashed border-2 hover:border-[#2a9d8f] hover:bg-[#2a9d8f]/5"
-                        onClick={() => document.getElementById('image-upload')?.click()}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Choose Images to Upload
-                      </Button>
-                    </label>
+                  {/* Drag & Drop Zone */}
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    className={`transition-colors rounded-lg p-4 border-2 border-dashed ${dragActive ? 'border-[#2a9d8f] bg-[#2a9d8f]/5' : 'border-gray-300'} flex flex-col sm:flex-row items-center justify-between gap-3`}
+                  >
+                    <div className="text-sm text-gray-600">
+                      Drag & drop images here, or choose files
+                    </div>
+                    <div>
+                      <input
+                        type="file"
+                        id={`image-upload-${patient.id}`}
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                      <label htmlFor={`image-upload-${patient.id}`} className="cursor-pointer">
+                        <div className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-[#2a9d8f] text-[#0d5c75] hover:bg-[#2a9d8f]/10 h-10 px-4 py-2">
+                          <Upload className="h-4 w-4 mr-2" />
+                          Choose Images
+                        </div>
+                      </label>
+                    </div>
                   </div>
                   
                   {/* Image Previews */}
                   {imagePreviewUrls.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {imagePreviewUrls.map((url, index) => (
                         <div key={index} className="relative group">
                           <div className="aspect-square rounded-lg border-2 border-gray-200 overflow-hidden">
@@ -369,7 +394,7 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
                           >
                             <X className="h-4 w-4" />
                           </Button>
-                          <p className="text-xs text-gray-500 mt-1 truncate">
+                          <p className="text-xs text-gray-500 mt-1 truncate" title={selectedImages[index]?.name}>
                             {selectedImages[index]?.name}
                           </p>
                         </div>
@@ -379,7 +404,7 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
                 </div>
               </div>
               
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col sm:flex-row justify-end gap-3">
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isUploading}>
                   Cancel
                 </Button>

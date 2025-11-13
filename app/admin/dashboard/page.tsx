@@ -3824,7 +3824,10 @@ export default function AdminDashboard() {
                     <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Appointment</h4>
                     <p className="text-sm"><span className="font-medium">Date:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleDateString()}</p>
                     <p className="text-sm"><span className="font-medium">Time:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleTimeString()}</p>
-                    <p className="text-sm"><span className="font-medium">Status:</span> <Badge className="ml-2">{selectedPatientDetail.status}</Badge></p>
+                    <div className="text-sm flex items-center gap-2">
+                      <span className="font-medium">Status:</span>
+                      <Badge>{selectedPatientDetail.status}</Badge>
+                    </div>
                     <p className="text-sm"><span className="font-medium">Payment:</span> {selectedPatientDetail.payment_method?.toUpperCase?.() || 'CASH'}</p>
                     {selectedPatientDetail.last_visit && (
                       <p className="text-sm"><span className="font-medium">Last Visit:</span> {new Date(selectedPatientDetail.last_visit).toLocaleDateString()}</p>
