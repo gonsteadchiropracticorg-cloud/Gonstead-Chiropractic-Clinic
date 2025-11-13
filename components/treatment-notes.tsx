@@ -56,6 +56,8 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
+  const [viewingNote, setViewingNote] = useState<TreatmentNote | null>(null)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const { toast } = useToast()
   
   // Initialize Supabase client
@@ -203,6 +205,11 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
       setSelectedImages([])
       setImagePreviewUrls([])
       setIsAddDialogOpen(false)
+      
+      // Open the newly created note in viewer
+      setViewingNote(note)
+      setIsViewDialogOpen(true)
+
       loadNotes()
       onNotesUpdated?.()
 
@@ -428,82 +435,38 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {note.notes && (
+                {/* Compact summary only (no full text shown openly) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                   <div>
-                    <h4 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'} mb-1`}>
-                      Clinical Notes
-                    </h4>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {note.notes}
+                    <p className="text-gray-500">Summary</p>
+                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} line-clamp-2`}>
+                      {note.notes || note.diagnosis || note.treatmentProvided || 'No summary provided.'}
                     </p>
                   </div>
-                )}
-                {note.diagnosis && (
                   <div>
-                    <h4 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'} mb-1`}>
-                      Diagnosis / Assessment
-                    </h4>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {note.diagnosis}
+                    <p className="text-gray-500">Attachments</p>
+                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {note.images?.length ? `${note.images.length} image(s)` : 'No images'}
                     </p>
                   </div>
-                )}
-                {note.treatmentProvided && (
                   <div>
-                    <h4 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'} mb-1`}>
-                      Treatment Provided
-                    </h4>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {note.treatmentProvided}
-                    </p>
+                    <p className="text-gray-500">Created By</p>
+                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{note.createdBy}</p>
                   </div>
-                )}
-                {note.nextSteps && (
-                  <div>
-                    <h4 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'} mb-1`}>
-                      Next Steps
-                    </h4>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {note.nextSteps}
-                    </p>
-                  </div>
-                )}
+                </div>
                 
-                {/* Image Gallery */}
-                {note.images && note.images.length > 0 && (
-                  <div className="border-t pt-3">
-                    <h4 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'} mb-2 flex items-center gap-2`}>
-                      <ImageIcon className="h-4 w-4" />
-                      Attached Images ({note.images.length})
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {note.images.map((image) => (
-                        <div key={image.id} className="relative group">
-                          <div 
-                            className="aspect-square rounded-lg border-2 border-gray-200 overflow-hidden cursor-pointer hover:border-[#2a9d8f] transition-colors"
-                            onClick={() => setViewingImage(image.url)}
-                          >
-                            <Image
-                              src={image.url}
-                              alt={image.fileName}
-                              fill
-                              className="object-cover group-hover:scale-110 transition-transform"
-                            />
-                          </div>
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                            <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                          <p className="text-xs text-gray-500 mt-1 truncate" title={image.fileName}>
-                            {image.fileName}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="text-xs text-gray-500">
+                    {new Date(note.createdAt).toLocaleString()}
                   </div>
-                )}
-                
-                <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} pt-2 border-t`}>
-                  Created by {note.createdBy} on {new Date(note.createdAt).toLocaleString()}
+                  <div className="flex items-center gap-2">
+                    {note.images?.length ? (
+                      <Badge variant="secondary" className="bg-[#2a9d8f]/10 text-[#0d5c75]">{note.images.length} Images</Badge>
+                    ) : null}
+                    <Button size="sm" variant="outline" className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75]/10" onClick={() => { setViewingNote(note); setIsViewDialogOpen(true) }}>
+                      View Details
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -511,6 +474,99 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
         )}
       </div>
       
+      {/* Note Viewer Dialog (Professional, Responsive) */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto p-0">
+          <div className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] px-6 py-5">
+            <DialogHeader>
+              <DialogTitle className="text-white text-xl flex items-center justify-between">
+                <span>Session #{viewingNote?.sessionNumber} • Treatment Note</span>
+                <span className="text-white/80 text-sm">{viewingNote ? new Date(viewingNote.date).toLocaleString() : ''}</span>
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+          <div className="p-6 space-y-6">
+            {/* Top meta */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gray-50 rounded-lg p-4 border">
+                <p className="text-xs text-gray-500">Patient</p>
+                <p className="font-medium text-[#0d5c75]">{viewingNote?.patientName}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 border">
+                <p className="text-xs text-gray-500">Created By</p>
+                <p className="font-medium">{viewingNote?.createdBy}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 border">
+                <p className="text-xs text-gray-500">Attachments</p>
+                <p className="font-medium">{viewingNote?.images?.length || 0} image(s)</p>
+              </div>
+            </div>
+
+            {/* Details grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {viewingNote?.notes && (
+                <div>
+                  <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Clinical Notes</h4>
+                  <div className="bg-white rounded-lg p-4 border text-sm text-gray-800 whitespace-pre-wrap">
+                    {viewingNote.notes}
+                  </div>
+                </div>
+              )}
+              {viewingNote?.diagnosis && (
+                <div>
+                  <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Diagnosis / Assessment</h4>
+                  <div className="bg-white rounded-lg p-4 border text-sm text-gray-800 whitespace-pre-wrap">
+                    {viewingNote.diagnosis}
+                  </div>
+                </div>
+              )}
+              {viewingNote?.treatmentProvided && (
+                <div>
+                  <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Treatment Provided</h4>
+                  <div className="bg-white rounded-lg p-4 border text-sm text-gray-800 whitespace-pre-wrap">
+                    {viewingNote.treatmentProvided}
+                  </div>
+                </div>
+              )}
+              {viewingNote?.nextSteps && (
+                <div>
+                  <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Next Steps / Recommendations</h4>
+                  <div className="bg-white rounded-lg p-4 border text-sm text-gray-800 whitespace-pre-wrap">
+                    {viewingNote.nextSteps}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Image gallery */}
+            {viewingNote?.images && viewingNote.images.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-[#0d5c75] mb-3 flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Attached Images
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {viewingNote.images.map(img => (
+                    <div key={img.id} className="relative group">
+                      <div
+                        className="aspect-square rounded-lg border overflow-hidden cursor-pointer hover:border-[#2a9d8f] transition-colors"
+                        onClick={() => setViewingImage(img.url)}
+                      >
+                        <Image src={img.url} alt={img.fileName} fill className="object-cover group-hover:scale-110 transition-transform" />
+                      </div>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                        <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 truncate" title={img.fileName}>{img.fileName}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Image Viewer Dialog */}
       <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
