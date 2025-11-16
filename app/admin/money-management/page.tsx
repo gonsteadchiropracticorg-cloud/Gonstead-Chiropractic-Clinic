@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { getCurrentUser } from "@/lib/supabase"
 import {
   DollarSign,
   Calculator,
@@ -57,8 +58,7 @@ interface PaymentRecord {
 
 function MoneyManagementContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [records, setRecords] = useState<PaymentRecord[]>([])
   const [isAddRecordDialogOpen, setIsAddRecordDialogOpen] = useState(false)
   const [isEditRecordDialogOpen, setIsEditRecordDialogOpen] = useState(false)
@@ -76,6 +76,7 @@ function MoneyManagementContent() {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [deleteConfirmRecord, setDeleteConfirmRecord] = useState<PaymentRecord | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isLoadingRecords, setIsLoadingRecords] = useState(false)
   
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -94,63 +95,287 @@ function MoneyManagementContent() {
 
   const { toast } = useToast()
 
-  const ADMIN_PASSWORD = "bashirkhan1122@"
-
-  // Load records from localStorage
+  // Check admin authentication (mirror admin dashboard/settings pattern)
   useEffect(() => {
-    if (isAuthenticated) {
-      const savedRecords = localStorage.getItem("money_records")
-      if (savedRecords) {
-        setRecords(JSON.parse(savedRecords))
-      }
-      
-      // Check for pre-filled patient data from URL params
-      const patientData = searchParams.get('patient')
-      if (patientData) {
-        try {
-          const patient = JSON.parse(decodeURIComponent(patientData))
-          setNewRecord({
-            patientName: patient.name || "",
-            phone: patient.phone || "",
-            sessionType: patient.sessionType || "in_clinic",
-            amount: "",
-            paymentMethod: "cash",
-            description: `${patient.sessionType === 'in_clinic' ? 'In-Clinic' : 'Video'} consultation for ${patient.name}`,
-            category: "consultation",
-            status: "pending"
-          })
-          setIsAddRecordDialogOpen(true)
-          toast({
-            title: "📋 Patient Data Pre-filled",
-            description: `Payment form pre-filled with ${patient.name}'s details. Please add the payment amount.`,
-          })
-        } catch (error) {
-          console.error('Error parsing patient data:', error)
+    const checkAuth = async () => {
+      try {
+        // 1) Check localStorage flags first (set by admin auth flow)
+        const isAuthenticatedLocal = typeof window !== 'undefined' ? localStorage.getItem("admin_authenticated") : null
+        const storedEmail = typeof window !== 'undefined' ? localStorage.getItem("admin_email") : null
+
+        if (isAuthenticatedLocal === "true" && storedEmail) {
+          setIsAuthenticated(true)
+          setIsCheckingAuth(false)
+          return
         }
+
+        // 2) Fallback to Supabase current user
+        const { user } = await getCurrentUser()
+        const adminEmails = [
+          "bashirahmad123.org@gmail.com",
+          "bashirahmad123.org@gmail.com", // ensure lowercase match
+          "admin@gonsteadchiropractic.com",
+          "dr.bashir@gonsteadchiropractic.com",
+        ]
+
+        const email = (user?.email || "").toLowerCase()
+        if (!user || !adminEmails.includes(email)) {
+          console.warn("MoneyManagement: unauthorized access, redirecting to /admin/auth")
+          setIsAuthenticated(false)
+          setIsCheckingAuth(false)
+          router.replace("/admin/auth")
+          return
+        }
+
+        // Store auth flags for future navigations (same as other admin pages)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem("admin_authenticated", "true")
+          localStorage.setItem("admin_email", user.email || "")
+        }
+
+        setIsAuthenticated(true)
+      } catch (error) {
+        console.error("MoneyManagement: auth check failed", error)
+        setIsAuthenticated(false)
+        router.replace("/admin/auth")
+      } finally {
+        setIsCheckingAuth(false)
       }
     }
+
+    checkAuth()
+  }, [router])
+
+  // Load records from Supabase payment_records as primary source (with localStorage fallback + backfill)
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const loadRecords = async () => {
+      setIsLoadingRecords(true)
+      try {
+        // 1) Read any existing local records for fallback and migration
+        let localRecords: PaymentRecord[] = []
+        try {
+          const savedRecords = localStorage.getItem("money_records")
+          if (savedRecords) {
+            localRecords = JSON.parse(savedRecords)
+          }
+        } catch (error) {
+          console.error("MoneyManagement: failed to read money_records from localStorage", error)
+        }
+
+        // 2) Try to load from Supabase payment_records
+        // Load from backend API
+        const res = await fetch('/api/payments', { method: 'GET' })
+        if (!res.ok) {
+          console.error("MoneyManagement: failed to load payment records via API", await res.text())
+          if (localRecords.length > 0) setRecords(localRecords)
+        } else {
+          const payload = await res.json()
+          const items = Array.isArray(payload.items) ? payload.items : []
+          const apiRecords: PaymentRecord[] = items.map((row: any) => {
+            const metadata = row.metadata || {}
+            const paymentDate: string = row.paymentDate
+              ? new Date(row.paymentDate).toISOString().split("T")[0]
+              : new Date().toISOString().split("T")[0]
+            return {
+              id: row.transactionId || row.id,
+              date: paymentDate,
+              patientName: metadata.patient_name || "",
+              phone: metadata.phone || "",
+              sessionType: metadata.session_type === "video" ? "video" : "in_clinic",
+              amount: typeof row.amount === "number" ? row.amount : Number(row.amount) || 0,
+              paymentMethod: (row.paymentMethod as any) || "cash",
+              description: row.notes || "",
+              category: (row.serviceType as any) || "consultation",
+              status: (row.status as any) || "completed",
+              createdBy: metadata.created_by || "System",
+            }
+          })
+          setRecords(apiRecords)
+          saveRecords(apiRecords)
+
+          // Backfill local-only records to API
+          if (localRecords.length > 0) {
+            const existingIds = new Set(items.map((row: any) => row.transactionId).filter((id: string) => !!id))
+            const localOnly = localRecords.filter(record => !existingIds.has(record.id))
+            if (localOnly.length > 0) {
+              Promise.all(
+                localOnly.map(record => fetch('/api/payments', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    transactionId: record.id,
+                    paymentDate: record.date,
+                    amount: record.amount,
+                    paymentMethod: record.paymentMethod,
+                    status: record.status,
+                    serviceType: record.category,
+                    notes: record.description,
+                    metadata: {
+                      patient_name: record.patientName,
+                      phone: record.phone,
+                      session_type: record.sessionType,
+                      category: record.category,
+                      created_by: record.createdBy,
+                    }
+                  })
+                }))
+              ).catch(err => console.error('MoneyManagement: backfill failed', err))
+            }
+          }
+        }
+
+        // 4) Handle pre-filled patient data from URL params (same as before)
+        const patientData = searchParams.get("patient")
+        if (patientData) {
+          try {
+            const patient = JSON.parse(decodeURIComponent(patientData))
+            setNewRecord({
+              patientName: patient.name || "",
+              phone: patient.phone || "",
+              sessionType: patient.sessionType || "in_clinic",
+              amount: "",
+              paymentMethod: "cash",
+              description: `${patient.sessionType === "in_clinic" ? "In-Clinic" : "Video"} consultation for ${patient.name}`,
+              category: "consultation",
+              status: "pending",
+            })
+            setIsAddRecordDialogOpen(true)
+            toast({
+              title: "📋 Patient Data Pre-filled",
+              description: `Payment form pre-filled with ${patient.name}'s details. Please add the payment amount.`,
+            })
+          } catch (error) {
+            console.error("MoneyManagement: error parsing patient data from URL", error)
+          }
+        }
+      } catch (error) {
+        console.error("MoneyManagement: unexpected error while loading records", error)
+      } finally {
+        setIsLoadingRecords(false)
+      }
+    }
+
+    loadRecords()
   }, [isAuthenticated, searchParams])
 
-  // Save records to localStorage
+  // Persist records to localStorage (primary source for UI today)
   const saveRecords = (newRecords: PaymentRecord[]) => {
     setRecords(newRecords)
-    localStorage.setItem("money_records", JSON.stringify(newRecords))
+    try {
+      localStorage.setItem("money_records", JSON.stringify(newRecords))
+    } catch (error) {
+      console.error("MoneyManagement: failed to persist money_records to localStorage", error)
+    }
   }
 
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true)
-      toast({
-        title: "🔓 Access Granted",
-        description: "Welcome to the Money Management System",
+  // Map UI payment record to Supabase payment_records row
+  const mapToPaymentRecordRow = (record: PaymentRecord) => {
+    // Map our simplified status to Supabase status enum
+    const statusMap: Record<string, string> = {
+      completed: 'completed',
+      pending: 'pending',
+      refunded: 'refunded',
+    }
+
+    const supabaseStatus = statusMap[record.status] || 'completed'
+
+    return {
+      // id is auto-generated UUID by Supabase; we use our MR-* id as business transaction_id
+      patient_id: null,
+      appointment_id: null,
+      transaction_type: 'payment' as const,
+      payment_method: record.paymentMethod,
+      amount: record.amount,
+      currency: 'PKR',
+      status: supabaseStatus,
+      transaction_id: record.id,
+      reference_number: null,
+      payment_date: record.date ? new Date(record.date) : new Date(),
+      due_date: null,
+      service_type: record.category,
+      session_count: 1,
+      discount_applied: 0,
+      tax_amount: 0,
+      notes: record.description,
+      payment_proof_url: null,
+      receipt_number: null,
+      recorded_by: null,
+      approved_by: null,
+      approval_date: null,
+      metadata: {
+        patient_name: record.patientName,
+        phone: record.phone,
+        session_type: record.sessionType,
+        category: record.category,
+        created_by: record.createdBy,
+      },
+    }
+  }
+
+  // Server-backed sync helpers (use API; do not block UI)
+  const syncCreateToAPI = async (record: PaymentRecord) => {
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transactionId: record.id,
+          paymentDate: record.date,
+          amount: record.amount,
+          paymentMethod: record.paymentMethod,
+          status: record.status,
+          serviceType: record.category,
+          notes: record.description,
+          metadata: {
+            patient_name: record.patientName,
+            phone: record.phone,
+            session_type: record.sessionType,
+            category: record.category,
+            created_by: record.createdBy,
+          }
+        })
       })
-    } else {
-      toast({
-        title: "❌ Access Denied",
-        description: "Incorrect password. Only authorized admin can access this page.",
-        variant: "destructive",
+      if (!res.ok) console.error('MoneyManagement: create API failed', await res.text())
+    } catch (error) {
+      console.error('MoneyManagement: unexpected error during create API sync', error)
+    }
+  }
+
+  const syncUpdateToAPI = async (record: PaymentRecord) => {
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transactionId: record.id,
+          amount: record.amount,
+          paymentMethod: record.paymentMethod,
+          status: record.status,
+          serviceType: record.category,
+          notes: record.description,
+          metadata: {
+            patient_name: record.patientName,
+            phone: record.phone,
+            session_type: record.sessionType,
+            category: record.category,
+            created_by: record.createdBy,
+          }
+        })
       })
-      setPassword("")
+      if (!res.ok) console.error('MoneyManagement: update API failed', await res.text())
+    } catch (error) {
+      console.error('MoneyManagement: unexpected error during update API sync', error)
+    }
+  }
+
+  const syncDeleteToAPI = async (record: PaymentRecord) => {
+    try {
+      const res = await fetch(`/api/payments?transactionId=${encodeURIComponent(record.id)}`, { method: 'DELETE' })
+      if (!res.ok) console.error('MoneyManagement: delete API failed', await res.text())
+    } catch (error) {
+      console.error('MoneyManagement: unexpected error during delete API sync', error)
     }
   }
 
@@ -190,6 +415,9 @@ function MoneyManagementContent() {
 
     const updatedRecords = [record, ...records]
     saveRecords(updatedRecords)
+
+    // Fire-and-forget sync to API
+    syncCreateToAPI(record)
 
     setIsAddRecordDialogOpen(false)
     setNewRecord({
@@ -231,6 +459,9 @@ function MoneyManagementContent() {
     )
     saveRecords(updatedRecords)
 
+    // Fire-and-forget sync to API
+    syncUpdateToAPI(editingRecord)
+
     setIsEditRecordDialogOpen(false)
     setEditingRecord(null)
 
@@ -245,6 +476,9 @@ function MoneyManagementContent() {
 
     const updatedRecords = records.filter(record => record.id !== deleteConfirmRecord.id)
     saveRecords(updatedRecords)
+
+    // Fire-and-forget sync to API
+    syncDeleteToAPI(deleteConfirmRecord)
 
     setIsDeleteDialogOpen(false)
     setDeleteConfirmRecord(null)
@@ -459,56 +693,18 @@ function MoneyManagementContent() {
     })
   }
 
-  if (!isAuthenticated) {
+  // Show lightweight loading screen while checking authentication
+  if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] rounded-full flex items-center justify-center">
-              <Lock className="h-8 w-8 text-white" />
-            </div>
-            <CardTitle className="text-2xl text-[#0d5c75]">
-              Money Management System
-            </CardTitle>
-            <p className="text-gray-600 text-sm mt-2">
-              Secure Access Required
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="password">Admin Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter admin password"
-                  onKeyPress={(e) => e.key === "Enter" && handleLogin()}
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <Button onClick={handleLogin} className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c]">
-              <Lock className="h-4 w-4 mr-2" />
-              Access System
-            </Button>
-            <div className="text-center text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
-              <strong>⚠️ Access Denied:</strong> Only authorized admin can access this page.
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-lg text-[#0d5c75]">Checking admin access...</div>
       </div>
     )
+  }
+
+  // If not authenticated (and already redirected), render nothing
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
@@ -530,8 +726,8 @@ function MoneyManagementContent() {
             <Button
               variant="outline"
               onClick={() => {
+                // Local logout for this page; global admin logout can be handled via main admin UI
                 setIsAuthenticated(false)
-                setPassword("")
               }}
               className="text-red-600 border-red-300 hover:bg-red-50"
             >
@@ -893,7 +1089,12 @@ function MoneyManagementContent() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredRecords.length === 0 ? (
+          {isLoadingRecords ? (
+            <div className="text-center py-12">
+              <div className="text-lg font-medium text-[#0d5c75]">Loading payment records from Supabase...</div>
+              <p className="text-gray-500 mt-2">Please wait a moment.</p>
+            </div>
+          ) : filteredRecords.length === 0 ? (
             <div className="text-center py-12">
               <Receipt className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-600 mb-2">No Payment Records Found</h3>
