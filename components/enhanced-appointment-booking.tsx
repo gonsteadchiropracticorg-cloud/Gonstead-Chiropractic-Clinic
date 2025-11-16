@@ -384,7 +384,7 @@ export function EnhancedAppointmentBooking() {
         treatmentType: formData.sessionType === "in_clinic" ? "Gonstead Adjustment" : "Video Consultation",
         status: "Ongoing",
         sessionsCompleted: 0,
-        totalSessions: 8, // Default total sessions
+        totalSessions: 3, // Default total sessions
         nextAppointment: `${formData.selectedDate}T${formData.selectedTime}`,
         chiefComplaint: formData.notes || "Online appointment booking",
         medicalHistory: "Medical history to be collected during consultation",

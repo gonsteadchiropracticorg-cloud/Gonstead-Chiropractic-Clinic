@@ -8,6 +8,9 @@ const FILES_TO_CACHE = [
   '/admin',
   '/admin/dashboard',
   '/admin/auth',
+  // Staff-facing read-only dashboard and login
+  '/staff-dashboard',
+  '/staff-login',
   '/patient-portal',
   '/offline',
   '/manifest.json',

@@ -149,7 +149,8 @@ export async function generateAppointmentConfirmationPDF(data: AppointmentConfir
   pdf.setFont('helvetica', 'bold')
   // Left: Reference number; Right: Patient ID (prominent)
   pdf.text(`Reference No: ${referenceNumber}`, 20, currentY, { align: 'left' })
-  const patientIdDisplay = patient.patient_code || (patient.id ? patient.id.substring(0, 8).toUpperCase() : 'N/A')
+  // Use full professional ID (no truncation). If a separate patient_code exists, prefer it.
+  const patientIdDisplay = (patient as any).patient_code || (patient.id || 'N/A')
   pdf.text(`Patient ID: ${patientIdDisplay}`, 195, currentY, { align: 'right' })
 
   currentY += 15
@@ -164,8 +165,8 @@ export async function generateAppointmentConfirmationPDF(data: AppointmentConfir
     { label: 'Full Name', value: patient.name },
     { label: 'Phone Number', value: patient.phone },
     { label: 'Email Address', value: patient.email || 'Not provided' },
-    { label: 'Patient ID', value: patient.patient_code || patient.id.substring(0, 8).toUpperCase() },
-    { label: 'Sessions Completed', value: `${patient.sessions_completed || 0} of ${patient.total_sessions || 8}` }
+    { label: 'Patient ID', value: (patient as any).patient_code || (patient.id || 'N/A') },
+    { label: 'Sessions Completed', value: `${patient.sessions_completed || 0} of ${patient.total_sessions || 3}` }
   ]
 
   currentY = drawInfoBlock(pdf, patientInfo, currentY, 15, darkGray, lightGray)

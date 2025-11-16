@@ -237,8 +237,8 @@ export function generateWelcomeMessage(patient: Patient): string {
 
 // Generate follow-up message
 export function generateFollowUpMessage(patient: Patient, sessionNumber: number): string {
-  return `Follow-up: Session ${sessionNumber} Complete 💪\n\nDear ${patient.name},\n\nGreat progress! You've completed ${sessionNumber} of ${patient.total_sessions || 8} sessions. ${
-    sessionNumber < (patient.total_sessions || 8) 
+  return `Follow-up: Session ${sessionNumber} Complete 💪\n\nDear ${patient.name},\n\nGreat progress! You've completed ${sessionNumber} of ${patient.total_sessions || 3} sessions. ${
+    sessionNumber < (patient.total_sessions || 3) 
       ? `Your next appointment is coming up. Keep up the good work!` 
       : 'Congratulations on completing your treatment plan! We recommend periodic check-ups to maintain your spinal health.'
   }\n\nGonstead Chiropractic Clinic\n+92 304 699 6267`
@@ -246,8 +246,8 @@ export function generateFollowUpMessage(patient: Patient, sessionNumber: number)
 
 // Generate progress update
 export function generateProgressUpdate(patient: Patient): string {
-  const progress = Math.round(((patient.sessions_completed || 0) / (patient.total_sessions || 8)) * 100)
-  return `Treatment Progress Update 📊\n\nDear ${patient.name},\n\nYou're ${progress}% through your treatment plan! Keep following your home care instructions for best results.\n\nCompleted: ${patient.sessions_completed || 0} sessions\nRemaining: ${(patient.total_sessions || 8) - (patient.sessions_completed || 0)} sessions\n\nGonstead Chiropractic Clinic`
+  const progress = Math.round(((patient.sessions_completed || 0) / (patient.total_sessions || 3)) * 100)
+  return `Treatment Progress Update 📊\n\nDear ${patient.name},\n\nYou're ${progress}% through your treatment plan! Keep following your home care instructions for best results.\n\nCompleted: ${patient.sessions_completed || 0} sessions\nRemaining: ${(patient.total_sessions || 3) - (patient.sessions_completed || 0)} sessions\n\nGonstead Chiropractic Clinic`
 }
 
 // Check for no-show risk

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Calendar, 
@@ -29,11 +29,15 @@ import {
 import { getPatients, type Patient } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+
+// Lazy-load staff PWA install client only on client side
+const StaffServiceWorkerClient = dynamic(() => import('@/components/StaffServiceWorkerClient'), { ssr: false })
 
 const statusColors = {
   pending: 'bg-orange-100 text-orange-800',
@@ -387,6 +391,16 @@ export default function StaffDashboard() {
     setIsRefreshing(false)
   }
 
+  // Memoized derived collections for quick filters (read-only)
+  const todayPatients = useMemo(() => {
+    const todayStr = new Date().toDateString()
+    return filteredPatients.filter((p) => new Date(p.appointment_date).toDateString() === todayStr)
+  }, [filteredPatients])
+
+  const urgentPatients = useMemo(() => {
+    return filteredPatients.filter((p) => p.urgency === 'urgent' || p.urgency === 'emergency')
+  }, [filteredPatients])
+
   // Get urgency color for badges
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -601,7 +615,7 @@ export default function StaffDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search and Filters */}
+        {/* Search and Filters + Quick Stats */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
             {/* Search */}
@@ -653,15 +667,15 @@ export default function StaffDashboard() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {filteredPatients.filter(patient => patient.status === 'confirmed' || patient.status === 'pending').length}
+                {todayPatients.length}
               </div>
-              <div className="text-sm text-gray-500">Upcoming</div>
+              <div className="text-sm text-gray-500">Today&apos;s Appointments</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {filteredPatients.filter(patient => patient.urgency === 'urgent' || patient.urgency === 'emergency').length}
+                {urgentPatients.length}
               </div>
-              <div className="text-sm text-gray-500">Urgent Cases</div>
+              <div className="text-sm text-gray-500">Urgent / Emergency</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
@@ -712,11 +726,18 @@ export default function StaffDashboard() {
                       <div className="space-y-2 text-sm text-gray-600">
                         <div className="flex items-center space-x-2">
                           <Phone className="h-4 w-4 flex-shrink-0 text-blue-500" />
-                          <span>{patient.phone}</span>
+                          <a href={`tel:${patient.phone}`} className="text-blue-700 hover:underline">
+                            {patient.phone}
+                          </a>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Mail className="h-4 w-4 flex-shrink-0 text-blue-500" />
-                          <span>{patient.email || 'No email provided'}</span>
+                          <a
+                            href={patient.email ? `mailto:${patient.email}` : undefined}
+                            className={patient.email ? 'text-blue-700 hover:underline' : 'text-gray-400'}
+                          >
+                            {patient.email || 'No email provided'}
+                          </a>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Calendar className="h-4 w-4 flex-shrink-0 text-purple-500" />
@@ -808,6 +829,9 @@ export default function StaffDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Staff PWA install prompt - only on staff routes */}
+      <StaffServiceWorkerClient />
     </div>
   )
 }

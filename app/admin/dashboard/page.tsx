@@ -95,6 +95,7 @@ import {
   generateWelcomeMessage,
   generateFollowUpMessage,
 } from "@/lib/appointment-utils"
+import { generateAppointmentConfirmationPDF } from "@/lib/pdf-appointment-confirmation"
 
 export default function AdminDashboard() {
   const [patients, setPatients] = useState<Patient[]>([])
@@ -569,10 +570,21 @@ export default function AdminDashboard() {
         updateData.last_visit = new Date().toISOString()
         updateData.status = deriveStatus(newCount, total)
       } else if (newStatus === "cancelled") {
-        // Respect explicit cancellation and reset sessions to 0/0
+        // Respect explicit cancellation.
+        // If patient never attended, reset counters to 0/0.
+        // If patient had already taken sessions, cancelation should roll back ONE taken session,
+        // not wipe the full history.
         updateData.status = "cancelled"
-        updateData.sessions_completed = 0
-        updateData.total_sessions = 0
+        if ((prevCount || 0) <= 0) {
+          // No sessions taken → both taken and total become 0
+          updateData.sessions_completed = 0
+          updateData.total_sessions = 0
+        } else {
+          // Some sessions already taken → remove ONE from the taken count only
+          const rolledBack = Math.max(0, prevCount - 1)
+          updateData.sessions_completed = rolledBack
+          // Keep total_sessions as-is so history of planned plan is preserved
+        }
       } else {
         // For 'pending' or 'confirmed' clicks, always align with counts automatically
         updateData.status = deriveStatus(prevCount, total)
@@ -743,6 +755,27 @@ export default function AdminDashboard() {
       // Mark admin-created patients as viewed immediately (no red dot needed)
       if (newPatientRecord?.id) {
         setViewedPatients(prev => new Set([...prev, newPatientRecord.id]))
+
+        // Automatically generate professional confirmation PDF when a full appointment is booked
+        try {
+          if (newPatientRecord.appointment_date) {
+            const apptDate = new Date(newPatientRecord.appointment_date)
+            const appointmentTimeDisplay = apptDate.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            })
+            await generateAppointmentConfirmationPDF({
+              patient: newPatientRecord,
+              appointmentDate: newPatientRecord.appointment_date,
+              appointmentTime: appointmentTimeDisplay,
+              sessionType: newPatientRecord.session_type,
+              notes: newPatientRecord.notes || undefined,
+            })
+          }
+        } catch (pdfError) {
+          console.error('Error generating confirmation PDF for admin-created appointment:', pdfError)
+        }
         
         // Mobile-compatible localStorage sync with error handling
         let localStorageSaved = false
@@ -1181,6 +1214,347 @@ export default function AdminDashboard() {
       toast({
         title: "Error",
         description: "Failed to print prescription",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const downloadPatientHistoryPDF = async () => {
+    if (!selectedPatientHistory) {
+      toast({
+        title: "Error",
+        description: "No patient selected for history PDF",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      // Load clinic logo for professional header (same asset as other PDFs)
+      const loadImageAsDataURL = async (path: string) => {
+        const res = await fetch(path)
+        const blob = await res.blob()
+        return await new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(blob)
+        })
+      }
+
+      let logo: string | null = null
+      try {
+        logo = await loadImageAsDataURL("/images/gonstead-chiropractic-logo-new.png")
+      } catch (e) {
+        console.warn("History PDF: failed to load logo", e)
+      }
+
+      const pdf = new jsPDF("p", "mm", "a4")
+      const pageWidth = 210
+      const pageHeight = 297
+      const margin = 15
+      let y = 20
+      let currentPage = 1
+      const maxPages = 2
+
+      const primaryColor: [number, number, number] = [13, 92, 117]
+      const lightGray: [number, number, number] = [243, 244, 246]
+      const textMuted: [number, number, number] = [107, 114, 128]
+
+      const addHeader = () => {
+        pdf.setFillColor(...primaryColor)
+        pdf.rect(0, 0, pageWidth, 22, "F")
+
+        // Optional clinic logo on the left inside the header band
+        if (logo) {
+          const logoSize = 10
+          pdf.addImage(logo, "PNG", margin, 5, logoSize, logoSize)
+        }
+
+        pdf.setTextColor(255, 255, 255)
+        pdf.setFont("helvetica", "bold")
+        pdf.setFontSize(13)
+        pdf.text("GONSTEAD CHIROPRACTIC CLINIC", pageWidth / 2, 9, { align: "center" })
+
+        pdf.setFontSize(9)
+        pdf.setFont("helvetica", "normal")
+        pdf.text("Patient Session History Summary", pageWidth / 2, 14, { align: "center" })
+
+        // Discreet address/phone line for formal header
+        pdf.setFontSize(8)
+        pdf.text(
+          "Near Peshawar Model School, Tehsil Road, Nowshera  •  +92 304 699 6267",
+          pageWidth / 2,
+          19,
+          { align: "center" },
+        )
+
+        y = 28
+      }
+
+      addHeader()
+
+      const code = getPatientCodeById(selectedPatientHistory.id)
+      const fullId = selectedPatientHistory.id
+      const firstVisitDate = new Date(selectedPatientHistory.appointment_date)
+      const lastVisitDate = selectedPatientHistory.last_visit
+        ? new Date(selectedPatientHistory.last_visit)
+        : null
+      const completedSessions = selectedPatientHistory.sessions_completed || 0
+      const totalSessions = (selectedPatientHistory.total_sessions ?? completedSessions) || 3
+
+      // Discreet report meta row just under header
+      pdf.setFont("helvetica", "normal")
+      pdf.setFontSize(8)
+      pdf.setTextColor(...textMuted)
+      const generatedOn = new Date()
+      const reportLabel = `History Report: ${code}`
+      const generatedLabel = `Generated: ${generatedOn.toLocaleDateString()} ${generatedOn.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+      pdf.text(reportLabel, margin, y)
+      pdf.text(generatedLabel, pageWidth - margin, y, { align: "right" })
+      y += 6
+
+      // Patient info block
+      pdf.setFillColor(...lightGray)
+      pdf.roundedRect(margin, y - 6, pageWidth - margin * 2, 18, 2, 2, "F")
+      pdf.setTextColor(17, 24, 39)
+      pdf.setFont("helvetica", "bold")
+      pdf.setFontSize(11)
+      pdf.text(selectedPatientHistory.name || "-", margin + 2, y)
+
+      pdf.setFontSize(9)
+      pdf.setTextColor(...textMuted)
+      pdf.setFont("helvetica", "normal")
+      pdf.text(`Patient Code: ${code}`, margin + 2, y + 5)
+      pdf.text(`Patient ID: ${fullId}`, margin + 2, y + 10)
+
+      pdf.text(`Phone: ${selectedPatientHistory.phone || "-"}`, pageWidth - margin - 2, y + 5, { align: "right" })
+      pdf.text(`Email: ${selectedPatientHistory.email || "Not provided"}`, pageWidth - margin - 2, y + 10, { align: "right" })
+
+      y += 22
+
+      // Summary block
+      const addSummary = () => {
+        pdf.setFontSize(10)
+        pdf.setTextColor(17, 24, 39)
+        pdf.setFont("helvetica", "bold")
+        pdf.text("TREATMENT SUMMARY", margin, y)
+        pdf.setDrawColor(...primaryColor)
+        pdf.setLineWidth(0.5)
+        pdf.line(margin, y + 1.5, pageWidth - margin, y + 1.5)
+        y += 6
+
+        pdf.setFont("helvetica", "normal")
+        pdf.setTextColor(31, 41, 55)
+
+        const colWidth = (pageWidth - margin * 2) / 2
+        const leftX = margin
+        const rightX = margin + colWidth
+
+        const summaryRowsLeft = [
+          ["First Visit", firstVisitDate.toLocaleDateString()],
+          ["Last Visit", lastVisitDate ? lastVisitDate.toLocaleDateString() : "No visits yet"],
+          ["Session Type", selectedPatientHistory.session_type === "in_clinic" ? "In-Clinic" : "Video"],
+        ] as const
+
+        const summaryRowsRight = [
+          ["Completed / Total", `${completedSessions} / ${totalSessions}`],
+          ["Status", selectedPatientHistory.status.toUpperCase()],
+          ["Urgency", (selectedPatientHistory.urgency || "normal").toUpperCase()],
+        ] as const
+
+        const rowHeight = 6
+        summaryRowsLeft.forEach(([label, val], index) => {
+          const rowY = y + index * rowHeight
+          pdf.setTextColor(...textMuted)
+          pdf.text(`${label}:`, leftX, rowY)
+          pdf.setTextColor(31, 41, 55)
+          pdf.text(String(val), leftX + 28, rowY)
+        })
+
+        summaryRowsRight.forEach(([label, val], index) => {
+          const rowY = y + index * rowHeight
+          pdf.setTextColor(...textMuted)
+          pdf.text(`${label}:`, rightX, rowY)
+          pdf.setTextColor(31, 41, 55)
+          pdf.text(String(val), rightX + 32, rowY)
+        })
+
+        y += rowHeight * Math.max(summaryRowsLeft.length, summaryRowsRight.length) + 4
+      }
+
+      addSummary()
+
+      // Build session list (same logic as UI timeline, but simplified)
+      const sessions: {
+        sessionNumber: number
+        date: Date
+        status: string
+        type: "in_clinic" | "video"
+        note: string
+      }[] = []
+
+      const sessionsCount = completedSessions
+      const startDate = new Date(selectedPatientHistory.appointment_date)
+      const effectiveCount = Math.max(sessionsCount, 1)
+
+      for (let i = 0; i < effectiveCount; i++) {
+        const sessionDate = new Date(startDate)
+        sessionDate.setDate(sessionDate.getDate() + i * 7) // 7‑day spacing as in UI
+
+        const isCompleted = i < sessionsCount
+        const isUpcoming = i === sessionsCount && selectedPatientHistory.status === "confirmed"
+        const isCurrent = i === 0
+
+        let status: string
+        if (isCompleted) status = "completed"
+        else if (isUpcoming) status = "upcoming"
+        else if (isCurrent) status = "current"
+        else status = "scheduled"
+
+        const note = isCurrent
+          ? selectedPatientHistory.notes || "Initial consultation"
+          : isCompleted
+            ? "Gonstead adjustment completed"
+            : "Session pending"
+
+        sessions.push({
+          sessionNumber: i + 1,
+          date: sessionDate,
+          status,
+          type: selectedPatientHistory.session_type,
+          note,
+        })
+      }
+
+      // Session table header
+      const addSessionHeader = () => {
+        pdf.setFontSize(10)
+        pdf.setFont("helvetica", "bold")
+        pdf.setTextColor(17, 24, 39)
+        pdf.text("SESSION HISTORY", margin, y)
+        pdf.setDrawColor(...primaryColor)
+        pdf.setLineWidth(0.5)
+        pdf.line(margin, y + 1.5, pageWidth - margin, y + 1.5)
+        y += 6
+
+        const colSession = 14
+        const colDate = 38
+        const colTime = 24
+        const colStatus = 28
+        const colNotes = pageWidth - margin * 2 - (colSession + colDate + colTime + colStatus)
+
+        pdf.setFillColor(...primaryColor)
+        pdf.setTextColor(255, 255, 255)
+        pdf.setFontSize(8.5)
+
+        let x = margin
+        const headerHeight = 7
+        const headers: [string, number][] = [
+          ["#", colSession],
+          ["Date", colDate],
+          ["Time", colTime],
+          ["Status", colStatus],
+          ["Notes", colNotes],
+        ]
+
+        headers.forEach(([label, width]) => {
+          pdf.rect(x, y, width, headerHeight, "F")
+          pdf.text(label, x + 2, y + 4.5)
+          x += width
+        })
+
+        y += headerHeight + 1.5
+
+        return { colSession, colDate, colTime, colStatus, colNotes }
+      }
+
+      const cols = addSessionHeader()
+
+      // Table rows, limited to 2 pages
+      const rowHeight = 6
+      pdf.setFont("helvetica", "normal")
+      pdf.setFontSize(8)
+
+      const renderRow = (session: typeof sessions[number]) => {
+        const remainingHeight = pageHeight - margin - y
+        if (remainingHeight < rowHeight + 8) {
+          if (currentPage >= maxPages) return false
+          pdf.addPage()
+          currentPage += 1
+          addHeader()
+          addSummary()
+          addSessionHeader()
+        }
+
+        // Zebra background for readability
+        const rowTop = y
+        const rowWidth = pageWidth - margin * 2
+        if (session.sessionNumber % 2 === 0) {
+          pdf.setFillColor(248, 250, 252)
+          pdf.rect(margin, rowTop - 1, rowWidth, rowHeight + 2, "F")
+        }
+
+        let x = margin
+        const dateStr = session.date.toLocaleDateString()
+        const timeStr = session.date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        const statusStr = session.status.toUpperCase()
+
+        pdf.setTextColor(31, 41, 55)
+
+        // #
+        pdf.text(String(session.sessionNumber), x + 2, y + 4)
+        x += cols.colSession
+
+        // Date
+        pdf.text(dateStr, x + 2, y + 4)
+        x += cols.colDate
+
+        // Time
+        pdf.text(timeStr, x + 2, y + 4)
+        x += cols.colTime
+
+        // Status
+        pdf.text(statusStr, x + 2, y + 4)
+        x += cols.colStatus
+
+        // Notes (wrap)
+        const maxNoteWidth = cols.colNotes - 3
+        const noteLines = pdf.splitTextToSize(session.note, maxNoteWidth) as string[]
+        pdf.text(noteLines[0], x + 2, y + 4)
+
+        y += rowHeight
+        return true
+      }
+
+      for (const session of sessions) {
+        const ok = renderRow(session)
+        if (!ok) break
+      }
+
+      // Footer with generation timestamp and clinic credentials
+      pdf.setFontSize(7.5)
+      pdf.setTextColor(...textMuted)
+      const generated = new Date()
+      const footerLine1 = `Generated on ${generated.toLocaleDateString()} ${generated.toLocaleTimeString()} • Gonstead Chiropractic Clinic`
+      const footerLine2 = "Dr. Bashir Khan — Gonstead Certified Specialist • Clinical use only"
+      pdf.text(footerLine1, pageWidth / 2, pageHeight - 10, { align: "center" })
+      pdf.text(footerLine2, pageWidth / 2, pageHeight - 6, { align: "center" })
+
+      const safeName = selectedPatientHistory.name.replace(/\s+/g, "_")
+      const patientCode = code
+      const today = new Date().toISOString().split("T")[0]
+      const fileName = `${safeName}_Session_History_${patientCode}_${today}.pdf`
+      pdf.save(fileName)
+
+      toast({
+        title: "✅ History PDF Downloaded",
+        description: `Session history downloaded for ${selectedPatientHistory.name}`,
+      })
+    } catch (error) {
+      console.error("Error generating history PDF:", error)
+      toast({
+        title: "Error",
+        description: "Failed to generate history PDF",
         variant: "destructive",
       })
     }
@@ -1744,7 +2118,10 @@ export default function AdminDashboard() {
       const payload = { 
         ...editingPatient, 
         status: derivedStatus,
-        ...(derivedStatus === 'cancelled' ? { total_sessions: 0, sessions_completed: 0 } : {})
+        // Only reset session counters to 0/0 if patient never attended any session
+        ...(derivedStatus === 'cancelled' && (completed || 0) <= 0
+          ? { total_sessions: 0, sessions_completed: 0 }
+          : {})
       }
 
       const before = patients.find(p => p.id === editingPatient.id)
@@ -2123,7 +2500,7 @@ export default function AdminDashboard() {
           const rawPayment = normalizePayment(values[11])
           
           const sessionsCompleted = Number.isFinite(parseInt(values[9])) ? parseInt(values[9]) : 0
-          const totalSessions = Number.isFinite(parseInt(values[10])) ? parseInt(values[10]) : 8
+          const totalSessions = Number.isFinite(parseInt(values[10])) ? parseInt(values[10]) : 3
           
           const patientData: any = {
             name: values[1] || '',
@@ -2202,7 +2579,7 @@ export default function AdminDashboard() {
         patient.urgency || 'normal',
         patient.session_type === 'in_clinic' ? 'In-Clinic' : 'Video',
         patient.sessions_completed || 0,
-        patient.total_sessions || 8
+        patient.total_sessions || 3
       ])
       
       const csvContent = [
@@ -3303,11 +3680,11 @@ export default function AdminDashboard() {
                             <div className="text-center">
                               <div className="flex items-center justify-center gap-1">
                                 <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                                  {patient.status === "cancelled" ? 0 : (patient.sessions_completed || 0)}
+                                  {patient.sessions_completed || 0}
                                 </div>
                                 <div className={`text-lg ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>/</div>
                                 <div className={`text-lg font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                  {patient.status === "cancelled" ? 0 : (patient.total_sessions || 8)}
+                                  {patient.total_sessions ?? (patient.sessions_completed || 0)}
                                 </div>
                               </div>
                               <div className="text-xs text-gray-500 mt-1">sessions</div>
@@ -4724,16 +5101,28 @@ export default function AdminDashboard() {
       <Dialog open={isPatientHistoryDialogOpen} onOpenChange={setIsPatientHistoryDialogOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] rounded-full flex items-center justify-center">
-                <Clock className="h-6 w-6 text-white" />
-              </div>
-              <span>Complete Patient History - {selectedPatientHistory?.name}</span>
-            </DialogTitle>
+            <div className="flex items-center justify-between gap-4">
+              <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] rounded-full flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+                <span>Complete Patient History - {selectedPatientHistory?.name}</span>
+              </DialogTitle>
+              {selectedPatientHistory && (
+                <Button
+                  variant="outline"
+                  className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
+                  onClick={downloadPatientHistoryPDF}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download History PDF
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           
           {selectedPatientHistory && (
-            <div className="space-y-8">
+            <div id="patient-history-content" className="space-y-8">
 
               {/* Enhanced Patient Overview Card */}
               <Card className="border-l-4 border-l-[#8b5cf6] shadow-lg">
@@ -5510,8 +5899,32 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">Session Counter Reset</p>
-                      <p className="text-xs text-gray-600 mt-1">Session progress will be reset from <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">{patientToCancel.sessions_completed || 0}/{patientToCancel.total_sessions || 8}</span> to <span className="font-mono bg-red-100 px-2 py-0.5 rounded text-red-700">0/0</span></p>
+                      <p className="text-sm font-semibold text-gray-900">Session Counter</p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {(patientToCancel.sessions_completed || 0) > 0 ? (
+                          <>
+                            Session progress will remain at
+                            {" "}
+                            <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">
+                              {patientToCancel.sessions_completed || 0}/{patientToCancel.total_sessions || 8}
+                            </span>
+                            {" "}
+                            (completed treatment history will be preserved)
+                          </>
+                        ) : (
+                          <>
+                            Session progress will be reset from
+                            {" "}
+                            <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">
+                              0/{patientToCancel.total_sessions || 8}
+                            </span>
+                            {" "}
+                            to
+                            {" "}
+                            <span className="font-mono bg-red-100 px-2 py-0.5 rounded text-red-700">0/0</span>
+                          </>
+                        )}
+                      </p>
                     </div>
                   </div>
                   

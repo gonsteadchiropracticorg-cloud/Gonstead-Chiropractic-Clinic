@@ -191,14 +191,20 @@ export function BookNextAppointment({
       }
 
       // Calculate new session count and status
-      const newSessionsCompleted = Math.min(
-        (patient.sessions_completed || 0) + 1,
-        patient.total_sessions || 8
-      )
-      
-      const totalSessions = patient.total_sessions || 8
-      const derivedStatus: Patient['status'] = 
-        newSessionsCompleted >= totalSessions ? 'completed' : 'confirmed'
+      const previousSessionsCompleted = patient.sessions_completed || 0
+      const previousTotalSessions = patient.total_sessions || 3
+
+      // Always increment sessions_completed for each completed visit
+      const newSessionsCompleted = previousSessionsCompleted + 1
+
+      // IMPORTANT BUSINESS RULE:
+      // sessions_completed (taken) must never be greater than total_sessions (total).
+      // If patient completes more sessions than originally planned,
+      // automatically extend total_sessions to match.
+      const newTotalSessions = Math.max(previousTotalSessions, newSessionsCompleted)
+
+      const derivedStatus: Patient['status'] =
+        newSessionsCompleted >= newTotalSessions ? 'completed' : 'confirmed'
 
       // Update CURRENT patient record with:
       // 1. Increment session count (current session is now completed)
@@ -209,6 +215,7 @@ export function BookNextAppointment({
       const currentPatientUpdates: Partial<Patient> = {
         appointment_date: nextAppointmentDate, // Move to next appointment
         sessions_completed: newSessionsCompleted, // Increment session count
+        total_sessions: newTotalSessions, // Ensure total always >= completed sessions
         last_visit: new Date().toISOString(), // Mark current visit as completed
         status: derivedStatus, // Update status based on progress
         session_type: sessionType, // Update session type for next appointment
@@ -270,7 +277,7 @@ export function BookNextAppointment({
       
       toast({
         title: "✅ Appointment Updated & Session Recorded",
-        description: `${patient.name}'s appointment moved to ${new Date(nextAppointmentDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${selectedTime}. Session ${newSessionsCompleted}/${totalSessions} completed.`,
+        description: `${patient.name}'s appointment moved to ${new Date(nextAppointmentDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${selectedTime}. Session ${newSessionsCompleted}/${newTotalSessions} completed.`,
       })
 
       if (onSuccess) onSuccess()
@@ -338,7 +345,7 @@ export function BookNextAppointment({
                   {patient.name}
                 </p>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {patient.phone} • Sessions: {patient.sessions_completed || 0}/{patient.total_sessions || 8}
+                  {patient.phone} • Sessions: {patient.sessions_completed || 0}/{patient.total_sessions || 3}
                 </p>
               </div>
               <div className="text-right">
