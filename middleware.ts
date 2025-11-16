@@ -125,7 +125,7 @@ export function middleware(request: NextRequest) {
   }
   
   // 4. Block requests without referer (suspicious for automated tools)
-  // BUT allow internal assets like images, fonts, CSS
+  // BUT allow direct access from mobile browsers, bookmarks, etc.
   if (!referer && !userAgent.includes('google') && !userAgent.includes('bing')) {
     const isDirectAccess = url === '/' || url === '/index'
     const isAssetRequest = url.startsWith('/images/') || 
@@ -139,7 +139,14 @@ export function middleware(request: NextRequest) {
                           url.includes('.ico') ||
                           url.includes('.svg')
     
-    if (!isDirectAccess && !isAssetRequest) {
+    // Allow legitimate mobile browsers (common user agents)
+    const isMobileBrowser = userAgent.includes('mobile') || 
+                           userAgent.includes('android') || 
+                           userAgent.includes('iphone') || 
+                           userAgent.includes('ipad') || 
+                           userAgent.includes('safari')
+    
+    if (!isDirectAccess && !isAssetRequest && !isMobileBrowser) {
       console.log(`Blocked request without referer: ${url} from IP: ${ip}`)
       return new NextResponse('Forbidden', { status: 403 })
     }

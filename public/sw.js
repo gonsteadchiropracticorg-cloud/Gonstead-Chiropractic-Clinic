@@ -58,7 +58,7 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// Fetch event - serve from cache when offline
+// Fetch event - Network-first strategy for HTML, cache-first for assets
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') {
@@ -70,38 +70,55 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  const url = new URL(event.request.url)
+  
+  // Network-first for HTML pages (prevents stale cached pages on mobile)
+  if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone()
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache)
+            })
+          }
+          return response
+        })
+        .catch(() => {
+          // Fallback to cache if offline
+          return caches.match(event.request).then((cached) => {
+            return cached || caches.match(OFFLINE_URL)
+          })
+        })
+    )
+    return
+  }
+
+  // Cache-first for static assets (images, fonts, CSS, JS)
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Return cached version or fetch from network
         if (response) {
-          console.log('Service Worker: Serving from cache', event.request.url)
+          console.log('Service Worker: Serving asset from cache', event.request.url)
           return response
         }
 
         return fetch(event.request)
           .then((response) => {
-            // Don't cache if not a valid response
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response
             }
 
-            // Clone the response
             const responseToCache = response.clone()
-
-            // Cache the new response
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache)
-              })
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache)
+            })
 
             return response
           })
           .catch(() => {
-            // If network fails, serve offline page for navigate requests
-            if (event.request.mode === 'navigate') {
-              return caches.match(OFFLINE_URL)
-            }
+            return caches.match(event.request)
           })
       })
   )
