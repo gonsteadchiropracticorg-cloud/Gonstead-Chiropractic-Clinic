@@ -61,6 +61,7 @@ jobs:
       - name: Build Next.js app
         run: npm run build
         env:
+          NODE_OPTIONS: --max_old_space_size=4096
           NEXT_PUBLIC_SUPABASE_URL: https://xwgommkgdhgntehzwejs.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Z29tbWtnZGhnbnRlaHp3ZWpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNTQ2MTEsImV4cCI6MjA3NzkzMDYxMX0.h2M5jIeT5mjApHSk11NRZGeT2jqzAWULp7tEgG4fk_Y
           
@@ -95,6 +96,7 @@ jobs:
       - name: Test build
         run: npm run build
         env:
+          NODE_OPTIONS: --max_old_space_size=4096
           NEXT_PUBLIC_SUPABASE_URL: https://xwgommkgdhgntehzwejs.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Z29tbWtnZGhnbnRlaHp3ZWpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNTQ2MTEsImV4cCI6MjA3NzkzMDYxMX0.h2M5jIeT5mjApHSk11NRZGeT2jqzAWULp7tEgG4fk_Y
 
