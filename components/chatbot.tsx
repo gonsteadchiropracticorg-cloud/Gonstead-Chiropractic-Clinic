@@ -87,50 +87,17 @@ export function ChatBot() {
   }, [isOpen, language])
 
   const handleQuickAction = (action: string) => {
-    let responseText = ""
-
-    switch (action) {
-      case "book":
-        responseText =
-          language === "ur"
-            ? "اپائنٹمنٹ بک کرنے کے لیے براہ کرم اپنا نام اور فون نمبر بھیجیں۔ مثال: احمد علی - 03001234567"
-            : "To book an appointment, please send your name and phone number. Example: Ahmad Ali - 03001234567"
-        break
-      case "emergency":
-        responseText =
-          language === "ur"
-            ? "ایمرجنسی کے لیے فوری طور پر +92 304 6996267 پر کال کریں یا واٹس ایپ پر رابطہ کریں۔"
-            : "For emergency, immediately call +92 304 6996267 or contact via WhatsApp."
-        break
-      case "location":
-        responseText =
-          language === "ur"
-            ? "گونسٹیڈ کائروپریکٹک کلینک\nپولیس سٹیشن کے قریب، تحصیل روڈ، نوشہرہ\nفون: +92 304 6996267"
-            : "Gonstead Chiropractic Clinic\nNear Peshawar Model School, Tehsil Road, Nowshera\nPhone: +92 304 6996267"
-        break
-      case "services":
-        responseText =
-          language === "ur"
-            ? "🔹 گونسٹیڈ ایڈجسٹمنٹ (مشین کی مدد سے)\n🔹 ریڑھ کی ہڈی کی درستگی\n🔹 ایمرجنسی ویڈیو مشاورت\n🔹 درد کا علاج"
-            : "🔹 Gonstead Adjustments (Machine-assisted)\n🔹 Spinal Alignment Correction\n🔹 Emergency Video Consultations\n🔹 Pain Management"
-        break
-    }
-
     const userMessage: Message = {
       id: Date.now().toString(),
       text: action,
       sender: "user",
       timestamp: new Date(),
     }
+    setMessages((prev) => [...prev, userMessage])
 
-    const botResponse: Message = {
-      id: (Date.now() + 1).toString(),
-      text: responseText,
-      sender: "bot",
-      timestamp: new Date(),
+    if (action === "book") {
+      setShowBookingForm(true)
     }
-
-    setMessages((prev) => [...prev, userMessage, botResponse])
   }
 
   const handleSendMessage = async () => {
@@ -143,109 +110,65 @@ export function ChatBot() {
       timestamp: new Date(),
     }
 
-    setMessages((prev) => [...prev, userMessage])
     const messageText = inputValue
     setInputValue("")
+    setMessages((prev) => [...prev, userMessage])
     setIsTyping(true)
 
     try {
-      // Check for appointment keywords and open form
-      if (messageText.toLowerCase().includes("appointment") || 
-          messageText.toLowerCase().includes("book") || 
-          messageText.includes("اپائنٹمنٹ")) {
-        setShowBookingForm(true)
-      }
+      const historyPayload = [...messages, userMessage].map((m) => ({
+        sender: m.sender,
+        text: m.text,
+      }))
 
-      // Call real API with streaming
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           message: messageText,
-          stream: true,
-          history: messages.slice(-6).map(m => ({ sender: m.sender, text: m.text }))
-        })
+          history: historyPayload,
+        }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Network error' }))
-        throw new Error(errorData.error || `HTTP ${response.status}`)
+      const data = await res.json()
+      if (!res.ok || !data?.text) {
+        throw new Error(data?.error || "Unable to get assistant response.")
       }
 
-      // Handle streaming response
-      const contentType = response.headers.get('content-type')
-      if (contentType?.includes('text/plain')) {
-        // Streaming response
-        const reader = response.body?.getReader()
-        const decoder = new TextDecoder()
-        let botResponse = ""
-        
-        const botMessageId = (Date.now() + 1).toString()
-        setIsTyping(false)
-        
-        // Add initial empty bot message
-        setMessages((prev) => [...prev, {
-          id: botMessageId,
-          text: "",
-          sender: "bot",
-          timestamp: new Date(),
-        }])
-
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-            
-            const chunk = decoder.decode(value, { stream: true })
-            botResponse += chunk
-            
-            // Update the bot message in real-time with cleaned text
-            const cleanedText = cleanResponse(botResponse)
-            setMessages((prev) => 
-              prev.map((msg) => 
-                msg.id === botMessageId 
-                  ? { ...msg, text: cleanedText }
-                  : msg
-              )
-            )
-          }
-        }
-        
-        // Speak the complete response if voice is enabled
-        if (isVoiceEnabled && botResponse) {
-          setTimeout(() => speakMessage(botResponse), 500)
-        }
-      } else {
-        // Non-streaming response (fallback)
-        const data = await response.json()
-        const botResponse = data.text || 'No response received'
-        const cleanedText = cleanResponse(botResponse)
-        
-        setMessages((prev) => [...prev, {
-          id: (Date.now() + 1).toString(),
-          text: cleanedText,
-          sender: "bot",
-          timestamp: new Date(),
-        }])
-        setIsTyping(false)
-        
-        if (isVoiceEnabled) {
-          setTimeout(() => speakMessage(botResponse), 500)
-        }
-      }
-    } catch (error) {
-      console.error('Chat error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to get response'
-      
-      setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(),
-        text: language === "ur" 
-          ? `خرابی: ${errorMessage}. براہ کرم دوبارہ کوشش کریں۔`
-          : `Error: ${errorMessage}. Please try again.`,
+      const cleaned = cleanResponse(String(data.text))
+      const botMessage: Message = {
+        id: `${Date.now()}-bot`,
+        text: cleaned,
         sender: "bot",
         timestamp: new Date(),
-      }])
+      }
+
+      setMessages((prev) => [...prev, botMessage])
+      void speakMessage(cleaned)
+    } catch (error) {
+      console.error("Chat error:", error)
+      const fallback: Message = {
+        id: `${Date.now()}-error`,
+        text:
+          language === "ur"
+            ? "معذرت، اس وقت سرور جواب نہیں دے سکا۔ براہِ کرم تھوڑی دیر بعد دوبارہ کوشش کریں یا براہِ راست کلینک سے رابطہ کریں: +92 304 699 6267."
+            : "Sorry, I couldn't reach the assistant right now. Please try again shortly or contact the clinic directly at +92 304 699 6267.",
+        sender: "bot",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, fallback])
+    } finally {
       setIsTyping(false)
+
+      if (
+        messageText.toLowerCase().includes("appointment") ||
+        messageText.toLowerCase().includes("book") ||
+        messageText.includes("اپائنٹمنٹ")
+      ) {
+        setShowBookingForm(true)
+      }
     }
   }
 

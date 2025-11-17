@@ -158,79 +158,41 @@ export function AIChatbotSystem() {
 
   const findMedicalContext = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase()
-    for (const [key, knowledge] of Object.entries(chiropracticKnowledge)) {
+    for (const [, knowledge] of Object.entries(chiropracticKnowledge)) {
       if (knowledge.keywords.some((keyword) => lowerMessage.includes(keyword))) {
         return knowledge.info
       }
     }
     return ""
   }
+  
+  // Backend-powered response generator calling the unified /api/chat route.
+  const callOpenRouterAPI = async (userMessage: string, history: Message[]): Promise<string> => {
+    const medicalContext = findMedicalContext(userMessage)
 
-  const callOpenRouterAPI = async (userMessage: string): Promise<string> => {
-    try {
-      // Find relevant medical context
-      const medicalContext = findMedicalContext(userMessage)
+    const historyPayload = history.map((m) => ({
+      sender: m.sender,
+      text: m.text,
+    }))
 
-      // Build conversation history for context
-      const conversationHistory = conversationState.messages.slice(-5).map((msg) => ({
-        role: msg.sender === "user" ? "user" : "assistant",
-        content: msg.text,
-      }))
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: userMessage,
+        history: historyPayload,
+        medicalContext,
+      }),
+    })
 
-      // Add the current user message
-      conversationHistory.push({
-        role: "user",
-        content: userMessage,
-      })
-
-      // Enhanced system prompt with medical knowledge
-      let systemPrompt = `You are Dr. Bashir's AI assistant for Gonstead Chiropractic clinic in Nowshera, Pakistan. 
-      
-      Key Information:
-      - Dr. Bashir is a Gonstead Certified Specialist Level V
-      - Clinic location: Near Peshawar Model School, Tehsil Road, Nowshera
-      - Phone: +92 304 699 6267
-      - Email: gonsteadchiropractic.org@gmail.com
-      - Hours: Mon-Fri 8AM-6PM, Sat 9AM-3PM, Sun Closed
-      - Emergency care available 24/7
-      
-      Provide professional, helpful information about chiropractic care, especially the Gonstead technique. 
-      Keep responses concise (under 150 words) and professional. 
-      If someone wants to book an appointment, guide them through providing their name, phone number, and health concern.`
-
-      if (medicalContext) {
-        systemPrompt += `\n\nRelevant medical information: ${medicalContext}`
-      }
-
-const response = await fetch("/api/chat", {
-        method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify({
-          message: userMessage,
-          history: conversationState.messages,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`)
-      }
-
-const data = await response.json()
-      const aiResponse = data?.text || "I'm here to help you with your chiropractic needs."
-
-      // Update medical context if relevant
-      if (medicalContext) {
-        setConversationState((prev) => ({
-          ...prev,
-          medicalContext: [...prev.medicalContext.slice(-3), medicalContext], // Keep last 3 contexts
-        }))
-      }
-
-      return aiResponse
-    } catch (error) {
-      console.error("OpenRouter API Error:", error)
-      return "I'm experiencing some technical difficulties. Please contact Dr. Bashir directly at +92 304 699 6267 or visit our clinic Near Peshawar Model School, Tehsil Road, Nowshera."
+    const data = await res.json()
+    if (!res.ok || !data?.text) {
+      throw new Error(data?.error || "Failed to get reply from assistant")
     }
+
+    return String(data.text)
   }
 
   const handleAppointmentFlow = (userInput: string): string => {
@@ -356,68 +318,81 @@ const data = await response.json()
       timestamp: new Date(),
     }
 
+    const messageText = inputValue
+    setInputValue("")
+
     setConversationState((prev) => ({
       ...prev,
       messages: [...prev.messages, userMessage],
     }))
-    setInputValue("")
+
     setIsTyping(true)
 
-    // Check if we're in appointment flow
-    let botResponse = ""
-    if (conversationState.appointmentFlow.active) {
-      botResponse = handleAppointmentFlow(inputValue)
-    } else {
-      // Check for appointment booking intent
-      const lowerInput = inputValue.toLowerCase()
-      if (
+    try {
+      let botText: string | null = null
+      const lowerInput = messageText.toLowerCase()
+      const triggersAppointment =
         lowerInput.includes("appointment") ||
         lowerInput.includes("book") ||
         lowerInput.includes("schedule") ||
         lowerInput.includes("اپائنٹمنٹ") ||
         lowerInput.includes("بک")
-      ) {
+
+      if (conversationState.appointmentFlow.active || triggersAppointment) {
+        // Ensure appointment flow is active
+        if (!conversationState.appointmentFlow.active) {
+          setConversationState((prev) => ({
+            ...prev,
+            appointmentFlow: {
+              ...prev.appointmentFlow,
+              active: true,
+              step: 1,
+            },
+          }))
+          botText =
+            language === "ur"
+              ? "میں آپ کی اپائنٹمنٹ بک کرنے میں مدد کروں گا۔ براہِ کرم پہلے اپنا نام لکھیں۔"
+              : "I'll help you book an appointment. Let's start with your full name."
+        } else {
+          botText = handleAppointmentFlow(messageText)
+        }
+      } else {
+        const historyForApi = [...conversationState.messages, userMessage]
+        botText = await callOpenRouterAPI(messageText, historyForApi)
+      }
+
+      if (botText && botText.trim()) {
+        const botMessage: Message = {
+          id: `${Date.now()}-bot`,
+          text: botText,
+          sender: "bot",
+          timestamp: new Date(),
+        }
+
         setConversationState((prev) => ({
           ...prev,
-          appointmentFlow: {
-            ...prev.appointmentFlow,
-            active: true,
-            step: 1,
-          },
+          messages: [...prev.messages, botMessage],
         }))
-        botResponse =
-          language === "ur"
-            ? "میں آپ کی اپائنٹمنٹ بک کرنے میں مدد کروں گا۔ پہلے اپنا مکمل نام بتائیں۔"
-            : "I'll help you book an appointment with Dr. Bashir. First, please tell me your full name."
-      } else {
-        // Use OpenRouter API for general questions
-        botResponse = await callOpenRouterAPI(inputValue)
       }
-    }
-
-    setTimeout(() => {
-      const response: Message = {
-        id: (Date.now() + 1).toString(),
-        text: botResponse,
+    } catch (error) {
+      console.error("AI chat error:", error)
+      const fallbackText =
+        language === "ur"
+          ? "معذرت، اس وقت سرور جواب نہیں دے سکا۔ براہِ کرم تھوڑی دیر بعد دوبارہ کوشش کریں یا براہِ راست کلینک سے رابطہ کریں: +92 304 699 6267."
+          : "Sorry, I couldn't reach the assistant right now. Please try again shortly or contact the clinic directly at +92 304 699 6267."
+      const botMessage: Message = {
+        id: `${Date.now()}-error`,
+        text: fallbackText,
         sender: "bot",
         timestamp: new Date(),
       }
-
       setConversationState((prev) => ({
         ...prev,
-        messages: [...prev.messages, response],
+        messages: [...prev.messages, botMessage],
       }))
+    } finally {
       setIsTyping(false)
-
-      // Voice response (reduced for performance)
-      if ("speechSynthesis" in window && botResponse.length < 200) {
-        const utterance = new SpeechSynthesisUtterance(botResponse)
-        utterance.lang = language === "ur" ? "ur-PK" : "en-US"
-        utterance.rate = 0.9
-        utterance.volume = 0.7
-        speechSynthesis.speak(utterance)
-      }
-    }, 1000) // Reduced delay for better UX
+    }
   }
 
   return (

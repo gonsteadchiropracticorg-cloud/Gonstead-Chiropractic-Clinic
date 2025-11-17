@@ -114,6 +114,8 @@ export default function StaffAccessPage() {
           email: form.email,
           phone: form.phone,
           role: form.role,
+          // Optional: update password if admin entered a new one
+          password: form.password || undefined,
         })
       })
       const result = await response.json()

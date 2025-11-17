@@ -26,7 +26,8 @@ import {
   ClipboardList,
   FileCheck,
   BarChart3,
-  LineChart
+  LineChart,
+  Volume2
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
@@ -2035,6 +2036,7 @@ export function AdvancedChatbot() {
   }
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const { toast } = useToast()
   const analyticsRef = useRef<AnalyticsTracker | null>(null)
   const prevFocusRef = useRef<HTMLElement | null>(null)
@@ -2250,37 +2252,108 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
   const getBotResponse = async (userMessage: string): Promise<string> => {
     const message = userMessage.toLowerCase()
 
-    // Handle appointment booking flow first
-    if (appointmentBooking || message.includes("appointment") || message.includes("book") || message.includes("schedule")) {
+    // Appointment booking conversational flow
+    if (
+      appointmentBooking ||
+      message.includes("appointment") ||
+      message.includes("book") ||
+      message.includes("schedule") ||
+      message.includes("اپائنٹمنٹ") ||
+      message.includes("بک")
+    ) {
       return processAppointmentBooking(userMessage)
     }
 
-    // Server-side AI via API route
+    // Try unified backend first
     try {
-      const resp = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, history: messages })
+      const historyPayload = messages.map((m) => ({
+        sender: m.sender,
+        text: m.text,
+      }))
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          history: historyPayload,
+        }),
       })
-      if (resp.ok) {
-        const data = await resp.json()
-        if (data?.text) return data.text
+
+      const data = await res.json()
+      if (!res.ok || !data?.text) {
+        throw new Error(data?.error || "Failed to get assistant response")
       }
-      console.warn('AI API failed, falling back')
-      return getFallbackResponse(message)
+
+      return String(data.text)
     } catch (error) {
-      console.error('Error calling AI API:', error)
-      return getFallbackResponse(message)
+      console.error("Chat backend error:", error)
+      // Fallback to local structured knowledge base
+      const kbAnswer = getFallbackResponse(userMessage)
+      return `${kbAnswer}\n\nThis information is general educational guidance and not a diagnosis. For a personalized assessment, please consult the clinic directly at +92 304 699 6267 or your healthcare provider.`
     }
   }
 
   const getFallbackResponse = (message: string): string => {
-    // Import and use the comprehensive knowledge base
+    console.warn('Fallback response used for message:', message)
+    return "Right now the intelligent assistant engine is not fully connected, so I can't safely generate a detailed clinical answer. This chat is for general guidance only. For accurate advice about your specific condition, please contact Gonstead Chiropractic Clinic directly at +92 304 699 6267 or visit in person. For any emergency or severe symptoms, seek urgent medical care or call 1122."
+  }
+
+  const speakMessage = async (text: string) => {
+    const content = (text || '').trim()
+    if (!content) return
     try {
-      return generateKnowledgeResponse(message)
-    } catch (error) {
-      console.error('Error accessing knowledge base:', error)
-      return "I understand you're looking for information about our chiropractic services. Our Gonstead Chiropractic Clinic team is here to help with your spinal health needs. Would you like to book an appointment, learn about our treatments, or speak directly with our specialists?"
+      // Stop any existing playback
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      }
+
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content }),
+      })
+
+      if (!res.ok) {
+        let serverError = 'TTS request failed'
+        try {
+          const text = await res.text()
+          serverError = text || serverError
+        } catch {
+          // ignore
+        }
+        console.error('TTS HTTP error', res.status, serverError)
+        throw new Error(serverError)
+      }
+
+      const arrayBuffer = await res.arrayBuffer()
+      const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
+      const url = URL.createObjectURL(blob)
+
+      if (!audioRef.current) {
+        audioRef.current = new Audio()
+      } else {
+        audioRef.current.pause()
+      }
+
+      audioRef.current.src = url
+      audioRef.current.onended = () => {
+        URL.revokeObjectURL(url)
+      }
+      await audioRef.current.play()
+    } catch (err: any) {
+      console.error('Error playing TTS audio:', err)
+      const desc = typeof err?.message === 'string'
+        ? err.message
+        : 'Unable to play voice for this message. Please try again.'
+      toast({
+        title: 'Voice error',
+        description: desc,
+        variant: 'destructive',
+      })
     }
   }
 
@@ -2294,61 +2367,37 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
       timestamp: new Date(),
     }
 
-    setMessages((prev) => [...prev, userMessage])
     const currentMessage = inputMessage
     setInputMessage("")
-    setIsTyping(true)
+    setMessages((prev) => [...prev, userMessage])
 
     analyticsRef.current?.trackEvent('chat_send', { len: currentMessage.length })
+
+    setIsTyping(true)
     try {
-      // Try streaming first
-      const canStream = true
-      if (canStream) {
-        const botId = (Date.now() + 1).toString()
-        const initialBot: Message = { id: botId, text: '', sender: 'bot', timestamp: new Date() }
-        setMessages(prev => [...prev, initialBot])
-        const resp = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: currentMessage, history: messages, stream: true }) })
-        if (resp.ok && resp.body) {
-          const reader = resp.body.getReader()
-          const decoder = new TextDecoder()
-          let done = false
-          while (!done) {
-            const chunk = await reader.read()
-            done = chunk.done
-            if (chunk.value) {
-              const text = decoder.decode(chunk.value)
-              setMessages(prev => prev.map(m => m.id === botId ? { ...m, text: (m.text || '') + text } : m))
-            }
-          }
-          setIsTyping(false)
-          return
+      const botText = await getBotResponse(currentMessage)
+      if (botText && botText.trim()) {
+        const botMessage: Message = {
+          id: `${Date.now()}-bot`,
+          text: botText,
+          sender: "bot",
+          timestamp: new Date(),
         }
-        // fallback to non-stream
-        setMessages(prev => prev.filter(m => m.id !== botId))
+        setMessages((prev) => [...prev, botMessage])
       }
-
-      // Get AI-powered response (non-stream)
-      const botResponse = await getBotResponse(currentMessage)
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: botResponse,
-        sender: "bot",
-        timestamp: new Date(),
-      }
-
-      setMessages((prev) => [...prev, botMessage])
-      setIsTyping(false)
-
-
     } catch (error) {
-      console.error('Error generating response:', error)
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "I apologize, but I'm having trouble processing your request right now. Please try again or contact us directly at +92 304 699 6267.",
-        sender: "bot",
+      console.error('Advanced chatbot error:', error)
+      const fallback: Message = {
+        id: `${Date.now()}-error`,
+        text:
+          language === 'ur'
+            ? 'معذرت، اس وقت سرور جواب نہیں دے سکا۔ براہِ کرم تھوڑی دیر بعد دوبارہ کوشش کریں یا براہِ راست کلینک سے رابطہ کریں: +92 304 699 6267.'
+            : "Sorry, I couldn't process your request right now. Please try again shortly or contact the clinic directly at +92 304 699 6267.",
+        sender: 'bot',
         timestamp: new Date(),
       }
-      setMessages((prev) => [...prev, errorMessage])
+      setMessages((prev) => [...prev, fallback])
+    } finally {
       setIsTyping(false)
     }
   }
@@ -2656,7 +2705,18 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
           >
             <p className="text-[11px] md:text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
             <div className="flex items-center gap-2 mt-1.5">
-              <span className={`text-xs ${
+              {message.sender === "bot" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={message.sender === 'user' ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}
+                  onClick={() => speakMessage(message.text)}
+                  title="Listen to this answer"
+                >
+                  <Volume2 className="h-4 w-4" />
+                </Button>
+              )}
+              <span className={`${
                 message.sender === "user" ? "text-white/70" : "text-gray-500 dark:text-gray-400"
               }`}>
                 {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

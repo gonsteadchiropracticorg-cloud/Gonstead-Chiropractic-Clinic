@@ -73,6 +73,8 @@ export default function StaffDashboard() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [urgencyFilter, setUrgencyFilter] = useState('')
+  // New high‑level date filters for staff: All / Today / Next 7 Days
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'next'>('all')
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [sessionTimeout, setSessionTimeout] = useState<NodeJS.Timeout | null>(null)
 
@@ -253,92 +255,74 @@ export default function StaffDashboard() {
     }
   }
 
-  // Staff authentication
-  const handleStaffLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setAuthLoading(true)
-    
-    try {
-      // 1) New multi-account support: check staff_accounts list first
-      const staffAccountsRaw = localStorage.getItem('staff_accounts')
-      if (staffAccountsRaw) {
-        try {
-          const accounts = JSON.parse(staffAccountsRaw) as Array<any>
-          const match = accounts.find(a => a.username?.toLowerCase() === credentials.username.toLowerCase())
-          if (match) {
-            if (match.active === false) {
-              toast({ title: 'Access disabled', description: 'This staff account is disabled.', variant: 'destructive' })
-              setAuthLoading(false)
-              return
-            }
-            if (match.password === credentials.password) {
-              // Set authentication
-              localStorage.setItem('staff_authenticated', 'true')
-              localStorage.setItem('staff_login_time', new Date().toISOString())
-              localStorage.setItem('staff_username', match.username)
-              localStorage.setItem(`staff_last_login_${match.username}`, new Date().toISOString())
+// Staff authentication using admin-managed staff_accounts
+const handleStaffLogin = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setAuthLoading(true)
 
-              setIsAuthenticated(true)
-              setStaffUsername(match.username)
-              await loadPatientData()
-              setupSessionTimeout()
-              toast({ title: '✅ Authentication Successful', description: `Welcome ${match.display_name || match.username}` })
-              setAuthLoading(false)
-              return
-            }
-          }
-        } catch {}
-      }
-
-      // 2) Legacy single credential fallback
-      let storedCredentials = localStorage.getItem('staff_credentials')
-      if (!storedCredentials) {
-        const defaultCredentials = {
-          username: 'staff',
-          password: 'staff123',
-          lastUpdated: new Date().toISOString(),
-          updatedBy: 'system'
-        }
-        localStorage.setItem('staff_credentials', JSON.stringify(defaultCredentials))
-        storedCredentials = JSON.stringify(defaultCredentials)
-      }
-      const savedCredentials = JSON.parse(storedCredentials)
-      if (credentials.username === savedCredentials.username && credentials.password === savedCredentials.password) {
-        
-        // Set authentication
-        localStorage.setItem('staff_authenticated', 'true')
-        localStorage.setItem('staff_login_time', new Date().toISOString())
-        localStorage.setItem('staff_username', credentials.username)
-        
-        setIsAuthenticated(true)
-        setStaffUsername(credentials.username)
-        
-        // Load patient data and setup session timeout
-        await loadPatientData()
-        setupSessionTimeout()
-        
-        toast({
-          title: '✅ Authentication Successful',
-          description: 'Welcome to Staff Dashboard. You have read-only access to patient data.',
-        })
-      } else {
-        toast({
-          title: '❌ Authentication Failed',
-          description: 'Invalid username or password. Please contact the doctor for correct credentials.',
-          variant: 'destructive'
-        })
-      }
-    } catch (error) {
-      console.error('Authentication error:', error)
+  try {
+    if (!credentials.username.trim() || !credentials.password.trim()) {
       toast({
-        title: 'Error',
-        description: 'Authentication system error. Please try again.',
-        variant: 'destructive'
+        title: 'Missing credentials',
+        description: 'Please enter both username and password.',
+        variant: 'destructive',
       })
-    } finally {
-      setAuthLoading(false)
+      return
     }
+
+    const response = await fetch('/api/staff/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: credentials.username.trim(),
+        password: credentials.password,
+      }),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok || !result?.data) {
+      const message = result?.error || 'Invalid username or password. Please contact the doctor for correct credentials.'
+      toast({
+        title: '❌ Authentication Failed',
+        description: message,
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const staff = result.data as { username: string; display_name?: string | null; role?: string | null }
+
+    // Persist minimal session info on this device only
+    localStorage.setItem('staff_authenticated', 'true')
+    localStorage.setItem('staff_login_time', new Date().toISOString())
+    localStorage.setItem('staff_username', staff.username)
+    if (staff.display_name) localStorage.setItem('staff_display_name', staff.display_name)
+    if (staff.role) localStorage.setItem('staff_role', staff.role)
+
+    setIsAuthenticated(true)
+    setStaffUsername(staff.display_name || staff.username)
+
+    await loadPatientData()
+    setupSessionTimeout()
+
+    toast({
+      title: '✅ Authentication Successful',
+      description: `Welcome ${staff.display_name || staff.username}. You have read-only access to patient data.`,
+    })
+  } catch (error) {
+    console.error('Authentication error:', error)
+    toast({
+      title: 'Error',
+      description: 'Authentication system error. Please try again.',
+      variant: 'destructive',
+    })
+  } finally {
+    setAuthLoading(false)
   }
+}
 
   // Staff logout
   const handleStaffLogout = () => {
@@ -360,29 +344,48 @@ export default function StaffDashboard() {
     })
   }
 
-  // Filter patients based on search and filters
+  // Filter patients based on search + status + urgency + high‑level date filter
   useEffect(() => {
     let filtered = patients
 
+    // Date filters: All / Today / Next 7 Days
+    const today = new Date()
+    const todayStr = today.toDateString()
+    const sevenDaysFromNow = new Date(today)
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
+
+    if (dateFilter === 'today') {
+      filtered = filtered.filter(
+        (patient) => new Date(patient.appointment_date).toDateString() === todayStr,
+      )
+    } else if (dateFilter === 'next') {
+      filtered = filtered.filter((patient) => {
+        const d = new Date(patient.appointment_date)
+        if (Number.isNaN(d.getTime())) return false
+        return d >= today && d <= sevenDaysFromNow
+      })
+    }
+
     if (searchTerm) {
       filtered = filtered.filter(
-        patient => 
+        (patient) =>
           patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           patient.phone.includes(searchTerm) ||
-          (patient.email && patient.email.toLowerCase().includes(searchTerm.toLowerCase()))
+          (patient.email &&
+            patient.email.toLowerCase().includes(searchTerm.toLowerCase())),
       )
     }
 
     if (statusFilter) {
-      filtered = filtered.filter(patient => patient.status === statusFilter)
+      filtered = filtered.filter((patient) => patient.status === statusFilter)
     }
 
     if (urgencyFilter) {
-      filtered = filtered.filter(patient => patient.urgency === urgencyFilter)
+      filtered = filtered.filter((patient) => patient.urgency === urgencyFilter)
     }
 
     setFilteredPatients(filtered)
-  }, [patients, searchTerm, statusFilter, urgencyFilter])
+  }, [patients, searchTerm, statusFilter, urgencyFilter, dateFilter])
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -400,6 +403,24 @@ export default function StaffDashboard() {
   const urgentPatients = useMemo(() => {
     return filteredPatients.filter((p) => p.urgency === 'urgent' || p.urgency === 'emergency')
   }, [filteredPatients])
+
+  // Next upcoming appointment (for "Next" highlight card)
+  const nextUpcomingAppointment = useMemo(() => {
+    if (!patients.length) return null
+    const now = new Date()
+    return (
+      patients
+        .filter((p) => {
+          const d = new Date(p.appointment_date)
+          return !Number.isNaN(d.getTime()) && d.getTime() >= now.getTime()
+        })
+        .sort(
+          (a, b) =>
+            new Date(a.appointment_date).getTime() -
+            new Date(b.appointment_date).getTime(),
+        )[0] || null
+    )
+  }, [patients])
 
   // Get urgency color for badges
   const getUrgencyColor = (urgency: string) => {
@@ -535,21 +556,6 @@ export default function StaffDashboard() {
                   )}
                 </Button>
 
-                {/* Info Section */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-start space-x-3">
-                    <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                      <p className="font-medium mb-1">Staff Access Information:</p>
-                      <ul className="text-xs space-y-1 text-blue-700">
-                        <li>• Read-only access to patient data</li>
-                        <li>• Real-time appointment updates</li>
-                        <li>• Contact admin for password changes</li>
-                        <li>• Session expires after inactivity</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
               </form>
             </CardContent>
 
@@ -557,7 +563,6 @@ export default function StaffDashboard() {
             <div className="bg-gray-50 px-8 py-4 text-center">
               <p className="text-xs text-gray-600">Gonstead Chiropractic Clinic Staff Portal</p>
               <p className="text-xs text-gray-500 mt-1">For assistance, contact Dr. Bashir Khan</p>
-              <p className="text-xs text-gray-400 mt-2">Default: Username: staff, Password: staff123</p>
             </div>
           </Card>
         </div>
@@ -615,7 +620,7 @@ export default function StaffDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search and Filters + Quick Stats */}
+        {/* Search, Filters, and Quick Stats */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
             {/* Search */}
@@ -632,7 +637,44 @@ export default function StaffDashboard() {
               </div>
             </div>
 
-            {/* Filters */}
+            {/* Date quick filters */}
+            <div className="flex flex-wrap gap-3 mb-3 lg:mb-0">
+              <button
+                type="button"
+                onClick={() => setDateFilter('all')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  dateFilter === 'all'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-emerald-50'
+                }`}
+              >
+                All Appointments
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilter('today')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  dateFilter === 'today'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-emerald-50'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilter('next')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  dateFilter === 'next'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-emerald-50'
+                }`}
+              >
+                Next 7 Days
+              </button>
+            </div>
+
+            {/* Status / urgency filters */}
             <div className="flex flex-wrap gap-3">
               <select
                 value={statusFilter}
@@ -659,29 +701,76 @@ export default function StaffDashboard() {
             </div>
           </div>
 
-          {/* Summary Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-600">{filteredPatients.length}</div>
-              <div className="text-sm text-gray-500">Total Patients</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {todayPatients.length}
+          {/* Next appointment highlight + Summary Stats */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
+            {/* Next upcoming appointment card */}
+            <div className="lg:col-span-2">
+              <div className="h-full bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl px-4 py-3 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-emerald-600 flex items-center justify-center text-white shadow-sm">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                {nextUpcomingAppointment ? (
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
+                      Next Appointment
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {nextUpcomingAppointment.name}{' '}
+                      <span className="text-xs font-normal text-gray-500">
+                        ({nextUpcomingAppointment.session_type === 'in_clinic'
+                          ? 'In-Clinic'
+                          : 'Video'})
+                      </span>
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {new Date(nextUpcomingAppointment.appointment_date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                      })}{' '}
+                      •{' '}
+                      {new Date(nextUpcomingAppointment.appointment_date).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                      })}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
+                      Next Appointment
+                    </p>
+                    <p className="text-sm text-gray-600">No upcoming appointments found.</p>
+                  </div>
+                )}
               </div>
-              <div className="text-sm text-gray-500">Today&apos;s Appointments</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {urgentPatients.length}
+
+            {/* Compact summary stats */}
+            <div className="grid grid-cols-2 gap-4 lg:col-span-2">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-600">{filteredPatients.length}</div>
+                <div className="text-sm text-gray-500">Showing Patients</div>
               </div>
-              <div className="text-sm text-gray-500">Urgent / Emergency</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {filteredPatients.filter(patient => patient.status === 'completed').length}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {todayPatients.length}
+                </div>
+                <div className="text-sm text-gray-500">Today&apos;s Appointments</div>
               </div>
-              <div className="text-sm text-gray-500">Completed</div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">
+                  {urgentPatients.length}
+                </div>
+                <div className="text-sm text-gray-500">Urgent / Emergency</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {filteredPatients.filter((patient) => patient.status === 'completed').length}
+                </div>
+                <div className="text-sm text-gray-500">Completed</div>
+              </div>
             </div>
           </div>
         </div>

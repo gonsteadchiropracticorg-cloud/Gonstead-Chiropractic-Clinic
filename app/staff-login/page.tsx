@@ -178,31 +178,6 @@ export default function StaffLoginPage() {
               </button>
             </form>
 
-            {/* Staff Access Information */}
-            <div className="border-t border-gray-200 pt-3">
-              <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                <Shield className="h-4 w-4 mr-1 text-emerald-600" />
-                Staff Access Information:
-              </h3>
-              <ul className="text-xs text-gray-600 space-y-1">
-                <li className="flex items-center">
-                  <span className="w-1 h-1 bg-emerald-500 rounded-full mr-2 flex-shrink-0"></span>
-                  Read-only access to patient data
-                </li>
-                <li className="flex items-center">
-                  <span className="w-1 h-1 bg-emerald-500 rounded-full mr-2 flex-shrink-0"></span>
-                  Real-time appointment updates
-                </li>
-                <li className="flex items-center">
-                  <span className="w-1 h-1 bg-emerald-500 rounded-full mr-2 flex-shrink-0"></span>
-                  Contact admin for password changes
-                </li>
-                <li className="flex items-center">
-                  <span className="w-1 h-1 bg-emerald-500 rounded-full mr-2 flex-shrink-0"></span>
-                  Session expires after inactivity
-                </li>
-              </ul>
-            </div>
 
             {/* Compact Footer */}
             <div className="text-center text-xs text-gray-500 pt-1">

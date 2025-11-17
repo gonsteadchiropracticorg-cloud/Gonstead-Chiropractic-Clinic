@@ -38,6 +38,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { password, ...accountData } = body
 
+    // NOTE: For now we persist the password as provided so that
+    // the client-side staff dashboard can validate credentials
+    // against the `staff_accounts` table via a secure API.
+    // This keeps the flow simple for a small internal clinic app.
+    // If you later want stronger security, we can switch this to
+    // a hash (e.g. using Node crypto) without changing the API.
+
     // Generate ID if not provided
     const record = {
       id: accountData.id || `staff_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -47,6 +54,7 @@ export async function POST(req: NextRequest) {
       phone: accountData.phone || '',
       role: accountData.role || 'staff',
       active: accountData.active !== undefined ? accountData.active : true,
+      password: password || '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
@@ -89,6 +97,12 @@ export async function PATCH(req: NextRequest) {
 
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    // If a new password is provided, update it as well so staff
+    // can use the latest credentials from the admin panel.
+    if (typeof password === 'string' && password.trim().length > 0) {
+      ;(updates as any).password = password
     }
 
     const { data, error } = await supabaseAdmin
