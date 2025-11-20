@@ -73,6 +73,9 @@ export default function StaffDashboard() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [urgencyFilter, setUrgencyFilter] = useState('')
+  // Clinic operating-hours awareness for staff views
+  const [todayHours, setTodayHours] = useState<{ open: string; close: string; closed: boolean } | null>(null)
+  const [clinicStatus, setClinicStatus] = useState<'unknown' | 'open_now' | 'closed_now' | 'closed_day'>('unknown')
   // New high‑level date filters for staff: All / Today / Next 7 Days
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'next'>('all')
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -171,10 +174,10 @@ export default function StaffDashboard() {
     }
   }, [isAuthenticated])
 
-  // Helper functions
+  // Helper functions for time/date display
   const formatTime12Hour = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
+      hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       hour12: true,
@@ -189,6 +192,97 @@ export default function StaffDashboard() {
       day: 'numeric',
     })
   }
+
+  const formatDayOnly = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+    })
+  }
+
+  const formatShortDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
+  const formatCompactDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: '2-digit',
+    })
+  }
+
+  // Determine today's operating hours from localStorage (with sensible defaults)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const raw = localStorage.getItem('operating_hours')
+      let hoursByDay: any = null
+      if (raw) {
+        hoursByDay = JSON.parse(raw)
+      } else {
+        // Fallback default hours if settings not configured yet
+        hoursByDay = {
+          monday: { open: '09:00', close: '18:00', closed: false },
+          tuesday: { open: '09:00', close: '18:00', closed: false },
+          wednesday: { open: '09:00', close: '18:00', closed: false },
+          thursday: { open: '09:00', close: '18:00', closed: false },
+          friday: { open: '09:00', close: '18:00', closed: false },
+          saturday: { open: '09:00', close: '18:00', closed: false },
+          sunday: { open: '00:00', close: '00:00', closed: true },
+        }
+      }
+
+      const weekday = currentTime
+        .toLocaleDateString('en-US', { weekday: 'long' })
+        .toLowerCase() // e.g. 'monday'
+      const dayHours = hoursByDay?.[weekday] || null
+      if (dayHours && typeof dayHours.open === 'string' && typeof dayHours.close === 'string') {
+        setTodayHours({
+          open: dayHours.open,
+          close: dayHours.close,
+          closed: !!dayHours.closed,
+        })
+      } else {
+        setTodayHours(null)
+      }
+    } catch (e) {
+      console.warn('Failed to read operating_hours from localStorage:', e)
+      setTodayHours(null)
+    }
+  }, [currentTime.toDateString()])
+
+  // Recompute clinic open/closed status whenever time or hours change
+  useEffect(() => {
+    if (!todayHours) {
+      setClinicStatus('unknown')
+      return
+    }
+
+    if (todayHours.closed) {
+      setClinicStatus('closed_day')
+      return
+    }
+
+    const [openH, openM] = (todayHours.open || '09:00').split(':').map((n) => parseInt(n || '0', 10))
+    const [closeH, closeM] = (todayHours.close || '18:00').split(':').map((n) => parseInt(n || '0', 10))
+
+    const openTime = new Date(currentTime)
+    openTime.setHours(openH, openM, 0, 0)
+
+    const closeTime = new Date(currentTime)
+    closeTime.setHours(closeH, closeM, 0, 0)
+
+    if (currentTime >= openTime && currentTime <= closeTime) {
+      setClinicStatus('open_now')
+    } else {
+      setClinicStatus('closed_now')
+    }
+  }, [currentTime, todayHours])
 
   // Setup session timeout (30 minutes)
   const setupSessionTimeout = () => {
@@ -446,59 +540,82 @@ const handleStaffLogin = async (e: React.FormEvent) => {
   // Show login form if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[rgb(174,193,192)] via-[rgb(220,230,229)] to-[rgb(174,193,192)] flex items-center justify-center p-4">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-[10%] left-[15%] w-32 h-32 bg-gradient-to-r from-[#0d5c75]/30 to-[#2a9d8f]/30 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-[60%] right-[10%] w-24 h-24 bg-gradient-to-r from-[rgb(227,252,236)]/30 to-[#0d5c75]/30 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute bottom-[20%] left-[20%] w-20 h-20 bg-gradient-to-r from-[#2a9d8f]/30 to-[rgb(227,252,236)]/30 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        </div>
-
+      <div className="min-h-screen bg-gradient-to-br from-[rgb(174,193,192)] to-white flex items-center justify-center p-4">
         {/* Main Authentication Card */}
-        <div className="relative z-10 w-full max-w-md">
-          <Card className="bg-white/95 backdrop-blur-xl shadow-2xl border-0 rounded-2xl overflow-hidden">
+        <div className="w-full max-w-md">
+          <Card className="bg-white/98 backdrop-blur-xl shadow-2xl border-[#0d5c75]/15 rounded-2xl overflow-hidden">
             {/* Header with Logo */}
-            <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white p-8 text-center relative">
+            <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-5 py-4 text-center relative">
               <div className="relative z-10">
                 {/* Logo */}
-                <div className="w-20 h-20 mx-auto mb-4 relative">
-                  <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
+                <div className="w-14 h-14 mx-auto mb-2.5 relative">
+                  <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
                     <Image
                       src="/images/gonstead-chiropractic-logo-new.png"
                       alt="Gonstead Logo"
-                      width={48}
-                      height={48}
+                      width={36}
+                      height={36}
                       className="object-contain"
                     />
                   </div>
                   {/* Staff Badge */}
-                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-[rgb(227,252,236)] to-white rounded-full flex items-center justify-center shadow-lg">
-                    <Shield className="h-4 w-4 text-[#0d5c75]" />
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-r from-[rgb(227,252,236)] to-white rounded-full flex items-center justify-center shadow-lg">
+                    <Shield className="h-3 w-3 text-[#0d5c75]" />
                   </div>
                 </div>
                 
-                <CardTitle className="text-2xl font-bold mb-2">Staff Portal</CardTitle>
-                <p className="text-white/90 text-sm">Gonstead Chiropractic Clinic</p>
-                <p className="text-white/80 text-xs mt-1">Dr. Bashir Khan - Staff Access System</p>
-                
-                {/* Live Time Display */}
-                <div className="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                  <div className="text-sm font-semibold">{formatTime12Hour(currentTime)}</div>
-                  <div className="text-xs opacity-90">{formatDate(currentTime)}</div>
-                </div>
+                <CardTitle className="text-lg font-semibold mb-0.5">Staff Portal</CardTitle>
+                <p className="text-white/90 text-[11px]">Gonstead Chiropractic Clinic</p>
               </div>
             </CardHeader>
 
-            <CardContent className="p-8">
-              <form onSubmit={handleStaffLogin} className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-semibold text-[#0d5c75] mb-2">Staff Authentication</h3>
-                  <p className="text-sm text-gray-600">Enter your credentials to access patient data</p>
+            <CardContent className="px-6 py-5">
+              {/* Clinic time widget – optimized for all screen sizes */}
+              <div className="mb-5 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 px-4 py-3 shadow-sm">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#0d5c75] text-white shadow-md">
+                    <Clock3 className="h-4 w-4" />
+                  </div>
+                  <p className="text-[11px] font-semibold text-emerald-800 tracking-[0.18em] uppercase">
+                    Clinic time
+                  </p>
+                  <span
+                    className={`inline-flex h-2.5 w-2.5 rounded-full ${
+                      clinicStatus === 'open_now'
+                        ? 'bg-emerald-400'
+                        : clinicStatus === 'closed_day' || clinicStatus === 'closed_now'
+                        ? 'bg-red-400'
+                        : 'bg-gray-300'
+                    }`}
+                  />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-700">
+                    {clinicStatus === 'open_now'
+                      ? 'ON'
+                      : clinicStatus === 'closed_day'
+                      ? 'OFF DAY'
+                      : clinicStatus === 'closed_now'
+                      ? 'OFF TIME'
+                      : 'UNKNOWN'}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center text-center gap-1">
+                  <p className="text-sm sm:text-base font-semibold text-slate-900">
+                    {formatDate(currentTime)}
+                  </p>
+                  <p className="text-sm sm:text-base font-semibold text-slate-900 tabular-nums">
+                    {formatTime12Hour(currentTime)}
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleStaffLogin} className="space-y-3.5">
+                <div className="text-center mb-1">
+                  <h3 className="text-sm font-semibold text-[#0d5c75]">Staff Authentication</h3>
                 </div>
 
                 {/* Username Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-[#0d5c75] font-medium">Username</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="username" className="text-xs text-[#0d5c75] font-medium">Username</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
@@ -507,15 +624,15 @@ const handleStaffLogin = async (e: React.FormEvent) => {
                       placeholder="Enter your username"
                       value={credentials.username}
                       onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
-                      className="pl-10 border-2 border-gray-200 focus:border-[#0d5c75] rounded-lg"
+                      className="pl-10 h-9 text-sm border border-gray-200 focus:border-[#0d5c75] rounded-lg"
                       required
                     />
                   </div>
                 </div>
 
                 {/* Password Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[#0d5c75] font-medium">Password</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password" className="text-xs text-[#0d5c75] font-medium">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
@@ -524,13 +641,13 @@ const handleStaffLogin = async (e: React.FormEvent) => {
                       placeholder="Enter your password"
                       value={credentials.password}
                       onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
-                      className="pl-10 pr-10 border-2 border-gray-200 focus:border-[#0d5c75] rounded-lg"
+                      className="pl-10 pr-9 h-9 text-sm border border-gray-200 focus:border-[#0d5c75] rounded-lg"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -541,15 +658,15 @@ const handleStaffLogin = async (e: React.FormEvent) => {
                 <Button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#238a7a] text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#238a7a] text-white text-sm font-semibold py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
                 >
                   {authLoading ? (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-center space-x-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                       <span>Authenticating...</span>
                     </div>
                   ) : (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-center space-x-2">
                       <Shield className="h-4 w-4" />
                       <span>Access Staff Dashboard</span>
                     </div>
@@ -560,9 +677,8 @@ const handleStaffLogin = async (e: React.FormEvent) => {
             </CardContent>
 
             {/* Footer */}
-            <div className="bg-gray-50 px-8 py-4 text-center">
-              <p className="text-xs text-gray-600">Gonstead Chiropractic Clinic Staff Portal</p>
-              <p className="text-xs text-gray-500 mt-1">For assistance, contact Dr. Bashir Khan</p>
+            <div className="bg-gray-50 px-5 py-2.5 text-center">
+              <p className="text-[11px] text-gray-600">Gonstead Chiropractic Clinic Staff Portal</p>
             </div>
           </Card>
         </div>
@@ -602,7 +718,26 @@ const handleStaffLogin = async (e: React.FormEvent) => {
                 <p className="text-sm font-medium text-gray-900">
                   {staffUsername || 'Staff User'}
                 </p>
-                <p className="text-xs text-gray-500">Staff Portal - Read Only</p>
+                <div className="flex items-center justify-end gap-1 text-xs text-gray-500">
+                  <span
+                    className={`inline-flex h-2 w-2 rounded-full ${
+                      clinicStatus === 'open_now'
+                        ? 'bg-emerald-500'
+                        : clinicStatus === 'closed_day' || clinicStatus === 'closed_now'
+                        ? 'bg-red-500'
+                        : 'bg-gray-400'
+                    }`}
+                  />
+                  <span>
+                    {clinicStatus === 'open_now'
+                      ? 'Clinic ON · open now'
+                      : clinicStatus === 'closed_day'
+                      ? 'Clinic OFF · off day'
+                      : clinicStatus === 'closed_now'
+                      ? 'Clinic OFF · closed now'
+                      : 'Clinic status unknown'}
+                  </span>
+                </div>
               </div>
 
               <button

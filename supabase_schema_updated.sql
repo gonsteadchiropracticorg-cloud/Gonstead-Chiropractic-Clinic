@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS staff_accounts (
   phone TEXT,
   role TEXT NOT NULL CHECK (role IN ('staff', 'assistant', 'admin')),
   active BOOLEAN DEFAULT TRUE,
+  password TEXT,
   last_login_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()

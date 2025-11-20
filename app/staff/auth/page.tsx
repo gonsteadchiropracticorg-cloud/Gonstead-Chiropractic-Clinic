@@ -125,7 +125,7 @@ export default function StaffAuthPage() {
       <div className="relative z-10 w-full max-w-md">
         <Card className="bg-white/95 backdrop-blur-xl shadow-2xl border-0 rounded-2xl overflow-hidden">
           {/* Header with Logo */}
-          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white p-8 text-center relative">
+          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-5 py-4 text-center relative">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><pattern id=%22grain%22 width=%22100%22 height=%22100%22 patternUnits=%22userSpaceOnUse%22><circle cx=%2250%22 cy=%2250%22 r=%221%22 fill=%22%23ffffff%22 fill-opacity=%220.3%22/></pattern></defs><rect width=%22100%22 height=%22100%22 fill=%22url(%23grain)%22/></svg>')] opacity-30"></div>
@@ -133,19 +133,19 @@ export default function StaffAuthPage() {
             
             <div className="relative z-10">
               {/* Logo */}
-              <div className="w-20 h-20 mx-auto mb-4 relative">
-                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
+              <div className="w-16 h-16 mx-auto mb-3 relative">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
                   <Image
                     src="/images/gonstead-chiropractic-logo-new.png"
                     alt="Gonstead Logo"
-                    width={48}
-                    height={48}
+                    width={40}
+                    height={40}
                     className="object-contain"
                   />
                 </div>
                 {/* Staff Badge */}
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-[rgb(227,252,236)] to-white rounded-full flex items-center justify-center shadow-lg">
-                  <Shield className="h-4 w-4 text-[#0d5c75]" />
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-gradient-to-r from-[rgb(227,252,236)] to-white rounded-full flex items-center justify-center shadow-lg">
+                  <Shield className="h-3.5 w-3.5 text-[#0d5c75]" />
                 </div>
               </div>
               
@@ -153,16 +153,11 @@ export default function StaffAuthPage() {
               <p className="text-white/90 text-sm">Gonstead Chiropractic Clinic</p>
               <p className="text-white/80 text-xs mt-1">Dr. Bashir Khan - Staff Access System</p>
               
-              {/* Live Time Display */}
-              <div className="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                <div className="text-sm font-semibold">{formatTime12Hour(currentTime)}</div>
-                <div className="text-xs opacity-90">{formatDate(currentTime)}</div>
-              </div>
             </div>
           </CardHeader>
 
-          <CardContent className="p-8">
-            <form onSubmit={handleLogin} className="space-y-6">
+          <CardContent className="px-6 py-5">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="text-center mb-6">
                 <h3 className="text-lg font-semibold text-[#0d5c75] mb-2">Staff Authentication</h3>
                 <p className="text-sm text-gray-600">Enter your credentials to access patient data</p>

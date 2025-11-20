@@ -64,8 +64,14 @@ export default function StaffAccessPage() {
     // role/status filters
     if (roleFilter !== 'all') arr = arr.filter(a => (a.role || 'staff') === roleFilter)
     if (statusFilter !== 'all') arr = arr.filter(a => statusFilter === 'active' ? a.active : !a.active)
-    // order active first, then recent
-    return arr.sort((a,b) => (Number(b.active) - Number(a.active)) || new Date(b.updated_at||b.created_at).getTime() - new Date(a.updated_at||a.created_at).getTime())
+    // order active first, then recent (by last_login_at or updated_at)
+    return arr.sort((a,b) => {
+      const activeDiff = Number(b.active) - Number(a.active)
+      if (activeDiff !== 0) return activeDiff
+      const bTime = new Date((b as any).last_login_at || b.updated_at || b.created_at).getTime()
+      const aTime = new Date((a as any).last_login_at || a.updated_at || a.created_at).getTime()
+      return bTime - aTime
+    })
   }, [accounts, search, roleFilter, statusFilter])
 
   const resetForm = () => setForm({ username: "", display_name: "", email: "", phone: "", role: "staff", password: "" })
@@ -313,7 +319,23 @@ export default function StaffAccessPage() {
                           <Badge className="bg-gray-100 text-gray-700">Disabled</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs text-gray-500">{acc.last_login_at || localStorage.getItem(`staff_last_login_${acc.username}`) || '-'}</TableCell>
+                      <TableCell className="text-xs text-gray-500">
+                        {acc.last_login_at ? (
+                          <span>
+                            {new Date(acc.last_login_at as any).toLocaleString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true,
+                            })}
+                          </span>
+                        ) : (
+                          <span className="italic text-gray-400">Never logged in</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1.5">
                           <Button variant="ghost" size="sm" onClick={()=>openEdit(acc)} className="text-emerald-700 hover:bg-emerald-50"><Pencil className="h-4 w-4"/></Button>
