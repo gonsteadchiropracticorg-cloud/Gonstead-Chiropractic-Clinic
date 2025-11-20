@@ -609,10 +609,6 @@ const handleStaffLogin = async (e: React.FormEvent) => {
               </div>
 
               <form onSubmit={handleStaffLogin} className="space-y-3.5">
-                <div className="text-center mb-1">
-                  <h3 className="text-sm font-semibold text-[#0d5c75]">Staff Authentication</h3>
-                </div>
-
                 {/* Username Field */}
                 <div className="space-y-1.5">
                   <Label htmlFor="username" className="text-xs text-[#0d5c75] font-medium">Username</Label>
