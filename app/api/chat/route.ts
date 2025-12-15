@@ -235,15 +235,15 @@ Security Rules:
       content: sanitize(String(m.text || ''))
     }))
 
-    const messages = [ { role: 'system' as const, content: systemPrompt }, ...lastMessages, { role: 'user' as const, content: message } ]
+    // We still build the structured context above for future providers,
+    // but the current implementation answers ONLY from the approved
+    // clinic website knowledge base. No external AI calls are required
+    // for the chatbot to function.
 
-    // IMPORTANT:
-    // We answer ONLY from the approved website knowledge defined in lib/site-knowledge.ts.
-    // No external AI providers or other knowledge bases are used here.
     const siteAnswer = answerFromSiteKnowledge(message)
 
     if (!siteAnswer) {
-      const safeText = `I could not find a precise answer to this question in the official Gonstead Chiropractic Clinic website content.\n\nPlease contact the clinic directly at +92 304 699 6267 or visit in person for an assessment. For any emergency symptoms (severe or worsening pain, weakness, loss of control, high fever, trauma), seek immediate emergency care or call 1122.`
+      const safeText = `I could not find a precise answer to this question in the official Gonstead Chiropractic Clinic information.\n\nPlease contact the clinic directly at +92 304 699 6267 or visit in person for an assessment. For any emergency symptoms (severe or worsening pain, weakness, loss of control, high fever, trauma), seek immediate emergency care or call 1122.`
       return NextResponse.json({ text: safeText }, { headers: {
         'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'no-store'

@@ -400,7 +400,7 @@ export function AIChatbotSystem() {
       {/* Chat Toggle Button with Spine Animation */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-4 z-50 h-10 w-10 rounded-full bg-gradient-to-r from-[#3e8288] to-[#358085] hover:from-[#358085] hover:to-[#2c7078] shadow-xl border-3 border-[#f3a800] transition-all duration-300 hover:scale-110 spine-pulse"
+        className="fixed bottom-4 right-4 z-[10010] h-10 w-10 rounded-full bg-gradient-to-r from-[#3e8288] to-[#358085] hover:from-[#358085] hover:to-[#2c7078] shadow-xl border-3 border-[#f3a800] transition-all duration-300 hover:scale-110 spine-pulse"
         size="icon"
         aria-label={isOpen ? "Close chat" : "Open chat with Dr. Bashir's AI assistant"}
       >
@@ -416,7 +416,7 @@ export function AIChatbotSystem() {
 
       {/* Welcome Screen with Animated Spine Visual */}
       {isOpen && showWelcome && (
-        <Card className="fixed bottom-24 right-4 z-40 w-96 h-64 shadow-2xl border-2 border-[#f3a800] bg-gradient-to-br from-[#F8F5F0] to-white">
+        <Card className="fixed bottom-24 right-4 z-[10005] w-96 h-64 shadow-2xl border-2 border-[#f3a800] bg-gradient-to-br from-[#F8F5F0] to-white">
           <CardContent className="flex flex-col items-center justify-center h-full p-6">
             <div className="animated-spine-visual mb-4">
               <div className="spine-container">
@@ -442,7 +442,10 @@ export function AIChatbotSystem() {
 
       {/* Main Chat Window */}
       {isOpen && !showWelcome && (
-        <Card ref={chatContainerRef} className="fixed bottom-24 right-4 z-40 w-96 h-[500px] shadow-2xl border-2 border-[#0d5c75] bg-white overflow-hidden">
+        <Card
+          ref={chatContainerRef}
+          className="fixed bottom-24 right-4 z-[10005] w-96 h-[500px] shadow-2xl border-2 border-[#0d5c75] bg-white overflow-hidden"
+        >
           <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#0a4a5c] text-white p-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <Image
