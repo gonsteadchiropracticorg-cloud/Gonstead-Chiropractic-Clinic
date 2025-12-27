@@ -10,8 +10,6 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Send,
-  Mic,
-  MicOff,
   X,
   Bot,
   User,
@@ -26,8 +24,7 @@ import {
   ClipboardList,
   FileCheck,
   BarChart3,
-  LineChart,
-  Volume2
+  LineChart
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
@@ -43,7 +40,7 @@ interface Message {
   text: string
   sender: "user" | "bot"
   timestamp: Date
-  type?: "text" | "voice" | "appointment" | "location" | "booking"
+  type?: "text" | "appointment" | "location" | "booking"
 }
 
 interface AppointmentData {
@@ -87,13 +84,6 @@ export function AdvancedChatbot() {
   ])
   const [inputMessage, setInputMessage] = useState("")
   const [isTyping, setIsTyping] = useState(false)
-  const [isListening, setIsListening] = useState(false)
-  const [recognition, setRecognition] = useState<any | null>(null)
-  const [voiceSettings, setVoiceSettings] = useState({
-    autoSpeak: false,
-    voiceSpeed: 1,
-    voiceVolume: 0.8
-  })
   const [compact, setCompact] = useState(false)
   const [isNarrow, setIsNarrow] = useState(false)
   const [showQuick, setShowQuick] = useState(false)
@@ -2036,50 +2026,9 @@ export function AdvancedChatbot() {
   }
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
   const { toast } = useToast()
   const analyticsRef = useRef<AnalyticsTracker | null>(null)
   const prevFocusRef = useRef<HTMLElement | null>(null)
-
-  // Initialize speech recognition and synthesis
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Speech Recognition
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-      if (SpeechRecognition) {
-        const recognitionInstance = new SpeechRecognition()
-        recognitionInstance.continuous = false
-        recognitionInstance.interimResults = false
-        recognitionInstance.lang = "en-US"
-
-        recognitionInstance.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript
-          setInputMessage(transcript)
-          setIsListening(false)
-        }
-
-        recognitionInstance.onerror = () => {
-          setIsListening(false)
-          toast({
-            title: "Voice Recognition Error",
-            description: "Could not recognize speech. Please try again.",
-            variant: "destructive",
-          })
-        }
-
-        recognitionInstance.onend = () => {
-          setIsListening(false)
-        }
-
-        setRecognition(recognitionInstance)
-      }
-
-      // Speech Synthesis (optional)
-      // if (window.speechSynthesis) {
-      //   setSynthesis(window.speechSynthesis)
-      // }
-    }
-  }, [toast])
 
   // Simple highlight for search matches
   const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -2145,19 +2094,6 @@ export function AdvancedChatbot() {
     setSuggestedIds(Array.from(new Set(ids)).slice(0,3))
   }, [inputMessage])
 
-  const startVoiceRecognition = () => {
-    if (recognition && !isListening) {
-      setIsListening(true)
-      recognition.start()
-    }
-  }
-
-  const stopVoiceRecognition = () => {
-    if (recognition && isListening) {
-      recognition.stop()
-      setIsListening(false)
-    }
-  }
 
   const processAppointmentBooking = (userMessage: string): string => {
     const message = userMessage.toLowerCase()
@@ -2763,33 +2699,20 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
 
             {/* Enhanced Input Area - Fixed positioning */}
             {!showQuick && (
-<div className="flex-shrink-0 p-2 md:p-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <div className="flex-shrink-0 p-2 md:p-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
               <div className="flex gap-2">
-                <div className="flex-1 relative min-w-0">
-                  <Input
-                    aria-label="Message input"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Type your message..."
-className="pr-10 pl-3 py-2 md:py-2.5 rounded-lg border-gray-200/70 dark:border-gray-700 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)]/25 bg-white dark:bg-gray-800 text-sm w-full min-w-0 transition-all duration-200 shadow-sm"
-                  />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
-className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-md transition-all duration-200 shadow-sm motion-reduce:transition-none motion-reduce:animate-none ${
-                      isListening ? "text-red-500 animate-pulse bg-red-50 dark:bg-red-900/20" : "text-gray-400 hover:text-[rgb(66,139,124)] hover:bg-[rgb(66,139,124)]/10"
-                    }`}
-                    title={isListening ? "Stop listening" : "Use voice input"}
-                  >
-                    <Mic className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
-                  </Button>
-                </div>
+                <Input
+                  aria-label="Message input"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
+                  className="flex-1 pl-3 py-2 md:py-2.5 rounded-lg border-gray-200/70 dark:border-gray-700 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)]/25 bg-white dark:bg-gray-800 text-sm w-full min-w-0 transition-all duration-200 shadow-sm"
+                />
                 <Button
                   aria-label="Send message"
                   onClick={sendMessage}
-className="flex-shrink-0 bg-gradient-to-r from-[rgb(66,139,124)] to-[rgb(58,133,118)] hover:from-[rgb(72,145,130)] hover:to-[rgb(64,139,124)] text-white px-3 md:px-4 py-2.5 md:py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-shrink-0 bg-gradient-to-r from-[rgb(66,139,124)] to-[rgb(58,133,118)] hover:from-[rgb(72,145,130)] hover:to-[rgb(64,139,124)] text-white px-3 md:px-4 py-2.5 md:py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!inputMessage.trim()}
                   title="Send message"
                 >
