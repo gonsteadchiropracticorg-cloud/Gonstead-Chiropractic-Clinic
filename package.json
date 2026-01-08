@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "next build",
-    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 next dev",
     "lint": "next lint",
     "start": "next start",
     "build:electron": "cross-env BUILD_ELECTRON=true npm run build && npm run electron:build",
