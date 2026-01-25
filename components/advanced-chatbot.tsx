@@ -2333,61 +2333,6 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
     return "Right now the intelligent assistant engine is not fully connected, so I can't safely generate a detailed clinical answer. This chat is for general guidance only. For accurate advice about your specific condition, please contact Gonstead Chiropractic Clinic directly at +92 304 699 6267 or visit in person. For any emergency or severe symptoms, seek urgent medical care or call 1122."
   }
 
-  const speakMessage = async (text: string) => {
-    const content = (text || '').trim()
-    if (!content) return
-    try {
-      // Stop any existing playback
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.currentTime = 0
-      }
-
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: content }),
-      })
-
-      if (!res.ok) {
-        let serverError = 'TTS request failed'
-        try {
-          const text = await res.text()
-          serverError = text || serverError
-        } catch {
-          // ignore
-        }
-        console.error('TTS HTTP error', res.status, serverError)
-        throw new Error(serverError)
-      }
-
-      const arrayBuffer = await res.arrayBuffer()
-      const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
-      const url = URL.createObjectURL(blob)
-
-      if (!audioRef.current) {
-        audioRef.current = new Audio()
-      } else {
-        audioRef.current.pause()
-      }
-
-      audioRef.current.src = url
-      audioRef.current.onended = () => {
-        URL.revokeObjectURL(url)
-      }
-      await audioRef.current.play()
-    } catch (err: any) {
-      console.error('Error playing TTS audio:', err)
-      const desc = typeof err?.message === 'string'
-        ? err.message
-        : 'Unable to play voice for this message. Please try again.'
-      toast({
-        title: 'Voice error',
-        description: desc,
-        variant: 'destructive',
-      })
-    }
-  }
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return

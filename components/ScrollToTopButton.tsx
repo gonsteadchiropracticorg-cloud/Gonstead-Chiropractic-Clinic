@@ -45,35 +45,24 @@ export default function ScrollToTopButton({ showAfter = 200, className = "" }: S
   if (!isVisible) return null
 
   return (
-    <div className={`fixed bottom-6 right-6 z-40 ${className}`}>
+    <div className={`fixed bottom-20 right-4 z-[9998] ${className}`}>
       <Button
         onClick={scrollToTop}
         className={`
-          relative w-14 h-14 rounded-full shadow-2xl transition-all duration-300 ease-in-out
-          bg-[rgba(40,147,135,0.15)] backdrop-blur-md border border-[rgba(40,147,135,0.3)]
-          hover:bg-[rgba(40,147,135,0.25)] hover:border-[rgba(40,147,135,0.5)]
+          relative w-12 h-12 rounded-full shadow-lg transition-all duration-300 ease-in-out
+          bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 hover:from-[#0d5c75]/30 hover:to-[#2a9d8f]/30
+          text-white border-2 border-white/20 backdrop-blur-xl
           hover:scale-110 active:scale-95
           ${isAnimating ? 'animate-pulse' : ''}
         `}
         title="Scroll to Top"
       >
-        {/* Gradient background overlay */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[rgb(40,147,135)]/20 to-[rgb(40,147,135)]/10 opacity-80" />
-        
-        {/* Animated ring */}
-        <div className="absolute inset-0 rounded-full border-2 border-[rgb(40,147,135)]/30 animate-pulse" style={{ animationDuration: '2s' }} />
-        
-        {/* Icon with animation */}
         <ChevronUp 
           className={`
-            relative z-10 h-6 w-6 text-[rgb(40,147,135)] transition-all duration-300
+            relative z-10 h-5 w-5 text-[#0d5c75] transition-all duration-300
             ${isAnimating ? 'translate-y-[-2px]' : ''}
           `} 
         />
-        
-        {/* Professional indicator dot */}
-        <div className="absolute top-1 right-1 w-3 h-3 bg-[rgb(40,147,135)] rounded-full animate-ping opacity-60" />
-        <div className="absolute top-1 right-1 w-3 h-3 bg-[rgb(40,147,135)] rounded-full opacity-90" />
       </Button>
     </div>
   )

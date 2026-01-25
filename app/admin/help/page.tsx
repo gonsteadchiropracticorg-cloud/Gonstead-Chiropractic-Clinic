@@ -23,6 +23,7 @@ export default function AdminHelpPageEnhanced() {
   const router = useRouter()
   const [query, setQuery] = useState("")
   const [activeTab, setActiveTab] = useState("getting-started")
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const sections = useMemo(() => ([
     { id: "overview", title: "Quick Start", icon: Rocket },
@@ -56,49 +57,65 @@ export default function AdminHelpPageEnhanced() {
     <div className="min-h-screen bg-gradient-to-br from-[#0d5c75]/5 via-[rgb(66,139,124)]/5 to-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with enhanced styling */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d5c75] to-[rgb(66,139,124)] p-8 text-white shadow-2xl">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d5c75] to-[rgb(66,139,124)] p-4 sm:p-6 lg:p-8 text-white shadow-2xl">
           <div className="absolute inset-0 bg-grid-white/10"></div>
           <div className="relative z-10">
-            <div className="flex items-start justify-between gap-6 flex-wrap">
-              <div className="flex items-center gap-4">
-                <div className="relative w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm p-2">
+            {/* Mobile Header */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-6">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm p-1.5 sm:p-2 flex-shrink-0">
                   <Image src="/images/gonstead-logo-new.png" alt="Logo" fill className="object-contain p-1" />
                 </div>
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-bold mb-2">Admin Help Center</h1>
-                  <p className="text-white/90 text-lg">Your complete guide to mastering the admin dashboard</p>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold mb-1 sm:mb-2 truncate">Admin Help Center</h1>
+                  <p className="text-white/90 text-sm sm:text-base lg:text-lg hidden sm:block">Your complete guide to mastering the admin dashboard</p>
+                  <p className="text-white/90 text-xs sm:hidden">Complete admin dashboard guide</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Button variant="secondary" onClick={() => router.replace('/admin/dashboard')} className="bg-white hover:bg-white/90">
-                  <LayoutDashboard className="h-4 w-4 mr-2" />Dashboard
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Button 
+                  variant="secondary" 
+                  onClick={() => router.replace('/admin/dashboard')} 
+                  className="bg-white hover:bg-white/90 text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-10"
+                >
+                  <LayoutDashboard className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                  <span className="sm:hidden">Dash</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="lg:hidden bg-white/20 hover:bg-white/30 text-white p-2"
+                >
+                  <BookMarked className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             
             {/* Search Bar */}
-            <div className="relative mt-6 max-w-2xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <div className="relative mt-4 sm:mt-6 max-w-full">
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
               <Input 
                 value={query} 
                 onChange={(e) => setQuery(e.target.value)} 
-                placeholder="Search documentation (e.g., patient, calendar, troubleshooting)" 
-                className="pl-12 h-12 bg-white/95 backdrop-blur-sm border-0 text-gray-900 placeholder:text-gray-500 text-base" 
+                placeholder="Search documentation..." 
+                className="pl-10 sm:pl-12 h-10 sm:h-12 bg-white/95 backdrop-blur-sm border-0 text-gray-900 placeholder:text-gray-500 text-sm sm:text-base w-full" 
               />
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mt-4 sm:mt-6">
               {[
                 { label: "Guides", value: "14+", icon: BookOpen },
                 { label: "Videos", value: "6", icon: Video },
                 { label: "FAQs", value: "25+", icon: HelpCircle },
                 { label: "Shortcuts", value: "10+", icon: Keyboard }
               ].map((stat, i) => (
-                <div key={i} className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                  <stat.icon className="h-5 w-5 mb-2 text-white/80" />
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <div className="text-sm text-white/80">{stat.label}</div>
+                <div key={i} className="bg-white/10 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-white/20">
+                  <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 mb-1 sm:mb-2 text-white/80" />
+                  <div className="text-lg sm:text-2xl font-bold">{stat.value}</div>
+                  <div className="text-xs sm:text-sm text-white/80">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -107,25 +124,37 @@ export default function AdminHelpPageEnhanced() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-8">
           {/* Enhanced Sidebar Navigation */}
-          <Card className="lg:col-span-1 h-fit sticky top-6 shadow-lg">
-            <CardHeader className="bg-gradient-to-br from-[#0d5c75]/10 to-[rgb(66,139,124)]/10">
+          <Card className={`lg:col-span-1 h-fit shadow-lg transition-all duration-300 ${isSidebarOpen ? 'fixed inset-0 z-50 lg:relative lg:inset-auto rounded-none lg:rounded-xl' : 'hidden lg:block'}`}>
+            <CardHeader className="bg-gradient-to-br from-[#0d5c75]/10 to-[rgb(66,139,124)]/10 flex-row justify-between items-center">
               <CardTitle className="text-base flex items-center gap-2">
                 <BookMarked className="h-5 w-5 text-[#0d5c75]" />
-                Quick Navigation
+                <span className="hidden lg:inline">Quick Navigation</span>
+                <span className="lg:hidden">Menu</span>
               </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSidebarOpen(false)}
+                className="lg:hidden hover:bg-[#0d5c75]/20 p-2"
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
             </CardHeader>
-            <CardContent className="p-3">
-              <ScrollArea className="h-[520px] pr-2">
+            <CardContent className="p-3 lg:p-3">
+              <ScrollArea className="h-[60vh] lg:h-[520px] pr-2">
                 <div className="space-y-1">
                   {filtered.map(s => (
                     <Button 
                       key={s.id} 
                       variant="ghost" 
-                      className="justify-start w-full hover:bg-[#0d5c75]/10 hover:text-[#0d5c75] transition-all" 
-                      onClick={() => go(s.id)}
+                      className="justify-start w-full hover:bg-[#0d5c75]/10 hover:text-[#0d5c75] transition-all h-12 lg:h-auto px-3 py-2 text-sm lg:text-base" 
+                      onClick={() => {
+                        go(s.id)
+                        setIsSidebarOpen(false)
+                      }}
                     >
-                      <s.icon className="h-4 w-4 mr-2" />
-                      {s.title}
+                      <s.icon className="h-4 w-4 lg:mr-2 mr-3" />
+                      <span className="text-left">{s.title}</span>
                     </Button>
                   ))}
                 </div>
@@ -133,17 +162,41 @@ export default function AdminHelpPageEnhanced() {
             </CardContent>
           </Card>
 
+          {/* Overlay for mobile sidebar */}
+          {isSidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+
           {/* Main Content Area */}
           <div className="lg:col-span-3 space-y-6">
             {/* Tabs for Different Content Types */}
             <Card className="shadow-lg">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <CardHeader className="pb-3 bg-gradient-to-r from-[#0d5c75]/5 to-[rgb(66,139,124)]/5">
-                  <TabsList className="grid w-full grid-cols-4 bg-white">
-                    <TabsTrigger value="getting-started"><Rocket className="h-4 w-4 mr-2" />Get Started</TabsTrigger>
-                    <TabsTrigger value="guides"><BookOpen className="h-4 w-4 mr-2" />Guides</TabsTrigger>
-                    <TabsTrigger value="videos"><Video className="h-4 w-4 mr-2" />Videos</TabsTrigger>
-                    <TabsTrigger value="support"><MessageSquare className="h-4 w-4 mr-2" />Support</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-white h-auto">
+                    <TabsTrigger value="getting-started" className="flex-col gap-1 h-12 sm:h-auto py-2 text-xs sm:text-sm">
+                      <Rocket className="h-4 w-4" />
+                      <span className="hidden sm:inline">Get Started</span>
+                      <span className="sm:hidden">Start</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="guides" className="flex-col gap-1 h-12 sm:h-auto py-2 text-xs sm:text-sm">
+                      <BookOpen className="h-4 w-4" />
+                      <span className="hidden sm:inline">Guides</span>
+                      <span className="sm:hidden">Guide</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="videos" className="flex-col gap-1 h-12 sm:h-auto py-2 text-xs sm:text-sm">
+                      <Video className="h-4 w-4" />
+                      <span className="hidden sm:inline">Videos</span>
+                      <span className="sm:hidden">Video</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="support" className="flex-col gap-1 h-12 sm:h-auto py-2 text-xs sm:text-sm">
+                      <MessageSquare className="h-4 w-4" />
+                      <span className="hidden sm:inline">Support</span>
+                      <span className="sm:hidden">Help</span>
+                    </TabsTrigger>
                   </TabsList>
                 </CardHeader>
                 
@@ -151,10 +204,10 @@ export default function AdminHelpPageEnhanced() {
                   {/* Getting Started Tab */}
                   <TabsContent value="getting-started" className="space-y-6 mt-0">
                     <div>
-                      <h3 className="text-2xl font-bold text-[#0d5c75] mb-4">Welcome to Your Admin Dashboard</h3>
-                      <p className="text-gray-600 mb-6">Follow this quick checklist to get started with your clinic management system:</p>
+                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#0d5c75] mb-3 sm:mb-4">Welcome to Your Admin Dashboard</h3>
+                      <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">Follow this quick checklist to get started with your clinic management system:</p>
                       
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
                         {[
                           { title: "1. Complete Profile Setup", desc: "Update clinic info, hours, and contact details", icon: Settings, status: "complete" },
                           { title: "2. Add First Patient", desc: "Create your first patient record", icon: Users, status: "pending" },
@@ -163,17 +216,17 @@ export default function AdminHelpPageEnhanced() {
                           { title: "5. Record Payment", desc: "Log your first payment transaction", icon: DollarSign, status: "pending" },
                           { title: "6. Review Analytics", desc: "Check your clinic KPIs", icon: BarChart3, status: "pending" },
                         ].map((step, i) => (
-                          <div key={i} className="relative p-4 border rounded-xl hover:shadow-md transition-all cursor-pointer bg-white group">
+                          <div key={i} className="relative p-3 sm:p-4 border rounded-xl hover:shadow-md transition-all cursor-pointer bg-white group">
                             <div className="flex items-start gap-3">
-                              <div className={`p-2 rounded-lg ${step.status === 'complete' ? 'bg-green-100' : 'bg-[#0d5c75]/10'}`}>
-                                <step.icon className={`h-5 w-5 ${step.status === 'complete' ? 'text-green-600' : 'text-[#0d5c75]'}`} />
+                              <div className={`p-2 rounded-lg ${step.status === 'complete' ? 'bg-green-100' : 'bg-[#0d5c75]/10'} flex-shrink-0`}>
+                                <step.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${step.status === 'complete' ? 'text-green-600' : 'text-[#0d5c75]'}`} />
                               </div>
-                              <div className="flex-1">
+                              <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <p className="font-semibold group-hover:text-[#0d5c75] transition-colors">{step.title}</p>
-                                  {step.status === 'complete' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                                  <p className="font-semibold text-sm sm:text-base group-hover:text-[#0d5c75] transition-colors truncate">{step.title}</p>
+                                  {step.status === 'complete' && <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 flex-shrink-0" />}
                                 </div>
-                                <p className="text-sm text-gray-600 mt-1">{step.desc}</p>
+                                <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{step.desc}</p>
                               </div>
                             </div>
                           </div>
@@ -190,7 +243,7 @@ export default function AdminHelpPageEnhanced() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                           {[
                             { label: "Add Patient", icon: Users, action: () => router.push('/admin/patient-tracking') },
                             { label: "Book Appointment", icon: CalendarIcon, action: () => router.push('/admin/calendar') },
@@ -200,11 +253,11 @@ export default function AdminHelpPageEnhanced() {
                             <Button 
                               key={i} 
                               variant="outline" 
-                              className="h-auto flex-col gap-2 py-4 hover:bg-white hover:shadow-md transition-all"
+                              className="h-auto flex-col gap-2 py-3 sm:py-4 px-2 sm:px-3 hover:bg-white hover:shadow-md transition-all"
                               onClick={action.action}
                             >
-                              <action.icon className="h-6 w-6 text-[#0d5c75]" />
-                              <span className="text-xs font-medium">{action.label}</span>
+                              <action.icon className="h-5 w-5 sm:h-6 sm:w-6 text-[#0d5c75]" />
+                              <span className="text-xs sm:text-sm font-medium text-center">{action.label}</span>
                             </Button>
                           ))}
                         </div>
@@ -423,7 +476,7 @@ export default function AdminHelpPageEnhanced() {
                   <CardDescription>Work faster with these keyboard shortcuts</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
                     {[
                       { keys: ["Ctrl", "K"], desc: "Global search" },
                       { keys: ["G", "D"], desc: "Go to Dashboard" },
@@ -434,18 +487,18 @@ export default function AdminHelpPageEnhanced() {
                       { keys: ["Esc"], desc: "Close modal/dialog" },
                       { keys: ["Ctrl", "P"], desc: "Print/Export" },
                     ].map((shortcut, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg border bg-white hover:shadow-md transition-all">
-                        <div className="flex items-center gap-2">
+                      <div key={i} className="flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-white hover:shadow-md transition-all">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           {shortcut.keys.map((key, j) => (
                             <React.Fragment key={j}>
-                              <kbd className="px-3 py-1.5 rounded-md border bg-gradient-to-b from-gray-50 to-gray-100 shadow-sm font-mono text-sm font-semibold text-gray-700">
+                              <kbd className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md border bg-gradient-to-b from-gray-50 to-gray-100 shadow-sm font-mono text-xs sm:text-sm font-semibold text-gray-700">
                                 {key}
                               </kbd>
-                              {j < shortcut.keys.length - 1 && <span className="text-gray-400">+</span>}
+                              {j < shortcut.keys.length - 1 && <span className="text-gray-400 text-xs sm:text-sm">+</span>}
                             </React.Fragment>
                           ))}
                         </div>
-                        <span className="text-sm text-gray-600">{shortcut.desc}</span>
+                        <span className="text-xs sm:text-sm text-gray-600 ml-2">{shortcut.desc}</span>
                       </div>
                     ))}
                   </div>
@@ -462,7 +515,7 @@ export default function AdminHelpPageEnhanced() {
                   <CardDescription>Common terms and definitions</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
                     {[
                       { term: "Patient Record", def: "Complete profile with contact, medical history, and visit tracking" },
                       { term: "Appointment", def: "Scheduled visit with specific date, time, and duration" },
@@ -477,9 +530,9 @@ export default function AdminHelpPageEnhanced() {
                       { term: "QR Code", def: "Scannable code on prescriptions for verification" },
                       { term: "Buffer Time", def: "Gap between appointments to prevent delays" },
                     ].map((item, i) => (
-                      <div key={i} className="p-4 rounded-lg border bg-white hover:shadow-md transition-all">
-                        <h4 className="font-semibold text-[#0d5c75] mb-1">{item.term}</h4>
-                        <p className="text-sm text-gray-600">{item.def}</p>
+                      <div key={i} className="p-3 sm:p-4 rounded-lg border bg-white hover:shadow-md transition-all">
+                        <h4 className="font-semibold text-sm sm:text-base text-[#0d5c75] mb-1">{item.term}</h4>
+                        <p className="text-xs sm:text-sm text-gray-600 line-clamp-3">{item.def}</p>
                       </div>
                     ))}
                   </div>
@@ -488,17 +541,24 @@ export default function AdminHelpPageEnhanced() {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-8 border-t">
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={() => router.replace('/admin/dashboard')} className="bg-[#0d5c75] hover:bg-[#0d5c75]/90">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 sm:pt-8 border-t">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <Button 
+                  onClick={() => router.replace('/admin/dashboard')} 
+                  className="bg-[#0d5c75] hover:bg-[#0d5c75]/90 w-full sm:w-auto justify-center"
+                >
                   <LayoutDashboard className="h-4 w-4 mr-2" /> Return to Dashboard
                 </Button>
-                <Button variant="outline" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="w-full sm:w-auto justify-center"
+                >
                   <ChevronRight className="h-4 w-4 mr-2 rotate-[-90deg]" /> Back to Top
                 </Button>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="h-4 w-4" />
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Last updated: Nov 2025</span>
               </div>
             </div>
@@ -623,18 +683,18 @@ function GuidesContent({ go }: { go: (id: string) => void }) {
   ]
 
   return (
-    <div className="grid md:grid-cols-2 gap-4">
+    <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
       {guides.map((guide) => (
         <div 
           key={guide.id}
-          className="p-6 rounded-xl border bg-white hover:shadow-lg transition-all cursor-pointer group"
+          className="p-4 sm:p-6 rounded-xl border bg-white hover:shadow-lg transition-all cursor-pointer group"
           onClick={() => go(guide.id)}
         >
-          <guide.icon className="h-8 w-8 text-[#0d5c75] mb-3 group-hover:scale-110 transition-transform" />
-          <h3 className="font-bold text-lg mb-2 group-hover:text-[#0d5c75] transition-colors">{guide.title}</h3>
-          <p className="text-sm text-gray-600 mb-4">{guide.desc}</p>
-          <Button variant="ghost" size="sm" className="group-hover:bg-[#0d5c75]/10">
-            Read Guide <ChevronRight className="h-4 w-4 ml-1" />
+          <guide.icon className="h-6 w-6 sm:h-8 sm:w-8 text-[#0d5c75] mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
+          <h3 className="font-bold text-base sm:text-lg mb-2 group-hover:text-[#0d5c75] transition-colors">{guide.title}</h3>
+          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2">{guide.desc}</p>
+          <Button variant="ghost" size="sm" className="group-hover:bg-[#0d5c75]/10 h-8 sm:h-auto py-1 sm:py-2">
+            <span className="text-xs sm:text-sm">Read Guide</span> <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
           </Button>
         </div>
       ))}
@@ -654,17 +714,17 @@ function VideosContent() {
   ]
 
   return (
-    <div className="grid md:grid-cols-2 gap-4">
+    <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
       {videos.map((video, i) => (
         <div key={i} className="rounded-xl border bg-white overflow-hidden hover:shadow-lg transition-all group cursor-pointer">
-          <div className="relative h-40 bg-gradient-to-br from-[#0d5c75] to-[rgb(66,139,124)] flex items-center justify-center">
-            <PlayCircle className="h-16 w-16 text-white group-hover:scale-110 transition-transform" />
+          <div className="relative h-32 sm:h-40 bg-gradient-to-br from-[#0d5c75] to-[rgb(66,139,124)] flex items-center justify-center">
+            <PlayCircle className="h-12 w-12 sm:h-16 sm:w-16 text-white group-hover:scale-110 transition-transform" />
             <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
               {video.duration}
             </div>
           </div>
-          <div className="p-4">
-            <h3 className="font-semibold group-hover:text-[#0d5c75] transition-colors">{video.title}</h3>
+          <div className="p-3 sm:p-4">
+            <h3 className="font-semibold text-sm sm:text-base group-hover:text-[#0d5c75] transition-colors line-clamp-2">{video.title}</h3>
             <p className="text-xs text-gray-500 mt-1">Click to watch tutorial</p>
           </div>
         </div>
@@ -677,40 +737,40 @@ function VideosContent() {
 function SupportContent() {
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-3 gap-3 sm:gap-4">
         {[
-          { icon: Mail, title: "Email Support", value: "support@gonsteadchiropractic.com", action: "mailto:support@gonsteadchiropractic.com" },
-          { icon: Phone, title: "Phone Support", value: "+92 304 699 6267", action: "tel:+923046996267" },
-          { icon: MessageSquare, title: "Live Chat", value: "Available 9 AM - 6 PM", action: "#" },
+          { icon: Mail, title: "Email Support", value: "support@gonstead...", action: "mailto:support@gonsteadchiropractic.com" },
+          { icon: Phone, title: "Phone Support", value: "+92 304 699...", action: "tel:+923046996267" },
+          { icon: MessageSquare, title: "Live Chat", value: "9 AM - 6 PM", action: "#" },
         ].map((contact, i) => (
           <a 
             key={i} 
             href={contact.action}
-            className="p-6 rounded-xl border bg-white hover:shadow-lg transition-all text-center group"
+            className="p-4 sm:p-6 rounded-xl border bg-white hover:shadow-lg transition-all text-center group"
           >
-            <contact.icon className="h-8 w-8 text-[#0d5c75] mx-auto mb-3 group-hover:scale-110 transition-transform" />
-            <h3 className="font-semibold mb-1">{contact.title}</h3>
-            <p className="text-sm text-gray-600">{contact.value}</p>
+            <contact.icon className="h-6 w-6 sm:h-8 sm:w-8 text-[#0d5c75] mx-auto mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
+            <h3 className="font-semibold text-sm sm:text-base mb-1">{contact.title}</h3>
+            <p className="text-xs sm:text-sm text-gray-600">{contact.value}</p>
           </a>
         ))}
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Submit a Support Ticket</CardTitle>
-          <CardDescription>Our team will respond within 24 hours</CardDescription>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base sm:text-lg">Submit a Support Ticket</CardTitle>
+          <CardDescription className="text-sm">Our team will respond within 24 hours</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Input placeholder="Your Name" />
-          <Input placeholder="Email Address" type="email" />
-          <Input placeholder="Subject" />
+        <CardContent className="space-y-3 sm:space-y-4">
+          <Input placeholder="Your Name" className="h-10 sm:h-auto" />
+          <Input placeholder="Email Address" type="email" className="h-10 sm:h-auto" />
+          <Input placeholder="Subject" className="h-10 sm:h-auto" />
           <textarea 
-            className="w-full min-h-[120px] p-3 rounded-md border border-input bg-background resize-none" 
+            className="w-full min-h-[100px] sm:min-h-[120px] p-3 rounded-md border border-input bg-background resize-none text-sm" 
             placeholder="Describe your issue..."
           />
-          <Button className="w-full bg-[#0d5c75] hover:bg-[#0d5c75]/90">
+          <Button className="w-full bg-[#0d5c75] hover:bg-[#0d5c75]/90 h-10 sm:h-auto">
             <MessageSquare className="h-4 w-4 mr-2" />
-            Submit Ticket
+            <span className="text-sm">Submit Ticket</span>
           </Button>
         </CardContent>
       </Card>

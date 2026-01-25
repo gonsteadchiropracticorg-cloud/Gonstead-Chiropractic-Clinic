@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import WhatsAppChatInterface from "@/components/WhatsAppChatInterface"
 import {
   Calendar,
   Users,
@@ -225,6 +226,7 @@ export default function AdminDashboard() {
   
   // Quick Wins: Last updated timestamp
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [adminUser, setAdminUser] = useState<any>({ email: 'admin-user', name: 'Dr. Bashir Khan' })
 
   const router = useRouter()
   const pathname = usePathname()
@@ -433,6 +435,12 @@ export default function AdminDashboard() {
       }
 
       console.log("Dashboard: User authenticated:", user.email)
+      
+      // Set admin user state for chat
+      setAdminUser({
+        ...user,
+        name: user.name || 'Dr. Bashir Khan'
+      })
 
       // Store auth in localStorage to prevent future loops
       localStorage.setItem("admin_authenticated", "true")
@@ -6061,6 +6069,21 @@ export default function AdminDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* WhatsApp-Style Chat Interface */}
+      <WhatsAppChatInterface 
+        currentUserId={adminUser?.email || 'admin-user'} 
+        currentUserRole={'admin'}
+        currentUserName={adminUser?.name || 'Dr. Bashir Khan'}
+        adminMode={true}
+      />
+      
+      {/* Debug: Show admin user info */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 rounded text-xs">
+          Debug Admin: {adminUser?.email} | {adminUser?.name}
+        </div>
+      )}
     </React.Fragment>
   )
 }

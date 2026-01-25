@@ -1,0 +1,266 @@
+"use client"
+
+import React, { useState, useEffect, useRef } from 'react'
+import { Send, MessageCircle, X, Minimize2, Maximize2, Bell } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { supabase } from '@/lib/supabase'
+import { 
+  sendMessage, 
+  getMessages, 
+  markMessagesAsRead, 
+  subscribeToMessages,
+  getUnreadCount,
+  type ChatMessage 
+} from '@/lib/chat'
+
+interface StaffChatProps {
+  staffId: string
+  staffName: string
+  adminId?: string
+}
+
+export default function StaffChat({ staffId, staffName, adminId = 'admin-user' }: StaffChatProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(false)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [newMessage, setNewMessage] = useState('')
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Load initial messages
+  useEffect(() => {
+    if (isOpen && staffId) {
+      loadMessages()
+    }
+  }, [isOpen, staffId])
+
+  // Subscribe to new messages
+  useEffect(() => {
+    if (staffId) {
+      const channel = subscribeToMessages(staffId, (message) => {
+        setMessages(prev => [...prev, message])
+        if (!isOpen) {
+          setUnreadCount(prev => prev + 1)
+        }
+      })
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
+    }
+  }, [staffId, isOpen])
+
+  // Load unread count
+  useEffect(() => {
+    if (staffId) {
+      getUnreadCount(staffId, 'staff').then(({ data }) => {
+        setUnreadCount(data)
+      })
+    }
+  }, [staffId])
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const loadMessages = async () => {
+    setIsLoading(true)
+    try {
+      const { data } = await getMessages(staffId, adminId)
+      setMessages(data || [])
+      // Mark messages as read
+      await markMessagesAsRead(adminId, staffId)
+      setUnreadCount(0)
+    } catch (error) {
+      console.error('Error loading messages:', error)
+      // Set empty messages to prevent errors
+      setMessages([])
+      setUnreadCount(0)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !staffId) return
+
+    const messageText = newMessage.trim()
+    setNewMessage('')
+
+    try {
+      await sendMessage(
+        staffId,
+        staffName,
+        'staff',
+        adminId,
+        'admin',
+        messageText
+      )
+    } catch (error) {
+      console.error('Error sending message:', error)
+      // Show user-friendly error message
+      if (error?.message?.includes('relation') || error?.message?.includes('table')) {
+        alert('Chat database tables not found. Please contact admin to set up the chat system.')
+      } else {
+        alert('Message could not be sent. Please try again later.')
+      }
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage()
+    }
+  }
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
+
+  if (!isOpen) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-4 shadow-lg"
+          size="lg"
+        >
+          <MessageCircle className="h-6 w-6" />
+          {unreadCount > 0 && (
+            <Badge className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col">
+      {/* Header */}
+      <CardHeader className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-t-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <MessageCircle className="h-5 w-5" />
+            <CardTitle className="text-lg">Admin Chat</CardTitle>
+            {unreadCount > 0 && (
+              <Badge className="bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">
+                {unreadCount}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="text-white hover:bg-white/20 p-1"
+            >
+              {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(false)}
+              className="text-white hover:bg-white/20 p-1"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+
+      {!isMinimized && (
+        <>
+          {/* Messages */}
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>No messages yet. Start a conversation with the admin.</p>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.sender_role === 'staff' ? 'justify-end' : 'justify-start'} mb-3`}
+                >
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                      message.sender_role === 'staff'
+                        ? 'bg-emerald-600 text-white rounded-br-none'
+                        : 'bg-gray-200 text-gray-900 rounded-bl-none'
+                    }`}
+                  >
+                    {/* Sender name only for admin messages */}
+                    {message.sender_role === 'admin' && (
+                      <div className="text-xs font-semibold text-gray-600 mb-1">
+                        {message.sender_name}
+                      </div>
+                    )}
+                    
+                    {/* Message content */}
+                    <p className="text-sm break-words leading-relaxed">
+                      {message.message}
+                    </p>
+                    
+                    {/* Time and read status */}
+                    <div className={`flex items-center justify-end space-x-1 mt-1 ${
+                      message.sender_role === 'staff' ? 'text-emerald-100' : 'text-gray-500'
+                    }`}>
+                      <span className="text-xs">
+                        {formatTime(message.created_at)}
+                      </span>
+                      {message.sender_role === 'staff' && (
+                        <span className="text-xs">
+                          {message.read ? '✓✓' : '✓'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </CardContent>
+
+          {/* Input */}
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex space-x-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message..."
+                className="flex-1"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim() || isLoading}
+                className="bg-emerald-600 hover:bg-emerald-700"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}

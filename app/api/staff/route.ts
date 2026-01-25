@@ -82,6 +82,20 @@ export async function POST(req: NextRequest) {
       meta: { after: data }
     })
 
+    // Add staff to user_status table for chat functionality
+    await supabaseAdmin.from('user_status').upsert({
+      user_id: data.id,
+      user_name: data.display_name || data.username,
+      user_role: 'staff',
+      is_online: false,
+      last_seen: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }).onConflict('user_id').update({
+      user_name: data.display_name || data.username,
+      user_role: 'staff',
+      updated_at: new Date().toISOString()
+    })
+
     return NextResponse.json({ success: true, data })
   } catch (error: any) {
     console.error('Unexpected error:', error)
