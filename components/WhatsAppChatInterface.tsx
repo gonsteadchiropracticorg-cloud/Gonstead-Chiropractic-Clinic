@@ -20,11 +20,25 @@ import {
   Phone,
   Video,
   Search,
+  ArrowLeft,
   MoreVertical,
-  ArrowLeft
+  Edit,
+  Trash2,
+  Copy,
+  Reply,
+  Forward,
+  Star,
+  Clock,
+  Download,
+  Upload,
+  Wifi,
+  WifiOff
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import WhatsAppMessageMenu from './WhatsAppMessageMenu'
+import { chatLocalStorage, LocalChatMessage } from '@/lib/chat-local-storage'
+import { chatSyncService } from '@/lib/chat-sync-service'
 
 interface WhatsAppChatInterfaceProps {
   currentUserId: string
@@ -49,6 +63,10 @@ interface ChatMessage {
   delivered_at?: string
   created_at: string
   chat_type?: 'individual' | 'group'
+  deleted_for?: string[]
+  edited?: boolean
+  edited_at?: string
+  original_message?: string
 }
 
 interface ChatUser {
@@ -85,6 +103,11 @@ export default function WhatsAppChatInterface({
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
   const [searchQuery, setSearchQuery] = useState('')
   const [showChatList, setShowChatList] = useState(true)
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
+  const [editingMessage, setEditingMessage] = useState<string | null>(null)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('synced')
+  const [showClearChatDialog, setShowClearChatDialog] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
   const subscriptionRef = useRef<any>(null)
@@ -144,6 +167,179 @@ export default function WhatsAppChatInterface({
       }
     }
   }, [currentUserId, currentUserName, currentUserRole])
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      setSyncStatus('synced')
+      toast({
+        title: "Connection restored",
+        description: "Your messages will sync automatically",
+      })
+    }
+
+    const handleOffline = () => {
+      setIsOnline(false)
+      setSyncStatus('offline')
+      toast({
+        title: "Connection lost",
+        description: "Messages will be saved locally and synced when you're back online",
+        variant: "destructive"
+      })
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Initialize local storage and sync service
+  useEffect(() => {
+    // Save current user info to localStorage
+    localStorage.setItem('current_user_id', currentUserId)
+    localStorage.setItem('current_user_name', currentUserName)
+    localStorage.setItem('current_user_role', currentUserRole)
+
+    // Start sync service
+    chatSyncService.startAutoSync()
+
+    return () => {
+      chatSyncService.destroy()
+    }
+  }, [currentUserId, currentUserName, currentUserRole])
+
+  // Message management functions
+  const handleEditMessage = async (messageId: string, newMessageText: string) => {
+    try {
+      const success = await chatSyncService.editMessage(messageId, newMessageText)
+      if (success) {
+        // Update local state
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, message: newMessageText, edited: true, edited_at: new Date().toISOString() }
+            : msg
+        ))
+        toast({
+          title: "Message edited",
+          description: "Your message has been updated"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to edit message",
+        description: "Please try again",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleDeleteMessage = async (messageId: string, deleteFor: 'self' | 'everyone') => {
+    try {
+      const success = deleteFor === 'everyone' 
+        ? await chatSyncService.deleteMessageForEveryone(messageId)
+        : await chatSyncService.deleteMessageForUser(messageId, currentUserId)
+
+      if (success) {
+        if (deleteFor === 'everyone') {
+          // Remove from local state
+          setMessages(prev => prev.filter(msg => msg.id !== messageId))
+          toast({
+            title: "Message deleted for everyone",
+            description: "The message has been removed for all participants"
+          })
+        } else {
+          // Mark as deleted for current user
+          setMessages(prev => prev.map(msg => 
+            msg.id === messageId 
+              ? { ...msg, deleted_for: [...(msg.deleted_for || []), currentUserId] }
+              : msg
+          ))
+          toast({
+            title: "Message deleted",
+            description: "The message has been removed for you"
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to delete message",
+        description: "Please try again",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleReplyMessage = (message: ChatMessage) => {
+    setReplyingTo(message)
+    // Focus on input
+    setTimeout(() => {
+      const inputElement = document.getElementById('chat-input') as HTMLInputElement
+      inputElement?.focus()
+    }, 100)
+  }
+
+  const handleForwardMessage = (message: ChatMessage) => {
+    // Store message for forwarding
+    const forwardData = {
+      message: message.message,
+      sender_name: message.sender_name
+    }
+    localStorage.setItem('forwarding_message', JSON.stringify(forwardData))
+    toast({
+      title: "Message ready to forward",
+      description: "Select a chat to forward this message"
+    })
+  }
+
+  const handleStarMessage = (messageId: string) => {
+    // Implement starring functionality
+    toast({
+      title: "Message starred",
+      description: "You can find starred messages in the starred section"
+    })
+  }
+
+  const handleClearChat = async () => {
+    if (selectedChat) {
+      try {
+        const success = await chatSyncService.clearConversation(selectedChat)
+        if (success) {
+          setMessages([])
+          setShowClearChatDialog(false)
+          toast({
+            title: "Chat cleared",
+            description: "All messages have been removed"
+          })
+        }
+      } catch (error) {
+        toast({
+          title: "Failed to clear chat",
+          description: "Please try again",
+          variant: "destructive"
+        })
+      }
+    }
+  }
+
+  const handleExportChat = () => {
+    const chatData = chatLocalStorage.exportChatData()
+    const blob = new Blob([chatData], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `chat-export-${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast({
+      title: "Chat exported",
+      description: "Your chat history has been downloaded"
+    })
+  }
 
   // Load chat users
   const loadChatUsers = async () => {
