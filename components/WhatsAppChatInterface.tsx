@@ -60,6 +60,11 @@ interface ChatUser {
   unread_count: number
   last_message?: string
   last_message_time?: string
+  staff_communication?: {
+    with: string
+    message: string
+    time: string
+  } | null
 }
 
 export default function WhatsAppChatInterface({ 
@@ -149,8 +154,8 @@ export default function WhatsAppChatInterface({
         // Admin sees all staff members only
         query = query.eq('user_role', 'staff')
       } else if (currentUserRole === 'staff') {
-        // Staff sees only admin, not other staff
-        query = query.eq('user_role', 'admin')
+        // Staff sees admin AND other staff members for staff-to-staff communication
+        query = query.or('user_role.eq.admin,user_role.eq.staff').neq('user_id', currentUserId)
       }
       
       const { data, error } = await query.order('user_name')
@@ -177,11 +182,44 @@ export default function WhatsAppChatInterface({
             .limit(1)
             .single()
 
+          // For admin: Check if this staff member is communicating with other staff
+          let staffCommunicationIndicator = null
+          if (currentUserRole === 'admin' && user.user_role === 'staff') {
+            try {
+              const { data: staffToStaffMsgs } = await supabase
+                .from('chat_messages')
+                .select('sender_id, receiver_id, message, created_at')
+                .or(`and(sender_id.eq.${user.user_id},receiver_id.in.(select user_id from user_status where user_role = 'staff' and user_id != '${user.user_id}')),and(receiver_id.eq.${user.user_id},sender_id.in.(select user_id from user_status where user_role = 'staff' and user_id != '${user.user_id}'))`)
+                .eq('chat_type', 'individual')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single()
+
+              if (staffToStaffMsgs) {
+                const otherStaffId = staffToStaffMsgs.sender_id === user.user_id ? staffToStaffMsgs.receiver_id : staffToStaffMsgs.sender_id
+                const { data: otherStaff } = await supabase
+                  .from('user_status')
+                  .select('user_name')
+                  .eq('user_id', otherStaffId)
+                  .single()
+                
+                staffCommunicationIndicator = {
+                  with: otherStaff?.user_name || 'Another Staff',
+                  message: staffToStaffMsgs.message,
+                  time: staffToStaffMsgs.created_at
+                }
+              }
+            } catch (err) {
+              // Ignore errors in staff communication tracking
+            }
+          }
+
           return {
             ...user,
             unread_count: unreadData?.length || 0,
             last_message: lastMsgData?.message || '',
-            last_message_time: lastMsgData?.created_at || ''
+            last_message_time: lastMsgData?.created_at || '',
+            staff_communication: staffCommunicationIndicator
           }
         })
       )
@@ -778,11 +816,22 @@ export default function WhatsAppChatInterface({
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600 truncate">
-                            {user.last_message || 'No messages yet'}
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm text-gray-600 truncate">
+                              {user.last_message || 'No messages yet'}
+                            </span>
+                            {/* Staff communication indicator for admin */}
+                            {adminMode && currentUserRole === 'admin' && user.staff_communication && (
+                              <div className="flex items-center mt-1 text-xs text-amber-600">
+                                <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-1 animate-pulse"></span>
+                                <span className="truncate">
+                                  Chatting with {user.staff_communication.with}: "{user.staff_communication.message.substring(0, 30)}{user.staff_communication.message.length > 30 ? '...' : ''}"
+                                </span>
+                              </div>
+                            )}
+                          </div>
                           {unreadCounts[user.user_id] > 0 && (
-                            <Badge className="bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">
+                            <Badge className="bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs ml-2">
                               {unreadCounts[user.user_id]}
                             </Badge>
                           )}
