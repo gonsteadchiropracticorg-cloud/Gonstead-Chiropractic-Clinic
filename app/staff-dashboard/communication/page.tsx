@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import SimpleStaffChat from '@/components/SimpleStaffChat'
 
 export default function StaffCommunication() {
   const [staffUsername, setStaffUsername] = useState('')
@@ -238,12 +237,6 @@ export default function StaffCommunication() {
           </Card>
         </div>
       </div>
-
-      {/* Simple Debug Chat Component */}
-      <SimpleStaffChat 
-        staffId={staffUsername} 
-        staffName={staffUsername} 
-      />
     </div>
   )
 }
