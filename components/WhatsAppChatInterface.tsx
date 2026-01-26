@@ -495,9 +495,9 @@ export default function WhatsAppChatInterface({
       }
 
       if (selectedChat === 'group-chat') {
-        // Group message
+        // Group message - use 'staff' as receiver_role to satisfy database constraints
         messageData.receiver_id = 'group'
-        messageData.receiver_role = 'group'
+        messageData.receiver_role = 'staff' // Use 'staff' instead of 'group' to satisfy constraints
         // Only add chat_type if column exists
         try {
           messageData.chat_type = 'group'
