@@ -1,16 +1,18 @@
 "use client"
 
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { Mic, Square, Play, Pause, Volume2, VolumeX, File, Image, Video, X } from 'lucide-react'
+import { Mic, Square, Play, Pause, Volume2, VolumeX, File, Image, Video, X, Send, Camera, Smile, Paperclip } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 
 interface MediaRecorderProps {
   onMediaReady: (media: MediaData) => void
   currentUserId: string
   adminMode?: boolean
+  onSendMessage: (message: string) => void
 }
 
 interface MediaData {
@@ -34,7 +36,8 @@ interface RecordingState {
 export default function WhatsAppMediaRecorder({ 
   onMediaReady, 
   currentUserId, 
-  adminMode = false 
+  adminMode = false,
+  onSendMessage
 }: MediaRecorderProps) {
   const [recordingState, setRecordingState] = useState<RecordingState>({
     isRecording: false,
@@ -49,6 +52,8 @@ export default function WhatsAppMediaRecorder({
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
+  const [messageText, setMessageText] = useState('')
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -57,6 +62,8 @@ export default function WhatsAppMediaRecorder({
   const animationFrameRef = useRef<number | null>(null)
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
   
   const { toast } = useToast()
 
@@ -201,7 +208,7 @@ export default function WhatsAppMediaRecorder({
   }, [stopRecording])
 
   // Handle file selection
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>, fileType: 'file' | 'image' | 'video') => {
     const file = event.target.files?.[0]
     if (!file) return
     
@@ -287,6 +294,14 @@ export default function WhatsAppMediaRecorder({
     }
   }, [selectedFile, onMediaReady])
 
+  // Handle message send
+  const handleSend = useCallback(() => {
+    if (messageText.trim()) {
+      onSendMessage(messageText.trim())
+      setMessageText('')
+    }
+  }, [messageText, onSendMessage])
+
   // Format duration
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -303,165 +318,214 @@ export default function WhatsAppMediaRecorder({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
+  // WhatsApp Exact Interface
   return (
-    <div className="flex items-center gap-2 p-2 border-t">
-      {/* Voice Recording */}
-      {!selectedFile && !recordingState.isRecording && (
+    <div className="flex items-center gap-2 px-4 py-2 border-t bg-gray-50">
+      {/* Left side - Emoji and Attach */}
+      <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={startRecording}
-          onMouseUp={stopRecording}
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
-          className={`p-3 rounded-full ${
-            adminMode 
-              ? 'bg-[#0d5c75] hover:bg-[#0d5c75]/90 text-white' 
-              : 'bg-[#2a9d8f] hover:bg-[#2a9d8f]/90 text-white'
-          }`}
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          className="p-2 rounded-full text-gray-600 hover:bg-gray-200 transition-colors"
         >
-          <Mic className="h-5 w-5" />
+          <Smile className="h-5 w-5" />
         </Button>
-      )}
-      
-      {/* Recording Interface */}
-      {recordingState.isRecording && (
-        <Card className="flex-1 p-3">
-          <div className="flex items-center gap-3">
-            {/* Waveform Visualization */}
-            <div className="flex items-center gap-1 flex-1">
-              {recordingState.amplitude.map((amp, index) => (
-                <div
-                  key={index}
-                  className="w-1 bg-red-500 rounded-full transition-all duration-100"
-                  style={{ height: `${Math.max(2, amp * 20)}px` }}
-                />
-              ))}
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+          className="p-2 rounded-full text-gray-600 hover:bg-gray-200 transition-colors"
+        >
+          <Paperclip className="h-5 w-5" />
+        </Button>
+        
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+          onChange={(e) => handleFileSelect(e, 'file')}
+          className="hidden"
+        />
+      </div>
+
+      {/* Center - Input Field with Voice Button */}
+      <div className="flex-1 relative">
+        {recordingState.isRecording ? (
+          // Recording Interface
+          <Card className="p-2 bg-red-50 border-red-200">
+            <div className="flex items-center gap-2">
+              {/* Waveform */}
+              <div className="flex items-center gap-1 flex-1">
+                {recordingState.amplitude.map((amp, index) => (
+                  <div
+                    key={index}
+                    className="w-1 bg-red-500 rounded-full transition-all duration-100"
+                    style={{ height: `${Math.max(2, amp * 20)}px` }}
+                  />
+                ))}
+              </div>
+              
+              {/* Duration */}
+              <span className="text-sm font-medium text-red-600 min-w-[40px]">
+                {formatDuration(recordingState.duration)}
+              </span>
+              
+              {/* Cancel */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={cancelRecording}
+                className="p-1 text-red-600 hover:bg-red-100 rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              
+              {/* Stop */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={stopRecording}
+                className="p-1 bg-red-500 hover:bg-red-600 text-white rounded-full"
+              >
+                <Square className="h-4 w-4" />
+              </Button>
             </div>
+          </Card>
+        ) : (
+          // Normal Input with Voice Button
+          <div className="flex items-center bg-white rounded-full border border-gray-300 px-3 py-1 focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500 transition-all">
+            <Input
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              placeholder="Type a message"
+              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-0 text-sm"
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            />
             
-            {/* Duration */}
-            <span className="text-sm font-medium text-red-600">
-              {formatDuration(recordingState.duration)}
-            </span>
-            
-            {/* Cancel Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={cancelRecording}
-              className="text-red-600 hover:bg-red-50"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            
-            {/* Stop Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={stopRecording}
-              className="bg-red-500 hover:bg-red-600 text-white"
-            >
-              <Square className="h-4 w-4" />
-            </Button>
+            {/* Voice Button (inside input) */}
+            {!messageText.trim() && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onMouseDown={startRecording}
+                onMouseUp={stopRecording}
+                onTouchStart={startRecording}
+                onTouchEnd={stopRecording}
+                className="p-1 rounded-full text-gray-600 hover:bg-gray-100 ml-1"
+              >
+                <Mic className="h-5 w-5" />
+              </Button>
+            )}
           </div>
-        </Card>
-      )}
-      
-      {/* File Upload */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-      
-      {!selectedFile && !recordingState.isRecording && (
-        <>
+        )}
+      </div>
+
+      {/* Right side - Camera, Video, Send */}
+      <div className="flex items-center gap-1">
+        {/* Camera Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => imageInputRef.current?.click()}
+          className="p-2 rounded-full text-gray-600 hover:bg-gray-200 transition-colors"
+        >
+          <Camera className="h-5 w-5" />
+        </Button>
+        
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleFileSelect(e, 'image')}
+          className="hidden"
+        />
+        
+        {/* Video Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => videoInputRef.current?.click()}
+          className="p-2 rounded-full text-gray-600 hover:bg-gray-200 transition-colors"
+        >
+          <Video className="h-5 w-5" />
+        </Button>
+        
+        <input
+          ref={videoInputRef}
+          type="file"
+          accept="video/*"
+          onChange={(e) => handleFileSelect(e, 'video')}
+          className="hidden"
+        />
+        
+        {/* Send Button */}
+        {messageText.trim() ? (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-3 rounded-full text-gray-600 hover:bg-gray-100"
+            onClick={handleSend}
+            className={`p-2 rounded-full transition-colors ${
+              adminMode 
+                ? 'bg-[#0d5c75] hover:bg-[#0d5c75]/90 text-white' 
+                : 'bg-[#128C7E] hover:bg-[#128C7E]/90 text-white'
+            }`}
           >
-            <File className="h-5 w-5" />
+            <Send className="h-5 w-5" />
           </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-3 rounded-full text-gray-600 hover:bg-gray-100"
-          >
-            <Image className="h-5 w-5" />
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-3 rounded-full text-gray-600 hover:bg-gray-100"
-          >
-            <Video className="h-5 w-5" />
-          </Button>
-        </>
-      )}
-      
-      {/* File Preview */}
+        ) : (
+          <div className="w-9" /> 
+        )}
+      </div>
+
+      {/* File Upload Modal */}
       {selectedFile && (
-        <Card className="flex-1 p-3">
-          <div className="flex items-center gap-3">
-            {/* File Icon */}
-            <div className="p-2 rounded-full bg-gray-100">
-              {selectedFile.type.startsWith('image/') && <Image className="h-4 w-4" />}
-              {selectedFile.type.startsWith('video/') && <Video className="h-4 w-4" />}
-              {!selectedFile.type.startsWith('image/') && !selectedFile.type.startsWith('video/') && <File className="h-4 w-4" />}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-full bg-gray-100">
+                {selectedFile.type.startsWith('image/') && <Image className="h-6 w-6" />}
+                {selectedFile.type.startsWith('video/') && <Video className="h-6 w-6" />}
+                {!selectedFile.type.startsWith('image/') && !selectedFile.type.startsWith('video/') && <File className="h-6 w-6" />}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                <p className="text-xs text-gray-500">{formatFileSize(selectedFile.size)}</p>
+              </div>
             </div>
             
-            {/* File Info */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{selectedFile.name}</p>
-              <p className="text-xs text-gray-500">{formatFileSize(selectedFile.size)}</p>
-            </div>
-            
-            {/* Upload Progress */}
             {isUploading && (
-              <div className="w-24">
+              <div className="mb-4">
                 <Progress value={uploadProgress} className="h-2" />
-                <p className="text-xs text-gray-500 mt-1">{uploadProgress}%</p>
+                <p className="text-xs text-gray-500 mt-1 text-center">Uploading... {uploadProgress}%</p>
               </div>
             )}
             
-            {/* Actions */}
-            <div className="flex items-center gap-2">
-              {!isUploading && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedFile(null)}
-                    className="text-red-600 hover:bg-red-50"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={uploadFile}
-                    className={`${
-                      adminMode 
-                        ? 'bg-[#0d5c75] hover:bg-[#0d5c75]/90 text-white' 
-                        : 'bg-[#2a9d8f] hover:bg-[#2a9d8f]/90 text-white'
-                    }`}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedFile(null)}
+                disabled={isUploading}
+              >
+                Cancel
+              </Button>
+              
+              <Button
+                onClick={uploadFile}
+                disabled={isUploading}
+                className={`${
+                  adminMode 
+                    ? 'bg-[#0d5c75] hover:bg-[#0d5c75]/90' 
+                    : 'bg-[#128C7E] hover:bg-[#128C7E]/90'
+                }`}
+              >
+                {isUploading ? 'Sending...' : 'Send'}
+              </Button>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       )}
     </div>
   )
