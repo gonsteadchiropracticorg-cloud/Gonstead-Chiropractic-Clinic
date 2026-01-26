@@ -37,8 +37,11 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import WhatsAppMessageMenu from './WhatsAppMessageMenu'
+import WhatsAppMediaRecorder from './WhatsAppMediaRecorder'
+import WhatsAppMediaMessage from './WhatsAppMediaMessage'
 import { chatLocalStorage, LocalChatMessage } from '@/lib/chat-local-storage'
 import { chatSyncService } from '@/lib/chat-sync-service'
+import { mediaStorage, MediaFile } from '@/lib/media-storage'
 
 interface WhatsAppChatInterfaceProps {
   currentUserId: string
@@ -56,7 +59,12 @@ interface ChatMessage {
   sender_role: string
   receiver_id: string
   receiver_role: string
-  message: string
+  message?: string
+  media_url?: string
+  media_type?: 'voice' | 'video' | 'image' | 'file'
+  media_name?: string
+  media_size?: number
+  media_duration?: number
   read: boolean
   read_at?: string
   delivered: boolean
@@ -339,6 +347,130 @@ export default function WhatsAppChatInterface({
       title: "Chat exported",
       description: "Your chat history has been downloaded"
     })
+  }
+
+  // Handle media from recorder
+  const handleMediaReady = async (mediaData: any) => {
+    try {
+      let mediaFile: MediaFile
+
+      if (mediaData.type === 'voice') {
+        // Upload voice recording
+        mediaFile = await mediaStorage.uploadVoiceRecording(
+          await fetch(mediaData.url).then(r => r.blob()),
+          currentUserId,
+          mediaData.duration
+        )
+      } else {
+        // Upload file/image/video
+        const response = await fetch(mediaData.url)
+        const blob = await response.blob()
+        const file = new File([blob], mediaData.name || 'media', { type: mediaData.mimeType })
+        
+        mediaFile = await mediaStorage.uploadFile(file, currentUserId)
+      }
+
+      // Send media message
+      await sendMediaMessage(mediaFile)
+
+    } catch (error) {
+      toast({
+        title: "Media upload failed",
+        description: "Could not upload media file",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Send media message
+  const sendMediaMessage = async (mediaFile: MediaFile) => {
+    if (!selectedChat) return
+
+    setIsLoading(true)
+    try {
+      let messageData: any = {
+        sender_id: currentUserId,
+        sender_name: currentUserName,
+        sender_role: currentUserRole,
+        media_url: mediaFile.url,
+        media_type: mediaFile.type,
+        media_name: mediaFile.name,
+        media_size: mediaFile.size,
+        media_duration: mediaFile.duration,
+        read: false,
+        delivered: true,
+        delivered_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      }
+
+      // Only add expires_at if column exists
+      try {
+        messageData.expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      } catch (err) {
+        console.warn('expires_at column not found, skipping')
+      }
+
+      if (selectedChat === 'group-chat') {
+        messageData.receiver_id = 'group'
+        messageData.receiver_role = 'staff'
+        try {
+          messageData.chat_type = 'group'
+        } catch (err) {
+          console.warn('chat_type column not found, sending without chat_type')
+        }
+      } else {
+        messageData.receiver_id = selectedChat
+        const selectedUser = chatUsers.find(user => user.user_id === selectedChat)
+        messageData.receiver_role = selectedUser?.user_role || 'staff'
+        try {
+          messageData.chat_type = 'individual'
+        } catch (err) {
+          console.warn('chat_type column not found, sending without chat_type')
+        }
+      }
+      
+      console.log('Sending media message data:', messageData)
+      
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert(messageData)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Insert error:', error)
+        console.error('Error details:', JSON.stringify(error, null, 2))
+        throw error
+      }
+
+      console.log('Media message sent successfully:', data)
+
+      // Update delivered status
+      setTimeout(async () => {
+        try {
+          await supabase
+            .from('chat_messages')
+            .update({ 
+              delivered: true, 
+              delivered_at: new Date().toISOString() 
+            })
+            .eq('id', data.id)
+        } catch (updateError) {
+          console.warn('Error updating delivered status:', updateError)
+        }
+      }, 1000)
+
+    } catch (error) {
+      console.error('Error sending media message:', error)
+      console.error('Full error details:', JSON.stringify(error, null, 2))
+      toast({
+        title: "Failed to send media",
+        description: "Please check your connection and try again",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Load chat users
@@ -1065,7 +1197,27 @@ export default function WhatsAppChatInterface({
                               {message.sender_name}
                             </p>
                           )}
-                          <p className="text-sm break-words">{message.message}</p>
+                          
+                          {/* Render media or text message */}
+                          {message.media_url ? (
+                            <WhatsAppMediaMessage
+                              message={{
+                                id: message.id,
+                                type: message.media_type!,
+                                url: message.media_url,
+                                duration: message.media_duration,
+                                size: message.media_size,
+                                name: message.media_name,
+                                mimeType: message.mimeType,
+                                sender_id: message.sender_id,
+                                created_at: message.created_at,
+                                isOwn: message.sender_id === currentUserId,
+                                adminMode
+                              }}
+                            />
+                          ) : (
+                            <p className="text-sm break-words">{message.message}</p>
+                          )}
                           <div className={`flex items-center justify-between gap-2 mt-1 ${
                             message.sender_id === currentUserId ? 'flex-row-reverse' : 'flex-row'
                           }`}>
@@ -1091,8 +1243,17 @@ export default function WhatsAppChatInterface({
 
             {/* Input */}
             <div className="p-4 border-t flex-shrink-0">
-              <div className="flex gap-2">
+              {/* Media Recorder */}
+              <WhatsAppMediaRecorder
+                onMediaReady={handleMediaReady}
+                currentUserId={currentUserId}
+                adminMode={adminMode}
+              />
+              
+              {/* Text Input */}
+              <div className="flex gap-2 mt-2">
                 <Input
+                  id="chat-input"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder={`Message ${selectedChat === 'group-chat' ? 'Team Group' : selectedChatUser?.user_name || '...'}...`}
