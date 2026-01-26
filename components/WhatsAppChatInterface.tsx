@@ -443,34 +443,43 @@ export default function WhatsAppChatInterface({
         sender_name: currentUserName,
         sender_role: currentUserRole,
         message: messageText,
+        read: false,
         delivered: true,
         delivered_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        created_at: new Date().toISOString()
+      }
+
+      // Only add expires_at if column exists
+      try {
+        messageData.expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      } catch (err) {
+        console.warn('expires_at column not found, skipping')
       }
 
       if (selectedChat === 'group-chat') {
-        // Group message - try to add chat_type, fallback if column doesn't exist
+        // Group message
+        messageData.receiver_id = 'group'
+        messageData.receiver_role = 'group'
+        // Only add chat_type if column exists
         try {
           messageData.chat_type = 'group'
-          messageData.receiver_id = 'group'
-          messageData.receiver_role = 'group'
         } catch (err) {
-          console.warn('chat_type column not found, sending as regular message')
-          messageData.receiver_id = 'group'
-          messageData.receiver_role = 'group'
+          console.warn('chat_type column not found, sending without chat_type')
         }
       } else {
         // Individual message
-        try {
-          messageData.chat_type = 'individual'
-        } catch (err) {
-          console.warn('chat_type column not found, sending as regular message')
-        }
         messageData.receiver_id = selectedChat
         const selectedUser = chatUsers.find(user => user.user_id === selectedChat)
         messageData.receiver_role = selectedUser?.user_role || 'staff'
+        // Only add chat_type if column exists
+        try {
+          messageData.chat_type = 'individual'
+        } catch (err) {
+          console.warn('chat_type column not found, sending without chat_type')
+        }
       }
+      
+      console.log('Sending message data:', messageData)
       
       const { data, error } = await supabase
         .from('chat_messages')
@@ -480,8 +489,11 @@ export default function WhatsAppChatInterface({
 
       if (error) {
         console.error('Insert error:', error)
+        console.error('Error details:', JSON.stringify(error, null, 2))
         throw error
       }
+
+      console.log('Message sent successfully:', data)
 
       // Update delivered status
       setTimeout(async () => {
@@ -500,9 +512,10 @@ export default function WhatsAppChatInterface({
 
     } catch (error) {
       console.error('Error sending message:', error)
+      console.error('Full error details:', JSON.stringify(error, null, 2))
       toast({
         title: "Failed to send message",
-        description: "Please try again",
+        description: "Please check your connection and try again",
         variant: "destructive"
       })
     } finally {
