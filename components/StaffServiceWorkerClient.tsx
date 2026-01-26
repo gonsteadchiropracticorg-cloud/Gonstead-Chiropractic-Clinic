@@ -13,8 +13,10 @@ export default function StaffServiceWorkerClient() {
   useEffect(() => {
     if (!isStaffRoute) return
 
-    // Register service worker + initialize sync for staff routes
-    syncManager.initialize().catch(() => {})
+    // Register service worker + initialize sync for staff routes (optional)
+    syncManager.initialize().catch((error) => {
+      console.warn('Staff service worker initialization failed (app will still work):', error)
+    })
 
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker.ready.then((reg) => {
@@ -22,6 +24,8 @@ export default function StaffServiceWorkerClient() {
           type: "CACHE_URLS",
           urls: ["/staff-dashboard", "/staff-login", "/offline"],
         })
+      }).catch((error) => {
+        console.warn('Staff service worker ready failed (app will still work):', error)
       })
     }
 

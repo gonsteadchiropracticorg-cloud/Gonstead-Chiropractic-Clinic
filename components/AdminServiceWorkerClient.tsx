@@ -15,8 +15,10 @@ export default function AdminServiceWorkerClient() {
     // Only initialize for admin routes
     if (!isAdminRoute) return
 
-    // Register service worker + initialize sync
-    syncManager.initialize().catch(() => {})
+    // Register service worker + initialize sync (optional)
+    syncManager.initialize().catch((error) => {
+      console.warn('Admin service worker initialization failed (app will still work):', error)
+    })
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((reg) => {
@@ -25,6 +27,8 @@ export default function AdminServiceWorkerClient() {
           type: 'CACHE_URLS',
           urls: ['/admin', '/admin/dashboard', '/admin/patient-tracking', '/admin/calendar', '/admin/money-management', '/offline']
         })
+      }).catch((error) => {
+        console.warn('Admin service worker ready failed (app will still work):', error)
       })
     }
 

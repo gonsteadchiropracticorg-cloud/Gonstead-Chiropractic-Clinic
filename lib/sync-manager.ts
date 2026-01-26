@@ -251,22 +251,31 @@ class SyncManager {
   async registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js')
-        console.log('Service Worker registered successfully:', registration)
+        // Check if service worker file exists before registering
+        const response = await fetch('/sw.js', { method: 'HEAD' }).catch(() => null)
         
-        // Register background sync
-        if ('sync' in window.ServiceWorkerRegistration.prototype) {
-          const syncReg = registration as any // Background Sync API not in TS types
-          if (syncReg.sync && syncReg.sync.register) {
-            await syncReg.sync.register('background-sync')
-            console.log('Background sync registered')
+        if (response && response.ok) {
+          const registration = await navigator.serviceWorker.register('/sw.js')
+          console.log('Service Worker registered successfully:', registration)
+          
+          // Register background sync
+          if ('sync' in window.ServiceWorkerRegistration.prototype) {
+            const syncReg = registration as any // Background Sync API not in TS types
+            if (syncReg.sync && syncReg.sync.register) {
+              await syncReg.sync.register('background-sync')
+              console.log('Background sync registered')
+            }
           }
+          
+          return registration
+        } else {
+          console.log('Service Worker file not found, skipping registration')
+          return undefined
         }
-        
-        return registration
       } catch (error) {
-        console.error('Service Worker registration failed:', error)
-        throw error
+        console.warn('Service Worker registration failed (this is optional):', error)
+        // Don't throw error - service worker is optional for chat functionality
+        return undefined
       }
     }
   }
@@ -283,7 +292,7 @@ class SyncManager {
         await offlineStorage.migrateFromLocalStorage()
       }
       
-      // Register service worker
+      // Register service worker (optional - won't fail if not available)
       await this.registerServiceWorker()
       
       // Perform initial sync if online
@@ -295,7 +304,8 @@ class SyncManager {
       
       console.log('SyncManager initialized successfully')
     } catch (error) {
-      console.error('SyncManager initialization failed:', error)
+      console.warn('SyncManager initialization failed (chat will still work):', error)
+      // Don't throw error - sync manager is optional for chat functionality
     }
   }
 }

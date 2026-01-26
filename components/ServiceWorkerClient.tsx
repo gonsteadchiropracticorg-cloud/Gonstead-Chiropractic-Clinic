@@ -7,8 +7,10 @@ export default function ServiceWorkerClient() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
 
   useEffect(() => {
-    // Register service worker + initialize sync
-    syncManager.initialize().catch(() => {})
+    // Register service worker + initialize sync (optional)
+    syncManager.initialize().catch((error) => {
+      console.warn('Service worker initialization failed (app will still work):', error)
+    })
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((reg) => {
@@ -17,6 +19,8 @@ export default function ServiceWorkerClient() {
           type: 'CACHE_URLS',
           urls: ['/admin', '/admin/dashboard', '/offline']
         })
+      }).catch((error) => {
+        console.warn('Service worker ready failed (app will still work):', error)
       })
     }
 
