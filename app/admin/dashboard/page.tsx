@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import WhatsAppChatInterface from "@/components/WhatsAppChatInterface"
+import PerfectWhatsAppChat from "@/components/PerfectWhatsAppChat"
 import {
   Calendar,
   Users,
@@ -6070,12 +6070,11 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* WhatsApp-Style Chat Interface */}
-      <WhatsAppChatInterface 
+      {/* Perfect WhatsApp-Style Chat Interface */}
+      <PerfectWhatsAppChat 
         currentUserId={adminUser?.email || 'admin-user'} 
         currentUserRole={'admin'}
         currentUserName={adminUser?.name || 'Dr. Bashir Khan'}
-        adminMode={true}
       />
       
       {/* Debug: Show admin user info */}

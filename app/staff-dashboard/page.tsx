@@ -35,7 +35,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import WhatsAppChatInterface from '@/components/WhatsAppChatInterface'
+import PerfectWhatsAppChat from '@/components/PerfectWhatsAppChat'
 import StaffScrollToTopButton from '@/components/StaffScrollToTopButton'
 
 // Lazy-load staff PWA install client only on client side
@@ -1055,12 +1055,11 @@ const handleStaffLogin = async (e: React.FormEvent) => {
       {/* Staff PWA install prompt - only on staff routes */}
       <StaffServiceWorkerClient />
       
-      {/* WhatsApp-Style Chat Interface */}
-      <WhatsAppChatInterface 
+      {/* Perfect WhatsApp-Style Chat Interface */}
+      <PerfectWhatsAppChat 
         currentUserId={staffUsername || 'staff-user'} 
         currentUserRole={'staff'}
         currentUserName={staffUsername || 'Staff Member'}
-        adminMode={false}
       />
       
       {/* Scroll to Top Button */}
