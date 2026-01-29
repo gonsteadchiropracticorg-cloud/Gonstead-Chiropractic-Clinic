@@ -1003,94 +1003,134 @@ export default function PerfectWhatsAppChat({
           boxShadow: `0 10px 40px ${colors.shadow}, 0 0 0 1px ${colors.border}`
         }}
       >
-        {/* Enhanced Header with WhatsApp-style features */}
+        {/* Perfect Chat Header - Analyzed & Optimized */}
         <CardHeader 
-          className="p-3.5 flex flex-row items-center justify-between flex-shrink-0 border-b"
-          style={{ backgroundColor: colors.headerBg, borderColor: 'rgba(255,255,255,0.1)' }}
+          className="px-4 py-3 flex-shrink-0 border-b"
+          style={{ 
+            backgroundColor: colors.headerBg, 
+            borderColor: 'rgba(255,255,255,0.1)'
+          }}
         >
-          <div className="flex items-center space-x-2.5">
-            <div className="flex items-center space-x-1.5">
+          {/* Primary Header Row */}
+          <div className="flex items-center justify-between">
+            {/* Left Section - Chat Identity */}
+            <div className="flex items-center space-x-3">
+              {/* Chat Icon with Status */}
               <div className="relative">
-                <Users className="h-4.5 w-4.5 text-white" />
-                <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full border border-white"></div>
+                <MessageSquare className="h-4.5 w-4.5 text-white/95" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full border border-white/90"></div>
               </div>
+              
+              {/* Chat Title */}
               <div>
-                <CardTitle className="text-base font-semibold text-white leading-tight">
+                <h2 className="text-white font-semibold text-sm leading-tight">
                   {settings.group_name}
-                </CardTitle>
-                <div className="flex items-center space-x-3 text-xs text-blue-100 mt-0.5">
-                  <div className="flex items-center space-x-1">
-                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                    <span>{onlineUsers.length + 1} online</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                  {currentUserRole === 'admin' && (
-                    <div className="flex items-center space-x-1 bg-amber-500/20 px-1.5 py-0.5 rounded-full">
-                      <Crown className="h-3 w-3 text-amber-300" />
-                      <span className="text-amber-200">Admin</span>
-                    </div>
-                  )}
+                </h2>
+                <div className="flex items-center space-x-2 mt-0.5">
+                  <span className="text-xs text-white/60">
+                    {onlineUsers.length} members
+                  </span>
+                  <span className="text-xs text-white/40">•</span>
+                  <span className="text-xs text-white/60">
+                    {formatTime(new Date().toISOString())}
+                  </span>
                 </div>
+              </div>
+            </div>
+            
+            {/* Right Section - Status & Actions */}
+            <div className="flex items-center space-x-2">
+              {/* Connection Status */}
+              <div className="flex items-center space-x-1 px-2 py-1 bg-green-500/10 rounded-md">
+                <Wifi className="h-3 w-3 text-green-400" />
+                <span className="text-xs font-medium text-green-300">Online</span>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-0.5">
+                {/* Voice Call */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => startCall('voice')}
+                  disabled={isInCall}
+                  className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-md transition-colors"
+                  title="Voice Call"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                </Button>
+                
+                {/* Video Call */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => startCall('video')}
+                  disabled={isInCall}
+                  className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-md transition-colors"
+                  title="Video Call"
+                >
+                  <Video className="h-3.5 w-3.5" />
+                </Button>
+                
+                {/* Admin Settings */}
+                {currentUserRole === 'admin' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSettings(!showSettings)}
+                    className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-md transition-colors"
+                    title="Settings"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                
+                {/* Close */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                  className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-md transition-colors"
+                  title="Close"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            {/* Connection Status Indicator */}
-            <div className="flex items-center space-x-1 px-2 py-1 bg-white/10 rounded-full">
-              <Wifi className="h-3 w-3 text-green-400" />
-              <span className="text-xs text-green-400">Connected</span>
+          {/* Admin Authority Bar - Only for Admin */}
+          {currentUserRole === 'admin' && (
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-3 w-3 text-amber-400" />
+                <span className="text-xs font-medium text-amber-300">Administrator Access</span>
+              </div>
+              <div className="flex items-center space-x-3 text-xs text-white/50">
+                <span>Staff Messages: {settings.allow_staff_messages ? 'Enabled' : 'Disabled'}</span>
+                <span>•</span>
+                <span>Auto-clear: {settings.auto_clear_enabled ? 'On' : 'Off'}</span>
+              </div>
             </div>
-            
-            {/* Call Buttons - Moved to header */}
-            <div className="flex items-center space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => startCall('voice')}
-                disabled={isInCall}
-                className="text-white hover:bg-white/20 p-1.5 transition-all duration-200 hover:scale-105"
-                title="Voice Call"
-              >
-                <Phone className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => startCall('video')}
-                disabled={isInCall}
-                className="text-white hover:bg-white/20 p-1.5 transition-all duration-200 hover:scale-105"
-                title="Video Call"
-              >
-                <Video className="h-3.5 w-3.5" />
-              </Button>
+          )}
+          
+          {/* Staff Status Bar - Only for Staff */}
+          {currentUserRole === 'staff' && (
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+              <div className="flex items-center space-x-2">
+                <Users className="h-3 w-3 text-blue-400" />
+                <span className="text-xs font-medium text-blue-300">Staff Member</span>
+              </div>
+              <div className="flex items-center space-x-3 text-xs text-white/50">
+                <span className={`flex items-center space-x-1 ${settings.allow_staff_messages ? 'text-green-400' : 'text-orange-400'}`}>
+                  <Circle className={`h-2 w-2 fill-current ${settings.allow_staff_messages ? 'text-green-400' : 'text-orange-400'}`} />
+                  Messages {settings.allow_staff_messages ? 'Enabled' : 'Disabled'}
+                </span>
+                <span className="text-white/30">•</span>
+                <span className="text-white/50">Role: {currentUserName}</span>
+              </div>
             </div>
-            
-            {/* Admin Settings */}
-            {currentUserRole === 'admin' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSettings(!showSettings)}
-                className="text-white hover:bg-white/20 p-2 transition-all duration-200 hover:scale-105"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            )}
-            
-            {/* Close Button - Moved up */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-white/20 p-2 transition-all duration-200 hover:scale-105"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          )}
         </CardHeader>
 
         {/* Fixed Admin Settings Panel */}
@@ -1396,19 +1436,33 @@ export default function PerfectWhatsAppChat({
                 😊
               </Button>
               
-              {/* Emoji Picker */}
+              {/* Improved Emoji Picker */}
               {showEmojiPicker && (
-                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 z-50">
+                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-2xl border border-gray-200 p-4 z-50 w-80 max-h-80">
+                  <div className="mb-2 pb-2 border-b border-gray-200">
+                    <p className="text-sm font-medium text-gray-700">Select Emoji</p>
+                  </div>
                   <div className="grid grid-cols-8 gap-1 max-h-60 overflow-y-auto">
                     {commonEmojis.map((emoji, index) => (
                       <button
                         key={index}
                         onClick={() => handleEmojiSelect(emoji)}
-                        className="text-lg hover:bg-gray-100 rounded p-1 transition-colors"
+                        className="text-2xl hover:bg-gray-100 rounded p-2 transition-colors hover:scale-110 transform"
+                        title={emoji}
                       >
                         {emoji}
                       </button>
                     ))}
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowEmojiPicker(false)}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      Close
+                    </Button>
                   </div>
                 </div>
               )}
