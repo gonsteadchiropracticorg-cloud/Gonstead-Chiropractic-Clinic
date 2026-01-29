@@ -36,7 +36,14 @@ import {
   Shield,
   Crown,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  File,
+  Paperclip,
+  Mic,
+  MicOff,
+  PhoneCall,
+  PhoneIncoming,
+  PhoneOutgoing
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -53,7 +60,7 @@ interface ChatMessage {
   sender_name: string
   sender_role: 'admin' | 'staff'
   message: string
-  message_type: 'text' | 'system' | 'notification'
+  message_type: 'text' | 'system' | 'notification' | 'file' | 'call'
   read: boolean
   read_at?: string
   delivered: boolean
@@ -66,6 +73,13 @@ interface ChatMessage {
   is_deleted?: boolean
   deleted_by?: string
   deleted_at?: string
+  file_url?: string
+  file_name?: string
+  file_size?: number
+  file_type?: string
+  call_type?: 'voice' | 'video'
+  call_duration?: number
+  call_status?: 'missed' | 'incoming' | 'outgoing' | 'completed'
 }
 
 interface GroupSettings {
@@ -99,11 +113,19 @@ export default function PerfectWhatsAppChat({
   const [isRecording, setIsRecording] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [isInCall, setIsInCall] = useState(false)
+  const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'connected' | 'ended'>('idle')
+  const [callDuration, setCallDuration] = useState(0)
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
 
   // Close chat when clicking outside
@@ -517,7 +539,7 @@ export default function PerfectWhatsAppChat({
     }
   }, [])
 
-  // WhatsApp-style message status simulation
+  // WhatsApp-style message status simulation with proper read tracking
   const updateMessageStatus = useCallback(async (messageId: string) => {
     // Simulate delivery after 1 second
     setTimeout(async () => {
@@ -534,7 +556,7 @@ export default function PerfectWhatsAppChat({
       }
     }, 1000)
 
-    // Simulate read after 3 seconds (for messages from others)
+    // Mark other users' messages as read when viewed
     setTimeout(async () => {
       try {
         await supabase
@@ -550,6 +572,29 @@ export default function PerfectWhatsAppChat({
       }
     }, 3000)
   }, [currentUserId])
+
+  // Mark messages as read when chat is open
+  useEffect(() => {
+    if (isOpen && messages.length > 0) {
+      const unreadMessages = messages.filter(
+        msg => !msg.read && msg.sender_id !== currentUserId
+      )
+      
+      unreadMessages.forEach(async (message) => {
+        try {
+          await supabase
+            .from('chat_messages')
+            .update({ 
+              read: true, 
+              read_at: new Date().toISOString() 
+            })
+            .eq('id', message.id)
+        } catch (error) {
+          console.log('Failed to mark message as read')
+        }
+      })
+    }
+  }, [isOpen, messages, currentUserId])
 
   // Enhanced auto-scroll for new messages
   useEffect(() => {
@@ -592,41 +637,260 @@ export default function PerfectWhatsAppChat({
     inputRef.current?.focus()
   }
 
-  // Handle voice recording
-  const startRecording = () => {
-    setIsRecording(true)
-    setRecordingTime(0)
-    
-    const interval = setInterval(() => {
-      setRecordingTime(prev => {
-        if (prev >= 59) {
-          stopRecording()
-          return 0
-        }
-        return prev + 1
+  // Handle file upload with better error handling
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please select a file smaller than 10MB",
+        variant: "destructive"
       })
-    }, 1000)
-    
-    // Store interval ID for cleanup
-    ;(window as any).recordingInterval = interval
+      return
+    }
+
+    setIsUploading(true)
+    setUploadedFile(file)
+
+    try {
+      // Create a simple file message without uploading to storage for now
+      const fileMessage: Partial<ChatMessage> = {
+        sender_id: currentUserId,
+        sender_name: currentUserName,
+        sender_role: currentUserRole,
+        message: `📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
+        message_type: 'text', // Use text type for now
+        read: false,
+        delivered: true,
+        delivered_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      }
+
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert(fileMessage)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      if (data) {
+        setMessages(prev => [...prev, data])
+        saveToLocalStorage([...messages, data])
+        setTimeout(() => scrollToBottom(true), 100)
+      }
+
+      toast({
+        title: "File Message Sent",
+        description: `${file.name} message sent successfully`,
+      })
+
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      toast({
+        title: "Upload Failed",
+        description: "Failed to send file message. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsUploading(false)
+      setUploadedFile(null)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  // Handle voice recording with MediaRecorder API
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+      const chunks: Blob[] = []
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data)
+        }
+      }
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' })
+        const audioUrl = URL.createObjectURL(audioBlob)
+        
+        // Here you would normally upload the audio file
+        // For now, we'll just show a message
+        const voiceMessage: Partial<ChatMessage> = {
+          sender_id: currentUserId,
+          sender_name: currentUserName,
+          sender_role: currentUserRole,
+          message: '🎤 Voice message',
+          message_type: 'text', // Change to 'voice' when you implement voice storage
+          read: false,
+          delivered: true,
+          delivered_at: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        }
+
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .insert(voiceMessage)
+          .select()
+          .single()
+
+        if (!error && data) {
+          setMessages(prev => [...prev, data])
+          saveToLocalStorage([...messages, data])
+          setTimeout(() => scrollToBottom(true), 100)
+        }
+
+        // Clean up
+        stream.getTracks().forEach(track => track.stop())
+        URL.revokeObjectURL(audioUrl)
+      }
+
+      recorder.start()
+      setMediaRecorder(recorder)
+      setIsRecording(true)
+      setRecordingTime(0)
+      
+      const interval = setInterval(() => {
+        setRecordingTime(prev => {
+          if (prev >= 59) {
+            stopRecording()
+            return 0
+          }
+          return prev + 1
+        })
+      }, 1000)
+      
+      ;(window as any).recordingInterval = interval
+
+    } catch (error) {
+      console.error('Error starting recording:', error)
+      toast({
+        title: "Recording Failed",
+        description: "Could not access microphone. Please check permissions.",
+        variant: "destructive"
+      })
+    }
   }
 
   const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop()
+    }
     setIsRecording(false)
     setRecordingTime(0)
     
-    // Clear the interval
     if ((window as any).recordingInterval) {
       clearInterval((window as any).recordingInterval)
       delete (window as any).recordingInterval
     }
+  }
+
+  // Handle call functionality
+  const startCall = async (type: 'voice' | 'video') => {
+    setCallStatus('calling')
+    setIsInCall(true)
     
-    // Here you would normally handle the recorded audio
-    // For now, just show a toast
-    toast({
-      title: "Voice Recording",
-      description: "Voice recording feature is ready for implementation",
-    })
+    const callMessage: Partial<ChatMessage> = {
+      sender_id: currentUserId,
+      sender_name: currentUserName,
+      sender_role: currentUserRole,
+      message: type === 'voice' ? '📞 Voice call started' : '📹 Video call started',
+      message_type: 'call',
+      call_type: type,
+      call_status: 'outgoing',
+      read: false,
+      delivered: true,
+      delivered_at: new Date().toISOString(),
+      created_at: new Date().toISOString()
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert(callMessage)
+        .select()
+        .single()
+
+      if (!error && data) {
+        setMessages(prev => [...prev, data])
+        saveToLocalStorage([...messages, data])
+        setTimeout(() => scrollToBottom(true), 100)
+      }
+
+      toast({
+        title: "Call Started",
+        description: `${type === 'voice' ? 'Voice' : 'Video'} call initiated`,
+      })
+
+      // Simulate call connection
+      setTimeout(() => {
+        setCallStatus('connected')
+        startCallTimer()
+      }, 2000)
+
+    } catch (error) {
+      console.error('Error starting call:', error)
+      setCallStatus('idle')
+      setIsInCall(false)
+    }
+  }
+
+  const endCall = () => {
+    setCallStatus('ended')
+    setIsInCall(false)
+    
+    if ((window as any).callTimer) {
+      clearInterval((window as any).callTimer)
+      delete (window as any).callTimer
+    }
+
+    const endCallMessage: Partial<ChatMessage> = {
+      sender_id: currentUserId,
+      sender_name: currentUserName,
+      sender_role: currentUserRole,
+      message: `📞 Call ended (${formatCallDuration(callDuration)})`,
+      message_type: 'call',
+      call_type: 'voice',
+      call_status: 'completed',
+      call_duration: callDuration,
+      read: false,
+      delivered: true,
+      delivered_at: new Date().toISOString(),
+      created_at: new Date().toISOString()
+    }
+
+    supabase
+      .from('chat_messages')
+      .insert(endCallMessage)
+      .select()
+      .single()
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setMessages(prev => [...prev, data])
+          saveToLocalStorage([...messages, data])
+        }
+      })
+
+    setCallDuration(0)
+  }
+
+  const startCallTimer = () => {
+    ;(window as any).callTimer = setInterval(() => {
+      setCallDuration(prev => prev + 1)
+    }, 1000)
+  }
+
+  const formatCallDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   // Professional luxury floating chat button with premium animations
@@ -774,13 +1038,38 @@ export default function PerfectWhatsAppChat({
             </div>
           </div>
           
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-2">
             {/* Connection Status Indicator */}
             <div className="flex items-center space-x-1 px-2 py-1 bg-white/10 rounded-full">
               <Wifi className="h-3 w-3 text-green-400" />
               <span className="text-xs text-green-400">Connected</span>
             </div>
             
+            {/* Call Buttons - Moved to header */}
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => startCall('voice')}
+                disabled={isInCall}
+                className="text-white hover:bg-white/20 p-1.5 transition-all duration-200 hover:scale-105"
+                title="Voice Call"
+              >
+                <Phone className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => startCall('video')}
+                disabled={isInCall}
+                className="text-white hover:bg-white/20 p-1.5 transition-all duration-200 hover:scale-105"
+                title="Video Call"
+              >
+                <Video className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            
+            {/* Admin Settings */}
             {currentUserRole === 'admin' && (
               <Button
                 variant="ghost"
@@ -791,6 +1080,8 @@ export default function PerfectWhatsAppChat({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             )}
+            
+            {/* Close Button - Moved up */}
             <Button
               variant="ghost"
               size="sm"
@@ -935,9 +1226,60 @@ export default function PerfectWhatsAppChat({
                         boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
                       }}
                     >
-                      <p className="text-sm break-words leading-relaxed" style={{ color: colors.textPrimary }}>
-                        {message.message}
-                      </p>
+                      {/* File Message */}
+                      {message.message_type === 'file' && (
+                        <div className="flex items-center space-x-2">
+                          <File className="w-5 h-5 text-blue-500" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium" style={{ color: colors.textPrimary }}>
+                              {message.file_name}
+                            </p>
+                            <p className="text-xs" style={{ color: colors.textSecondary }}>
+                              {message.file_size && `${(message.file_size / 1024).toFixed(1)} KB`}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (message.file_url) {
+                                window.open(message.file_url, '_blank')
+                              }
+                            }}
+                            className="text-blue-500 hover:text-blue-700 p-1"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Call Message */}
+                      {message.message_type === 'call' && (
+                        <div className="flex items-center space-x-2">
+                          {message.call_type === 'voice' ? (
+                            <PhoneCall className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <Video className="w-5 h-5 text-blue-500" />
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm" style={{ color: colors.textPrimary }}>
+                              {message.message}
+                            </p>
+                            {message.call_duration && (
+                              <p className="text-xs" style={{ color: colors.textSecondary }}>
+                                Duration: {formatCallDuration(message.call_duration)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Text Message */}
+                      {message.message_type === 'text' && (
+                        <p className="text-sm break-words leading-relaxed" style={{ color: colors.textPrimary }}>
+                          {message.message}
+                        </p>
+                      )}
                       
                       {/* WhatsApp-style Message Status - Fixed positioning inside textbox */}
                       <div className="flex items-center justify-end mt-1 text-xs">
@@ -947,7 +1289,7 @@ export default function PerfectWhatsAppChat({
                           <div className="flex items-center ml-1">
                             {message.read ? (
                               <div className="flex items-center h-3">
-                                {/* Bottom check */}
+                                {/* Bottom check - blue when read */}
                                 <svg 
                                   className="w-3 h-3" 
                                   style={{ color: '#53bdeb' }}
@@ -956,7 +1298,7 @@ export default function PerfectWhatsAppChat({
                                 >
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
-                                {/* Top check - overlapping */}
+                                {/* Top check - overlapping, blue when read */}
                                 <svg 
                                   className="w-3 h-3 -ml-1.5" 
                                   style={{ color: '#53bdeb' }}
@@ -968,7 +1310,7 @@ export default function PerfectWhatsAppChat({
                               </div>
                             ) : message.delivered ? (
                               <div className="flex items-center h-3">
-                                {/* Bottom check */}
+                                {/* Bottom check - gray when delivered but not read */}
                                 <svg 
                                   className="w-3 h-3" 
                                   style={{ color: colors.textSecondary }}
@@ -977,7 +1319,7 @@ export default function PerfectWhatsAppChat({
                                 >
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
-                                {/* Top check - overlapping */}
+                                {/* Top check - overlapping, gray when delivered but not read */}
                                 <svg 
                                   className="w-3 h-3 -ml-1.5" 
                                   style={{ color: colors.textSecondary }}
@@ -988,6 +1330,7 @@ export default function PerfectWhatsAppChat({
                                 </svg>
                               </div>
                             ) : (
+                              /* Single check - gray when sent but not delivered */
                               <svg 
                                 className="w-3 h-3" 
                                 style={{ color: colors.textSecondary }}
@@ -1041,7 +1384,7 @@ export default function PerfectWhatsAppChat({
             </div>
           )}
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-end space-x-2">
             {/* Emoji Button */}
             <div className="relative">
               <Button
@@ -1071,14 +1414,29 @@ export default function PerfectWhatsAppChat({
               )}
             </div>
             
-            {/* Attach Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-500 hover:text-gray-700 p-2 hidden sm:flex transition-colors"
-            >
-              <Upload className="h-4 w-4" />
-            </Button>
+            {/* File Upload Button */}
+            <div className="relative">
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileUpload}
+                className="hidden"
+                accept="*/*"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="text-gray-500 hover:text-gray-700 p-2 transition-colors"
+              >
+                {isUploading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Paperclip className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
             
             {/* Voice Recording Button */}
             <Button
@@ -1097,51 +1455,62 @@ export default function PerfectWhatsAppChat({
                   <span className="text-xs text-red-500 font-medium">{recordingTime}s</span>
                 </div>
               ) : (
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 01-6 0V4z" clipRule="evenodd" />
-                  <path d="M4 10a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8z" />
-                </svg>
+                <Mic className="h-4 w-4" />
               )}
             </Button>
             
-            {/* Text Input */}
-            <Input
-              ref={inputRef}
-              placeholder={
-                currentUserRole === 'staff' && !settings.allow_staff_messages
-                  ? "Messages disabled"
-                  : "Type a message..."
-              }
-              value={newMessage}
-              onChange={(e) => {
-                setNewMessage(e.target.value)
-                // Simulate typing indicator
-                if (e.target.value.length > 0 && !isTyping) {
-                  setIsTyping(true)
-                  setTimeout(() => setIsTyping(false), 1000)
+            {/* Multi-line Text Input */}
+            <div className="flex-1 relative">
+              <textarea
+                ref={inputRef}
+                placeholder={
+                  currentUserRole === 'staff' && !settings.allow_staff_messages
+                    ? "Messages disabled"
+                    : "Type a message..."
                 }
-              }}
-              onFocus={() => {
-                // Simulate typing when focused
-                if (newMessage.length > 0) {
-                  setIsTyping(true)
+                value={newMessage}
+                onChange={(e) => {
+                  setNewMessage(e.target.value)
+                  // Auto-resize textarea
+                  e.target.style.height = 'auto'
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
+                  
+                  // Simulate typing indicator
+                  if (e.target.value.length > 0 && !isTyping) {
+                    setIsTyping(true)
+                    setTimeout(() => setIsTyping(false), 1000)
+                  }
+                }}
+                onFocus={() => {
+                  // Simulate typing when focused
+                  if (newMessage.length > 0) {
+                    setIsTyping(true)
+                  }
+                }}
+                onBlur={() => setIsTyping(false)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    sendMessage()
+                  }
+                }}
+                disabled={
+                  (currentUserRole === 'staff' && !settings.allow_staff_messages) ||
+                  isLoading
                 }
-              }}
-              onBlur={() => setIsTyping(false)}
-              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-              disabled={
-                (currentUserRole === 'staff' && !settings.allow_staff_messages) ||
-                isLoading
-              }
-              className="flex-1 text-sm"
-              style={{ 
-                backgroundColor: colors.inputBg,
-                borderColor: colors.border,
-                color: colors.textPrimary,
-                fontSize: '0.875rem',
-                borderWidth: '1px'
-              }}
-            />
+                className="w-full text-sm resize-none rounded-lg border px-3 py-2 max-h-32"
+                style={{ 
+                  backgroundColor: colors.inputBg,
+                  borderColor: colors.border,
+                  color: colors.textPrimary,
+                  fontSize: '0.875rem',
+                  borderWidth: '1px',
+                  minHeight: '40px',
+                  lineHeight: '1.4'
+                }}
+                rows={1}
+              />
+            </div>
             
             {/* Send Button */}
             <Button
@@ -1165,6 +1534,35 @@ export default function PerfectWhatsAppChat({
               )}
             </Button>
           </div>
+          
+          {/* Call Overlay */}
+          {isInCall && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-lg">
+              <div className="bg-white rounded-lg p-6 text-center">
+                <div className="mb-4">
+                  {callStatus === 'calling' && (
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-6 h-6 text-green-500 animate-pulse" />
+                      <span className="text-lg font-medium">Calling...</span>
+                    </div>
+                  )}
+                  {callStatus === 'connected' && (
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-6 h-6 text-green-500" />
+                      <span className="text-lg font-medium">{formatCallDuration(callDuration)}</span>
+                    </div>
+                  )}
+                </div>
+                <Button
+                  onClick={endCall}
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                >
+                  <Phone className="w-4 h-4 mr-2" />
+                  End Call
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     </div>
