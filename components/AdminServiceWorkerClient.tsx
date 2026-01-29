@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { syncManager } from '@/lib/sync-manager'
 
 export default function AdminServiceWorkerClient() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [syncError, setSyncError] = useState<string | null>(null)
   const pathname = usePathname()
 
   // Only show install prompt on admin routes
@@ -15,38 +15,45 @@ export default function AdminServiceWorkerClient() {
     // Only initialize for admin routes
     if (!isAdminRoute) return
 
-    // Register service worker + initialize sync (optional)
-    syncManager.initialize().catch((error) => {
-      console.warn('Admin service worker initialization failed (app will still work):', error)
-    })
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((reg) => {
-        // Try to precache admin routes lazily
-        reg.active?.postMessage({
-          type: 'CACHE_URLS',
-          urls: ['/admin', '/admin/dashboard', '/admin/patient-tracking', '/admin/calendar', '/admin/money-management', '/offline']
-        })
-      }).catch((error) => {
-        console.warn('Admin service worker ready failed (app will still work):', error)
-      })
-    }
-
-    // Handle PWA install prompt capture - only for admin routes
-    const handler = (e: any) => {
-      // Only capture the install prompt if we're on an admin route
-      if (pathname?.startsWith('/admin')) {
-        e.preventDefault()
-        setDeferredPrompt(e)
+    // Dynamically import syncManager to avoid circular dependencies
+    const initializeSyncManager = async () => {
+      try {
+        const { syncManager } = await import('@/lib/sync-manager')
+        await syncManager.initialize()
+        setSyncError(null)
+      } catch (error) {
+        console.warn('Admin service worker initialization failed (app will still work):', error)
+        setSyncError('Service worker initialization failed')
       }
     }
-    window.addEventListener('beforeinstallprompt', handler as any)
 
-    return () => window.removeEventListener('beforeinstallprompt', handler as any)
-  }, [isAdminRoute, pathname])
+    initializeSyncManager()
 
-  // Don't show if not on admin route or if no install prompt available
-  if (!isAdminRoute || !deferredPrompt) return null
+    // Listen for beforeinstallprompt event
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [isAdminRoute])
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return
+
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    setDeferredPrompt(null)
+  }
+
+  // Don't render anything if not on admin route or if there's a sync error
+  if (!isAdminRoute || syncError) {
+    return null
+  }
 
   return (
     <>

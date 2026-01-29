@@ -561,22 +561,124 @@ export default function PerfectWhatsAppChat({
 
   const activeMessages = messages.filter(msg => !msg.is_deleted)
 
-  // Refined floating button with better positioning
+  // Professional luxury floating chat button with premium animations
   if (!isOpen) {
     return (
       <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-full p-3.5 shadow-lg border border-blue-800 transition-all duration-300 hover:scale-105 hover:shadow-xl"
-          size="sm"
-        >
-          <MessageCircle className="h-5 w-5" />
-          {activeMessages.length > 0 && (
-            <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-sm">
-              {activeMessages.length}
-            </Badge>
-          )}
-        </Button>
+        <div className="relative group">
+          {/* Ambient glow effect */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-xl scale-125 animate-pulse"></div>
+          
+          {/* Rotating orbital ring */}
+          <div className="absolute inset-0 rounded-full border border-transparent bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 animate-spin" style={{ animationDuration: '20s' }}>
+            <div className="absolute top-0 left-1/2 w-1.5 h-1.5 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-lg"></div>
+            <div className="absolute bottom-0 left-1/2 w-1 h-1 bg-blue-400 rounded-full transform -translate-x-1/2 translate-y-1/2 shadow-lg"></div>
+            <div className="absolute left-0 top-1/2 w-1 h-1 bg-purple-400 rounded-full transform -translate-y-1/2 shadow-lg"></div>
+            <div className="absolute right-0 top-1/2 w-1 h-1 bg-pink-400 rounded-full transform -translate-y-1/2 shadow-lg"></div>
+          </div>
+          
+          {/* Main luxury button - smaller size */}
+          <button
+            onClick={() => setIsOpen(true)}
+            className="relative group/btn w-12 h-12 rounded-full shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-white/20"
+            style={{
+              background: 'linear-gradient(145deg, #1e293b 0%, #334155 50%, #475569 100%)',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            {/* Inner metallic gradient */}
+            <div className="absolute inset-1 rounded-full bg-gradient-to-br from-gray-700/50 to-gray-900/50 backdrop-blur-sm"></div>
+            
+            {/* Shimmer effect */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-100%] group-hover/btn:translate-x-[200%] transition-transform duration-1000"></div>
+            
+            {/* Premium message icon */}
+            <div className="relative z-10 flex items-center justify-center">
+              {/* Icon background circle */}
+              <div className="absolute inset-1.5 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm"></div>
+              
+              {/* Message icon - smaller */}
+              <svg 
+                className="relative w-5 h-5 text-white drop-shadow-lg transition-all duration-300 group-hover/btn:scale-110" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' }}
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
+                />
+              </svg>
+              
+              {/* Status indicator - smaller */}
+              <div className="absolute bottom-0.5 right-0.5 w-2 h-2">
+                <div className="w-full h-full bg-green-400 rounded-full animate-pulse"></div>
+                <div className="absolute inset-0 bg-green-400 rounded-full animate-ping"></div>
+              </div>
+            </div>
+            
+            {/* Notification badge - smaller */}
+            {activeMessages.length > 0 && (
+              <div className="absolute -top-0.5 -right-0.5 z-20">
+                {/* Badge shadow */}
+                <div className="absolute inset-0 bg-red-500/30 rounded-full blur-sm"></div>
+                
+                {/* Main badge */}
+                <div className="relative bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center border border-white/20 shadow-md">
+                  {activeMessages.length > 9 ? '9+' : activeMessages.length}
+                </div>
+                
+                {/* Badge highlight */}
+                <div className="absolute top-0.5 left-0.5 w-0.5 h-0.5 bg-white/50 rounded-full"></div>
+              </div>
+            )}
+            
+            {/* Hover state inner glow */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/5 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+          </button>
+          
+          {/* Sophisticated tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+            <div className="relative">
+              {/* Tooltip content */}
+              <div className="bg-gray-900/95 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg shadow-lg border border-white/10">
+                <div className="flex items-center space-x-1.5">
+                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="font-medium">
+                    {activeMessages.length > 0 ? `${activeMessages.length} new message${activeMessages.length > 1 ? 's' : ''}` : 'Start conversation'}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Tooltip arrow */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                <div className="w-0 h-0 border-l-3 border-r-3 border-t-3 border-transparent border-t-gray-900/95"></div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Floating particles - smaller and fewer */}
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(2)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-0.5 h-0.5 bg-blue-400/30 rounded-full animate-pulse"
+                style={{
+                  top: `${25 + i * 25}%`,
+                  left: `${25 + i * 20}%`,
+                  animationDelay: `${i * 0.5}s`,
+                  animationDuration: `${2 + i * 0.5}s`
+                }}
+              ></div>
+            ))}
+          </div>
+          
+          {/* Ripple effect on hover - smaller */}
+          <div className="absolute inset-0 rounded-full border border-white/20 scale-0 group-hover:scale-110 transition-transform duration-700 opacity-0 group-hover:opacity-100"></div>
+        </div>
       </div>
     )
   }
