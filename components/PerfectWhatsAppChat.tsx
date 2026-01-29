@@ -97,9 +97,12 @@ export default function PerfectWhatsAppChat({
   const [isTyping, setIsTyping] = useState(false)
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const [isRecording, setIsRecording] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
   const { toast } = useToast()
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
 
@@ -108,16 +111,30 @@ export default function PerfectWhatsAppChat({
     const handleClickOutside = (event: MouseEvent) => {
       if (chatRef.current && !chatRef.current.contains(event.target as Node)) {
         setIsOpen(false)
+        setShowEmojiPicker(false)
       }
     }
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside)
+    const handleGlobalMouseUp = () => {
+      if (isRecording) {
+        stopRecording()
       }
     }
-  }, [isOpen])
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mouseup', handleGlobalMouseUp)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('mouseup', handleGlobalMouseUp)
+      
+      // Cleanup recording interval
+      if ((window as any).recordingInterval) {
+        clearInterval((window as any).recordingInterval)
+        delete (window as any).recordingInterval
+      }
+    }
+  }, [chatRef, isRecording, isOpen])
 
   // Local storage key
   const STORAGE_KEY = 'perfect_whatsapp_chat_messages'
@@ -481,21 +498,21 @@ export default function PerfectWhatsAppChat({
     }
   }, [isOpen, loadFromLocalStorage, loadMessagesFromDB, loadSettings])
 
-  // Enhanced auto-scroll to bottom with smooth behavior
+  // Enhanced auto-scroll to bottom with WhatsApp-like behavior
   const scrollToBottom = useCallback((force = false) => {
-    if (messagesEndRef.current) {
-      const scrollContainer = messagesEndRef.current.closest('[data-radix-scroll-area-viewport]') || messagesEndRef.current.parentElement
-      if (scrollContainer) {
-        const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 50
-        
-        // Always scroll if it's a new message from current user or if forced
-        // or if user is already at bottom (like WhatsApp behavior)
-        if (force || isAtBottom) {
-          scrollContainer.scrollTo({
-            top: scrollContainer.scrollHeight,
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current
+      const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100
+      
+      // Always scroll for own messages or when forced
+      // For others' messages, only scroll if user is already at bottom
+      if (force || isAtBottom) {
+        setTimeout(() => {
+          container.scrollTo({
+            top: container.scrollHeight,
             behavior: 'smooth'
           })
-        }
+        }, 100)
       }
     }
   }, [])
@@ -553,53 +570,91 @@ export default function PerfectWhatsAppChat({
   }, [isOpen, messages.length, scrollToBottom])
 
   const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    const date = new Date(timestamp)
+    let hours = date.getHours()
+    const minutes = date.getMinutes()
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    hours = hours % 12
+    hours = hours ? hours : 12 // the hour '0' should be '12'
+    const minutesStr = minutes < 10 ? '0' + minutes : minutes
+    return `${hours}:${minutesStr} ${ampm}`
   }
 
   const activeMessages = messages.filter(msg => !msg.is_deleted)
+
+  // Common emojis list
+  const commonEmojis = ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😜', '🤪', '😝', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '👋', '🤏', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🙏', '🤝', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄', '👶', '🧒', '👦', '👧', '🧑', '👱', '👨', '🧔', '👩', '🧓', '👴', '👵', '🙍', '🙎', '🙅', '🙆', '💁', '🙋', '🧏', '🙇', '🤦', '🤷', '👨‍⚕️', '👩‍⚕️', '👨‍🎓', '👩‍🎓', '👨‍🏫', '👩‍🏫', '👨‍⚖️', '👩‍⚖️', '👨‍🌾', '👩‍🌾', '👨‍🍳', '👩‍🍳', '👨‍🔧', '👩‍🔧', '👨‍🏭', '👩‍🏭', '👨‍💼', '👩‍💼', '👨‍🔬', '👩‍🔬', '👨‍💻', '👩‍💻', '👨‍🎤', '👩‍🎤', '👨‍🎨', '👩‍🎨', '👨‍✈️', '👩‍✈️', '👨‍🚀', '👩‍🚀', '👨‍🚒', '👩‍🚒', '👮', '🕵️', '💂', '👷', '🤴', '👸', '👳', '👲', '🧕', '🤵', '👰', '🤰', '🤱', '👼', '🎅', '🤶', '🦸', '🦹', '🧙', '🧝', '🧛', '🧟', '🧞', '🧜', '🧚', '🧞‍♂️', '🧞‍♀️', '🧟‍♂️', '🧟‍♀️', '🧛‍♂️', '🧛‍♀️', '🧜‍♂️', '🧜‍♀️', '🧚‍♂️', '🧚‍♀️', '🧙‍♂️', '🧙‍♀️', '💂‍♂️', '💂‍♀️', '👮‍♂️', '👮‍♀️', '🕵️‍♂️', '🕵️‍♀️', '👷‍♂️', '👷‍♀️', '🤴‍♂️', '👸‍♀️', '👳‍♂️', '🧕‍♀️', '🧔‍♂️', '👱‍♀️', '👱‍♂️', '👨‍🦰', '👩‍🦰', '👨‍🦱', '👩‍🦱', '👨‍🦳', '👩‍🦳', '👨‍🦲', '👩‍🦲', '🙋‍♂️', '🙋‍♀️', '🙇‍♂️', '🙇‍♀️', '🙏', '🤝', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄']
+
+  // Handle emoji selection
+  const handleEmojiSelect = (emoji: string) => {
+    setNewMessage(prev => prev + emoji)
+    setShowEmojiPicker(false)
+    inputRef.current?.focus()
+  }
+
+  // Handle voice recording
+  const startRecording = () => {
+    setIsRecording(true)
+    setRecordingTime(0)
+    
+    const interval = setInterval(() => {
+      setRecordingTime(prev => {
+        if (prev >= 59) {
+          stopRecording()
+          return 0
+        }
+        return prev + 1
+      })
+    }, 1000)
+    
+    // Store interval ID for cleanup
+    ;(window as any).recordingInterval = interval
+  }
+
+  const stopRecording = () => {
+    setIsRecording(false)
+    setRecordingTime(0)
+    
+    // Clear the interval
+    if ((window as any).recordingInterval) {
+      clearInterval((window as any).recordingInterval)
+      delete (window as any).recordingInterval
+    }
+    
+    // Here you would normally handle the recorded audio
+    // For now, just show a toast
+    toast({
+      title: "Voice Recording",
+      description: "Voice recording feature is ready for implementation",
+    })
+  }
 
   // Professional luxury floating chat button with premium animations
   if (!isOpen) {
     return (
       <div className="fixed bottom-6 right-6 z-50">
         <div className="relative group">
-          {/* Ambient glow effect */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-xl scale-125 animate-pulse"></div>
-          
-          {/* Rotating orbital ring */}
-          <div className="absolute inset-0 rounded-full border border-transparent bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 animate-spin" style={{ animationDuration: '20s' }}>
-            <div className="absolute top-0 left-1/2 w-1.5 h-1.5 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-lg"></div>
-            <div className="absolute bottom-0 left-1/2 w-1 h-1 bg-blue-400 rounded-full transform -translate-x-1/2 translate-y-1/2 shadow-lg"></div>
-            <div className="absolute left-0 top-1/2 w-1 h-1 bg-purple-400 rounded-full transform -translate-y-1/2 shadow-lg"></div>
-            <div className="absolute right-0 top-1/2 w-1 h-1 bg-pink-400 rounded-full transform -translate-y-1/2 shadow-lg"></div>
-          </div>
-          
-          {/* Main luxury button - smaller size */}
+          {/* Main luxury button - minimal animations */}
           <button
             onClick={() => setIsOpen(true)}
-            className="relative group/btn w-12 h-12 rounded-full shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-white/20"
+            className="relative w-12 h-12 rounded-full shadow-xl transition-all duration-200 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-white/20"
             style={{
               background: 'linear-gradient(145deg, #1e293b 0%, #334155 50%, #475569 100%)',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+              cursor: 'pointer'
             }}
           >
             {/* Inner metallic gradient */}
             <div className="absolute inset-1 rounded-full bg-gradient-to-br from-gray-700/50 to-gray-900/50 backdrop-blur-sm"></div>
-            
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-100%] group-hover/btn:translate-x-[200%] transition-transform duration-1000"></div>
             
             {/* Premium message icon */}
             <div className="relative z-10 flex items-center justify-center">
               {/* Icon background circle */}
               <div className="absolute inset-1.5 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm"></div>
               
-              {/* Message icon - smaller */}
+              {/* Message icon */}
               <svg 
-                className="relative w-5 h-5 text-white drop-shadow-lg transition-all duration-300 group-hover/btn:scale-110" 
+                className="relative w-5 h-5 text-white drop-shadow-lg" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -613,14 +668,13 @@ export default function PerfectWhatsAppChat({
                 />
               </svg>
               
-              {/* Status indicator - smaller */}
+              {/* Status indicator - static */}
               <div className="absolute bottom-0.5 right-0.5 w-2 h-2">
-                <div className="w-full h-full bg-green-400 rounded-full animate-pulse"></div>
-                <div className="absolute inset-0 bg-green-400 rounded-full animate-ping"></div>
+                <div className="w-full h-full bg-green-400 rounded-full"></div>
               </div>
             </div>
             
-            {/* Notification badge - smaller */}
+            {/* Notification badge */}
             {activeMessages.length > 0 && (
               <div className="absolute -top-0.5 -right-0.5 z-20">
                 {/* Badge shadow */}
@@ -635,18 +689,15 @@ export default function PerfectWhatsAppChat({
                 <div className="absolute top-0.5 left-0.5 w-0.5 h-0.5 bg-white/50 rounded-full"></div>
               </div>
             )}
-            
-            {/* Hover state inner glow */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/5 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
           </button>
           
-          {/* Sophisticated tooltip */}
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+          {/* Simple tooltip */}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none">
             <div className="relative">
               {/* Tooltip content */}
               <div className="bg-gray-900/95 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg shadow-lg border border-white/10">
                 <div className="flex items-center space-x-1.5">
-                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
                   <span className="font-medium">
                     {activeMessages.length > 0 ? `${activeMessages.length} new message${activeMessages.length > 1 ? 's' : ''}` : 'Start conversation'}
                   </span>
@@ -659,25 +710,6 @@ export default function PerfectWhatsAppChat({
               </div>
             </div>
           </div>
-          
-          {/* Floating particles - smaller and fewer */}
-          <div className="absolute inset-0 pointer-events-none">
-            {[...Array(2)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-0.5 h-0.5 bg-blue-400/30 rounded-full animate-pulse"
-                style={{
-                  top: `${25 + i * 25}%`,
-                  left: `${25 + i * 20}%`,
-                  animationDelay: `${i * 0.5}s`,
-                  animationDuration: `${2 + i * 0.5}s`
-                }}
-              ></div>
-            ))}
-          </div>
-          
-          {/* Ripple effect on hover - smaller */}
-          <div className="absolute inset-0 rounded-full border border-white/20 scale-0 group-hover:scale-110 transition-transform duration-700 opacity-0 group-hover:opacity-100"></div>
         </div>
       </div>
     )
@@ -828,13 +860,47 @@ export default function PerfectWhatsAppChat({
           </div>
         )}
 
-        {/* Scrollable Messages Area */}
-        <ScrollArea className="flex-1 overflow-hidden" style={{ backgroundColor: colors.sidebarBg }}>
+        {/* Scrollable Messages Area - Completely hidden scrollbars */}
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+          style={{ 
+            backgroundColor: colors.sidebarBg,
+            scrollbarWidth: 'none', /* Firefox */
+            msOverflowStyle: 'none' /* IE and Edge */
+          }}
+        >
+          <style jsx>{`
+            div::-webkit-scrollbar {
+              display: none; /* Chrome, Safari and Opera */
+            }
+            div::-webkit-scrollbar-track {
+              display: none;
+            }
+            div::-webkit-scrollbar-thumb {
+              display: none;
+            }
+            div::-webkit-scrollbar-button {
+              display: none;
+            }
+          `}</style>
           <div className="p-3 space-y-2">
             {activeMessages.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageCircle className="h-12 w-12 mx-auto mb-3" style={{ color: colors.textSecondary }} />
-                <p className="text-sm" style={{ color: colors.textSecondary }}>No messages yet. Start the conversation!</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-4">
+                  <MessageCircle className="w-8 h-8 text-blue-500" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2" style={{ color: colors.textPrimary }}>
+                  No messages yet
+                </h3>
+                <p className="text-sm" style={{ color: colors.textSecondary }}>
+                  {currentUserRole === 'admin' 
+                    ? "Start the conversation with your team" 
+                    : settings.allow_staff_messages 
+                    ? "Send a message to start chatting" 
+                    : "Waiting for admin to enable messages..."
+                  }
+                </p>
               </div>
             ) : (
               activeMessages.map((message) => (
@@ -873,24 +939,63 @@ export default function PerfectWhatsAppChat({
                         {message.message}
                       </p>
                       
-                      {/* WhatsApp-style Message Status */}
-                      <div className="flex items-center justify-end mt-1 space-x-1.5 text-xs">
+                      {/* WhatsApp-style Message Status - Fixed positioning inside textbox */}
+                      <div className="flex items-center justify-end mt-1 text-xs">
                         <span style={{ color: colors.textSecondary }}>{formatTime(message.created_at)}</span>
                         {message.edited && <span style={{ color: colors.textSecondary }}>edited</span>}
                         {message.sender_id === currentUserId && (
-                          <div className="flex items-center space-x-0.5">
+                          <div className="flex items-center ml-1">
                             {message.read ? (
-                              <div className="flex items-center">
-                                <CheckCheck className="h-3 w-3" style={{ color: '#53bdeb' }} />
-                                <CheckCheck className="h-3 w-3" style={{ color: '#53bdeb' }} />
+                              <div className="flex items-center h-3">
+                                {/* Bottom check */}
+                                <svg 
+                                  className="w-3 h-3" 
+                                  style={{ color: '#53bdeb' }}
+                                  fill="currentColor" 
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                {/* Top check - overlapping */}
+                                <svg 
+                                  className="w-3 h-3 -ml-1.5" 
+                                  style={{ color: '#53bdeb' }}
+                                  fill="currentColor" 
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
                               </div>
                             ) : message.delivered ? (
-                              <div className="flex items-center">
-                                <Check className="h-3 w-3" style={{ color: colors.textSecondary }} />
-                                <Check className="h-3 w-3" style={{ color: colors.textSecondary }} />
+                              <div className="flex items-center h-3">
+                                {/* Bottom check */}
+                                <svg 
+                                  className="w-3 h-3" 
+                                  style={{ color: colors.textSecondary }}
+                                  fill="currentColor" 
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                {/* Top check - overlapping */}
+                                <svg 
+                                  className="w-3 h-3 -ml-1.5" 
+                                  style={{ color: colors.textSecondary }}
+                                  fill="currentColor" 
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
                               </div>
                             ) : (
-                              <Check className="h-3 w-3" style={{ color: colors.textSecondary }} />
+                              <svg 
+                                className="w-3 h-3" 
+                                style={{ color: colors.textSecondary }}
+                                fill="currentColor" 
+                                viewBox="0 0 20 20"
+                              >
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
                             )}
                           </div>
                         )}
@@ -916,7 +1021,7 @@ export default function PerfectWhatsAppChat({
             )}
             <div ref={messagesEndRef} className="h-2" />
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Enhanced Message Input with WhatsApp features */}
         <div className="p-3 border-t flex-shrink-0" style={{ backgroundColor: colors.messageReceived, borderColor: colors.border }}>
@@ -938,13 +1043,33 @@ export default function PerfectWhatsAppChat({
           
           <div className="flex items-center space-x-2">
             {/* Emoji Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-500 hover:text-gray-700 p-2 transition-colors"
-            >
-              😊
-            </Button>
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="text-gray-500 hover:text-gray-700 p-2 transition-colors"
+              >
+                😊
+              </Button>
+              
+              {/* Emoji Picker */}
+              {showEmojiPicker && (
+                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 z-50">
+                  <div className="grid grid-cols-8 gap-1 max-h-60 overflow-y-auto">
+                    {commonEmojis.map((emoji, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleEmojiSelect(emoji)}
+                        className="text-lg hover:bg-gray-100 rounded p-1 transition-colors"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             
             {/* Attach Button */}
             <Button
@@ -959,16 +1084,17 @@ export default function PerfectWhatsAppChat({
             <Button
               variant="ghost"
               size="sm"
-              onMouseDown={() => setIsRecording(true)}
-              onMouseUp={() => setIsRecording(false)}
-              onTouchStart={() => setIsRecording(true)}
-              onTouchEnd={() => setIsRecording(false)}
+              onMouseDown={startRecording}
+              onMouseUp={stopRecording}
+              onTouchStart={startRecording}
+              onTouchEnd={stopRecording}
               className={`p-2 transition-colors ${isRecording ? 'text-red-500 bg-red-50' : 'text-gray-500 hover:text-gray-700'}`}
             >
               {isRecording ? (
                 <div className="flex items-center space-x-1">
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                  <span className="text-xs text-red-500 font-medium">{recordingTime}s</span>
                 </div>
               ) : (
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
