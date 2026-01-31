@@ -1,3 +1,0 @@
-feat: Update project structure and remove unused files
-
-This commit refactors the project by removing a significant number of unused files and directories. It also includes updates to the admin dashboard and prescription components.

@@ -47,6 +47,8 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import { applyMobileStyles } from './MobileChatStyles'
+import ChatNotificationBadge from './ChatNotificationBadge'
 
 interface PerfectWhatsAppChatProps {
   currentUserId: string
@@ -96,7 +98,126 @@ export default function PerfectWhatsAppChat({
   currentUserRole, 
   currentUserName 
 }: PerfectWhatsAppChatProps) {
+  // Mobile viewport height management for keyboard
+  const [viewportHeight, setViewportHeight] = useState(100)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
+
+  // Apply mobile styles and handle body scroll lock
+  useEffect(() => {
+    let cleanupMobileStyles: () => void
+    
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                           (window.innerWidth <= 768)
+      setIsMobile(isMobileDevice)
+      
+      // Apply mobile styles when mobile detected
+      if (isMobileDevice) {
+        cleanupMobileStyles = applyMobileStyles()
+        // Lock body scroll when chat is open on mobile
+        document.body.classList.add('mobile-chat-open')
+      } else {
+        document.body.classList.remove('mobile-chat-open')
+      }
+    }
+
+    const handleViewportChange = () => {
+      if (isMobile) {
+        const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight
+        const fullHeight = window.screen.height || window.innerHeight
+        const heightPercentage = (currentHeight / fullHeight) * 100
+        
+        setViewportHeight(heightPercentage)
+        
+        // Detect if keyboard is open (height reduced by more than 20%)
+        setIsKeyboardOpen(heightPercentage < 80)
+      }
+    }
+
+    const handleVisualViewportChange = () => {
+      if (window.visualViewport) {
+        handleViewportChange()
+      }
+    }
+
+    checkMobile()
+    handleViewportChange()
+
+    // Listen for viewport changes (keyboard open/close)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportChange)
+    } else {
+      // Fallback for browsers without visualViewport API
+      window.addEventListener('resize', handleViewportChange)
+    }
+
+    // Listen for focus/blur on inputs to detect keyboard
+    const handleFocus = () => setIsKeyboardOpen(true)
+    const handleBlur = () => setTimeout(() => setIsKeyboardOpen(false), 100)
+
+    const inputs = document.querySelectorAll('input, textarea')
+    inputs.forEach(input => {
+      input.addEventListener('focus', handleFocus)
+      input.addEventListener('blur', handleBlur)
+    })
+
+    return () => {
+      // Cleanup event listeners
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportChange)
+      } else {
+        window.removeEventListener('resize', handleViewportChange)
+      }
+      inputs.forEach(input => {
+        input.removeEventListener('focus', handleFocus)
+        input.removeEventListener('blur', handleBlur)
+      })
+      
+      // Cleanup mobile styles and unlock body
+      if (cleanupMobileStyles) {
+        cleanupMobileStyles()
+      }
+      document.body.classList.remove('mobile-chat-open')
+    }
+  }, [isMobile])
+
   const [isOpen, setIsOpen] = useState(false)
+
+  // Mark all messages as read when chat is opened
+  const markAllMessagesAsRead = useCallback(async () => {
+    try {
+      await supabase
+        .from('chat_messages')
+        .update({ 
+          read: true, 
+          read_at: new Date().toISOString() 
+        })
+        .eq('read', false)
+        .neq('sender_id', currentUserId)
+
+      // Update local messages to reflect read status
+      setMessages(prev => prev.map(msg => 
+        msg.sender_id !== currentUserId ? { ...msg, read: true, read_at: new Date().toISOString() } : msg
+      ))
+    } catch (error) {
+      console.error('Error marking messages as read:', error)
+    }
+  }, [currentUserId])
+
+  // Mark messages as read when chat opens
+  useEffect(() => {
+    if (isOpen) {
+      markAllMessagesAsRead()
+    }
+  }, [isOpen, markAllMessagesAsRead])
+
+  // Cleanup body lock when component unmounts or chat closes
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('mobile-chat-open')
+    }
+  }, [])
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -900,7 +1021,10 @@ export default function PerfectWhatsAppChat({
         <div className="relative group">
           {/* Main luxury button - minimal animations */}
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={() => {
+              setIsOpen(true)
+              markAllMessagesAsRead()
+            }}
             className="relative w-12 h-12 rounded-full shadow-xl transition-all duration-200 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-white/20"
             style={{
               background: 'linear-gradient(145deg, #1e293b 0%, #334155 50%, #475569 100%)',
@@ -938,21 +1062,11 @@ export default function PerfectWhatsAppChat({
               </div>
             </div>
             
-            {/* Notification badge */}
-            {activeMessages.length > 0 && (
-              <div className="absolute -top-0.5 -right-0.5 z-20">
-                {/* Badge shadow */}
-                <div className="absolute inset-0 bg-red-500/30 rounded-full blur-sm"></div>
-                
-                {/* Main badge */}
-                <div className="relative bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center border border-white/20 shadow-md">
-                  {activeMessages.length > 9 ? '9+' : activeMessages.length}
-                </div>
-                
-                {/* Badge highlight */}
-                <div className="absolute top-0.5 left-0.5 w-0.5 h-0.5 bg-white/50 rounded-full"></div>
-              </div>
-            )}
+            {/* Notification Badge - Perfect Mobile Style */}
+            <ChatNotificationBadge 
+              currentUserId={currentUserId}
+              currentUserRole={currentUserRole}
+            />
           </button>
           
           {/* Simple tooltip */}
@@ -963,7 +1077,7 @@ export default function PerfectWhatsAppChat({
                 <div className="flex items-center space-x-1.5">
                   <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
                   <span className="font-medium">
-                    {activeMessages.length > 0 ? `${activeMessages.length} new message${activeMessages.length > 1 ? 's' : ''}` : 'Start conversation'}
+                    Open chat to view messages
                   </span>
                 </div>
               </div>
@@ -991,24 +1105,45 @@ export default function PerfectWhatsAppChat({
         top: chatDimensions.top || 'auto'
       }}
     >
-      {/* Chat Window */}
+      {/* Chat Window - Mobile Optimized */}
       <Card 
-        className="shadow-2xl border overflow-hidden flex flex-col"
+        className={`shadow-2xl border overflow-hidden flex flex-col ${
+          isMobile ? 'fixed inset-0 rounded-none mobile-chat-container' : ''
+        }`}
         style={{
-          width: chatDimensions.width,
-          height: chatDimensions.height,
+          width: isMobile ? '100vw' : chatDimensions.width,
+          height: isMobile ? '100vh' : chatDimensions.height,
           maxWidth: chatDimensions.maxWidth || 'none',
           backgroundColor: colors.messageReceived,
           borderColor: colors.border,
-          boxShadow: `0 10px 40px ${colors.shadow}, 0 0 0 1px ${colors.border}`
+          boxShadow: `0 10px 40px ${colors.shadow}, 0 0 0 1px ${colors.border}`,
+          // Mobile-specific positioning
+          ...(isMobile && {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
+            borderRadius: '0'
+          })
         }}
       >
-        {/* Perfect Chat Header - Analyzed & Optimized */}
+        {/* Perfect Chat Header - Mobile Fixed */}
         <CardHeader 
-          className="px-4 py-3 flex-shrink-0 border-b"
+          className={`px-4 py-3 flex-shrink-0 border-b transition-all duration-300 ${
+            isMobile ? 'sticky top-0 z-50 mobile-chat-header' : ''
+          }`}
           style={{ 
             backgroundColor: colors.headerBg, 
-            borderColor: 'rgba(255,255,255,0.1)'
+            borderColor: 'rgba(255,255,255,0.1)',
+            // Mobile-specific header styling
+            ...(isMobile && {
+              position: 'sticky',
+              top: 0,
+              zIndex: 100,
+              minHeight: '60px'
+            })
           }}
         >
           {/* Primary Header Row */}
@@ -1191,14 +1326,25 @@ export default function PerfectWhatsAppChat({
           </div>
         )}
 
-        {/* Scrollable Messages Area - Completely hidden scrollbars */}
+        {/* Scrollable Messages Area - Mobile Optimized */}
         <div 
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto overflow-x-hidden"
+          className={`flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${
+            isMobile && isKeyboardOpen ? 'pb-2 mobile-chat-messages' : 'mobile-chat-messages'
+          }`}
           style={{ 
             backgroundColor: colors.sidebarBg,
             scrollbarWidth: 'none', /* Firefox */
-            msOverflowStyle: 'none' /* IE and Edge */
+            msOverflowStyle: 'none', /* IE and Edge */
+            // Mobile-specific height management
+            ...(isMobile && {
+              height: isKeyboardOpen 
+                ? `calc(${viewportHeight}vh - 120px)` // Header (60px) + Input (60px)
+                : `calc(${viewportHeight}vh - 120px)`, // Same calculation
+              maxHeight: isKeyboardOpen 
+                ? `calc(${viewportHeight}vh - 120px)`
+                : `calc(${viewportHeight}vh - 120px)`
+            })
           }}
         >
           <style jsx>{`
@@ -1406,8 +1552,25 @@ export default function PerfectWhatsAppChat({
           </div>
         </div>
 
-        {/* Enhanced Message Input with WhatsApp features */}
-        <div className="p-3 border-t flex-shrink-0" style={{ backgroundColor: colors.messageReceived, borderColor: colors.border }}>
+        {/* Enhanced Message Input - Mobile Fixed */}
+        <div 
+          className={`p-3 border-t flex-shrink-0 transition-all duration-300 ${
+            isMobile ? 'sticky bottom-0 z-40 mobile-chat-input' : ''
+          }`}
+          style={{ 
+            backgroundColor: colors.messageReceived, 
+            borderColor: colors.border,
+            // Mobile-specific input area styling
+            ...(isMobile && {
+              position: 'sticky',
+              bottom: 0,
+              zIndex: 40,
+              minHeight: '60px',
+              // Ensure it's always above keyboard
+              paddingBottom: isKeyboardOpen ? 'env(safe-area-inset-bottom, 10px)' : '12px'
+            })
+          }}
+        >
           {/* Typing Indicator */}
           {typingUsers.length > 0 && (
             <div className="px-3 py-1 mb-2 text-xs text-gray-500 italic">
@@ -1552,10 +1715,18 @@ export default function PerfectWhatsAppChat({
                   (currentUserRole === 'staff' && !settings.allow_staff_messages) ||
                   isLoading
                 }
-                className="w-full text-sm resize-none rounded-lg border px-3 py-2 max-h-32"
+                className={`w-full text-sm resize-none rounded-lg border px-3 py-2 max-h-32 ${
+                  isMobile ? 'mobile-chat-input' : ''
+                }`}
                 style={{ 
                   backgroundColor: colors.inputBg,
                   borderColor: colors.border,
+                  // Mobile-specific input styling to prevent zoom
+                  ...(isMobile && {
+                    fontSize: '16px !important',
+                    transform: 'scale(0.875)',
+                    transformOrigin: 'left top'
+                  }),
                   color: colors.textPrimary,
                   fontSize: '0.875rem',
                   borderWidth: '1px',
