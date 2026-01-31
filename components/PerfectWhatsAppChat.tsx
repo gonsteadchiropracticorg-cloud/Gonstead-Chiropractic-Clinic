@@ -38,12 +38,12 @@ import {
   RefreshCw,
   AlertTriangle,
   File,
-  Paperclip,
   Mic,
   MicOff,
   PhoneCall,
   PhoneIncoming,
-  PhoneOutgoing
+  PhoneOutgoing,
+  Eye
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -234,14 +234,11 @@ export default function PerfectWhatsAppChat({
   const [isRecording, setIsRecording] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [isInCall, setIsInCall] = useState(false)
   const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'connected' | 'ended'>('idle')
   const [callDuration, setCallDuration] = useState(0)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [audioChunks, setAudioChunks] = useState<Blob[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -758,73 +755,6 @@ export default function PerfectWhatsAppChat({
     inputRef.current?.focus()
   }
 
-  // Handle file upload with better error handling
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    // Check file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "Please select a file smaller than 10MB",
-        variant: "destructive"
-      })
-      return
-    }
-
-    setIsUploading(true)
-    setUploadedFile(file)
-
-    try {
-      // Create a simple file message without uploading to storage for now
-      const fileMessage: Partial<ChatMessage> = {
-        sender_id: currentUserId,
-        sender_name: currentUserName,
-        sender_role: currentUserRole,
-        message: `📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
-        message_type: 'text', // Use text type for now
-        read: false,
-        delivered: true,
-        delivered_at: new Date().toISOString(),
-        created_at: new Date().toISOString()
-      }
-
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .insert(fileMessage)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      if (data) {
-        setMessages(prev => [...prev, data])
-        saveToLocalStorage([...messages, data])
-        setTimeout(() => scrollToBottom(true), 100)
-      }
-
-      toast({
-        title: "File Message Sent",
-        description: `${file.name} message sent successfully`,
-      })
-
-    } catch (error) {
-      console.error('Error uploading file:', error)
-      toast({
-        title: "Upload Failed",
-        description: "Failed to send file message. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setIsUploading(false)
-      setUploadedFile(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
-  }
-
   // Handle voice recording with MediaRecorder API
   const startRecording = async () => {
     try {
@@ -839,17 +769,13 @@ export default function PerfectWhatsAppChat({
       }
 
       recorder.onstop = async () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' })
-        const audioUrl = URL.createObjectURL(audioBlob)
-        
-        // Here you would normally upload the audio file
-        // For now, we'll just show a message
+        // Create simple voice message without file upload
         const voiceMessage: Partial<ChatMessage> = {
           sender_id: currentUserId,
           sender_name: currentUserName,
           sender_role: currentUserRole,
           message: '🎤 Voice message',
-          message_type: 'text', // Change to 'voice' when you implement voice storage
+          message_type: 'text',
           read: false,
           delivered: true,
           delivered_at: new Date().toISOString(),
@@ -868,9 +794,13 @@ export default function PerfectWhatsAppChat({
           setTimeout(() => scrollToBottom(true), 100)
         }
 
+        toast({
+          title: "Voice Message Sent",
+          description: "Voice message recorded successfully",
+        })
+
         // Clean up
         stream.getTracks().forEach(track => track.stop())
-        URL.revokeObjectURL(audioUrl)
       }
 
       recorder.start()
@@ -1412,33 +1342,6 @@ export default function PerfectWhatsAppChat({
                         boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
                       }}
                     >
-                      {/* File Message */}
-                      {message.message_type === 'file' && (
-                        <div className="flex items-center space-x-2">
-                          <File className="w-5 h-5 text-blue-500" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium" style={{ color: colors.textPrimary }}>
-                              {message.file_name}
-                            </p>
-                            <p className="text-xs" style={{ color: colors.textSecondary }}>
-                              {message.file_size && `${(message.file_size / 1024).toFixed(1)} KB`}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (message.file_url) {
-                                window.open(message.file_url, '_blank')
-                              }
-                            }}
-                            className="text-blue-500 hover:text-blue-700 p-1"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                      
                       {/* Call Message */}
                       {message.message_type === 'call' && (
                         <div className="flex items-center space-x-2">
@@ -1629,30 +1532,6 @@ export default function PerfectWhatsAppChat({
                   </div>
                 </div>
               )}
-            </div>
-            
-            {/* File Upload Button */}
-            <div className="relative">
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileUpload}
-                className="hidden"
-                accept="*/*"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="text-gray-500 hover:text-gray-700 p-2 transition-colors"
-              >
-                {isUploading ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Paperclip className="h-4 w-4" />
-                )}
-              </Button>
             </div>
             
             {/* Voice Recording Button */}
