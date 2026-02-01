@@ -755,180 +755,36 @@ export default function PerfectWhatsAppChat({
     inputRef.current?.focus()
   }
 
-  // Handle voice recording with MediaRecorder API
+  // Handle voice recording - DISABLED
   const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
-      const chunks: Blob[] = []
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunks.push(event.data)
-        }
-      }
-
-      recorder.onstop = async () => {
-        // Create simple voice message without file upload
-        const voiceMessage: Partial<ChatMessage> = {
-          sender_id: currentUserId,
-          sender_name: currentUserName,
-          sender_role: currentUserRole,
-          message: '🎤 Voice message',
-          message_type: 'text',
-          read: false,
-          delivered: true,
-          delivered_at: new Date().toISOString(),
-          created_at: new Date().toISOString()
-        }
-
-        const { data, error } = await supabase
-          .from('chat_messages')
-          .insert(voiceMessage)
-          .select()
-          .single()
-
-        if (!error && data) {
-          setMessages(prev => [...prev, data])
-          saveToLocalStorage([...messages, data])
-          setTimeout(() => scrollToBottom(true), 100)
-        }
-
-        toast({
-          title: "Voice Message Sent",
-          description: "Voice message recorded successfully",
-        })
-
-        // Clean up
-        stream.getTracks().forEach(track => track.stop())
-      }
-
-      recorder.start()
-      setMediaRecorder(recorder)
-      setIsRecording(true)
-      setRecordingTime(0)
-      
-      const interval = setInterval(() => {
-        setRecordingTime(prev => {
-          if (prev >= 59) {
-            stopRecording()
-            return 0
-          }
-          return prev + 1
-        })
-      }, 1000)
-      
-      ;(window as any).recordingInterval = interval
-
-    } catch (error) {
-      console.error('Error starting recording:', error)
-      toast({
-        title: "Recording Failed",
-        description: "Could not access microphone. Please check permissions.",
-        variant: "destructive"
-      })
-    }
+    // Voice recording functionality disabled
+    toast({
+      title: "Feature Disabled",
+      description: "Voice recording is currently unavailable",
+      variant: "destructive"
+    })
   }
 
   const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop()
-    }
+    // Voice recording functionality disabled
     setIsRecording(false)
     setRecordingTime(0)
-    
-    if ((window as any).recordingInterval) {
-      clearInterval((window as any).recordingInterval)
-      delete (window as any).recordingInterval
-    }
   }
 
-  // Handle call functionality
+  // Handle call functionality - DISABLED
   const startCall = async (type: 'voice' | 'video') => {
-    setCallStatus('calling')
-    setIsInCall(true)
-    
-    const callMessage: Partial<ChatMessage> = {
-      sender_id: currentUserId,
-      sender_name: currentUserName,
-      sender_role: currentUserRole,
-      message: type === 'voice' ? '📞 Voice call started' : '📹 Video call started',
-      message_type: 'call',
-      call_type: type,
-      call_status: 'outgoing',
-      read: false,
-      delivered: true,
-      delivered_at: new Date().toISOString(),
-      created_at: new Date().toISOString()
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .insert(callMessage)
-        .select()
-        .single()
-
-      if (!error && data) {
-        setMessages(prev => [...prev, data])
-        saveToLocalStorage([...messages, data])
-        setTimeout(() => scrollToBottom(true), 100)
-      }
-
-      toast({
-        title: "Call Started",
-        description: `${type === 'voice' ? 'Voice' : 'Video'} call initiated`,
-      })
-
-      // Simulate call connection
-      setTimeout(() => {
-        setCallStatus('connected')
-        startCallTimer()
-      }, 2000)
-
-    } catch (error) {
-      console.error('Error starting call:', error)
-      setCallStatus('idle')
-      setIsInCall(false)
-    }
+    // Call functionality disabled
+    toast({
+      title: "Feature Disabled",
+      description: `${type === 'voice' ? 'Voice' : 'Video'} calls are currently unavailable`,
+      variant: "destructive"
+    })
   }
 
   const endCall = () => {
-    setCallStatus('ended')
+    // Call functionality disabled
+    setCallStatus('idle')
     setIsInCall(false)
-    
-    if ((window as any).callTimer) {
-      clearInterval((window as any).callTimer)
-      delete (window as any).callTimer
-    }
-
-    const endCallMessage: Partial<ChatMessage> = {
-      sender_id: currentUserId,
-      sender_name: currentUserName,
-      sender_role: currentUserRole,
-      message: `📞 Call ended (${formatCallDuration(callDuration)})`,
-      message_type: 'call',
-      call_type: 'voice',
-      call_status: 'completed',
-      call_duration: callDuration,
-      read: false,
-      delivered: true,
-      delivered_at: new Date().toISOString(),
-      created_at: new Date().toISOString()
-    }
-
-    supabase
-      .from('chat_messages')
-      .insert(endCallMessage)
-      .select()
-      .single()
-      .then(({ data, error }) => {
-        if (!error && data) {
-          setMessages(prev => [...prev, data])
-          saveToLocalStorage([...messages, data])
-        }
-      })
-
     setCallDuration(0)
   }
 
@@ -945,9 +801,10 @@ export default function PerfectWhatsAppChat({
   }
 
   // Professional luxury floating chat button with premium animations
+  // Only show when chat is closed
   if (!isOpen) {
     return (
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-0 right-0 z-40" data-chat-role={currentUserRole} data-chat-user={currentUserId}>
         <div className="relative group">
           {/* Main luxury button - minimal animations */}
           <button
@@ -955,7 +812,7 @@ export default function PerfectWhatsAppChat({
               setIsOpen(true)
               markAllMessagesAsRead()
             }}
-            className="relative w-12 h-12 rounded-full shadow-xl transition-all duration-200 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-white/20"
+            className="relative w-12 h-12 rounded-full shadow-xl transition-all duration-200 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-white/20 m-4"
             style={{
               background: 'linear-gradient(145deg, #1e293b 0%, #334155 50%, #475569 100%)',
               boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
@@ -1026,7 +883,10 @@ export default function PerfectWhatsAppChat({
   return (
     <div 
       ref={chatRef}
-      className="z-50 flex flex-col"
+      className="z-45 flex flex-col"
+      data-chat-role={currentUserRole}
+      data-chat-user={currentUserId}
+      data-chat-interface="true"
       style={{
         position: chatDimensions.position || 'fixed',
         bottom: chatDimensions.bottom !== undefined ? chatDimensions.bottom : '1.5rem',
@@ -1062,7 +922,7 @@ export default function PerfectWhatsAppChat({
         {/* Perfect Chat Header - Mobile Fixed */}
         <CardHeader 
           className={`px-4 py-3 flex-shrink-0 border-b transition-all duration-300 ${
-            isMobile ? 'sticky top-0 z-50 mobile-chat-header' : ''
+            isMobile ? 'sticky top-0 z-40 mobile-chat-header' : ''
           }`}
           style={{ 
             backgroundColor: colors.headerBg, 
@@ -1504,7 +1364,7 @@ export default function PerfectWhatsAppChat({
               
               {/* Improved Emoji Picker */}
               {showEmojiPicker && (
-                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-2xl border border-gray-200 p-4 z-50 w-80 max-h-80">
+                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-2xl border border-gray-200 p-4 z-40 w-80 max-h-80">
                   <div className="mb-2 pb-2 border-b border-gray-200">
                     <p className="text-sm font-medium text-gray-700">Select Emoji</p>
                   </div>
@@ -1641,7 +1501,7 @@ export default function PerfectWhatsAppChat({
           
           {/* Call Overlay */}
           {isInCall && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-lg">
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-40 rounded-lg">
               <div className="bg-white rounded-lg p-6 text-center">
                 <div className="mb-4">
                   {callStatus === 'calling' && (
