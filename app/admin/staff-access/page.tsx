@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getStaffAccounts, createStaffAccount, updateStaffAccount, removeStaffAccount, type StaffAccount, addAuditLog } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
-import { UserPlus, Shield, UserCheck, Pencil, Trash2, RefreshCw, Lock, Unlock, Mail, Phone, Link2, Search, Users, BadgeCheck, SlidersHorizontal } from "lucide-react"
+import { UserPlus, Shield, UserCheck, Pencil, Trash2, RefreshCw, Lock, Unlock, Mail, Phone, Link2, Search, Users, BadgeCheck, SlidersHorizontal, Activity, Smartphone } from "lucide-react"
 import Link from "next/link"
+import StaffSecurityMonitor from "@/components/StaffSecurityMonitor"
 
 export default function StaffAccessPage() {
   const { toast } = useToast()
@@ -30,6 +31,8 @@ export default function StaffAccessPage() {
     role: "staff" as "staff" | "assistant",
     password: "",
   })
+  const [selectedStaffForSecurity, setSelectedStaffForSecurity] = useState<StaffAccount | null>(null)
+  const [showSecurityMonitor, setShowSecurityMonitor] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -274,7 +277,7 @@ export default function StaffAccessPage() {
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last login</TableHead>
-                  <TableHead className="w-[220px]">Actions</TableHead>
+                  <TableHead className="w-[280px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -346,6 +349,18 @@ export default function StaffAccessPage() {
                             toggleActive(acc)
                           }} className={acc.active?"text-red-600 hover:bg-red-50":"text-green-600 hover:bg-green-50"}>{acc.active ? <Lock className="h-4 w-4"/> : <Unlock className="h-4 w-4"/>}</Button>
                           <Button variant="ghost" size="sm" onClick={()=>{ if (confirm('Permanently delete this staff account?')) onDelete(acc) }} className="text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4"/></Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => {
+                              setSelectedStaffForSecurity(acc)
+                              setShowSecurityMonitor(true)
+                            }} 
+                            className="text-blue-600 hover:bg-blue-50"
+                            title="View Security Monitor"
+                          >
+                            <Activity className="h-4 w-4"/>
+                          </Button>
                           <Button variant="outline" size="sm" onClick={()=>{ navigator.clipboard.writeText(toStaffLink()); toast({ title: 'Link copied', description: 'Staff login link copied' }) }} className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"><Link2 className="h-4 w-4 mr-1"/>Copy Staff Link</Button>
                         </div>
                       </TableCell>
@@ -356,6 +371,24 @@ export default function StaffAccessPage() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Security Monitor Dialog */}
+        <Dialog open={showSecurityMonitor} onOpenChange={setShowSecurityMonitor}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Security Monitor - {selectedStaffForSecurity?.display_name || selectedStaffForSecurity?.username}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedStaffForSecurity && (
+              <StaffSecurityMonitor 
+                staffId={selectedStaffForSecurity.id} 
+                staffName={selectedStaffForSecurity.display_name || selectedStaffForSecurity.username} 
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Create/Edit dialog */}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, LogIn, Shield, Stethoscope, AlertCircle, Loader2, Clock3 } from 'lucide-react'
 import { signInStaff, getCurrentUser } from '@/lib/supabase'
+import DeviceSecurityService from '@/lib/device-security'
 
 export default function StaffLoginPage() {
   const router = useRouter()
@@ -14,6 +15,7 @@ export default function StaffLoginPage() {
   const [error, setError] = useState('')
   const [isChecking, setIsChecking] = useState(true)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const deviceSecurity = new DeviceSecurityService()
 
   // Update current time every second for live clock display
   useEffect(() => {
@@ -64,6 +66,35 @@ export default function StaffLoginPage() {
       }
 
       if (user) {
+        // Create security event for successful login
+        try {
+          const securityEvent = await deviceSecurity.createSecurityEvent(
+            user.id,
+            'login'
+          )
+          
+          // Create device session
+          const deviceInfo = await deviceSecurity.getDeviceInfo()
+          const locationData = await deviceSecurity.getLocationData()
+          
+          await fetch('/api/device-sessions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              staff_id: user.id,
+              session_id: securityEvent.session_id,
+              device_fingerprint: deviceInfo.device_fingerprint,
+              device_info: deviceInfo,
+              location_data: locationData
+            })
+          })
+        } catch (securityError) {
+          console.warn('Failed to create security event:', securityError)
+          // Don't block login if security tracking fails
+        }
+
         // Store authentication state for the staff portal
         localStorage.setItem('staff_authenticated', 'true')
         localStorage.setItem('staff_email', user.email || '')

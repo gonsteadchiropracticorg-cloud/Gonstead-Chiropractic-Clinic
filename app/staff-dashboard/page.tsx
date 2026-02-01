@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { getPatients, type Patient } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import DeviceSecurityService from '@/lib/device-security'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -58,6 +59,7 @@ const statusIcons = {
 export default function StaffDashboard() {
   const router = useRouter()
   const { toast } = useToast()
+  const deviceSecurity = new DeviceSecurityService()
   
   // Authentication states
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -421,10 +423,22 @@ const handleStaffLogin = async (e: React.FormEvent) => {
 }
 
   // Staff logout
-  const handleStaffLogout = () => {
+  const handleStaffLogout = async () => {
+    // Create security event for logout
+    try {
+      const staffUserId = localStorage.getItem('staff_user_id')
+      if (staffUserId) {
+        await deviceSecurity.createSecurityEvent(staffUserId, 'logout')
+      }
+    } catch (securityError) {
+      console.warn('Failed to create logout security event:', securityError)
+      // Don't block logout if security tracking fails
+    }
+
     localStorage.removeItem('staff_authenticated')
     localStorage.removeItem('staff_login_time')
     localStorage.removeItem('staff_username')
+    localStorage.removeItem('staff_user_id')
     
     if (sessionTimeout) clearTimeout(sessionTimeout)
     
