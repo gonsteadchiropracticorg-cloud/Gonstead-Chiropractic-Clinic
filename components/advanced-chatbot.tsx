@@ -2427,7 +2427,7 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
   if (!isOpen) {
     // track open intent when launcher is visible; actual open tracked on click
     return (
-      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50">
+      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[10010]">
         <Button
           aria-label="Open chat assistant"
           onClick={() => { setIsOpen(true); analyticsRef.current?.trackEvent('chat_open', {}) }}
@@ -2465,11 +2465,12 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
   }
 
   return (
-    <div ref={chatbotRef} className="fixed right-4 md:right-6 z-[80] pb-[env(safe-area-inset-bottom)]" style={{ bottom: 'calc(env(safe-area-inset-bottom) + 16px)' }} dir={language === 'ur' ? 'rtl' : 'ltr'}>
+    <div ref={chatbotRef} className="fixed left-2 right-2 sm:left-auto sm:right-4 md:right-6 z-[10010] pb-[env(safe-area-inset-bottom)]" style={{ bottom: 'calc(env(safe-area-inset-bottom) + 16px)' }} dir={language === 'ur' ? 'rtl' : 'ltr'}>
       <Card
-        className={`w-[92vw] sm:w-[360px] md:w-[430px] lg:w-[500px] xl:w-[560px] max-w-[96vw]
+        className={`w-full sm:w-[360px] md:w-[400px] lg:w-[440px] xl:w-[460px] max-w-[calc(100vw-1rem)]
         shadow-sm border border-gray-200 dark:border-gray-800 transition-all duration-200 bg-white dark:bg-gray-900
-        ${compact ? "h-[85vh]" : "h-[80vh]"}
+        ${compact ? "h-[88dvh] sm:h-[85vh]" : "h-[82dvh] sm:h-[80vh]"}
+        max-h-[calc(100dvh-2.5rem)]
         rounded-2xl overflow-hidden flex flex-col`}
       >
         {/* Enhanced Header */}
@@ -2492,7 +2493,7 @@ Thank you for choosing Gonstead Chiropractic Clinic!`
                 size="sm"
                 variant="ghost"
                 onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-white/20 hover:bg-red-500/20 p-1.5 md:p-2 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
+                className="text-white hover:bg-red-500/20 p-1.5 md:p-2 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>

@@ -4505,7 +4505,7 @@ left: 80px;
             console.log('Starting assessment...');
             
             // Option 1: Redirect to separate assessment page (recommended)
-            window.location.href = '/assessment.html';
+            window.location.href = `/assessment.html?v=${Date.now()}`;
             return;
             
             // Option 2: Fix modal system (backup)

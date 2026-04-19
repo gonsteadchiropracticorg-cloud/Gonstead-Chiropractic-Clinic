@@ -93,6 +93,22 @@ interface GroupSettings {
   last_cleared_at?: string
 }
 
+interface GiphyGif {
+  id: string
+  title: string
+  previewUrl: string
+  originalUrl: string
+}
+
+const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'yqOnxaDn1LnngXxZCIb9zN5UQ1woEneJ'
+const GIPHY_MESSAGE_PREFIX = '[GIF] '
+
+const getGifUrlFromMessage = (message: string): string | null => {
+  if (!message.startsWith(GIPHY_MESSAGE_PREFIX)) return null
+  const gifUrl = message.slice(GIPHY_MESSAGE_PREFIX.length).trim()
+  return gifUrl.startsWith('http') ? gifUrl : null
+}
+
 export default function PerfectWhatsAppChat({ 
   currentUserId, 
   currentUserRole, 
@@ -233,6 +249,10 @@ export default function PerfectWhatsAppChat({
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const [isRecording, setIsRecording] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [pickerTab, setPickerTab] = useState<'emoji' | 'gif'>('emoji')
+  const [gifQuery, setGifQuery] = useState('')
+  const [gifResults, setGifResults] = useState<GiphyGif[]>([])
+  const [isGifLoading, setIsGifLoading] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const [isInCall, setIsInCall] = useState(false)
   const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'connected' | 'ended'>('idle')
@@ -245,10 +265,24 @@ export default function PerfectWhatsAppChat({
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const emojiTriggerRef = useRef<HTMLButtonElement>(null)
 
   // Close chat when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const targetNode = event.target as Node
+
+      if (
+        showEmojiPicker &&
+        pickerRef.current &&
+        !pickerRef.current.contains(targetNode) &&
+        emojiTriggerRef.current &&
+        !emojiTriggerRef.current.contains(targetNode)
+      ) {
+        setShowEmojiPicker(false)
+      }
+
       if (chatRef.current && !chatRef.current.contains(event.target as Node)) {
         setIsOpen(false)
         setShowEmojiPicker(false)
@@ -274,7 +308,7 @@ export default function PerfectWhatsAppChat({
         delete (window as any).recordingInterval
       }
     }
-  }, [chatRef, isRecording, isOpen])
+  }, [chatRef, isRecording, isOpen, showEmojiPicker])
 
   // Local storage key
   const STORAGE_KEY = 'perfect_whatsapp_chat_messages'
@@ -751,6 +785,61 @@ export default function PerfectWhatsAppChat({
   // Handle emoji selection
   const handleEmojiSelect = (emoji: string) => {
     setNewMessage(prev => prev + emoji)
+    inputRef.current?.focus()
+  }
+
+  const fetchGifs = useCallback(async (query: string, signal?: AbortSignal) => {
+    if (!GIPHY_API_KEY) {
+      setGifResults([])
+      return
+    }
+
+    setIsGifLoading(true)
+    try {
+      const endpoint = query
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=16&rating=pg-13&lang=en`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=16&rating=pg-13`
+
+      const response = await fetch(endpoint, { signal })
+      if (!response.ok) {
+        throw new Error(`Failed to fetch GIFs: ${response.status}`)
+      }
+
+      const payload = await response.json()
+      const gifs: GiphyGif[] = (payload?.data || []).map((item: any) => ({
+        id: item.id,
+        title: item.title || 'GIF',
+        previewUrl: item.images?.fixed_width?.url || item.images?.downsized?.url || item.images?.original?.url,
+        originalUrl: item.images?.original?.url || item.images?.fixed_width?.url
+      })).filter((item: GiphyGif) => Boolean(item.previewUrl && item.originalUrl))
+
+      setGifResults(gifs)
+    } catch (error) {
+      if ((error as Error)?.name !== 'AbortError') {
+        console.error('Error loading GIFs:', error)
+        setGifResults([])
+      }
+    } finally {
+      setIsGifLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!showEmojiPicker || pickerTab !== 'gif') return
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => {
+      fetchGifs(gifQuery.trim(), controller.signal)
+    }, 300)
+
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
+  }, [showEmojiPicker, pickerTab, gifQuery, fetchGifs])
+
+  const handleGifSelect = (gifUrl: string) => {
+    setNewMessage(prev => `${prev}${prev ? '\n' : ''}${GIPHY_MESSAGE_PREFIX}${gifUrl}`)
     setShowEmojiPicker(false)
     inputRef.current?.focus()
   }
@@ -883,7 +972,7 @@ export default function PerfectWhatsAppChat({
   return (
     <div 
       ref={chatRef}
-      className="z-45 flex flex-col"
+      className="flex flex-col"
       data-chat-role={currentUserRole}
       data-chat-user={currentUserId}
       data-chat-interface="true"
@@ -892,7 +981,8 @@ export default function PerfectWhatsAppChat({
         bottom: chatDimensions.bottom !== undefined ? chatDimensions.bottom : '1.5rem',
         right: chatDimensions.right !== undefined ? chatDimensions.right : '1.5rem',
         left: chatDimensions.left || 'auto',
-        top: chatDimensions.top || 'auto'
+        top: chatDimensions.top || 'auto',
+        zIndex: 10000
       }}
     >
       {/* Chat Window - Mobile Optimized */}
@@ -1225,9 +1315,31 @@ export default function PerfectWhatsAppChat({
                       
                       {/* Text Message */}
                       {message.message_type === 'text' && (
-                        <p className="text-sm break-words leading-relaxed" style={{ color: colors.textPrimary }}>
-                          {message.message}
-                        </p>
+                        (() => {
+                          const gifUrl = getGifUrlFromMessage(message.message)
+
+                          if (gifUrl) {
+                            return (
+                              <div className="space-y-1">
+                                <img
+                                  src={gifUrl}
+                                  alt="Shared GIF"
+                                  className="rounded-lg w-full max-w-[220px] h-auto object-cover"
+                                  loading="lazy"
+                                />
+                                <p className="text-[10px]" style={{ color: colors.textSecondary }}>
+                                  GIF message
+                                </p>
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <p className="text-sm break-words leading-relaxed" style={{ color: colors.textPrimary }}>
+                              {message.message}
+                            </p>
+                          )
+                        })()
                       )}
                       
                       {/* WhatsApp-style Message Status - Fixed positioning inside textbox */}
@@ -1351,44 +1463,109 @@ export default function PerfectWhatsAppChat({
           )}
           
           <div className="flex items-end space-x-2">
-            {/* Emoji Button */}
+            {/* Emoji Picker Button */}
             <div className="relative">
               <Button
+                ref={emojiTriggerRef}
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                onClick={() => {
+                  setShowEmojiPicker(!showEmojiPicker)
+                  setPickerTab('emoji')
+                }}
                 className="text-gray-500 hover:text-gray-700 p-2 transition-colors"
+                title="Open emoji picker"
               >
                 😊
               </Button>
               
-              {/* Improved Emoji Picker */}
+              {/* Emoji + GIF Picker */}
               {showEmojiPicker && (
-                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-2xl border border-gray-200 p-4 z-40 w-80 max-h-80">
-                  <div className="mb-2 pb-2 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-700">Select Emoji</p>
-                  </div>
-                  <div className="grid grid-cols-8 gap-1 max-h-60 overflow-y-auto">
-                    {commonEmojis.map((emoji, index) => (
+                <div ref={pickerRef} className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-2xl border border-gray-200 p-3 z-40 w-80">
+                  <div className="mb-2 pb-2 border-b border-gray-200 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <button
-                        key={index}
-                        onClick={() => handleEmojiSelect(emoji)}
-                        className="text-2xl hover:bg-gray-100 rounded p-2 transition-colors hover:scale-110 transform"
-                        title={emoji}
+                        type="button"
+                        onClick={() => setPickerTab('emoji')}
+                        className={`px-2 py-1 text-xs rounded-md transition-colors ${pickerTab === 'emoji' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                       >
-                        {emoji}
+                        Emoji
                       </button>
-                    ))}
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setPickerTab('gif')}
+                        className={`px-2 py-1 text-xs rounded-md transition-colors ${pickerTab === 'gif' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                      >
+                        GIF
+                      </button>
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowEmojiPicker(false)}
-                      className="text-xs text-gray-500 hover:text-gray-700"
+                      className="h-7 w-7 p-0 text-gray-500 hover:text-gray-700"
+                      title="Close picker"
                     >
-                      Close
+                      <X className="h-4 w-4" />
                     </Button>
+                  </div>
+
+                  {pickerTab === 'emoji' ? (
+                    <div className="grid grid-cols-8 gap-1 max-h-60 overflow-y-auto">
+                      {commonEmojis.map((emoji, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleEmojiSelect(emoji)}
+                          className="text-2xl hover:bg-gray-100 rounded p-2 transition-colors hover:scale-110 transform"
+                          title={emoji}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <Input
+                        value={gifQuery}
+                        onChange={(e) => setGifQuery(e.target.value)}
+                        placeholder="Search GIFs..."
+                        className="h-8 text-sm mb-2"
+                      />
+
+                      <div className="h-56 overflow-y-auto pr-1">
+                        {isGifLoading ? (
+                          <div className="h-full flex items-center justify-center text-sm text-gray-500">
+                            Loading GIFs...
+                          </div>
+                        ) : gifResults.length === 0 ? (
+                          <div className="h-full flex items-center justify-center text-sm text-gray-500 text-center px-4">
+                            No GIFs found. Try another keyword.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2">
+                            {gifResults.map((gif) => (
+                              <button
+                                key={gif.id}
+                                onClick={() => handleGifSelect(gif.originalUrl)}
+                                className="rounded-md overflow-hidden border border-gray-200 hover:border-blue-400 transition-colors"
+                                title={gif.title || 'GIF'}
+                              >
+                                <img
+                                  src={gif.previewUrl}
+                                  alt={gif.title || 'GIF'}
+                                  className="w-full h-24 object-cover"
+                                  loading="lazy"
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <span className="text-[10px] text-gray-400">Powered by GIPHY</span>
                   </div>
                 </div>
               )}

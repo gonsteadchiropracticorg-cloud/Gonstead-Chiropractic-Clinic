@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gonstead-chiropractic-v1.0.1'
+const CACHE_NAME = 'gonstead-chiropractic-v1.0.2'
 const OFFLINE_URL = '/offline'
 const SYNC_TAG = 'background-sync'
 
@@ -71,6 +71,28 @@ self.addEventListener('fetch', (event) => {
   }
 
   const url = new URL(event.request.url)
+
+  // Always prefer a fresh assessment page so UI updates are visible immediately.
+  if (url.pathname === '/assessment.html') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone()
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache)
+            })
+          }
+          return response
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => {
+            return cached || caches.match(OFFLINE_URL)
+          })
+        })
+    )
+    return
+  }
   
   // Network-first for HTML pages (prevents stale cached pages on mobile)
   if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {

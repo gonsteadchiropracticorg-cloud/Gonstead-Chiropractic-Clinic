@@ -12,6 +12,13 @@ interface ScrollToTopButtonProps {
 export default function ScrollToTopButton({ showAfter = 200, className = "" }: ScrollToTopButtonProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+
+  const syncChatVisibility = () => {
+    if (typeof document === "undefined") return
+    const chatInterface = document.querySelector('[data-chat-interface="true"]')
+    setIsChatOpen(Boolean(chatInterface))
+  }
 
   useEffect(() => {
     const toggleVisibility = () => {
@@ -25,8 +32,21 @@ export default function ScrollToTopButton({ showAfter = 200, className = "" }: S
     // Add scroll listener
     window.addEventListener("scroll", toggleVisibility)
 
+    // Initial checks
+    toggleVisibility()
+    syncChatVisibility()
+
+    // Watch for chat open/close DOM changes
+    const observer = new MutationObserver(() => {
+      syncChatVisibility()
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+
     // Cleanup
-    return () => window.removeEventListener("scroll", toggleVisibility)
+    return () => {
+      window.removeEventListener("scroll", toggleVisibility)
+      observer.disconnect()
+    }
   }, [showAfter])
 
   const scrollToTop = () => {
@@ -42,7 +62,7 @@ export default function ScrollToTopButton({ showAfter = 200, className = "" }: S
     }, 600)
   }
 
-  if (!isVisible) return null
+  if (!isVisible || isChatOpen) return null
 
   return (
     <div className={`fixed bottom-20 right-4 z-[9998] ${className}`}>
