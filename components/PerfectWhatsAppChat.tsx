@@ -466,7 +466,13 @@ export default function PerfectWhatsAppChat({
         latestLocationRef.current = snapshot
         updatePresence(true, snapshot)
       },
-      () => {},
+      (error) => {
+        // Staff UI keeps this hidden, but log for production troubleshooting.
+        console.warn('Staff geolocation capture failed:', {
+          code: error.code,
+          message: error.message
+        })
+      },
       {
         enableHighAccuracy: true,
         timeout: 15000,
@@ -1382,6 +1388,15 @@ export default function PerfectWhatsAppChat({
                   <p className="text-xs text-gray-500">No staff presence available yet.</p>
                 ) : (
                   <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                    {!staffPresence.some((staff) =>
+                      staff.share_location !== false &&
+                      typeof staff.latitude === 'number' &&
+                      typeof staff.longitude === 'number'
+                    ) && (
+                      <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+                        Live coordinates have not been received yet. Verify production DB migration and staff browser location permission.
+                      </div>
+                    )}
                     {staffPresence.map((staff) => {
                       const hasLocation =
                         staff.share_location !== false &&
