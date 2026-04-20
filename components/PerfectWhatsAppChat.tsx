@@ -44,6 +44,7 @@ import {
   PhoneIncoming,
   PhoneOutgoing,
   Eye,
+  MapPin,
   ExternalLink
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -268,6 +269,8 @@ export default function PerfectWhatsAppChat({
   // Location tracking is intentionally admin-side only (not exposed in staff UI).
   const shareLocation = true
   const [showSettings, setShowSettings] = useState(false)
+  const [showLiveLocationsPanel, setShowLiveLocationsPanel] = useState(false)
+  const [selectedMapStaffId, setSelectedMapStaffId] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const [isRecording, setIsRecording] = useState(false)
@@ -986,6 +989,38 @@ export default function PerfectWhatsAppChat({
     return `Updated ${hours}h ago`
   }
 
+  const activeStaffWithLocation = staffPresence.filter((staff) =>
+    staff.is_online &&
+    staff.share_location !== false &&
+    typeof staff.latitude === 'number' &&
+    typeof staff.longitude === 'number'
+  )
+
+  const selectedMapStaff = activeStaffWithLocation.find((staff) => staff.user_id === selectedMapStaffId)
+
+  const embeddedMapUrl =
+    selectedMapStaff &&
+    typeof selectedMapStaff.latitude === 'number' &&
+    typeof selectedMapStaff.longitude === 'number'
+      ? `https://maps.google.com/maps?q=${selectedMapStaff.latitude},${selectedMapStaff.longitude}&z=15&output=embed`
+      : ''
+
+  useEffect(() => {
+    if (currentUserRole !== 'admin') return
+
+    if (!selectedMapStaffId && activeStaffWithLocation.length > 0) {
+      setSelectedMapStaffId(activeStaffWithLocation[0].user_id)
+      return
+    }
+
+    if (
+      selectedMapStaffId &&
+      !activeStaffWithLocation.some((staff) => staff.user_id === selectedMapStaffId)
+    ) {
+      setSelectedMapStaffId(activeStaffWithLocation[0]?.user_id || '')
+    }
+  }, [activeStaffWithLocation, currentUserRole, selectedMapStaffId])
+
   // Common emojis list
   const commonEmojis = ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😜', '🤪', '😝', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '👋', '🤏', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🙏', '🤝', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄', '👶', '🧒', '👦', '👧', '🧑', '👱', '👨', '🧔', '👩', '🧓', '👴', '👵', '🙍', '🙎', '🙅', '🙆', '💁', '🙋', '🧏', '🙇', '🤦', '🤷', '👨‍⚕️', '👩‍⚕️', '👨‍🎓', '👩‍🎓', '👨‍🏫', '👩‍🏫', '👨‍⚖️', '👩‍⚖️', '👨‍🌾', '👩‍🌾', '👨‍🍳', '👩‍🍳', '👨‍🔧', '👩‍🔧', '👨‍🏭', '👩‍🏭', '👨‍💼', '👩‍💼', '👨‍🔬', '👩‍🔬', '👨‍💻', '👩‍💻', '👨‍🎤', '👩‍🎤', '👨‍🎨', '👩‍🎨', '👨‍✈️', '👩‍✈️', '👨‍🚀', '👩‍🚀', '👨‍🚒', '👩‍🚒', '👮', '🕵️', '💂', '👷', '🤴', '👸', '👳', '👲', '🧕', '🤵', '👰', '🤰', '🤱', '👼', '🎅', '🤶', '🦸', '🦹', '🧙', '🧝', '🧛', '🧟', '🧞', '🧜', '🧚', '🧞‍♂️', '🧞‍♀️', '🧟‍♂️', '🧟‍♀️', '🧛‍♂️', '🧛‍♀️', '🧜‍♂️', '🧜‍♀️', '🧚‍♂️', '🧚‍♀️', '🧙‍♂️', '🧙‍♀️', '💂‍♂️', '💂‍♀️', '👮‍♂️', '👮‍♀️', '🕵️‍♂️', '🕵️‍♀️', '👷‍♂️', '👷‍♀️', '🤴‍♂️', '👸‍♀️', '👳‍♂️', '🧕‍♀️', '🧔‍♂️', '👱‍♀️', '👱‍♂️', '👨‍🦰', '👩‍🦰', '👨‍🦱', '👩‍🦱', '👨‍🦳', '👩‍🦳', '👨‍🦲', '👩‍🦲', '🙋‍♂️', '🙋‍♀️', '🙇‍♂️', '🙇‍♀️', '🙏', '🤝', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄']
 
@@ -1299,6 +1334,18 @@ export default function PerfectWhatsAppChat({
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => setShowLiveLocationsPanel(!showLiveLocationsPanel)}
+                    className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-md transition-colors"
+                    title="Live Locations"
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+
+                {currentUserRole === 'admin' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setShowSettings(!showSettings)}
                     className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-md transition-colors"
                     title="Settings"
@@ -1354,6 +1401,82 @@ export default function PerfectWhatsAppChat({
             </div>
           )}
         </CardHeader>
+
+        {currentUserRole === 'admin' && showLiveLocationsPanel && (
+          <div className="p-3 border-b flex-shrink-0 bg-white" style={{ borderColor: colors.border }}>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-[#0d5c75]" />
+                  <span className="text-sm font-semibold text-gray-900">Live Staff Locations</span>
+                </div>
+                <span className="text-xs text-gray-500">
+                  Active with location: {activeStaffWithLocation.length}
+                </span>
+              </div>
+
+              {activeStaffWithLocation.length === 0 ? (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+                  No active staff location yet. Ask staff to keep the mobile dashboard open and allow location permission.
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 gap-2 max-h-36 overflow-y-auto pr-1">
+                    {activeStaffWithLocation.map((staff) => {
+                      const mapsUrl = `https://www.google.com/maps?q=${staff.latitude},${staff.longitude}`
+                      const isSelected = selectedMapStaffId === staff.user_id
+
+                      return (
+                        <div
+                          key={staff.user_id}
+                          className={`rounded-md border p-2 text-xs ${isSelected ? 'border-[#0d5c75] bg-[#0d5c75]/5' : 'border-gray-200 bg-white'}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedMapStaffId(staff.user_id)}
+                              className="text-left"
+                            >
+                              <div className="font-medium text-gray-800">{staff.user_name}</div>
+                              <div className="text-gray-500">{formatLocationAge(staff.location_updated_at)}</div>
+                              {staff.location_accuracy_meters != null && (
+                                <div className="text-gray-500">Accuracy: {Math.round(staff.location_accuracy_meters)}m</div>
+                              )}
+                            </button>
+                            <a
+                              href={mapsUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 underline whitespace-nowrap"
+                            >
+                              Open Maps
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {selectedMapStaff && embeddedMapUrl && (
+                    <div className="rounded-md border border-gray-200 overflow-hidden">
+                      <div className="px-2 py-1 text-xs bg-gray-50 border-b border-gray-200 text-gray-600">
+                        Live map: {selectedMapStaff.user_name}
+                      </div>
+                      <iframe
+                        title={`Live map for ${selectedMapStaff.user_name}`}
+                        src={embeddedMapUrl}
+                        className="w-full h-40"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Fixed Admin Settings Panel */}
         {currentUserRole === 'admin' && showSettings && (

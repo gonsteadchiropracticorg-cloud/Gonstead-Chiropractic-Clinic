@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { MessageCircle, X, Send, Check, CheckCheck } from 'lucide-react'
+import { MessageCircle, X, Send, Check, CheckCheck, MapPin, MapPinOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 
@@ -32,6 +32,13 @@ interface ChatMessage {
   created_at: string
 }
 
+interface StaffGeoLocation {
+  latitude: number
+  longitude: number
+  accuracy: number
+  updatedAt: string
+}
+
 export default function WhatsAppStaffChat({ staffId, staffName, adminId = 'admin-user' }: WhatsAppStaffChatProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -39,10 +46,60 @@ export default function WhatsAppStaffChat({ staffId, staffName, adminId = 'admin
   const [isLoading, setIsLoading] = useState(false)
   const [isOnline, setIsOnline] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [shareLocation, setShareLocation] = useState(true)
+  const [locationError, setLocationError] = useState<string | null>(null)
+  const [hasLocationPermission, setHasLocationPermission] = useState<boolean | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
   const subscriptionRef = useRef<any>(null)
+  const latestLocationRef = useRef<StaffGeoLocation | null>(null)
   const { toast } = useToast()
+
+  const upsertUserStatus = useCallback(async (payload: Record<string, unknown>) => {
+    const basePayload = {
+      user_id: staffId,
+      user_name: staffName,
+      user_role: 'staff',
+      is_online: payload.is_online,
+      last_seen: payload.last_seen,
+      updated_at: payload.updated_at
+    }
+
+    const { error } = await supabase
+      .from('user_status')
+      .upsert(payload)
+
+    // Keep chat online/offline status working even if location columns are not yet added.
+    if (error) {
+      await supabase
+        .from('user_status')
+        .upsert(basePayload)
+    }
+  }, [staffId, staffName])
+
+  const updateOnlineStatus = useCallback(async (online = true) => {
+    try {
+      const now = new Date().toISOString()
+      const latestLocation = latestLocationRef.current
+      const includeLocation = online && shareLocation && !!latestLocation
+
+      await upsertUserStatus({
+        user_id: staffId,
+        user_name: staffName,
+        user_role: 'staff',
+        is_online: online,
+        last_seen: now,
+        updated_at: now,
+        latitude: includeLocation ? latestLocation?.latitude : null,
+        longitude: includeLocation ? latestLocation?.longitude : null,
+        location_accuracy_meters: includeLocation ? latestLocation?.accuracy : null,
+        location_updated_at: includeLocation ? latestLocation?.updatedAt : null,
+        share_location: shareLocation
+      })
+    } catch (error) {
+      console.error('Error updating online status:', error)
+    }
+  }, [shareLocation, staffId, staffName, upsertUserStatus])
 
   // Click outside to close
   useEffect(() => {
@@ -63,41 +120,68 @@ export default function WhatsAppStaffChat({ staffId, staffName, adminId = 'admin
 
   // Update online status
   useEffect(() => {
-    const updateOnlineStatus = async () => {
-      try {
-        await supabase
-          .from('user_status')
-          .upsert({
-            user_id: staffId,
-            user_name: staffName,
-            user_role: 'staff',
-            is_online: true,
-            last_seen: new Date().toISOString()
-          })
-      } catch (error) {
-        console.error('Error updating online status:', error)
-      }
-    }
-
     if (staffId) {
-      updateOnlineStatus()
-      const interval = setInterval(updateOnlineStatus, 30000) // Update every 30 seconds
+      updateOnlineStatus(true)
+      const interval = setInterval(() => updateOnlineStatus(true), 30000) // Update every 30 seconds
       
       return () => {
         clearInterval(interval)
-        // Set offline when component unmounts
-        supabase
-          .from('user_status')
-          .upsert({
-            user_id: staffId,
-            user_name: staffName,
-            user_role: 'staff',
-            is_online: false,
-            last_seen: new Date().toISOString()
-          })
+        updateOnlineStatus(false)
       }
     }
-  }, [staffId, staffName])
+  }, [staffId, updateOnlineStatus])
+
+  // Track staff location and publish to admin presence.
+  useEffect(() => {
+    if (!staffId || !shareLocation) {
+      latestLocationRef.current = null
+      setLocationError(null)
+      setHasLocationPermission(null)
+      return
+    }
+
+    if (!('geolocation' in navigator)) {
+      setLocationError('Location is not supported in this browser')
+      setHasLocationPermission(false)
+      return
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setHasLocationPermission(true)
+        setLocationError(null)
+
+        latestLocationRef.current = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          updatedAt: new Date(position.timestamp).toISOString()
+        }
+
+        updateOnlineStatus(true)
+      },
+      (error) => {
+        setHasLocationPermission(false)
+
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError('Location permission denied')
+        } else if (error.code === error.TIMEOUT) {
+          setLocationError('Location request timed out')
+        } else {
+          setLocationError('Unable to fetch location')
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 30000
+      }
+    )
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId)
+    }
+  }, [shareLocation, staffId, updateOnlineStatus])
 
   // Check admin online status
   useEffect(() => {
@@ -342,6 +426,32 @@ export default function WhatsAppStaffChat({ staffId, staffName, adminId = 'admin
             className="text-white hover:bg-white/20 p-1 rounded-lg"
           >
             <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs text-white/90">
+            {shareLocation ? <MapPin className="h-3.5 w-3.5" /> : <MapPinOff className="h-3.5 w-3.5" />}
+            <span>
+              {shareLocation
+                ? hasLocationPermission === false
+                  ? locationError || 'Location not available'
+                  : 'Live location sharing is enabled'
+                : 'Live location sharing is paused'}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setShareLocation((prev) => !prev)
+              if (shareLocation) {
+                latestLocationRef.current = null
+              }
+            }}
+            className="text-white hover:bg-white/20 h-7 px-2"
+          >
+            {shareLocation ? 'Pause' : 'Share'}
           </Button>
         </div>
       </CardHeader>

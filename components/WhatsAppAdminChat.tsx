@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { MessageCircle, X, Send, Check, CheckCheck, Users, Circle, MessageSquare } from 'lucide-react'
+import { MessageCircle, X, Send, Check, CheckCheck, Users, Circle, MessageSquare, MapPin, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 
@@ -37,6 +37,11 @@ interface StaffMember {
   user_name: string
   is_online: boolean
   last_seen: string
+  latitude?: number | null
+  longitude?: number | null
+  location_accuracy_meters?: number | null
+  location_updated_at?: string | null
+  share_location?: boolean | null
   unread_count: number
 }
 
@@ -354,6 +359,28 @@ export default function WhatsAppAdminChat({ adminId = 'admin-user', adminName = 
 
   // Get selected staff name
   const selectedStaffName = staffMembers.find(staff => staff.user_id === selectedStaff)?.user_name || 'Unknown'
+  const selectedStaffMember = staffMembers.find(staff => staff.user_id === selectedStaff)
+  const hasStaffLocation =
+    selectedStaffMember?.share_location !== false &&
+    typeof selectedStaffMember?.latitude === 'number' &&
+    typeof selectedStaffMember?.longitude === 'number'
+
+  const mapsUrl = hasStaffLocation
+    ? `https://www.google.com/maps?q=${selectedStaffMember?.latitude},${selectedStaffMember?.longitude}`
+    : ''
+
+  const formatLocationAge = (updatedAt?: string | null) => {
+    if (!updatedAt) return 'Unknown update time'
+
+    const seconds = Math.max(0, Math.floor((Date.now() - new Date(updatedAt).getTime()) / 1000))
+    if (seconds < 60) return 'Updated just now'
+
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `Updated ${minutes}m ago`
+
+    const hours = Math.floor(minutes / 60)
+    return `Updated ${hours}h ago`
+  }
 
   if (!isOpen) {
     const totalUnread = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0)
@@ -420,6 +447,37 @@ export default function WhatsAppAdminChat({ adminId = 'admin-user', adminName = 
             </SelectContent>
           </Select>
         </div>
+
+        {selectedStaff && (
+          <div className="mt-2 rounded-md bg-white/15 border border-white/20 p-2 text-xs text-white/90">
+            {hasStaffLocation ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>Live location available for {selectedStaffName}</span>
+                </div>
+                <div>{formatLocationAge(selectedStaffMember?.location_updated_at)}</div>
+                {selectedStaffMember?.location_accuracy_meters != null && (
+                  <div>Accuracy: {Math.round(selectedStaffMember.location_accuracy_meters)}m</div>
+                )}
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 underline hover:text-white"
+                >
+                  Open exact location in Google Maps
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" />
+                <span>Live location is not available for {selectedStaffName}</span>
+              </div>
+            )}
+          </div>
+        )}
       </CardHeader>
 
       {/* Messages */}

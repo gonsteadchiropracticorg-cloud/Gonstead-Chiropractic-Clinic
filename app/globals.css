@@ -90,7 +90,7 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     background-color: #F8F5F0; /* Original ivory background */
     color: #0a3a47; /* Dark teal text */
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-open-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
   .dark body {

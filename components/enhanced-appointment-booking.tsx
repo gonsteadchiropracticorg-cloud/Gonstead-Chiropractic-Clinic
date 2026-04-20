@@ -866,6 +866,8 @@ export function EnhancedAppointmentBooking() {
           </div>
 
 
+          {currentStep === 3 && (
+          <>
           {/* Sunday Closure Notice */}
           {(isToday() || isSundaySelected) && (
             <Alert className={`border-2 ${
@@ -977,6 +979,42 @@ export function EnhancedAppointmentBooking() {
               className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)] min-h-[100px] md:min-h-[120px] text-sm md:text-base"
             />
           </div>
+          </>
+          )}
+
+          {currentStep === 4 && (
+            <div className="space-y-4">
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-[rgb(66,139,124)] border-b-2 border-[rgb(66,139,124)]/20 pb-2">
+                {language === "ur" ? "بکنگ کا جائزہ" : "Review Your Booking"}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70">
+                  <p className="text-xs text-gray-500">{language === "ur" ? "نام" : "Name"}</p>
+                  <p className="font-semibold text-sm">{formData.name || '-'}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70">
+                  <p className="text-xs text-gray-500">{language === "ur" ? "فون" : "Phone"}</p>
+                  <p className="font-semibold text-sm">{formData.phone || '-'}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70">
+                  <p className="text-xs text-gray-500">{language === "ur" ? "سیشن" : "Session"}</p>
+                  <p className="font-semibold text-sm">{formData.sessionType === 'in_clinic' ? (language === "ur" ? "کلینک میں" : "In-Clinic") : (language === "ur" ? "ویڈیو" : "Video")}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70">
+                  <p className="text-xs text-gray-500">{language === "ur" ? "فوریت" : "Urgency"}</p>
+                  <p className="font-semibold text-sm capitalize">{formData.urgency}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70 sm:col-span-2">
+                  <p className="text-xs text-gray-500">{language === "ur" ? "اپائنٹمنٹ کا وقت" : "Appointment Date & Time"}</p>
+                  <p className="font-semibold text-sm">{formData.preferredTime || '-'}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70 sm:col-span-2">
+                  <p className="text-xs text-gray-500">{language === "ur" ? "نوٹس" : "Notes"}</p>
+                  <p className="font-semibold text-sm">{formData.notes || (language === "ur" ? 'کوئی اضافی نوٹس نہیں' : 'No additional notes')}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <Button
             type="submit"

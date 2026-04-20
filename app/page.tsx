@@ -283,7 +283,7 @@ const HomePageContent = memo(() => {
 
       {/* Hero Section - Professional Medical Design with Background Image */}
       <section id="home" className="relative pt-28 sm:pt-32 min-h-[60vh] lg:min-h-[65vh] flex items-center overflow-hidden">
-            {/* Professional Background Image with Enhanced Glassmorphism Blur Effect */}
+            {/* Professional Background Image with a single clean overlay */}
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
               style={{
@@ -292,20 +292,8 @@ const HomePageContent = memo(() => {
                 backgroundPosition: 'center center'
               }}
             >
-              {/* Darkened Glassmorphism Blur Overlay - enhanced depth and visibility */}
+              {/* Primary overlay for text readability */}
               <div className="absolute inset-0 backdrop-blur-[3px] bg-gradient-to-br from-[rgb(76,157,144)]/55 via-[rgb(56,127,134)]/50 to-[rgb(36,97,124)]/55 dark:from-[rgb(76,157,144)]/65 dark:via-[rgb(56,127,134)]/60 dark:to-[rgb(36,97,124)]/65"></div>
-              
-              {/* Enhanced Glass Layer for Professional Depth */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10 backdrop-blur-[1px]"></div>
-              
-              {/* Subtle Glass Shimmer Effects */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/6 to-transparent opacity-50"></div>
-              
-              {/* Professional Spine Pattern - Mobile Hidden */}
-              <div className="hidden sm:block absolute right-10 top-1/4 w-3 h-96 bg-gradient-to-b from-transparent via-white/20 to-transparent rounded-full shadow-lg"></div>
-              <div className="hidden sm:block absolute right-11 top-1/3 w-5 h-5 bg-white/30 rounded-full shadow-md"></div>
-              <div className="hidden sm:block absolute right-7 top-1/2 w-5 h-5 bg-white/30 rounded-full shadow-md"></div>
-              <div className="hidden sm:block absolute right-11 top-2/3 w-5 h-5 bg-white/30 rounded-full shadow-md"></div>
             </div>
 
             <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-12 relative z-10">
@@ -353,50 +341,9 @@ const HomePageContent = memo(() => {
                       className="border-2 border-[rgb(76,157,144)]/50 text-emerald-300 hover:bg-[rgb(76,157,144)]/10 hover:border-[rgb(76,157,144)] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105 w-full sm:w-auto"
                     >
                       <PlayCircle className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
-                      <span className="text-base">{t("hero.discover.method")}</span>
+                      <span className="text-base">Learn More</span>
                     </Button>
                   </div>
-                  
-                  {/* Professional Visiting Card Download */}
-                  <div className="flex justify-center sm:justify-start pt-4 border-t border-blue-400/20 mt-4">
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        // Client-side only
-                        if (typeof window === 'undefined' || typeof document === 'undefined') return
-                        
-                        const link = document.createElement('a')
-                        link.href = '/images/visiting-card.jpg'
-                        link.download = 'Gonstead-Chiropractic-Visiting-Card.jpg'
-                        document.body.appendChild(link)
-                        link.click()
-                        document.body.removeChild(link)
-                      }}
-                      className="group bg-gradient-to-r from-white/10 to-white/5 hover:from-white/20 hover:to-white/10 text-white border border-white/20 hover:border-white/40 px-4 sm:px-6 py-2 sm:py-3 rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-white/10"
-                    >
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                          <svg 
-                            className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300 group-hover:text-white transition-colors" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                          </svg>
-                        </div>
-                        <div className="text-left">
-                          <div className="text-sm sm:text-base font-semibold text-white group-hover:text-cyan-200 transition-colors">
-                            Download Visiting Card
-                          </div>
-                          <div className="text-xs text-blue-300 group-hover:text-white transition-colors">
-                            Professional contact info
-                          </div>
-                        </div>
-                      </div>
-                    </Button>
-                  </div>
-                  
 
                   {/* Clinic Hours - Prominent Display */}
                   <div className="mt-8 mb-6">
