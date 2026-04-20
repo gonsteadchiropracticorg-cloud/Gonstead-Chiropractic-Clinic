@@ -74,6 +74,7 @@ export default function StaffDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [staffUsername, setStaffUsername] = useState('')
+  const [staffUserId, setStaffUserId] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [urgencyFilter, setUrgencyFilter] = useState('')
@@ -99,10 +100,12 @@ export default function StaffDashboard() {
     const checkAuth = () => {
       const staffAuth = localStorage.getItem('staff_authenticated')
       const staffUser = localStorage.getItem('staff_username')
+      const storedStaffUserId = localStorage.getItem('staff_user_id')
       
       if (staffAuth === 'true' && staffUser) {
         setIsAuthenticated(true)
         setStaffUsername(staffUser)
+        if (storedStaffUserId) setStaffUserId(storedStaffUserId)
         loadPatientData()
         setupSessionTimeout()
       } else {
@@ -391,17 +394,19 @@ const handleStaffLogin = async (e: React.FormEvent) => {
       return
     }
 
-    const staff = result.data as { username: string; display_name?: string | null; role?: string | null }
+    const staff = result.data as { id: string; username: string; display_name?: string | null; role?: string | null }
 
     // Persist minimal session info on this device only
     localStorage.setItem('staff_authenticated', 'true')
     localStorage.setItem('staff_login_time', new Date().toISOString())
     localStorage.setItem('staff_username', staff.username)
+    localStorage.setItem('staff_user_id', staff.id)
     if (staff.display_name) localStorage.setItem('staff_display_name', staff.display_name)
     if (staff.role) localStorage.setItem('staff_role', staff.role)
 
     setIsAuthenticated(true)
     setStaffUsername(staff.display_name || staff.username)
+    setStaffUserId(staff.id)
 
     await loadPatientData()
     setupSessionTimeout()
@@ -445,6 +450,7 @@ const handleStaffLogin = async (e: React.FormEvent) => {
     setIsAuthenticated(false)
     setCredentials({ username: '', password: '' })
     setStaffUsername('')
+    setStaffUserId('')
     setPatients([])
     setFilteredPatients([])
     
@@ -1071,7 +1077,7 @@ const handleStaffLogin = async (e: React.FormEvent) => {
       
       {/* Perfect WhatsApp-Style Chat Interface */}
       <PerfectWhatsAppChat 
-        currentUserId={staffUsername || 'staff-user'} 
+        currentUserId={staffUserId || staffUsername || 'staff-user'} 
         currentUserRole={'staff'}
         currentUserName={staffUsername || 'Staff Member'}
       />

@@ -6072,7 +6072,7 @@ export default function AdminDashboard() {
 
       {/* Perfect WhatsApp-Style Chat Interface */}
       <PerfectWhatsAppChat 
-        currentUserId={adminUser?.email || 'admin-user'} 
+        currentUserId={adminUser?.id || adminUser?.email || 'admin-user'} 
         currentUserRole={'admin'}
         currentUserName={adminUser?.name || 'Dr. Bashir Khan'}
       />

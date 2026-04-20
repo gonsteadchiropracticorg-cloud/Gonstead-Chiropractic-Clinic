@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 
 export const metadata: Metadata = {
   title: "Staff Dashboard - Gonstead Chiropractic",
@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     title: "GC Staff",
     statusBarStyle: "default",
   },
+}
+
+export const viewport: Viewport = {
   themeColor: "#0d5c75",
 }
 

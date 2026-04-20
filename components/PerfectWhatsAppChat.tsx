@@ -43,7 +43,8 @@ import {
   PhoneCall,
   PhoneIncoming,
   PhoneOutgoing,
-  Eye
+  Eye,
+  ExternalLink
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -98,6 +99,25 @@ interface GiphyGif {
   title: string
   previewUrl: string
   originalUrl: string
+}
+
+interface StaffPresence {
+  user_id: string
+  user_name: string
+  is_online: boolean
+  last_seen?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  location_accuracy_meters?: number | null
+  location_updated_at?: string | null
+  share_location?: boolean | null
+}
+
+interface GeoLocationSnapshot {
+  latitude: number
+  longitude: number
+  accuracy: number
+  updatedAt: string
 }
 
 const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'yqOnxaDn1LnngXxZCIb9zN5UQ1woEneJ'
@@ -244,6 +264,9 @@ export default function PerfectWhatsAppChat({
     auto_clear_enabled: false
   })
   const [onlineUsers, setOnlineUsers] = useState<string[]>([])
+  const [staffPresence, setStaffPresence] = useState<StaffPresence[]>([])
+  // Location tracking is intentionally admin-side only (not exposed in staff UI).
+  const shareLocation = true
   const [showSettings, setShowSettings] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [typingUsers, setTypingUsers] = useState<string[]>([])
@@ -267,6 +290,98 @@ export default function PerfectWhatsAppChat({
   const chatRef = useRef<HTMLDivElement>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
   const emojiTriggerRef = useRef<HTMLButtonElement>(null)
+  const latestLocationRef = useRef<GeoLocationSnapshot | null>(null)
+
+  const upsertUserStatus = useCallback(async (payload: Record<string, unknown>) => {
+    const basePayload = {
+      user_id: currentUserId,
+      user_name: currentUserName,
+      user_role: currentUserRole,
+      is_online: payload.is_online,
+      last_seen: payload.last_seen,
+      updated_at: payload.updated_at
+    }
+
+    const { error } = await supabase
+      .from('user_status')
+      .upsert(payload)
+
+    // Keep presence updates working even before location migration is applied.
+    if (error) {
+      await supabase
+        .from('user_status')
+        .upsert(basePayload)
+    }
+  }, [currentUserId, currentUserName, currentUserRole])
+
+  const updatePresence = useCallback(async (online = true, locationOverride?: GeoLocationSnapshot | null) => {
+    try {
+      const now = new Date().toISOString()
+      const latestLocation = locationOverride ?? latestLocationRef.current
+      const includeLocation = currentUserRole === 'staff' && online && shareLocation && !!latestLocation
+
+      await upsertUserStatus({
+        user_id: currentUserId,
+        user_name: currentUserName,
+        user_role: currentUserRole,
+        is_online: online,
+        last_seen: now,
+        updated_at: now,
+        latitude: includeLocation ? latestLocation?.latitude : null,
+        longitude: includeLocation ? latestLocation?.longitude : null,
+        location_accuracy_meters: includeLocation ? latestLocation?.accuracy : null,
+        location_updated_at: includeLocation ? latestLocation?.updatedAt : null,
+        share_location: currentUserRole === 'staff' ? shareLocation : null
+      })
+    } catch (error) {
+      console.error('Error updating presence:', error)
+    }
+  }, [currentUserId, currentUserName, currentUserRole, shareLocation, upsertUserStatus])
+
+  const loadPresence = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_status')
+        .select('user_id,user_name,user_role,is_online,last_seen,latitude,longitude,location_accuracy_meters,location_updated_at,share_location')
+
+      if (error) {
+        throw error
+      }
+
+      const rows = (data || []) as Array<any>
+      const online = rows.filter(user => user.is_online).map(user => user.user_name)
+      setOnlineUsers(online)
+
+      const staffRows = rows
+        .filter(user => user.user_role === 'staff')
+        .sort((a, b) => String(a.user_name).localeCompare(String(b.user_name)))
+
+      setStaffPresence(staffRows)
+    } catch (extendedError) {
+      // Fallback if location columns are not available yet.
+      try {
+        const { data, error } = await supabase
+          .from('user_status')
+          .select('user_id,user_name,user_role,is_online,last_seen')
+
+        if (error) {
+          throw error
+        }
+
+        const rows = (data || []) as Array<any>
+        const online = rows.filter(user => user.is_online).map(user => user.user_name)
+        setOnlineUsers(online)
+
+        const staffRows = rows
+          .filter(user => user.user_role === 'staff')
+          .sort((a, b) => String(a.user_name).localeCompare(String(b.user_name)))
+
+        setStaffPresence(staffRows)
+      } catch (baseError) {
+        console.error('Error loading presence:', baseError)
+      }
+    }
+  }, [])
 
   // Close chat when clicking outside
   useEffect(() => {
@@ -312,6 +427,79 @@ export default function PerfectWhatsAppChat({
 
   // Local storage key
   const STORAGE_KEY = 'perfect_whatsapp_chat_messages'
+
+  // Keep global online/offline + optional staff location presence updated.
+  useEffect(() => {
+    if (!currentUserId) return
+
+    updatePresence(true)
+    loadPresence()
+
+    const interval = setInterval(() => {
+      updatePresence(true)
+      loadPresence()
+    }, 30000)
+
+    return () => {
+      clearInterval(interval)
+      updatePresence(false)
+    }
+  }, [currentUserId, loadPresence, updatePresence])
+
+  // Staff geolocation tracking for admin visibility.
+  useEffect(() => {
+    if (currentUserRole !== 'staff' || !currentUserId) return
+
+    if (!('geolocation' in navigator)) {
+      return
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const snapshot: GeoLocationSnapshot = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          updatedAt: new Date(position.timestamp).toISOString()
+        }
+
+        latestLocationRef.current = snapshot
+        updatePresence(true, snapshot)
+      },
+      () => {},
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 30000
+      }
+    )
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId)
+    }
+  }, [currentUserId, currentUserRole, updatePresence])
+
+  // Realtime presence updates for member count + admin live-location panel.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`chat_user_status_${currentUserRole}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_status'
+        },
+        () => {
+          loadPresence()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [currentUserRole, loadPresence])
 
   // Refined antique-style colors with better coordination
   const colors = {
@@ -779,6 +967,19 @@ export default function PerfectWhatsAppChat({
 
   const activeMessages = messages.filter(msg => !msg.is_deleted)
 
+  const formatLocationAge = (updatedAt?: string | null) => {
+    if (!updatedAt) return 'Unknown update time'
+
+    const seconds = Math.max(0, Math.floor((Date.now() - new Date(updatedAt).getTime()) / 1000))
+    if (seconds < 60) return 'Updated just now'
+
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `Updated ${minutes}m ago`
+
+    const hours = Math.floor(minutes / 60)
+    return `Updated ${hours}h ago`
+  }
+
   // Common emojis list
   const commonEmojis = ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😜', '🤪', '😝', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '👋', '🤏', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🙏', '🤝', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄', '👶', '🧒', '👦', '👧', '🧑', '👱', '👨', '🧔', '👩', '🧓', '👴', '👵', '🙍', '🙎', '🙅', '🙆', '💁', '🙋', '🧏', '🙇', '🤦', '🤷', '👨‍⚕️', '👩‍⚕️', '👨‍🎓', '👩‍🎓', '👨‍🏫', '👩‍🏫', '👨‍⚖️', '👩‍⚖️', '👨‍🌾', '👩‍🌾', '👨‍🍳', '👩‍🍳', '👨‍🔧', '👩‍🔧', '👨‍🏭', '👩‍🏭', '👨‍💼', '👩‍💼', '👨‍🔬', '👩‍🔬', '👨‍💻', '👩‍💻', '👨‍🎤', '👩‍🎤', '👨‍🎨', '👩‍🎨', '👨‍✈️', '👩‍✈️', '👨‍🚀', '👩‍🚀', '👨‍🚒', '👩‍🚒', '👮', '🕵️', '💂', '👷', '🤴', '👸', '👳', '👲', '🧕', '🤵', '👰', '🤰', '🤱', '👼', '🎅', '🤶', '🦸', '🦹', '🧙', '🧝', '🧛', '🧟', '🧞', '🧜', '🧚', '🧞‍♂️', '🧞‍♀️', '🧟‍♂️', '🧟‍♀️', '🧛‍♂️', '🧛‍♀️', '🧜‍♂️', '🧜‍♀️', '🧚‍♂️', '🧚‍♀️', '🧙‍♂️', '🧙‍♀️', '💂‍♂️', '💂‍♀️', '👮‍♂️', '👮‍♀️', '🕵️‍♂️', '🕵️‍♀️', '👷‍♂️', '👷‍♀️', '🤴‍♂️', '👸‍♀️', '👳‍♂️', '🧕‍♀️', '🧔‍♂️', '👱‍♀️', '👱‍♂️', '👨‍🦰', '👩‍🦰', '👨‍🦱', '👩‍🦱', '👨‍🦳', '👩‍🦳', '👨‍🦲', '👩‍🦲', '🙋‍♂️', '🙋‍♀️', '🙇‍♂️', '🙇‍♀️', '🙏', '🤝', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄']
 
@@ -1174,6 +1375,57 @@ export default function PerfectWhatsAppChat({
               </div>
               
               <Separator style={{ backgroundColor: colors.border }} />
+
+              <div className="space-y-2">
+                <span className="text-sm font-medium" style={{ color: colors.textPrimary }}>Staff Live Locations</span>
+                {staffPresence.length === 0 ? (
+                  <p className="text-xs text-gray-500">No staff presence available yet.</p>
+                ) : (
+                  <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                    {staffPresence.map((staff) => {
+                      const hasLocation =
+                        staff.share_location !== false &&
+                        typeof staff.latitude === 'number' &&
+                        typeof staff.longitude === 'number'
+
+                      const mapsUrl = hasLocation
+                        ? `https://www.google.com/maps?q=${staff.latitude},${staff.longitude}`
+                        : ''
+
+                      return (
+                        <div key={staff.user_id} className="rounded-md border border-gray-200 bg-white p-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-800">{staff.user_name}</span>
+                            <span className={staff.is_online ? 'text-green-600' : 'text-gray-500'}>
+                              {staff.is_online ? 'Online' : 'Offline'}
+                            </span>
+                          </div>
+
+                          {hasLocation ? (
+                            <div className="mt-1 space-y-1 text-gray-600">
+                              <div>{formatLocationAge(staff.location_updated_at)}</div>
+                              {staff.location_accuracy_meters != null && (
+                                <div>Accuracy: {Math.round(staff.location_accuracy_meters)}m</div>
+                              )}
+                              <a
+                                href={mapsUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 underline"
+                              >
+                                Open in Google Maps
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="mt-1 text-gray-500">Location not shared</div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
               
               <div className="flex space-x-2">
                 <Button
