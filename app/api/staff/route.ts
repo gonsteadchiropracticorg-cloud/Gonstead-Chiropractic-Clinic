@@ -12,6 +12,28 @@ const supabaseAdmin = createClient(
   }
 )
 
+const mapDuplicateConstraintError = (error: any) => {
+  if (!error || error.code !== '23505') return null
+
+  const message = String(error.message || '')
+  const details = String(error.details || '')
+  const combined = `${message} ${details}`
+
+  if (combined.includes('staff_accounts_username_key')) {
+    return 'Username already exists. Please choose a different username.'
+  }
+
+  if (combined.includes('staff_accounts_email_key')) {
+    return 'Email already exists. Please use a different email.'
+  }
+
+  if (combined.includes('staff_accounts_phone_key')) {
+    return 'Phone number already exists. Please use a different phone number.'
+  }
+
+  return 'A duplicate value already exists. Please use unique staff details.'
+}
+
 // GET - Fetch all staff accounts
 export async function GET() {
   try {
@@ -67,6 +89,10 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('Error creating staff account:', error)
+      const duplicateMessage = mapDuplicateConstraintError(error)
+      if (duplicateMessage) {
+        return NextResponse.json({ error: duplicateMessage }, { status: 409 })
+      }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -82,19 +108,28 @@ export async function POST(req: NextRequest) {
       meta: { after: data }
     })
 
-    // Add staff to user_status table for chat functionality
-    await supabaseAdmin.from('user_status').upsert({
-      user_id: data.id,
-      user_name: data.display_name || data.username,
-      user_role: 'staff',
-      is_online: false,
-      last_seen: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }).onConflict('user_id').update({
-      user_name: data.display_name || data.username,
-      user_role: 'staff',
-      updated_at: new Date().toISOString()
-    })
+    // Add staff to user_status table for chat functionality.
+    // Supabase JS v2 handles conflict behavior via upsert options.
+    const { error: userStatusError } = await supabaseAdmin
+      .from('user_status')
+      .upsert(
+        {
+          user_id: data.id,
+          user_name: data.display_name || data.username,
+          user_role: 'staff',
+          is_online: false,
+          last_seen: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'user_id',
+        },
+      )
+
+    // Do not fail staff creation if presence table sync fails.
+    if (userStatusError) {
+      console.error('Warning: failed to sync user_status for new staff:', userStatusError)
+    }
 
     return NextResponse.json({ success: true, data })
   } catch (error: any) {
@@ -128,6 +163,10 @@ export async function PATCH(req: NextRequest) {
 
     if (error) {
       console.error('Error updating staff account:', error)
+      const duplicateMessage = mapDuplicateConstraintError(error)
+      if (duplicateMessage) {
+        return NextResponse.json({ error: duplicateMessage }, { status: 409 })
+      }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 

@@ -365,7 +365,7 @@ const handleStaffLogin = async (e: React.FormEvent) => {
     if (!credentials.username.trim() || !credentials.password.trim()) {
       toast({
         title: 'Missing credentials',
-        description: 'Please enter both username and password.',
+        description: 'Please enter both username/email and password.',
         variant: 'destructive',
       })
       return
@@ -385,7 +385,7 @@ const handleStaffLogin = async (e: React.FormEvent) => {
     const result = await response.json()
 
     if (!response.ok || !result?.data) {
-      const message = result?.error || 'Invalid username or password. Please contact the doctor for correct credentials.'
+      const message = result?.error || 'Invalid username/email or password. Please contact the doctor for correct credentials.'
       toast({
         title: '❌ Authentication Failed',
         description: message,
@@ -631,15 +631,15 @@ const handleStaffLogin = async (e: React.FormEvent) => {
               </div>
 
               <form onSubmit={handleStaffLogin} className="space-y-3.5">
-                {/* Username Field */}
+                {/* Username or Email Field */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="username" className="text-xs text-[#0d5c75] font-medium">Username</Label>
+                  <Label htmlFor="username" className="text-xs text-[#0d5c75] font-medium">Username or Email</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       id="username"
                       type="text"
-                      placeholder="Enter your username"
+                      placeholder="Enter your username or email"
                       value={credentials.username}
                       onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
                       className="pl-10 h-9 text-sm border border-gray-200 focus:border-[#0d5c75] rounded-lg"

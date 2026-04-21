@@ -16,21 +16,44 @@ const supabaseAdmin = createClient(
 // Validates staff credentials against the staff_accounts table.
 export async function POST(req: NextRequest) {
   try {
-    const { username, password } = await req.json()
+    const body = await req.json()
+    const password = typeof body?.password === 'string' ? body.password : ''
+    const identifierRaw =
+      typeof body?.username === 'string'
+        ? body.username
+        : typeof body?.email === 'string'
+        ? body.email
+        : typeof body?.identifier === 'string'
+        ? body.identifier
+        : ''
+    const identifier = identifierRaw.trim()
 
-    if (!username || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
-        { error: 'Username and password are required' },
+        { error: 'Username/email and password are required' },
         { status: 400 },
       )
     }
 
-    const { data, error } = await supabaseAdmin
+    let { data, error } = await supabaseAdmin
       .from('staff_accounts')
       .select('*')
-      .eq('username', username)
+      .eq('username', identifier)
       .eq('active', true)
       .maybeSingle()
+
+    // Support login with email as well as username.
+    if (!data && !error && identifier.includes('@')) {
+      const byEmail = await supabaseAdmin
+        .from('staff_accounts')
+        .select('*')
+        .eq('email', identifier)
+        .eq('active', true)
+        .maybeSingle()
+
+      data = byEmail.data
+      error = byEmail.error
+    }
 
     if (error) {
       console.error('Error fetching staff account:', error)
@@ -44,9 +67,31 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!data.password || data.password !== password) {
+    let authenticated = false
+
+    // Primary path: table-based credential check (legacy/internal flow).
+    if (typeof (data as any).password === 'string' && (data as any).password.length > 0) {
+      authenticated = (data as any).password === password
+    }
+
+    // Fallback path: Supabase Auth email/password check.
+    // This handles deployments where staff_accounts has no password column.
+    if (!authenticated) {
+      const emailForAuth = ((data as any).email || '').trim()
+      if (emailForAuth) {
+        const authRes = await supabaseAdmin.auth.signInWithPassword({
+          email: emailForAuth,
+          password,
+        })
+        if (!authRes.error && authRes.data?.user) {
+          authenticated = true
+        }
+      }
+    }
+
+    if (!authenticated) {
       return NextResponse.json(
-        { error: 'Invalid username or password' },
+        { error: 'Invalid username/email or password' },
         { status: 401 },
       )
     }

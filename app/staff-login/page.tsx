@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, LogIn, Shield, Stethoscope, AlertCircle, Loader2, Clock3 } from 'lucide-react'
-import { signInStaff, getCurrentUser } from '@/lib/supabase'
 import DeviceSecurityService from '@/lib/device-security'
 
 export default function StaffLoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -25,18 +24,13 @@ export default function StaffLoginPage() {
 
   // Check if user is already authenticated
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { user } = await getCurrentUser()
-        if (user) {
-          router.push('/staff-dashboard')
-          return
-        }
-      } catch (error) {
-        console.log('No existing session')
-      } finally {
-        setIsChecking(false)
+    const checkAuth = () => {
+      const staffAuth = localStorage.getItem('staff_authenticated')
+      if (staffAuth === 'true') {
+        router.push('/staff-dashboard')
+        return
       }
+      setIsChecking(false)
     }
     checkAuth()
   }, [router])
@@ -46,8 +40,8 @@ export default function StaffLoginPage() {
     setError('')
 
     // Basic client-side validation & offline check for a more professional experience
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password')
+    if (!identifier.trim() || !password.trim()) {
+      setError('Please enter username/email and password')
       return
     }
 
@@ -59,17 +53,34 @@ export default function StaffLoginPage() {
     setIsLoading(true)
 
     try {
-      const { user, error: signInError } = await signInStaff(email.trim(), password)
+      const response = await fetch('/api/staff/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: identifier.trim(),
+          password,
+        }),
+      })
 
-      if (signInError) {
-        throw signInError
+      const result = await response.json()
+
+      if (!response.ok || !result?.data) {
+        throw new Error(result?.error || 'Invalid username/email or password')
       }
 
-      if (user) {
+      const staff = result.data as {
+        id: string
+        username: string
+        display_name?: string | null
+      }
+
+      if (staff) {
         // Create security event for successful login
         try {
           const securityEvent = await deviceSecurity.createSecurityEvent(
-            user.id,
+            staff.id,
             'login'
           )
           
@@ -83,7 +94,7 @@ export default function StaffLoginPage() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              staff_id: user.id,
+              staff_id: staff.id,
               session_id: securityEvent.session_id,
               device_fingerprint: deviceInfo.device_fingerprint,
               device_info: deviceInfo,
@@ -97,8 +108,11 @@ export default function StaffLoginPage() {
 
         // Store authentication state for the staff portal
         localStorage.setItem('staff_authenticated', 'true')
-        localStorage.setItem('staff_email', user.email || '')
-        localStorage.setItem('staff_user_id', user.id)
+        localStorage.setItem('staff_username', staff.username)
+        if (staff.display_name) {
+          localStorage.setItem('staff_display_name', staff.display_name)
+        }
+        localStorage.setItem('staff_user_id', staff.id)
 
         // Redirect to staff dashboard
         router.push('/staff-dashboard')
@@ -149,7 +163,7 @@ export default function StaffLoginPage() {
       day: 'numeric',
     })
 
-  const isSubmitDisabled = isLoading || !email.trim() || !password.trim()
+  const isSubmitDisabled = isLoading || !identifier.trim() || !password.trim()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-emerald-50 to-slate-100 flex items-center justify-center py-6 px-4">
@@ -200,27 +214,27 @@ export default function StaffLoginPage() {
             <div className="text-center space-y-1">
               <p className="text-sm font-medium text-gray-800">Secure Staff Sign In</p>
               <p className="text-xs text-gray-500">
-                Use your registered staff email and password to access the internal dashboard.
+                Use your registered staff username or email and password to access the internal dashboard.
               </p>
             </div>
 
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-4" aria-busy={isLoading}>
-              {/* Email Field */}
+              {/* Username or Email Field */}
               <div className="space-y-1">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Staff Email
+                  Staff Username or Email
                 </label>
                 <input
                   id="email"
                   name="email"
-                  type="email"
+                  type="text"
                   autoComplete="email"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-colors"
-                  placeholder="name@clinic-domain.com"
+                  placeholder="username or name@clinic-domain.com"
                   disabled={isLoading}
                 />
               </div>
