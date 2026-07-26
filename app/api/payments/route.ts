@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { supabaseAdmin } from "@/lib/supabase-admin"
+import {
+  getPaymentRecordsFirestore,
+  createPaymentRecordFirestore,
+  updatePaymentRecordFirestore,
+  deletePaymentRecordFirestore,
+} from "@/lib/firebase-db"
 
-// Shared CORS headers (if you ever need mobile/webview access)
+// Shared CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
@@ -13,7 +18,6 @@ function json(data: any, init?: { status?: number }) {
   return NextResponse.json(data, { status: init?.status ?? 200, headers: corsHeaders })
 }
 
-// Map DB row -> lightweight API shape
 function mapRowToPayment(record: any) {
   const metadata = record.metadata || {}
   const paymentDate: string = record.payment_date
@@ -34,30 +38,16 @@ function mapRowToPayment(record: any) {
 }
 
 // GET /api/payments
-// Optional query params: ?limit=50&offset=0
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const limit = Number(searchParams.get("limit") || "200")
     const offset = Number(searchParams.get("offset") || "0")
 
-    const query = supabaseAdmin
-      .from("payment_records")
-      .select("*", { count: "exact" })
-      .eq("transaction_type", "payment")
-      .order("payment_date", { ascending: false })
-      .range(offset, offset + limit - 1)
+    const { items: rawItems, total } = await getPaymentRecordsFirestore(limit, offset)
+    const items = rawItems.map(mapRowToPayment)
 
-    const { data, error, count } = await query
-
-    if (error) {
-      console.error("Payments API: GET error", error)
-      return json({ success: false, error: error.message }, { status: 500 })
-    }
-
-    const items = (data || []).map(mapRowToPayment)
-
-    return json({ success: true, items, total: count ?? items.length })
+    return json({ success: true, items, total })
   } catch (error: any) {
     console.error("Payments API: GET unexpected error", error)
     return json({ success: false, error: error?.message || "Unexpected error" }, { status: 500 })
@@ -65,7 +55,6 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/payments
-// Body: { transactionId?, paymentDate?, amount, paymentMethod, status?, serviceType?, notes?, metadata? }
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -93,7 +82,7 @@ export async function POST(request: NextRequest) {
     const insertRow = {
       patient_id: null,
       appointment_id: null,
-      transaction_type: "payment" as const,
+      transaction_type: "payment",
       payment_method: paymentMethod,
       amount,
       currency: "PKR",
@@ -115,18 +104,12 @@ export async function POST(request: NextRequest) {
       metadata,
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("payment_records")
-      .insert(insertRow)
-      .select("*")
-      .single()
-
-    if (error) {
-      console.error("Payments API: POST error", error)
-      return json({ success: false, error: error.message }, { status: 500 })
+    const created = await createPaymentRecordFirestore(insertRow)
+    if (!created) {
+      return json({ success: false, error: "Failed to create payment record" }, { status: 500 })
     }
 
-    return json({ success: true, item: mapRowToPayment(data) })
+    return json({ success: true, item: mapRowToPayment(created) })
   } catch (error: any) {
     console.error("Payments API: POST unexpected error", error)
     return json({ success: false, error: error?.message || "Unexpected error" }, { status: 500 })
@@ -134,7 +117,6 @@ export async function POST(request: NextRequest) {
 }
 
 // PATCH /api/payments
-// Body: { transactionId (required), ...fieldsToUpdate }
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
@@ -182,20 +164,12 @@ export async function PATCH(request: NextRequest) {
       return json({ success: false, error: "No updatable fields provided" }, { status: 400 })
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("payment_records")
-      .update(updates)
-      .eq("transaction_id", transactionId)
-      .eq("transaction_type", "payment")
-      .select("*")
-      .single()
-
-    if (error) {
-      console.error("Payments API: PATCH error", error)
-      return json({ success: false, error: error.message }, { status: 500 })
+    const updated = await updatePaymentRecordFirestore(transactionId, updates)
+    if (!updated) {
+      return json({ success: false, error: "Payment record update failed" }, { status: 500 })
     }
 
-    return json({ success: true, item: mapRowToPayment(data) })
+    return json({ success: true, item: mapRowToPayment(updated) })
   } catch (error: any) {
     console.error("Payments API: PATCH unexpected error", error)
     return json({ success: false, error: error?.message || "Unexpected error" }, { status: 500 })
@@ -212,15 +186,9 @@ export async function DELETE(request: NextRequest) {
       return json({ success: false, error: "transactionId is required" }, { status: 400 })
     }
 
-    const { error } = await supabaseAdmin
-      .from("payment_records")
-      .delete()
-      .eq("transaction_id", transactionId)
-      .eq("transaction_type", "payment")
-
-    if (error) {
-      console.error("Payments API: DELETE error", error)
-      return json({ success: false, error: error.message }, { status: 500 })
+    const success = await deletePaymentRecordFirestore(transactionId)
+    if (!success) {
+      return json({ success: false, error: "Delete failed or record not found" }, { status: 500 })
     }
 
     return json({ success: true })
@@ -237,4 +205,3 @@ export async function OPTIONS() {
     headers: corsHeaders,
   })
 }
-

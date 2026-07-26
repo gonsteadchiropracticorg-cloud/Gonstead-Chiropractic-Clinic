@@ -34,7 +34,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { getPatients, type Patient } from "@/lib/supabase"
+import { getPatients, type Patient } from "@/lib/data-service"
 import Image from "next/image"
 
 interface PrescriptionRecord {
@@ -259,8 +259,8 @@ export default function PatientTrackingPage() {
     )
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStatusColor = (status?: string) => {
+    switch ((status || 'pending').toLowerCase()) {
       case 'completed': return 'bg-green-100 text-green-800'
       case 'confirmed': return 'bg-blue-100 text-blue-800'
       case 'pending': return 'bg-yellow-100 text-yellow-800'
@@ -269,8 +269,8 @@ export default function PatientTrackingPage() {
     }
   }
 
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency.toLowerCase()) {
+  const getUrgencyColor = (urgency?: string) => {
+    switch ((urgency || 'normal').toLowerCase()) {
       case 'emergency': return 'bg-red-100 text-red-800'
       case 'urgent': return 'bg-orange-100 text-orange-800'
       case 'normal': return 'bg-green-100 text-green-800'

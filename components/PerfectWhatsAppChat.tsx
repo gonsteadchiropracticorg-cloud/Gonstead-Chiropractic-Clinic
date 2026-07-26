@@ -381,7 +381,10 @@ export default function PerfectWhatsAppChat({
 
         setStaffPresence(staffRows)
       } catch (baseError) {
-        console.error('Error loading presence:', baseError)
+        const msg = (baseError as any)?.message || ""
+        if (msg) {
+          console.warn('Presence load note:', msg)
+        }
       }
     }
   }, [])
@@ -611,8 +614,9 @@ export default function PerfectWhatsAppChat({
         setMessages(data)
         saveToLocalStorage(data)
       }
-    } catch (error) {
-      console.error('Error loading messages from DB:', error)
+    } catch (error: any) {
+      const msg = error?.message || ""
+      if (msg) console.warn('Note loading messages from DB:', msg)
       loadFromLocalStorage()
     }
   }, [loadFromLocalStorage, saveToLocalStorage])
@@ -640,7 +644,7 @@ export default function PerfectWhatsAppChat({
         setSettings(settingsObj)
       }
     } catch (error) {
-      console.error('Error loading settings:', error)
+      // Quiet fallback when Supabase is disconnected/removed
       setSettings({
         group_name: 'Medical Team Communication',
         allow_staff_messages: true,

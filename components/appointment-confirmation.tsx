@@ -25,6 +25,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { useLanguage } from "./language-provider"
+import { getPatients, subscribeToPatients } from "@/lib/data-service"
 
 interface AppointmentConfirmationProps {
   appointmentData: {
@@ -48,8 +49,12 @@ export function AppointmentConfirmation({
   const [autoDownloadAttempted, setAutoDownloadAttempted] = useState(false)
   const [isAutoDownloading, setIsAutoDownloading] = useState(false)
   const [downloadStatus, setDownloadStatus] = useState<'pending' | 'success' | 'failed' | null>(null)
+  const [patientsAhead, setPatientsAhead] = useState<number | null>(null)
+  const [isQueueLoading, setIsQueueLoading] = useState(false)
+  const [queueError, setQueueError] = useState<string | null>(null)
 
   const isUrdu = language === "ur"
+  const estimatedWaitMinutes = patientsAhead !== null ? patientsAhead * 30 : null
 
   const downloadPDF = async (isAutoDownload = false) => {
     try {
@@ -166,6 +171,71 @@ export function AppointmentConfirmation({
       return () => clearTimeout(timer)
     }
   }, [autoDownloadAttempted])
+
+  useEffect(() => {
+    const apptDate = new Date(appointmentData.preferredTime)
+    if (!appointmentData.preferredTime || Number.isNaN(apptDate.getTime())) {
+      setPatientsAhead(null)
+      return
+    }
+
+    let isActive = true
+    setIsQueueLoading(true)
+    setQueueError(null)
+
+    const startOfDay = new Date(apptDate)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(apptDate)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    const toLocalTimestamp = (date: Date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, "0")
+      const day = String(date.getDate()).padStart(2, "0")
+      const hours = String(date.getHours()).padStart(2, "0")
+      const minutes = String(date.getMinutes()).padStart(2, "0")
+      const seconds = String(date.getSeconds()).padStart(2, "0")
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+    }
+
+    const apptLocalTs = toLocalTimestamp(apptDate)
+    const startOfDayLocalTs = toLocalTimestamp(startOfDay)
+    const endOfDayLocalTs = toLocalTimestamp(endOfDay)
+
+    const fetchQueuePosition = async () => {
+      try {
+        const { data: allPatients } = await getPatients()
+        if (!isActive) return
+
+        const targetTime = apptDate.getTime()
+        const patientsBefore = allPatients.filter((p) => {
+          if (p.status !== "pending" && p.status !== "confirmed") return false
+          const pTime = new Date(p.appointment_date).getTime()
+          return !isNaN(pTime) && pTime >= startOfDay.getTime() && pTime <= endOfDay.getTime() && pTime < targetTime
+        })
+
+        setPatientsAhead(patientsBefore.length)
+        setQueueError(null)
+      } catch (err: any) {
+        if (!isActive) return
+        setQueueError(err?.message || "Could not load queue status")
+        setPatientsAhead(null)
+      } finally {
+        if (isActive) setIsQueueLoading(false)
+      }
+    }
+
+    fetchQueuePosition()
+
+    const unsubscribe = subscribeToPatients(() => {
+      fetchQueuePosition()
+    })
+
+    return () => {
+      isActive = false
+      unsubscribe()
+    }
+  }, [appointmentData.preferredTime, appointmentData.appointmentId, appointmentData.phone])
 
   const handlePrint = () => {
     window.print()
@@ -388,6 +458,41 @@ export function AppointmentConfirmation({
                 {isUrdu ? `آپ کا اپائنٹمنٹ نمبر: #${appointmentData.appointmentId || `APT${Date.now().toString().slice(-6)}`}` : `Your Appointment ID: #${appointmentData.appointmentId || `APT${Date.now().toString().slice(-6)}`}`}
               </span>
             </Badge>
+          </div>
+
+          <div className="max-w-xl mx-auto mb-4 sm:mb-6">
+            <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3">
+              <p className="text-xs sm:text-sm text-emerald-700 font-medium">
+                {isUrdu ? "لائیو قطار کی پوزیشن" : "Live Queue Position"}
+              </p>
+              {isQueueLoading ? (
+                <p className="text-sm sm:text-base text-emerald-900 font-semibold mt-1">
+                  {isUrdu ? "لوڈ ہو رہا ہے..." : "Loading..."}
+                </p>
+              ) : queueError ? (
+                <p className="text-sm sm:text-base text-red-700 font-semibold mt-1">
+                  {isUrdu ? "قطار کی معلومات عارضی طور پر دستیاب نہیں" : "Queue status is temporarily unavailable"}
+                </p>
+              ) : (
+                <div className="mt-1 space-y-1">
+                  <p className="text-sm sm:text-base text-emerald-900 font-semibold">
+                    {isUrdu
+                      ? `آپ سے پہلے ${patientsAhead ?? 0} مریض ہیں`
+                      : `${patientsAhead ?? 0} patient(s) are ahead of you`}
+                  </p>
+                  <p className="text-xs sm:text-sm text-emerald-800 font-medium">
+                    {isUrdu
+                      ? `متوقع انتظار: تقریباً ${estimatedWaitMinutes ?? 0} منٹ`
+                      : `Estimated wait: around ${estimatedWaitMinutes ?? 0} minutes`}
+                  </p>
+                </div>
+              )}
+              <p className="text-[11px] sm:text-xs text-emerald-700 mt-1">
+                {isUrdu
+                  ? "یہ گنتی آج کے شیڈول میں آپ کے وقت سے پہلے موجود Pending/Confirmed اپائنٹمنٹس پر مبنی ہے اور خودکار طور پر اپڈیٹ ہوتی ہے۔"
+                  : "This count is based on today's pending/confirmed appointments scheduled before your time and updates automatically."}
+              </p>
+            </div>
           </div>
           
           {/* Appointment Details Section - Mobile Enhanced */}

@@ -128,9 +128,9 @@ export default function UnifiedGroupChat({
         setMessages(data)
         saveToLocalStorage(data)
       }
-    } catch (error) {
-      console.error('Error loading messages from DB:', error)
-      // Fallback to local storage if DB fails
+    } catch (error: any) {
+      const msg = error?.message || ""
+      if (msg) console.warn('Note loading messages from DB:', msg)
       loadFromLocalStorage()
     }
   }, [loadFromLocalStorage, saveToLocalStorage])
@@ -228,8 +228,8 @@ export default function UnifiedGroupChat({
       
       // Fallback: Save locally only
       const localMessage: UnifiedMessage = {
-        id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        ...messageObj as UnifiedMessage
+        ...(messageObj as any),
+        id: `local_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       }
       
       setMessages(prev => [...prev, localMessage])

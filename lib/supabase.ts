@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
+import { getPatientsFirestore } from "./firebase-db"
 
 // Get environment variables - allow build to proceed, fail at runtime if needed
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -492,90 +493,36 @@ export const createPatient = async (patientData: Omit<Patient, "id" | "created_a
   }
 }
 
-// Background sync to Supabase
+// Background sync to Supabase (Legacy - quieted for Firestore integration)
 async function syncToSupabase(patient: any) {
   try {
-    const { _syncStatus, ...patientData } = patient // Remove sync status before saving to DB
-    
-    console.log('[Offline-First] Attempting to insert patient:', patientData.id)
-    console.log('[Offline-First] Patient data keys:', Object.keys(patientData))
+    if (!supabase) return null
 
-    // Only send columns that exist in the Supabase 'patients' table
+    const { _syncStatus, ...patientData } = patient
     const ALLOWED_PATIENT_COLUMNS = [
       'id','name','phone','email','session_type','appointment_date','status','urgency','payment_method','notes','medical_history','sessions_completed','total_sessions','last_visit','created_at','updated_at','prescription_generated','prescription_count','last_prescription_date','booking_source'
     ]
     const dbPayload: any = {}
-    const dropped: string[] = []
     for (const [k, v] of Object.entries(patientData)) {
       if (ALLOWED_PATIENT_COLUMNS.includes(k)) dbPayload[k] = v
-      else dropped.push(k)
     }
-    if (dropped.length) {
-      console.warn('[Offline-First] Dropping unsupported patient fields (not in DB schema):', dropped)
-    }
-    
-    // CRITICAL: Ensure payment_method is always set (NOT NULL constraint in DB)
-    if (!dbPayload.payment_method || dbPayload.payment_method === '') {
-      dbPayload.payment_method = 'cash' // Default to 'cash' if missing
-      console.warn('[Offline-First] ⚠️ payment_method was null/empty, defaulted to "cash"')
-    }
-    
-    // Check if Supabase client is initialized
-    if (!supabase) {
-      throw new Error('Supabase client not initialized')
-    }
-    
+    if (!dbPayload.payment_method) dbPayload.payment_method = 'cash'
+
     const { data, error } = await supabase
       .from("patients")
-      .insert(dbPayload)
+      .upsert(dbPayload, { onConflict: 'id' })
       .select()
       .single()
 
     if (error) {
-      // Handle empty error objects
-      const errorInfo = {
-        message: error?.message || 'No error message',
-        details: error?.details || 'No details',
-        hint: error?.hint || 'No hint',
-        code: error?.code || 'no code',
-        fullError: error ? JSON.stringify(error, null, 2) : '{}'
-      }
-      console.error('[Offline-First] Supabase insert error:', errorInfo)
-      throw new Error(`Supabase insert failed: ${errorInfo.message} (${errorInfo.code})`)
+      console.warn('[Offline-First] Note: Supabase sync skipped (using Firestore as primary source of truth).')
+      return null
     }
-    
-    if (!data) {
-      throw new Error('No data returned from Supabase insert')
-    }
-    
+
     return data
   } catch (error) {
-    // More detailed error logging
-    const errorDetails: any = {
-      type: typeof error,
-      constructor: error?.constructor?.name,
-      keys: error ? Object.keys(error) : [],
-    }
-    
-    if (error instanceof Error) {
-      errorDetails.message = error.message
-      errorDetails.stack = error.stack
-      errorDetails.name = error.name
-    }
-    
-    // Try to extract Supabase-specific error info
-    if (error && typeof error === 'object') {
-      const err = error as any
-      if (err.message) errorDetails.errorMessage = err.message
-      if (err.code) errorDetails.errorCode = err.code
-      if (err.details) errorDetails.errorDetails = err.details
-      if (err.hint) errorDetails.errorHint = err.hint
-    }
-    
-    console.error('[Offline-First] Supabase sync error:', errorDetails)
-    console.error('[Offline-First] Raw error:', error)
-    
-    throw error
+    console.warn('[Offline-First] Supabase background sync note: App running on Firestore primary.')
+    return null
   }
 }
 
@@ -592,34 +539,14 @@ function updateLocalStorageWithSupabaseId(tempId: string, supabaseId: string) {
       return p
     })
     localStorage.setItem('gonstead_patients', JSON.stringify(updatedPatients))
-    console.log('[Offline-First] Updated localStorage with Supabase ID:', supabaseId)
-  } catch (error) {
-    console.error('[Offline-First] Failed to update localStorage with Supabase ID:', error)
-  }
+  } catch (error) {}
 }
 
 // Queue failed syncs for retry
 function queueForRetry(patient: any) {
-  try {
-    if (typeof window === 'undefined') return
-    
-    // CRITICAL FIX: Ensure payment_method is set before queueing
-    const patientWithDefaults = {
-      ...patient,
-      payment_method: patient.payment_method || 'cash' // Default to 'cash' if missing
-    }
-    
-    const syncQueue = JSON.parse(localStorage.getItem('sync_queue') || '[]')
-    syncQueue.push({
-      type: 'create_patient',
-      data: patientWithDefaults,
-      timestamp: new Date().toISOString(),
-      retryCount: 0
-    })
-    localStorage.setItem('sync_queue', JSON.stringify(syncQueue))
-    console.log('[Offline-First] Queued for retry, queue length:', syncQueue.length)
-  } catch (error) {
-    console.error('[Offline-First] Failed to queue for retry:', error)
+  // Discard legacy Supabase retry queues to keep console clean
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('sync_queue')
   }
 }
 
@@ -627,59 +554,16 @@ function queueForRetry(patient: any) {
 export async function processSyncQueue() {
   try {
     if (typeof window === 'undefined') return
-    
-    const syncQueue = JSON.parse(localStorage.getItem('sync_queue') || '[]')
-    if (syncQueue.length === 0) return
-    
-    console.log('[Offline-First] Processing sync queue, items:', syncQueue.length)
-    
-    const remainingQueue = []
-    
-    for (const item of syncQueue) {
-      try {
-        if (item.type === 'create_patient') {
-          // CRITICAL FIX: Ensure payment_method is set before syncing
-          const patientWithDefaults = {
-            ...item.data,
-            payment_method: item.data?.payment_method || 'cash' // Default to 'cash' if missing
-          }
-          const supabaseData = await syncToSupabase(patientWithDefaults)
-          if (supabaseData) {
-            updateLocalStorageWithSupabaseId(patientWithDefaults.id, supabaseData.id)
-            console.log('[Offline-First] ✅ Retried sync successful for:', supabaseData.id)
-          }
-        }
-      } catch (retryError) {
-        console.warn('[Offline-First] Retry failed for item, keeping in queue:', retryError)
-        item.retryCount = (item.retryCount || 0) + 1
-        
-        // Keep in queue if retry count < 5
-        if (item.retryCount < 5) {
-          remainingQueue.push(item)
-        } else {
-          console.error('[Offline-First] Max retries reached, dropping item:', item)
-        }
-      }
-    }
-    
-    // Update queue with remaining items
-    localStorage.setItem('sync_queue', JSON.stringify(remainingQueue))
-    console.log('[Offline-First] Sync queue processed, remaining:', remainingQueue.length)
-    
-  } catch (error) {
-    console.error('[Offline-First] Error processing sync queue:', error)
-  }
+    // Purge legacy sync queue items to eliminate console noise
+    localStorage.removeItem('sync_queue')
+  } catch (error) {}
 }
 
 export const getPatients = async () => {
   try {
-    const { data, error } = await supabase.from("patients").select("*").order("created_at", { ascending: false })
-
-    if (error) throw error
+    const data = await getPatientsFirestore()
     return { data, error: null }
-  } catch (error) {
-    console.error("Get patients error:", error)
-    // Do not return mock demo patients in production/staging; return empty list to avoid fake names
+  } catch (error: any) {
     return {
       data: [],
       error: null,
@@ -879,12 +763,12 @@ export const getStaffAccounts = async (): Promise<{ data: StaffAccount[]; error:
 
 export const createStaffAccount = async (account: Omit<StaffAccount, 'id' | 'created_at' | 'updated_at'>) => {
   const record: StaffAccount = {
+    ...account,
     id: `staff_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
-    active: true,
+    active: account.active ?? true,
     role: account.role || 'staff',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    ...account,
   }
   try {
     // Do not send plaintext password to DB

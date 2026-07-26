@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { addAuditLog, getAuditLogs, undoAuditLog, deleteAuditLog, clearAuditLogs, type AuditLog, supabase } from "@/lib/supabase"
+import { addAuditLog, getAuditLogs, undoAuditLog, deleteAuditLog, clearAuditLogs, type AuditLog } from "@/lib/data-service"
 import { useToast } from "@/hooks/use-toast"
 import { Activity, History, Filter, RotateCcw, RefreshCw, Search, ShieldAlert, UserCheck, Settings, Database, Download, Pin, PinOff, Copy, Bell, BarChart3, Trash2, AlertTriangle } from "lucide-react"
 import AdminSidebar from "@/components/AdminSidebar"
@@ -48,39 +48,7 @@ export default function AuditLogsPage() {
       setAnnotations(a)
     } catch {}
     
-    // REALTIME: Set up Supabase realtime subscription for audit_logs table
-    const channel = supabase
-      .channel('audit_logs_realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'audit_logs'
-        },
-        (payload) => {
-          console.log('[Realtime] New audit log:', payload.new)
-          const newLog = payload.new as AuditLog
-          setLogs(prev => [newLog, ...prev])
-          
-          // Show toast notification for important events
-          if (newLog.action === 'delete' || newLog.action === 'error') {
-            toast({
-              title: '🔔 New Activity',
-              description: `${newLog.action.toUpperCase()}: ${newLog.entity_type || 'system'} by ${newLog.actor_email || 'unknown'}`,
-              variant: newLog.action === 'error' ? 'destructive' : 'default'
-            })
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('[Realtime] Subscription status:', status)
-        if (status === 'SUBSCRIBED') {
-          console.log('[Realtime] ✅ Successfully subscribed to audit_logs')
-        }
-      })
-    
-    // Fallback: Custom event listener for localStorage-based logs
+    // Custom event listener for local audit log events
     const onNew = (e: any) => {
       const entry: AuditLog = e.detail
       setLogs(prev => [entry, ...prev])
@@ -114,10 +82,12 @@ export default function AuditLogsPage() {
     localStorage.setItem('audit_notes', JSON.stringify(annotations))
   }, [annotations])
 
+  const getTS = (l: AuditLog) => l.timestamp || new Date().toISOString()
+
   const load = async () => {
     setIsLoading(true)
     const { data } = await getAuditLogs()
-    setLogs((data || []).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()))
+    setLogs((data || []).sort((a, b) => new Date(getTS(b)).getTime() - new Date(getTS(a)).getTime()))
     setIsLoading(false)
   }
 
@@ -135,8 +105,8 @@ export default function AuditLogsPage() {
 
     const end = timeRange === 'custom' && customEnd ? new Date(customEnd) : null
 
-    if (start) arr = arr.filter(l => new Date(l.timestamp) >= start!)
-    if (end) arr = arr.filter(l => new Date(l.timestamp) <= end!)
+    if (start) arr = arr.filter(l => new Date(getTS(l)) >= start!)
+    if (end) arr = arr.filter(l => new Date(getTS(l)) <= end!)
 
     if (actionFilter !== 'all') arr = arr.filter(l => l.action === actionFilter)
     if (entityFilter !== 'all') arr = arr.filter(l => (l.entity_type || 'unknown') === entityFilter)

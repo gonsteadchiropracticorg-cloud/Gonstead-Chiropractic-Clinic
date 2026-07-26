@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft, Users, List, BarChart3, Shield, Key, Eye, EyeOff, Building2, Globe, Phone, Mail, Copy, ExternalLink } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { getCurrentUser } from "@/lib/supabase"
+import { getCurrentUser } from "@/lib/data-service"
 import Image from "next/image"
 
 export default function AdminSettings() {

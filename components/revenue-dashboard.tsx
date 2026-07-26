@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DollarSign, TrendingUp, TrendingDown, Calendar, CreditCard, Users, Activity } from 'lucide-react'
-import type { Patient } from '@/lib/supabase'
+import type { Patient } from '@/lib/data-service'
 
 interface RevenueDashboardProps {
   patients: Patient[]

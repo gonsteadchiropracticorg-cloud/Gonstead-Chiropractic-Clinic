@@ -1,239 +1,139 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { NextRequest, NextResponse } from "next/server"
+import {
+  getStaffAccountsFirestore,
+  createStaffAccountFirestore,
+  updateStaffAccountFirestore,
+  deleteStaffAccountFirestore,
+  addAuditLogFirestore,
+} from "@/lib/firebase-db"
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
-
-const mapDuplicateConstraintError = (error: any) => {
-  if (!error || error.code !== '23505') return null
-
-  const message = String(error.message || '')
-  const details = String(error.details || '')
-  const combined = `${message} ${details}`
-
-  if (combined.includes('staff_accounts_username_key')) {
-    return 'Username already exists. Please choose a different username.'
-  }
-
-  if (combined.includes('staff_accounts_email_key')) {
-    return 'Email already exists. Please use a different email.'
-  }
-
-  if (combined.includes('staff_accounts_phone_key')) {
-    return 'Phone number already exists. Please use a different phone number.'
-  }
-
-  return 'A duplicate value already exists. Please use unique staff details.'
-}
-
-// GET - Fetch all staff accounts
+// GET - Fetch all staff accounts from Firestore
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('staff_accounts')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching staff accounts:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
+    const data = await getStaffAccountsFirestore()
     return NextResponse.json({ data })
   } catch (error: any) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("GET /api/staff error:", error)
+    return NextResponse.json({ error: error.message || "Failed to fetch staff accounts" }, { status: 500 })
   }
 }
 
-// POST - Create new staff account
+// POST - Create new staff account in Firestore
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { password, ...accountData } = body
 
-    // NOTE: For now we persist the password as provided so that
-    // the client-side staff dashboard can validate credentials
-    // against the `staff_accounts` table via a secure API.
-    // This keeps the flow simple for a small internal clinic app.
-    // If you later want stronger security, we can switch this to
-    // a hash (e.g. using Node crypto) without changing the API.
+    if (!accountData.username || !password) {
+      return NextResponse.json({ error: "Username and password are required" }, { status: 400 })
+    }
 
-    // Generate ID if not provided
-    const record = {
-      id: accountData.id || `staff_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    const existingStaff = await getStaffAccountsFirestore()
+    const duplicate = existingStaff.find(
+      (s) =>
+        s.username.toLowerCase() === accountData.username.toLowerCase() ||
+        (accountData.email && s.email && s.email.toLowerCase() === accountData.email.toLowerCase())
+    )
+
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "Staff username or email already exists. Please choose another." },
+        { status: 409 }
+      )
+    }
+
+    const staffId = accountData.id || `staff_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    const newStaff = await createStaffAccountFirestore({
+      id: staffId,
       username: accountData.username,
-      display_name: accountData.display_name || '',
-      email: accountData.email || '',
-      phone: accountData.phone || '',
-      role: accountData.role || 'staff',
+      display_name: accountData.display_name || accountData.username,
+      email: accountData.email || "",
+      phone: accountData.phone || "",
+      role: accountData.role || "staff",
       active: accountData.active !== undefined ? accountData.active : true,
-      password: password || '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('staff_accounts')
-      .insert(record)
-      .select('*')
-      .single()
-
-    if (error) {
-      console.error('Error creating staff account:', error)
-      const duplicateMessage = mapDuplicateConstraintError(error)
-      if (duplicateMessage) {
-        return NextResponse.json({ error: duplicateMessage }, { status: 409 })
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    // Log audit event
-    await supabaseAdmin.from('audit_logs').insert({
-      id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      timestamp: new Date().toISOString(),
-      action: 'create',
-      entity_type: 'staff',
-      entity_id: data.id,
-      source: 'admin_dashboard',
-      reversible: true,
-      meta: { after: data }
+      password: password,
     })
 
-    // Add staff to user_status table for chat functionality.
-    // Supabase JS v2 handles conflict behavior via upsert options.
-    const { error: userStatusError } = await supabaseAdmin
-      .from('user_status')
-      .upsert(
-        {
-          user_id: data.id,
-          user_name: data.display_name || data.username,
-          user_role: 'staff',
-          is_online: false,
-          last_seen: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'user_id',
-        },
-      )
-
-    // Do not fail staff creation if presence table sync fails.
-    if (userStatusError) {
-      console.error('Warning: failed to sync user_status for new staff:', userStatusError)
+    if (!newStaff) {
+      return NextResponse.json({ error: "Failed to create staff account in Firestore" }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, data })
+    // Add audit log entry
+    await addAuditLogFirestore({
+      action: "create_staff",
+      entity_type: "staff",
+      entity_id: staffId,
+      source: "admin_dashboard",
+      meta: { username: accountData.username, role: accountData.role },
+    })
+
+    return NextResponse.json({ success: true, data: newStaff })
   } catch (error: any) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("POST /api/staff error:", error)
+    return NextResponse.json({ error: error.message || "Failed to create staff account" }, { status: 500 })
   }
 }
 
-// PATCH - Update staff account
+// PATCH - Update staff account in Firestore
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json()
     const { id, password, ...updates } = body
 
     if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+      return NextResponse.json({ error: "Staff ID is required" }, { status: 400 })
     }
 
-    // If a new password is provided, update it as well so staff
-    // can use the latest credentials from the admin panel.
-    if (typeof password === 'string' && password.trim().length > 0) {
-      ;(updates as any).password = password
+    const payload: any = { ...updates }
+    if (typeof password === "string" && password.trim().length > 0) {
+      payload.password = password.trim()
     }
 
-    const { data, error } = await supabaseAdmin
-      .from('staff_accounts')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select('*')
-      .single()
-
-    if (error) {
-      console.error('Error updating staff account:', error)
-      const duplicateMessage = mapDuplicateConstraintError(error)
-      if (duplicateMessage) {
-        return NextResponse.json({ error: duplicateMessage }, { status: 409 })
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    const ok = await updateStaffAccountFirestore(id, payload)
+    if (!ok) {
+      return NextResponse.json({ error: "Failed to update staff account" }, { status: 500 })
     }
 
-    // Log audit event
-    await supabaseAdmin.from('audit_logs').insert({
-      id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      timestamp: new Date().toISOString(),
-      action: 'update',
-      entity_type: 'staff',
+    await addAuditLogFirestore({
+      action: "update_staff",
+      entity_type: "staff",
       entity_id: id,
-      source: 'admin_dashboard',
-      reversible: true,
-      meta: { after: data }
+      source: "admin_dashboard",
+      meta: { updates: Object.keys(payload) },
     })
 
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, data: { id, ...payload } })
   } catch (error: any) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("PATCH /api/staff error:", error)
+    return NextResponse.json({ error: error.message || "Failed to update staff account" }, { status: 500 })
   }
 }
 
-// DELETE - Remove staff account
+// DELETE - Remove staff account from Firestore
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const id = searchParams.get('id')
+    const id = searchParams.get("id")
 
     if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+      return NextResponse.json({ error: "Staff ID is required" }, { status: 400 })
     }
 
-    // Get account before deleting for audit log
-    const { data: before } = await supabaseAdmin
-      .from('staff_accounts')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    const { error } = await supabaseAdmin
-      .from('staff_accounts')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error deleting staff account:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    const ok = await deleteStaffAccountFirestore(id)
+    if (!ok) {
+      return NextResponse.json({ error: "Failed to delete staff account" }, { status: 500 })
     }
 
-    // Log audit event
-    if (before) {
-      await supabaseAdmin.from('audit_logs').insert({
-        id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        timestamp: new Date().toISOString(),
-        action: 'delete',
-        entity_type: 'staff',
-        entity_id: id,
-        source: 'admin_dashboard',
-        reversible: true,
-        meta: { before }
-      })
-    }
+    await addAuditLogFirestore({
+      action: "delete_staff",
+      entity_type: "staff",
+      entity_id: id,
+      source: "admin_dashboard",
+    })
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("DELETE /api/staff error:", error)
+    return NextResponse.json({ error: error.message || "Failed to delete staff account" }, { status: 500 })
   }
 }
-

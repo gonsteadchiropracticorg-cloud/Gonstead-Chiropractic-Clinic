@@ -13,9 +13,10 @@ import { Calendar as CalendarIcon, Video, CheckCircle, Loader2, Phone, MessageCi
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useLanguage } from "./language-provider"
 import { useToast } from "@/hooks/use-toast"
-import { createPatient, getPatients, supabase } from "@/lib/supabase"
+import { createPatient, getPatients } from "@/lib/data-service"
 import { notifyNewAppointment, showBrowserNotification, requestNotificationPermission } from "@/lib/whatsapp-notifications"
 import { AppointmentConfirmation } from "./appointment-confirmation"
+import { sendBackgroundScreenNotification } from "@/lib/pwa-service-worker"
 
 // Business logic constants
 const BUSINESS_HOURS_START = 9 // 9:00 AM
@@ -52,6 +53,20 @@ const messages = {
     en: "This time is too close to another appointment. Please select a time with at least 40 minutes gap.",
     ur: "یہ وقت دوسری اپائنٹمنٹ سے بہت قریب ہے۔ براہ کرم کم از کم 40 منٹ کا فرق رکھتے ہوئے وقت منتخب کریں۔"
   }
+}
+
+/** Digits-only; accepts PK mobile (03xx / 3xx / 923xx / 00923xx) or 10–15 digit international. */
+function parseBookingPhoneDigits(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "")
+  if (digits.length < 10 || digits.length > 15) return null
+
+  if (/^3\d{9}$/.test(digits)) return digits
+  if (/^03\d{9}$/.test(digits)) return digits
+  if (/^923\d{9}$/.test(digits)) return digits
+  if (/^00923\d{9}$/.test(digits)) return digits
+
+  // Other international / landline: E.164-style length
+  return digits
 }
 
 export function EnhancedAppointmentBooking() {
@@ -158,32 +173,46 @@ export function EnhancedAppointmentBooking() {
       : `✅ Appointment available on ${dateStr} at ${timeStr}.`
   }
 
-  // Fix hydration mismatch by ensuring client-only rendering for dynamic content
+  // Fix hydration mismatch by ensuring client-only rendering for dynamic content & auto-fill patient credentials
   useEffect(() => {
     setIsMounted(true)
     // Request notification permission only on client
     requestNotificationPermission()
+
+    // Auto-fill patient details if authenticated
+    if (typeof window !== "undefined") {
+      const uName = localStorage.getItem("patient_name")
+      const uEmail = localStorage.getItem("patient_email")
+      const uPhone = localStorage.getItem("patient_phone")
+
+      if (uName || uEmail || uPhone) {
+        setFormData((prev) => ({
+          ...prev,
+          name: uName || prev.name,
+          email: uEmail || prev.email,
+          phone: uPhone || prev.phone,
+        }))
+      }
+    }
   }, [])
 
   // Fetch existing appointments to prevent double-booking
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const { data: appointments, error } = await supabase
-          .from('patients')
-          .select('appointment_date')
-          .not('appointment_date', 'is', null)
-          .order('appointment_date', { ascending: true })
+        const { data: appointments, error } = await getPatients()
 
         if (error) {
-          console.error('Error fetching appointments:', error)
+          console.warn("Could not prefetch appointments:", error)
           return
         }
 
-        const formattedAppointments = appointments.map(appointment => ({
-          datetime: appointment.appointment_date,
-          duration: 30 // Default duration in minutes
-        }))
+        const formattedAppointments = (appointments ?? [])
+          .filter((p) => p.appointment_date)
+          .map((p) => ({
+            datetime: p.appointment_date,
+            duration: 30
+          }))
         
         setBookedAppointments(formattedAppointments)
       } catch (error) {
@@ -201,11 +230,14 @@ export function EnhancedAppointmentBooking() {
     setIsSubmitting(true)
 
     try {
-      // Validate phone number (support Pakistani and international numbers)
-      const cleanPhone = formData.phone.replace(/[\s-()]/g, '')
-      const phoneRegex = /^(\+92|0)?3[0-9]{9}$|^(\+\d{1,3})?\d{10,14}$/
-      if (!phoneRegex.test(cleanPhone)) {
-        throw new Error(language === "ur" ? "غلط فون نمبر - پاکستانی نمبر (03xxxxxxxxx) یا بین الاقوامی نمبر درج کریں" : "Invalid phone number - Please enter Pakistani (03xxxxxxxxx) or international format")
+      // Validate phone (digits only after strip; dots/spaces/+92/0092/03 all OK)
+      const phoneDigits = parseBookingPhoneDigits(formData.phone)
+      if (!phoneDigits) {
+        throw new Error(
+          language === "ur"
+            ? "غلط فون نمبر — پاکستانی موبائل (03001234567، 923001234567، 00923001234567) یا 10–15 ہندسوں والا بین الاقوامی نمبر درج کریں"
+            : "Invalid phone number — use a Pakistani mobile (e.g. 03001234567, 923001234567) or a 10–15 digit international number."
+        )
       }
 
       // Validate required fields
@@ -251,23 +283,18 @@ export function EnhancedAppointmentBooking() {
         }
       }
 
-      // CRITICAL: Real-time database check to prevent race conditions
-      // Fetch latest appointments from database RIGHT before saving
-      const { data: latestAppointments, error: fetchError } = await supabase
-        .from('patients')
-        .select('appointment_date')
-        .not('appointment_date', 'is', null)
-        .order('appointment_date', { ascending: true })
+      // Live DB slot check
+      const { data: latestAppointments, error: fetchError } = await getPatients()
 
       if (fetchError) {
-        throw new Error(language === "ur" 
-          ? "ڈیٹا بیس سے اپائنٹمنٹس لوڈ کرنے میں خرابی" 
-          : "Failed to verify appointment availability. Please try again.")
+        console.warn("Live appointment check skipped:", fetchError)
       }
 
+      const latestRows = fetchError ? [] : (latestAppointments ?? [])
+
       // Check for conflicts with latest appointments (including concurrent bookings)
-      if (latestAppointments && latestAppointments.length > 0) {
-        for (const appointment of latestAppointments) {
+      if (latestRows.length > 0) {
+        for (const appointment of latestRows) {
           const appointmentTime = new Date(appointment.appointment_date).getTime()
           const timeDiff = Math.abs(selectedTime - appointmentTime) / (1000 * 60)
           
@@ -419,7 +446,13 @@ export function EnhancedAppointmentBooking() {
           }
         })
         window.dispatchEvent(adminEvent)
-        
+
+        // Trigger Real-Time Mobile Device Screen Push Notification via Service Worker
+        sendBackgroundScreenNotification({
+          title: "🎉 Appointment Booked Successfully!",
+          body: `Hi ${formData.name}, your Gonstead Chiropractic appointment is set for ${formData.selectedDate} at ${formData.selectedTime} with Dr. Bashir Khan.`,
+          url: "/patient-portal",
+        })
       } catch (error) {
         console.error('Notification error:', error)
       }
@@ -865,9 +898,6 @@ export function EnhancedAppointmentBooking() {
             </RadioGroup>
           </div>
 
-
-          {currentStep === 3 && (
-          <>
           {/* Sunday Closure Notice */}
           {(isToday() || isSundaySelected) && (
             <Alert className={`border-2 ${
@@ -979,10 +1009,7 @@ export function EnhancedAppointmentBooking() {
               className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)] min-h-[100px] md:min-h-[120px] text-sm md:text-base"
             />
           </div>
-          </>
-          )}
 
-          {currentStep === 4 && (
             <div className="space-y-4">
               <h3 className="text-base sm:text-lg md:text-xl font-semibold text-[rgb(66,139,124)] border-b-2 border-[rgb(66,139,124)]/20 pb-2">
                 {language === "ur" ? "بکنگ کا جائزہ" : "Review Your Booking"}
@@ -1014,7 +1041,6 @@ export function EnhancedAppointmentBooking() {
                 </div>
               </div>
             </div>
-          )}
 
           <Button
             type="submit"

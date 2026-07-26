@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { getStaffAccounts, createStaffAccount, updateStaffAccount, removeStaffAccount, type StaffAccount, addAuditLog } from "@/lib/supabase"
+import { getStaffAccounts, createStaffAccount, updateStaffAccount, removeStaffAccount, type StaffAccount, addAuditLog } from "@/lib/data-service"
 import { useToast } from "@/hooks/use-toast"
-import { UserPlus, Shield, UserCheck, Pencil, Trash2, RefreshCw, Lock, Unlock, Mail, Phone, Link2, Search, Users, BadgeCheck, SlidersHorizontal, Activity, Smartphone } from "lucide-react"
+import { UserPlus, Shield, UserCheck, Pencil, Trash2, RefreshCw, Lock, Unlock, Mail, Phone, Link2, Search, Users, BadgeCheck, SlidersHorizontal, Activity, Smartphone, Loader2 } from "lucide-react"
 import Link from "next/link"
 import StaffSecurityMonitor from "@/components/StaffSecurityMonitor"
 
@@ -77,67 +77,80 @@ export default function StaffAccessPage() {
     })
   }, [accounts, search, roleFilter, statusFilter])
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const resetForm = () => setForm({ username: "", display_name: "", email: "", phone: "", role: "staff", password: "" })
 
   const onCreate = async () => {
-    if (!form.username || !form.password) {
+    if (!form.username.trim() || !form.password.trim()) {
       toast({ title: 'Missing fields', description: 'Username and password are required', variant: 'destructive' })
       return
     }
+    setIsSubmitting(true)
     try {
       const response = await fetch('/api/staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: form.username,
-          display_name: form.display_name,
-          email: form.email,
-          phone: form.phone,
+          username: form.username.trim(),
+          display_name: form.display_name.trim() || form.username.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
           role: form.role,
-          password: form.password,
+          password: form.password.trim(),
         })
       })
       const result = await response.json()
       if (!response.ok) {
         throw new Error(result.error || 'Failed to create staff account')
       }
-      toast({ title: 'Staff created', description: `Account ${form.username} ready to use` })
+      toast({
+        title: '✅ Staff Account Created',
+        description: `Staff member "${form.display_name || form.username}" (${form.role}) added successfully!`,
+      })
       setOpenDialog(false)
       resetForm()
       await load()
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+      toast({ title: 'Error Creating Staff', description: error.message || 'Failed to create account', variant: 'destructive' })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const onUpdate = async () => {
     if (!editing) return
+    setIsSubmitting(true)
     try {
       const response = await fetch('/api/staff', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: editing.id,
-          username: form.username,
-          display_name: form.display_name,
-          email: form.email,
-          phone: form.phone,
+          username: form.username.trim(),
+          display_name: form.display_name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
           role: form.role,
-          // Optional: update password if admin entered a new one
-          password: form.password || undefined,
+          password: form.password.trim() || undefined,
         })
       })
       const result = await response.json()
       if (!response.ok) {
         throw new Error(result.error || 'Failed to update staff account')
       }
-      toast({ title: 'Updated', description: `Account ${editing.username} updated` })
+      toast({
+        title: '✅ Staff Account Updated',
+        description: `Staff member "${form.display_name || form.username}" updated successfully!`,
+      })
       setOpenDialog(false)
       setEditing(null)
       resetForm()
       await load()
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+      toast({ title: 'Error Updating Staff', description: error.message || 'Failed to update account', variant: 'destructive' })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -432,8 +445,14 @@ export default function StaffAccessPage() {
             </div>
             <div className="flex items-center justify-end gap-2 pt-2">
               <Button variant="outline" onClick={()=>{ setOpenDialog(false); setEditing(null) }}>Cancel</Button>
-              <Button onClick={editing ? onUpdate : onCreate} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                {editing ? <><Pencil className="h-4 w-4 mr-2"/>Update</> : <><UserPlus className="h-4 w-4 mr-2"/>Create</>}
+              <Button disabled={isSubmitting} onClick={editing ? onUpdate : onCreate} className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[100px]">
+                {isSubmitting ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin"/>Saving...</>
+                ) : editing ? (
+                  <><Pencil className="h-4 w-4 mr-2"/>Update</>
+                ) : (
+                  <><UserPlus className="h-4 w-4 mr-2"/>Create</>
+                )}
               </Button>
             </div>
           </div>

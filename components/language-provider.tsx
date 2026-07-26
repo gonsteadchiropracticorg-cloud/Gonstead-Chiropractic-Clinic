@@ -211,10 +211,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   return <LanguageContext.Provider value={{ language, setLanguage, t, mounted }}>{children}</LanguageContext.Provider>
 }
 
+const defaultLanguageContext: LanguageContextType = {
+  language: "en",
+  setLanguage: () => {},
+  t: (key: string) => translations.en[key as keyof typeof translations.en] || key,
+  mounted: true,
+}
+
 export function useLanguage() {
   const context = useContext(LanguageContext)
   if (context === undefined) {
-    throw new Error("useLanguage must be used within a LanguageProvider")
+    return defaultLanguageContext
   }
   return context
 }

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Stethoscope,
+  User,
   Users,
   Clock,
   MapPin,
@@ -225,6 +226,19 @@ const HomePageContent = memo(() => {
               <div className="flex items-center bg-white/10 hover:bg-white/15 rounded-md px-2 py-1 transition-all duration-200">
                 <LanguageToggle />
               </div>
+              <Button
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    const isAuth = localStorage.getItem("patient_authenticated")
+                    window.location.href = isAuth === "true" ? "/patient-portal" : "/patient/auth"
+                  }
+                }}
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/20 px-3 py-2 rounded-md font-medium text-xs sm:text-sm backdrop-blur-sm"
+              >
+                <User className="h-4 w-4 mr-1.5" />
+                Patient Portal
+              </Button>
               <AppointmentBookingModal
                 buttonText="Book Now"
                 className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#1e7a6b] text-white px-4 py-2 rounded-md font-medium shadow-md hover:shadow-lg transition-all duration-200 text-sm"
@@ -268,7 +282,19 @@ const HomePageContent = memo(() => {
                     <LanguageToggle />
                   </div>
                 </div>
-                <div className="px-4">
+                <div className="px-4 space-y-2">
+                  <Button
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        const isAuth = localStorage.getItem("patient_authenticated")
+                        window.location.href = isAuth === "true" ? "/patient-portal" : "/patient/auth"
+                      }
+                    }}
+                    className="w-full bg-white/20 text-white hover:bg-white/30 border border-white/30"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Patient Portal / Sign In
+                  </Button>
                   <AppointmentBookingModal
                     buttonText="Book Appointment"
                     fullWidth={true}

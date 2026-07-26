@@ -26,7 +26,7 @@ import {
   Lock,
   EyeOff
 } from 'lucide-react'
-import { getPatients, type Patient } from '@/lib/supabase'
+import { getPatients, type Patient } from "@/lib/data-service"
 import { useToast } from '@/hooks/use-toast'
 import DeviceSecurityService from '@/lib/device-security'
 import Image from 'next/image'
@@ -36,7 +36,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import PerfectWhatsAppChat from '@/components/PerfectWhatsAppChat'
+import StaffWhatsAppChatInbox from '@/components/StaffWhatsAppChatInbox'
 import StaffScrollToTopButton from '@/components/StaffScrollToTopButton'
 
 // Lazy-load staff PWA install client only on client side
@@ -1021,7 +1021,7 @@ const handleStaffLogin = async (e: React.FormEvent) => {
                         Sessions: {patient.sessions_completed || 0} completed
                       </p>
                       <p className="text-sm text-gray-600">
-                        Payment: {patient.payment_method.toUpperCase()}
+                        Payment: {(patient.payment_method || 'cash').toUpperCase()}
                       </p>
                     </div>
 
@@ -1029,14 +1029,14 @@ const handleStaffLogin = async (e: React.FormEvent) => {
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <StatusIcon className="h-5 w-5" />
-                        <Badge className={statusColors[patient.status]}>
-                          {patient.status.toUpperCase()}
+                        <Badge className={statusColors[patient.status || 'pending'] || 'bg-gray-100 text-gray-800'}>
+                          {(patient.status || 'pending').toUpperCase()}
                         </Badge>
                       </div>
                       <div className="flex items-center space-x-2">
                         <AlertCircle className="h-4 w-4" />
-                        <Badge className={getUrgencyColor(patient.urgency)}>
-                          {patient.urgency.toUpperCase()}
+                        <Badge className={getUrgencyColor(patient.urgency || 'normal')}>
+                          {(patient.urgency || 'normal').toUpperCase()}
                         </Badge>
                       </div>
                       {patient.notes && (
@@ -1075,12 +1075,8 @@ const handleStaffLogin = async (e: React.FormEvent) => {
       {/* Staff PWA install prompt - only on staff routes */}
       <StaffServiceWorkerClient />
       
-      {/* Perfect WhatsApp-Style Chat Interface */}
-      <PerfectWhatsAppChat 
-        currentUserId={staffUserId || staffUsername || 'staff-user'} 
-        currentUserRole={'staff'}
-        currentUserName={staffUsername || 'Staff Member'}
-      />
+      {/* Real-Time Staff-Patient-Doctor WhatsApp Chat Interface */}
+      <StaffWhatsAppChatInbox staffUsername={staffUsername || 'Staff Member'} />
       
       {/* Scroll to Top Button */}
       <StaffScrollToTopButton showAfter={300} />

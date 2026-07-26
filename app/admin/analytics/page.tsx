@@ -54,7 +54,7 @@ import {
   TrendingDown as TrendDown
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { getCurrentUser, getPatients } from "@/lib/supabase"
+import { getCurrentUser, getPatients } from "@/lib/data-service"
 import Image from "next/image"
 import { VisitorAnalytics } from "@/components/visitor-analytics"
 import { useSeamlessData } from "@/hooks/use-silent-sync"

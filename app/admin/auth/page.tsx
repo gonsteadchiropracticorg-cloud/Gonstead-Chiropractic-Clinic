@@ -11,7 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Shield, Lock, User, AlertCircle, Wifi, WifiOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { signInAdmin, getCurrentUser } from "@/lib/supabase"
+import { signInAdmin } from "@/lib/data-service"
+import { getCurrentUser } from "@/lib/data-service"
 import Image from "next/image"
 
 export default function AdminAuth() {

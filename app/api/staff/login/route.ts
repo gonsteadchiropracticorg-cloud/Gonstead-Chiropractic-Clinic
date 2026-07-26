@@ -1,120 +1,86 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  },
-)
+import { NextRequest, NextResponse } from "next/server"
+import {
+  getStaffAccountsFirestore,
+  updateStaffAccountFirestore,
+  addAuditLogFirestore,
+} from "@/lib/firebase-db"
 
 // POST /api/staff/login
-// Validates staff credentials against the staff_accounts table.
+// Validates staff credentials against Firestore staff_accounts collection.
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const password = typeof body?.password === 'string' ? body.password : ''
+    const password = typeof body?.password === "string" ? body.password.trim() : ""
     const identifierRaw =
-      typeof body?.username === 'string'
+      typeof body?.username === "string"
         ? body.username
-        : typeof body?.email === 'string'
+        : typeof body?.email === "string"
         ? body.email
-        : typeof body?.identifier === 'string'
+        : typeof body?.identifier === "string"
         ? body.identifier
-        : ''
-    const identifier = identifierRaw.trim()
+        : ""
+    const identifier = identifierRaw.trim().toLowerCase()
 
     if (!identifier || !password) {
       return NextResponse.json(
-        { error: 'Username/email and password are required' },
-        { status: 400 },
+        { error: "Username/email and password are required" },
+        { status: 400 }
       )
     }
 
-    let { data, error } = await supabaseAdmin
-      .from('staff_accounts')
-      .select('*')
-      .eq('username', identifier)
-      .eq('active', true)
-      .maybeSingle()
+    // Fetch all staff accounts from Firestore
+    const staffList = await getStaffAccountsFirestore()
 
-    // Support login with email as well as username.
-    if (!data && !error && identifier.includes('@')) {
-      const byEmail = await supabaseAdmin
-        .from('staff_accounts')
-        .select('*')
-        .eq('email', identifier)
-        .eq('active', true)
-        .maybeSingle()
+    // Find staff account by username or email
+    const staff = staffList.find(
+      (s) =>
+        (s.username.toLowerCase() === identifier ||
+          (s.email && s.email.toLowerCase() === identifier)) &&
+        s.active
+    )
 
-      data = byEmail.data
-      error = byEmail.error
-    }
-
-    if (error) {
-      console.error('Error fetching staff account:', error)
-      return NextResponse.json({ error: 'Authentication failed' }, { status: 500 })
-    }
-
-    if (!data) {
+    if (!staff) {
       return NextResponse.json(
-        { error: 'Invalid username or password' },
-        { status: 401 },
+        { error: "Invalid username/email or inactive staff account" },
+        { status: 401 }
       )
     }
 
-    let authenticated = false
+    // Validate password (direct match or case-sensitive match)
+    const isPasswordValid = staff.password && staff.password.trim() === password
 
-    // Primary path: table-based credential check (legacy/internal flow).
-    if (typeof (data as any).password === 'string' && (data as any).password.length > 0) {
-      authenticated = (data as any).password === password
-    }
-
-    // Fallback path: Supabase Auth email/password check.
-    // This handles deployments where staff_accounts has no password column.
-    if (!authenticated) {
-      const emailForAuth = ((data as any).email || '').trim()
-      if (emailForAuth) {
-        const authRes = await supabaseAdmin.auth.signInWithPassword({
-          email: emailForAuth,
-          password,
-        })
-        if (!authRes.error && authRes.data?.user) {
-          authenticated = true
-        }
-      }
-    }
-
-    if (!authenticated) {
+    if (!isPasswordValid) {
       return NextResponse.json(
-        { error: 'Invalid username/email or password' },
-        { status: 401 },
+        { error: "Invalid username/email or password" },
+        { status: 401 }
       )
     }
 
-    // Update last_login_at for audit/visibility
-    await supabaseAdmin
-      .from('staff_accounts')
-      .update({ last_login_at: new Date().toISOString() })
-      .eq('id', data.id)
+    // Update last_login_at in Firestore
+    const now = new Date().toISOString()
+    await updateStaffAccountFirestore(staff.id, { last_login_at: now })
 
-    // Only return non-sensitive fields to the client
+    // Log login audit event
+    await addAuditLogFirestore({
+      action: "staff_login",
+      entity_type: "staff",
+      entity_id: staff.id,
+      source: "staff_login_page",
+      meta: { username: staff.username, login_at: now },
+    })
+
+    // Safe return object for client
     const safe = {
-      id: data.id,
-      username: data.username as string,
-      display_name: (data as any).display_name ?? null,
-      role: (data as any).role ?? 'staff',
-      active: !!data.active,
+      id: staff.id,
+      username: staff.username,
+      display_name: staff.display_name || staff.username,
+      role: staff.role || "staff",
+      active: true,
     }
 
     return NextResponse.json({ success: true, data: safe })
   } catch (error: any) {
-    console.error('Unexpected staff login error:', error)
-    return NextResponse.json({ error: 'Authentication failed' }, { status: 500 })
+    console.error("Unexpected staff login error:", error)
+    return NextResponse.json({ error: "Authentication failed. Please try again." }, { status: 500 })
   }
 }
-

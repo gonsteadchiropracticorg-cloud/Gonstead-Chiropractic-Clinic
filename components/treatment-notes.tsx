@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { FileText, Plus, Clock, CheckCircle, Edit3, Trash2, Image as ImageIcon, X, Upload, ZoomIn } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
-import type { Patient } from '@/lib/supabase'
+import type { Patient } from '@/lib/data-service'
 import { createClient } from '@supabase/supabase-js'
 import Image from 'next/image'
 

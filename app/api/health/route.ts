@@ -1,19 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { testConnection } from '@/lib/supabase'
-
-/**
- * Health Check Endpoint
- * 
- * Used by:
- * - Docker health checks
- * - Load balancers
- * - Monitoring systems (Uptime Robot, Pingdom, etc.)
- * - CI/CD pipelines
- * 
- * Returns:
- * - 200 OK: System healthy
- * - 503 Service Unavailable: System unhealthy
- */
+import { getPatientsFirestore } from '@/lib/firebase-db'
 
 interface HealthStatus {
   status: 'healthy' | 'unhealthy' | 'degraded'
@@ -35,18 +21,16 @@ interface HealthStatus {
   }
 }
 
-// Track when the server started
 const serverStartTime = Date.now()
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
   
   try {
-    // Initialize health status
     const health: HealthStatus = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      uptime: Math.floor((Date.now() - serverStartTime) / 1000), // in seconds
+      uptime: Math.floor((Date.now() - serverStartTime) / 1000),
       version: process.env.npm_package_version || '3.0.0',
       checks: {
         database: 'disconnected',
@@ -56,17 +40,12 @@ export async function GET(request: NextRequest) {
       details: {},
     }
 
-    // Check 1: Database Connection
+    // Check 1: Database Connection (Firestore)
     try {
-      const dbConnected = await testConnection()
+      await getPatientsFirestore()
       const dbLatency = Date.now() - startTime
-      
-      health.checks.database = dbConnected ? 'connected' : 'disconnected'
+      health.checks.database = 'connected'
       health.details!.databaseLatency = dbLatency
-
-      if (!dbConnected) {
-        health.status = 'degraded'
-      }
     } catch (dbError) {
       health.checks.database = 'error'
       health.status = 'unhealthy'
@@ -80,8 +59,8 @@ export async function GET(request: NextRequest) {
       const percentage = (usedMemory / totalMemory) * 100
 
       health.details!.memoryUsage = {
-        used: Math.round(usedMemory / 1024 / 1024), // MB
-        total: Math.round(totalMemory / 1024 / 1024), // MB
+        used: Math.round(usedMemory / 1024 / 1024),
+        total: Math.round(totalMemory / 1024 / 1024),
         percentage: Math.round(percentage),
       }
 
@@ -94,10 +73,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Check 3: Environment Variables
+    // Check 3: Firebase Environment Variables
     const requiredEnvVars = [
-      'NEXT_PUBLIC_SUPABASE_URL',
-      'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+      'NEXT_PUBLIC_FIREBASE_API_KEY',
+      'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
     ]
 
     const missingVars = requiredEnvVars.filter(
@@ -109,7 +88,6 @@ export async function GET(request: NextRequest) {
       health.status = 'unhealthy'
     }
 
-    // Determine HTTP status code
     const statusCode = health.status === 'healthy' ? 200 : 
                        health.status === 'degraded' ? 200 : 503
 
@@ -123,7 +101,6 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error: any) {
-    // Critical error in health check itself
     return NextResponse.json(
       {
         status: 'unhealthy',
@@ -141,8 +118,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// HEAD request for simple alive check (used by some monitoring tools)
 export async function HEAD(request: NextRequest) {
   return new NextResponse(null, { status: 200 })
 }
-

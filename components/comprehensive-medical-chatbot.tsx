@@ -42,6 +42,7 @@ import {
   type BodyLocation
 } from '@/lib/medical-knowledge'
 import AppointmentBookingForm, { type AppointmentData } from './appointment-booking-form'
+import { createPatient } from "@/lib/data-service"
 
 interface Message {
   id: string
@@ -261,8 +262,19 @@ export default function ComprehensiveMedicalChatbot({ onAppointmentBooked }: Com
 
   const handleAppointmentSubmit = async (data: AppointmentData) => {
     try {
-      // Here you would normally send the data to your backend
-      console.log('Appointment data:', data)
+      // Save appointment directly to Firestore
+      await createPatient({
+        name: `${data.firstName} ${data.lastName}`.trim(),
+        phone: data.phone,
+        email: data.email,
+        session_type: data.appointmentType === "emergency" ? "video" : "in_clinic",
+        appointment_date: data.preferredDate ? data.preferredDate.toISOString() : new Date().toISOString(),
+        status: "pending",
+        urgency: data.appointmentType === "emergency" ? "emergency" : "normal",
+        payment_method: "cash",
+        notes: data.notes || data.symptoms || "",
+        sessions_completed: 0,
+      })
       
       if (onAppointmentBooked) {
         await onAppointmentBooked(data)

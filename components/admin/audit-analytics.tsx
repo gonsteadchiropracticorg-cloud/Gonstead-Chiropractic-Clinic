@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, TrendingUp, Clock, Users, Activity } from "lucide-react"
-import type { AuditLog } from "@/lib/supabase"
+import type { AuditLog } from "@/lib/data-service"
 
 interface AuditAnalyticsProps {
   logs: AuditLog[]
@@ -13,13 +13,14 @@ interface AuditAnalyticsProps {
 export function AuditAnalytics({ logs }: AuditAnalyticsProps) {
   const analytics = useMemo(() => {
     const now = new Date()
-    const last24h = logs.filter(l => new Date(l.timestamp) > new Date(now.getTime() - 24*60*60*1000))
-    const last7d = logs.filter(l => new Date(l.timestamp) > new Date(now.getTime() - 7*24*60*60*1000))
+    const getTimestamp = (l: AuditLog) => l.timestamp || new Date().toISOString()
+    const last24h = logs.filter(l => new Date(getTimestamp(l)) > new Date(now.getTime() - 24*60*60*1000))
+    const last7d = logs.filter(l => new Date(getTimestamp(l)) > new Date(now.getTime() - 7*24*60*60*1000))
     
     // Activity heatmap (by hour)
     const hourlyActivity = Array(24).fill(0)
     last7d.forEach(log => {
-      const hour = new Date(log.timestamp).getHours()
+      const hour = new Date(getTimestamp(log)).getHours()
       hourlyActivity[hour]++
     })
     const peakHour = hourlyActivity.indexOf(Math.max(...hourlyActivity))
@@ -57,7 +58,7 @@ export function AuditAnalytics({ logs }: AuditAnalyticsProps) {
     
     // 3. After-hours activity (10 PM - 6 AM)
     const afterHoursActivity = last7d.filter(l => {
-      const hour = new Date(l.timestamp).getHours()
+      const hour = new Date(getTimestamp(l)).getHours()
       return hour >= 22 || hour < 6
     })
     if (afterHoursActivity.length > 10) {
@@ -89,7 +90,7 @@ export function AuditAnalytics({ logs }: AuditAnalyticsProps) {
       const prevStart = new Date(now.getTime() - 2*days*24*60*60*1000)
       const prevEnd = new Date(now.getTime() - days*24*60*60*1000)
       const previous = logs.filter(l => {
-        const t = new Date(l.timestamp)
+        const t = new Date(getTimestamp(l))
         return t >= prevStart && t < prevEnd
       })
       const change = current.length - previous.length

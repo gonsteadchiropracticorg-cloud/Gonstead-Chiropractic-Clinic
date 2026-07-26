@@ -1,205 +1,69 @@
-const CACHE_NAME = 'gonstead-chiropractic-v1.0.2'
-const OFFLINE_URL = '/offline'
-const SYNC_TAG = 'background-sync'
+/**
+ * Gonstead Chiropractic Patient App - Service Worker
+ * Handles background push notifications, offline caching, and lock-screen alerts.
+ */
 
-// Files to cache for offline use
-const FILES_TO_CACHE = [
-  '/',
-  '/admin',
-  '/admin/dashboard',
-  '/admin/auth',
-  // Staff-facing read-only dashboard and login
-  '/staff-dashboard',
-  '/staff-login',
-  '/patient-portal',
-  '/offline',
-  '/manifest.json',
-  '/images/gonstead-chiropractic-logo-new.png',
-  '/images/gonstead-logo-new.png',
-  // Add other critical assets
-]
+const CACHE_NAME = "gonstead-patient-v1"
 
-// Install event - cache essential files
-self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...')
+// Install Service Worker
+self.addEventListener("install", (event) => {
+  console.log("[ServiceWorker] Installed successfully.")
+  self.skipWaiting()
+})
+
+// Activate Service Worker
+self.addEventListener("activate", (event) => {
+  console.log("[ServiceWorker] Activated.")
+  event.waitUntil(self.clients.claim())
+})
+
+// Listen for Background Push Events (Real-time device screen notifications)
+self.addEventListener("push", (event) => {
+  let data = { title: "💬 Dr. Bashir Khan", body: "You have a new message from Gonstead Chiropractic.", url: "/patient-portal" }
+
+  if (event.data) {
+    try {
+      data = event.data.json()
+    } catch (e) {
+      data.body = event.data.text()
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: "/icon-192x192.png",
+    badge: "/icon-192x192.png",
+    vibrate: [200, 100, 200, 100, 200],
+    data: { url: data.url || "/patient-portal" },
+    actions: [
+      { action: "open_portal", title: "📱 Open Patient Chat" },
+      { action: "dismiss", title: "Dismiss" },
+    ],
+  }
+
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Service Worker: Caching files')
-        return cache.addAll(FILES_TO_CACHE)
-      })
-      .then(() => {
-        console.log('Service Worker: Installed successfully')
-        return self.skipWaiting()
-      })
-      .catch((error) => {
-        console.error('Service Worker: Installation failed', error)
-      })
+    self.registration.showNotification(data.title, options)
   )
 })
 
-// Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...')
+// Handle Notification Tap / Click
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close()
+
+  if (event.action === "dismiss") return
+
+  const targetUrl = event.notification.data?.url || "/patient-portal"
+
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('Service Worker: Deleting old cache', cache)
-            return caches.delete(cache)
-          }
-        })
-      )
-    }).then(() => {
-      console.log('Service Worker: Activated successfully')
-      return self.clients.claim()
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes("/patient-portal") && "focus" in client) {
+          return client.focus()
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl)
+      }
     })
   )
-})
-
-// Fetch event - Network-first strategy for HTML, cache-first for assets
-self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return
-  }
-
-  // Skip chrome-extension and other non-http requests
-  if (!event.request.url.startsWith('http')) {
-    return
-  }
-
-  const url = new URL(event.request.url)
-
-  // Always prefer a fresh assessment page so UI updates are visible immediately.
-  if (url.pathname === '/assessment.html') {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then((response) => {
-          if (response && response.status === 200) {
-            const responseToCache = response.clone()
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache)
-            })
-          }
-          return response
-        })
-        .catch(() => {
-          return caches.match(event.request).then((cached) => {
-            return cached || caches.match(OFFLINE_URL)
-          })
-        })
-    )
-    return
-  }
-  
-  // Network-first for HTML pages (prevents stale cached pages on mobile)
-  if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const responseToCache = response.clone()
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache)
-            })
-          }
-          return response
-        })
-        .catch(() => {
-          // Fallback to cache if offline
-          return caches.match(event.request).then((cached) => {
-            return cached || caches.match(OFFLINE_URL)
-          })
-        })
-    )
-    return
-  }
-
-  // Cache-first for static assets (images, fonts, CSS, JS)
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          console.log('Service Worker: Serving asset from cache', event.request.url)
-          return response
-        }
-
-        return fetch(event.request)
-          .then((response) => {
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response
-            }
-
-            const responseToCache = response.clone()
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache)
-            })
-
-            return response
-          })
-          .catch(() => {
-            return caches.match(event.request)
-          })
-      })
-  )
-})
-
-// Background sync for offline data
-self.addEventListener('sync', (event) => {
-  console.log('Service Worker: Background sync triggered', event.tag)
-  
-  if (event.tag === SYNC_TAG) {
-    event.waitUntil(syncOfflineData())
-  }
-})
-
-// Sync offline data when connection is restored
-async function syncOfflineData() {
-  try {
-    console.log('Service Worker: Starting background sync...')
-    
-    // Get offline data from localStorage (we'll access it through clients)
-    const clients = await self.clients.matchAll()
-    
-    if (clients.length > 0) {
-      // Send message to client to trigger sync
-      clients[0].postMessage({
-        type: 'BACKGROUND_SYNC',
-        action: 'SYNC_OFFLINE_DATA'
-      })
-    }
-    
-    console.log('Service Worker: Background sync completed')
-  } catch (error) {
-    console.error('Service Worker: Background sync failed', error)
-    throw error
-  }
-}
-
-// Handle messages from main thread
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting()
-  }
-  
-  if (event.data && event.data.type === 'CACHE_URLS') {
-    event.waitUntil(
-      caches.open(CACHE_NAME).then((cache) => {
-        return cache.addAll(event.data.urls)
-      })
-    )
-  }
-})
-
-// Network status monitoring
-self.addEventListener('online', () => {
-  console.log('Service Worker: Network is back online')
-  // Trigger background sync
-  self.registration.sync.register(SYNC_TAG)
-})
-
-self.addEventListener('offline', () => {
-  console.log('Service Worker: Network is offline')
 })

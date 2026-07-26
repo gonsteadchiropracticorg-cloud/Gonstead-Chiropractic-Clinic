@@ -12,7 +12,7 @@ import { Calendar as CalendarIcon, Video, CheckCircle, Loader2, Phone, MessageCi
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useLanguage } from "./language-provider"
 import { useToast } from "@/hooks/use-toast"
-import { createPatient } from "@/lib/supabase"
+import { createPatient } from "@/lib/data-service"
 import { notifyNewAppointment, showBrowserNotification, requestNotificationPermission } from "@/lib/whatsapp-notifications"
 import { AppointmentConfirmation } from "./appointment-confirmation"
 

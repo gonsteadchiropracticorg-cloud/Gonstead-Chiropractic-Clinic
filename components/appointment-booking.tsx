@@ -14,6 +14,8 @@ import { useLanguage } from "./language-provider"
 import { useToast } from "@/hooks/use-toast"
 import { AppointmentConfirmation } from "./appointment-confirmation"
 
+import { createPatient } from "@/lib/data-service"
+
 export function AppointmentBooking() {
   const [formData, setFormData] = useState({
     name: "",
@@ -72,8 +74,21 @@ export function AppointmentBooking() {
       }
     }
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // Save appointment directly to Firestore
+    try {
+      await createPatient({
+        name: formData.name,
+        phone: formData.phone,
+        session_type: formData.sessionType === "clinic" ? "in_clinic" : "video",
+        appointment_date: formData.preferredTime || new Date().toISOString(),
+        status: "pending",
+        urgency: "normal",
+        payment_method: "cash",
+        sessions_completed: 0,
+      })
+    } catch (dbErr) {
+      console.error("Failed to save appointment to Firestore:", dbErr)
+    }
 
     setIsSubmitted(true)
     setIsSubmitting(false)

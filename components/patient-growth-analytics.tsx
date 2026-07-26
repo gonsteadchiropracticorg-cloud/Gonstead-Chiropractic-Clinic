@@ -15,7 +15,7 @@ import {
   Download
 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import type { Patient } from "@/lib/supabase"
+import type { Patient } from "@/lib/data-service"
 
 interface PatientGrowthAnalyticsProps {
   patients: Patient[]

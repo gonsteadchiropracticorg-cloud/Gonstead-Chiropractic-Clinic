@@ -287,9 +287,9 @@ export default function MedicalHistoryPage() {
         setIsLoading(true)
         console.log('[Medical History] Loading records from Supabase...')
         
-        // Load from Supabase FIRST (primary source)
+        // Load from Firestore via data-service FIRST (primary source)
         try {
-          const { getPatients } = await import('@/lib/supabase')
+          const { getPatients } = await import('@/lib/data-service')
           const { data: supabasePatients, error } = await getPatients()
           
           if (!error && supabasePatients && supabasePatients.length > 0) {
@@ -421,8 +421,8 @@ export default function MedicalHistoryPage() {
     console.log('[Medical History] Manual refresh triggered - loading from Supabase...')
     
     try {
-      // Force reload from Supabase
-      const { getPatients } = await import('@/lib/supabase')
+      // Force reload from Firestore
+      const { getPatients } = await import('@/lib/data-service')
       const { data: supabasePatients, error } = await getPatients()
       
       if (!error && supabasePatients && supabasePatients.length > 0) {

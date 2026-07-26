@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabaseAdmin } from "@/lib/supabase-admin"
+import { createPatientFirestore, getPatientsFirestore, upsertAppointmentQueueFirestore } from "@/lib/firebase-db"
 
 // Business hours constants
 const BUSINESS_HOURS_START = 9 // 9:00 AM
@@ -23,21 +23,13 @@ const mockAppointments: Array<{
   { id: "4", datetime: "2025-07-23T15:30:00", duration: 60, patientName: "Aisha Malik", phone: "03335678901" },
 ]
 
-// Function to get all appointments from Supabase
+// Function to get all appointments from Firestore
 async function getAllAppointments() {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('patients')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const fsPatients = await getPatientsFirestore()
     
-    if (error) {
-      console.error('Error fetching appointments from Supabase:', error)
-      return mockAppointments
-    }
-    
-    // Convert Supabase patient data to appointment format
-    const supabaseAppointments = (data || []).map(patient => ({
+    // Convert Firestore patient data to appointment format
+    const firestoreAppointments = fsPatients.map(patient => ({
       id: patient.id,
       datetime: patient.appointment_date,
       duration: 60, // Default duration
@@ -45,8 +37,7 @@ async function getAllAppointments() {
       phone: patient.phone
     }))
     
-    // Combine with mock appointments
-    return [...supabaseAppointments, ...mockAppointments]
+    return [...firestoreAppointments, ...mockAppointments]
   } catch (error) {
     console.error('Error in getAllAppointments:', error)
     return mockAppointments
@@ -247,35 +238,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Save to Supabase database
-    const { data: newPatient, error: dbError } = await supabaseAdmin
-      .from('patients')
-      .insert({
-        name: appointmentData.name,
-        phone: appointmentData.phone,
-        email: appointmentData.email || null,
-        session_type: appointmentData.session_type || 'in_clinic',
-        appointment_date: appointmentData.appointment_date,
-        status: 'pending',
-        urgency: appointmentData.urgency || 'normal',
-        payment_method: appointmentData.payment_method || 'cash',
-        notes: appointmentData.notes || '',
-        sessions_completed: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single()
+    // Save to Firestore database
+    const newPatient = await createPatientFirestore({
+      name: appointmentData.name,
+      phone: appointmentData.phone,
+      email: appointmentData.email || undefined,
+      session_type: appointmentData.session_type || 'in_clinic',
+      appointment_date: appointmentData.appointment_date,
+      status: 'pending',
+      urgency: appointmentData.urgency || 'normal',
+      payment_method: appointmentData.payment_method || 'cash',
+      notes: appointmentData.notes || '',
+      sessions_completed: 0,
+    })
 
-    if (dbError) {
-      console.error("❌ Database error:", dbError)
+    if (!newPatient) {
+      console.error("❌ Firestore create patient error")
       return NextResponse.json(
-        { success: false, error: `Database error: ${dbError.message}` },
+        { success: false, error: "Database error saving appointment to Firestore" },
         { status: 500, headers: corsHeaders }
       )
     }
 
     const appointmentId = newPatient.id
+
+    // Mirror the booking into the live queue in Firestore
+    try {
+      await upsertAppointmentQueueFirestore({
+        appointment_id: appointmentId,
+        patient_id: appointmentId,
+        patient_name: appointmentData.name,
+        patient_phone: appointmentData.phone,
+        appointment_date: appointmentData.appointment_date,
+        status: 'scheduled',
+      })
+    } catch (queueError) {
+      console.warn('⚠️ Failed to create appointment queue row:', queueError)
+    }
 
     // Add to mock database for backward compatibility
     mockAppointments.push({

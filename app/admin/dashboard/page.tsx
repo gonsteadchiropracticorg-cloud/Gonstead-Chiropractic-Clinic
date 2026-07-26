@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import PerfectWhatsAppChat from "@/components/PerfectWhatsAppChat"
+import { DoctorWhatsAppChatInbox } from "@/components/DoctorWhatsAppChatInbox"
 import {
   Calendar,
   Users,
@@ -53,15 +54,15 @@ import {
   X
 } from "lucide-react"
 import {
+  signOutAdmin,
+  getCurrentUser,
   getPatients,
   updatePatient,
   deletePatient,
   createPatient,
-  signOutAdmin,
-  getCurrentUser,
   addAuditLog,
   type Patient,
-} from "@/lib/supabase"
+} from "@/lib/data-service"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import { WeatherWidget } from "@/components/weather-widget"
@@ -152,14 +153,14 @@ export default function AdminDashboard() {
     emergencyPhone: "",
     insurance: "",
   })
-  
+
   // Add patient registration mode state
   const [isAdvancedMode, setIsAdvancedMode] = useState(false)
   const [registrationStep, setRegistrationStep] = useState(1)
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([])
   const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(undefined)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
-  
+
   // Prescription dialog state variables
   const [isPrescriptionDialogOpen, setIsPrescriptionDialogOpen] = useState(false)
   const [prescriptionNotes, setPrescriptionNotes] = useState("")
@@ -210,20 +211,20 @@ export default function AdminDashboard() {
   const [doctorSignature, setDoctorSignature] = useState<string | null>(null)
   const [isVideoCallFullscreen, setIsVideoCallFullscreen] = useState(false)
   const videoCallDialogRef = useRef<HTMLDivElement | null>(null)
-  
+
   // Book Next Appointment Dialog State
   const [isBookNextAppointmentOpen, setIsBookNextAppointmentOpen] = useState(false)
   const [patientForNextAppointment, setPatientForNextAppointment] = useState<Patient | null>(null)
-  
+
   // Cancellation Confirmation Dialog State
   const [isCancelConfirmDialogOpen, setIsCancelConfirmDialogOpen] = useState(false)
   const [patientToCancel, setPatientToCancel] = useState<Patient | null>(null)
   const [expandedCancelSection, setExpandedCancelSection] = useState<'patient' | 'impact' | 'recovery' | null>(null)
-  
+
   // Smart table sorting state (persisted)
   type SortKey = 'name' | 'phone' | 'profession' | 'appointment_date' | 'status' | 'urgency' | 'session_type' | 'sessions'
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
-  
+
   // Quick Wins: Last updated timestamp
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [adminUser, setAdminUser] = useState<any>({ email: 'admin-user', name: 'Dr. Bashir Khan' })
@@ -236,7 +237,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     // Set initial time on client mount to avoid hydration mismatch
     setCurrentTime(new Date())
-    
+
     const timer = setInterval(() => {
       setCurrentTime(new Date())
     }, 1000)
@@ -319,7 +320,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     checkAuthAndLoadData()
-    
+
     // Process pending sync queue on load (offline-first sync)
     const processPendingSyncs = async () => {
       try {
@@ -330,7 +331,7 @@ export default function AdminDashboard() {
       }
     }
     processPendingSyncs()
-    
+
     // Listen for new appointments from the booking form
     const handleNewAppointment = (event: CustomEvent) => {
       const newPatient = event.detail
@@ -340,17 +341,17 @@ export default function AdminDashboard() {
       setStats(prev => ({
         ...prev,
         totalPatients: prev.totalPatients + 1,
-        todayAppointments: new Date(newPatient.appointment_date).toDateString() === today 
-          ? prev.todayAppointments + 1 
+        todayAppointments: new Date(newPatient.appointment_date).toDateString() === today
+          ? prev.todayAppointments + 1
           : prev.todayAppointments,
-        pendingAppointments: newPatient.status === 'pending' 
-          ? prev.pendingAppointments + 1 
+        pendingAppointments: newPatient.status === 'pending'
+          ? prev.pendingAppointments + 1
           : prev.pendingAppointments,
-        emergencyPatients: newPatient.urgency === 'emergency' 
-          ? prev.emergencyPatients + 1 
+        emergencyPatients: newPatient.urgency === 'emergency'
+          ? prev.emergencyPatients + 1
           : prev.emergencyPatients
       }))
-      
+
       // Auto-create 24h reminder for new appointment
       try {
         const reminder = createAppointmentReminder(newPatient, '24h')
@@ -358,7 +359,7 @@ export default function AdminDashboard() {
       } catch (error) {
         console.error('Failed to create reminder:', error)
       }
-      
+
       toast({
         title: "📋 New Patient Registration",
         description: `${newPatient.name} has successfully scheduled an appointment for ${new Date(newPatient.appointment_date).toLocaleDateString()}`,
@@ -367,26 +368,26 @@ export default function AdminDashboard() {
 
     // Add event listener for real-time appointment updates
     window.addEventListener('newAppointment', handleNewAppointment as EventListener)
-    
+
     // Cleanup
     return () => {
       window.removeEventListener('newAppointment', handleNewAppointment as EventListener)
     }
   }, [])
-  
+
   // Auto-reminder system: Check for upcoming appointments and create reminders
   useEffect(() => {
     const checkAndCreateReminders = () => {
       try {
         const upcomingAppointments = getUpcomingAppointmentsForReminders(patients, 24)
         const existingReminders = getReminders()
-        
+
         upcomingAppointments.forEach(patient => {
           // Check if 24h reminder already exists
-          const has24hReminder = existingReminders.some(r => 
+          const has24hReminder = existingReminders.some(r =>
             r.patientId === patient.id && r.type === '24h' && r.status === 'pending'
           )
-          
+
           if (!has24hReminder) {
             const reminder = createAppointmentReminder(patient, '24h')
             saveReminder(reminder)
@@ -397,11 +398,11 @@ export default function AdminDashboard() {
         console.error('Error in reminder system:', error)
       }
     }
-    
+
     // Check immediately and then every 5 minutes
     checkAndCreateReminders()
     const interval = setInterval(checkAndCreateReminders, 5 * 60 * 1000)
-    
+
     return () => clearInterval(interval)
   }, [patients])
 
@@ -435,7 +436,7 @@ export default function AdminDashboard() {
       }
 
       console.log("Dashboard: User authenticated:", user.email)
-      
+
       // Set admin user state for chat
       setAdminUser({
         ...user,
@@ -461,7 +462,7 @@ export default function AdminDashboard() {
     try {
       setIsLoading(true)
       console.log("Dashboard: Loading patients...")
-      
+
       // Load from Supabase
       const { data, error } = await getPatients()
 
@@ -477,15 +478,15 @@ export default function AdminDashboard() {
 
       const supabasePatients = data || []
       console.log("Dashboard: Loaded Supabase patients:", supabasePatients.length)
-      
+
       // Load from localStorage (for appointment bookings from the form)
       const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
       console.log("Dashboard: Loaded localStorage patients:", localStoragePatients.length)
-      
+
       // Merge patients with proper deduplication - prioritize Supabase data
       const mergedPatients = [...supabasePatients]
       const existingIds = new Set(supabasePatients.map(p => p.id))
-      
+
       // Add localStorage patients that aren't already in Supabase (by ID)
       localStoragePatients.forEach((localPatient: Patient) => {
         if (!existingIds.has(localPatient.id)) {
@@ -493,7 +494,7 @@ export default function AdminDashboard() {
           existingIds.add(localPatient.id)
         }
       })
-      
+
       console.log("Dashboard: Total merged patients:", mergedPatients.length)
       setPatients(mergedPatients)
 
@@ -507,7 +508,7 @@ export default function AdminDashboard() {
         emergencyPatients: mergedPatients.filter((p) => p.urgency === "emergency").length,
       }
       setStats(newStats)
-      
+
       // Quick Win: Update last updated timestamp
       setLastUpdated(new Date())
     } catch (error) {
@@ -527,7 +528,7 @@ export default function AdminDashboard() {
       const before = patients.find(p => p.id === patientId) || null
       await deletePatient(patientId)
       // Audit: delete
-      try { await addAuditLog({ action: 'delete', entity_type: 'patient', entity_id: patientId, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before } }) } catch {}
+      try { await addAuditLog({ action: 'delete', entity_type: 'patient', entity_id: patientId, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before } }) } catch { }
       await loadPatients()
       toast({
         title: "Patient Deleted",
@@ -643,7 +644,7 @@ export default function AdminDashboard() {
             session_incremented: incremented,
           },
         })
-      } catch {}
+      } catch { }
 
       await loadPatients()
 
@@ -690,7 +691,7 @@ export default function AdminDashboard() {
       return []
     }
   }
-  
+
   // Update available slots when date changes for appointment booking
   const handleAppointmentDateSelection = (date: Date | undefined) => {
     setAppointmentDate(date)
@@ -700,7 +701,7 @@ export default function AdminDashboard() {
       if (slots.length === 0) {
         toast({
           title: date.getDay() === 0 ? "🚫 Clinic Closed on Sundays" : "📅 All Slots Booked",
-          description: date.getDay() === 0 
+          description: date.getDay() === 0
             ? "Our clinic is closed on Sundays. Please select Monday-Saturday."
             : "All appointment slots are booked for this date. Please select another date.",
           variant: "destructive",
@@ -738,7 +739,7 @@ export default function AdminDashboard() {
         })
         return
       }
-      
+
       // 🚫 DOUBLE BOOKING PREVENTION: Check for conflicts before creating appointment
       const conflict = checkAppointmentConflict(newPatient.appointment_date, patients)
       if (conflict.hasConflict) {
@@ -755,11 +756,11 @@ export default function AdminDashboard() {
         sessions_completed: 0,
         booking_source: "admin_dashboard" as const, // Mark as admin-created
       }
-      
+
       console.log("[Mobile Debug] Starting patient creation...", { isMobile: window.innerWidth < 768 })
       const newPatientRecord = await createPatient(patientData)
       console.log("[Mobile Debug] Patient created in Supabase:", newPatientRecord?.id)
-      
+
       // Mark admin-created patients as viewed immediately (no red dot needed)
       if (newPatientRecord?.id) {
         setViewedPatients(prev => new Set([...prev, newPatientRecord.id]))
@@ -784,7 +785,7 @@ export default function AdminDashboard() {
         } catch (pdfError) {
           console.error('Error generating confirmation PDF for admin-created appointment:', pdfError)
         }
-        
+
         // Mobile-compatible localStorage sync with error handling
         let localStorageSaved = false
         try {
@@ -802,39 +803,39 @@ export default function AdminDashboard() {
           console.error("[Mobile Debug] localStorage error (mobile restriction?):", storageError)
           // Continue execution - don't fail the entire operation
         }
-        
+
         // Always trigger event - medical history will fetch from Supabase if localStorage fails
         try {
-          window.dispatchEvent(new CustomEvent('medicalRecordsUpdated', { 
-            detail: { 
+          window.dispatchEvent(new CustomEvent('medicalRecordsUpdated', {
+            detail: {
               patientId: newPatientRecord.id,
               localStorageAvailable: localStorageSaved,
               timestamp: new Date().toISOString()
-            } 
+            }
           }))
           console.log("[Mobile Debug] Event dispatched successfully")
         } catch (eventError) {
           console.error("[Mobile Debug] Event dispatch error:", eventError)
         }
-        
+
         // Audit: create
-        try { 
+        try {
           const adminEmail = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_email') : null
-          await addAuditLog({ 
-            action: 'create', 
-            entity_type: 'patient', 
-            entity_id: newPatientRecord.id, 
-            actor_email: adminEmail || undefined, 
-            source: 'admin_dashboard', 
-            reversible: true, 
-            meta: { after: newPatientRecord, localStorageSaved } 
-          }) 
-        } catch {}
-        
+          await addAuditLog({
+            action: 'create',
+            entity_type: 'patient',
+            entity_id: newPatientRecord.id,
+            actor_email: adminEmail || undefined,
+            source: 'admin_dashboard',
+            reversible: true,
+            meta: { after: newPatientRecord, localStorageSaved }
+          })
+        } catch { }
+
         // DO NOT automatically create medical records - only patient records
         // Medical records should be created separately via Medical History page
       }
-      
+
       await loadPatients()
       setIsAddPatientDialogOpen(false)
       setNewPatient({
@@ -884,7 +885,7 @@ export default function AdminDashboard() {
   const generatePrescription = (patient: Patient) => {
     // Check if patient has an existing prescription
     const hasExistingPrescription = patient.prescription_generated || (patient.prescription_count ?? 0) > 0
-    
+
     if (hasExistingPrescription) {
       // Show existing prescription with option to generate new one
       showExistingPrescription(patient)
@@ -893,7 +894,7 @@ export default function AdminDashboard() {
       createNewPrescription(patient)
     }
   }
-  
+
   const showExistingPrescription = (patient: Patient) => {
     // Load existing prescription data
     setPrescriptionNotes(patient.notes || "")
@@ -907,7 +908,7 @@ export default function AdminDashboard() {
     setSelectedPatient(patient)
     setIsPrescriptionDialogOpen(true)
   }
-  
+
   const createNewPrescription = (patient: Patient) => {
     // Reset prescription data for new prescription
     setPrescriptionNotes(patient.notes || "")
@@ -921,7 +922,7 @@ export default function AdminDashboard() {
     setSelectedPatient(patient)
     setIsPrescriptionDialogOpen(true)
   }
-  
+
   const generateNewPrescription = () => {
     if (selectedPatient) {
       // Clear existing prescription data and create new one
@@ -1039,14 +1040,14 @@ export default function AdminDashboard() {
       // Generate unique prescription ID
       const existingRecords = JSON.parse(localStorage.getItem("prescription_records") || "[]")
       const prescriptionId = `RX${String(existingRecords.length + 1).padStart(3, '0')}`
-      
+
       // Set the prescription ID in state and make it available globally
       setCurrentPrescriptionId(prescriptionId)
       window.prescriptionId = prescriptionId
-      
+
       // Force re-render of prescription content with ID
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -1136,14 +1137,14 @@ export default function AdminDashboard() {
       // Generate unique prescription ID
       const existingRecords = JSON.parse(localStorage.getItem("prescription_records") || "[]")
       const prescriptionId = `RX${String(existingRecords.length + 1).padStart(3, '0')}`
-      
+
       // Set the prescription ID in state and make it available globally
       setCurrentPrescriptionId(prescriptionId)
       window.prescriptionId = prescriptionId
-      
+
       // Force re-render of prescription content with ID
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       // Create prescription record for tracking
       const prescriptionRecord = {
         id: prescriptionId,
@@ -1575,7 +1576,7 @@ export default function AdminDashboard() {
 
   const toggleVideoCallFullscreen = () => {
     if (!videoCallDialogRef.current) return
-    
+
     if (!isVideoCallFullscreen) {
       // Enter fullscreen
       if (videoCallDialogRef.current.requestFullscreen) {
@@ -1606,9 +1607,9 @@ export default function AdminDashboard() {
   // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen = !!(document.fullscreenElement || 
-        (document as any).webkitFullscreenElement || 
-        (document as any).mozFullScreenElement || 
+      const isCurrentlyFullscreen = !!(document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
         (document as any).msFullscreenElement)
       setIsVideoCallFullscreen(isCurrentlyFullscreen)
     }
@@ -1685,13 +1686,13 @@ export default function AdminDashboard() {
       const strong = () => pdf.setTextColor(17, 24, 39)
 
       // Badge chip helper
-      const chip = (txt: string, x: number, y0: number, fill: [number,number,number]) => {
+      const chip = (txt: string, x: number, y0: number, fill: [number, number, number]) => {
         const padX = 2.8
         pdf.setFont('helvetica', 'bold')
         pdf.setFontSize(9)
         const w = Math.min(pageWidth - margin - x, pdf.getTextWidth(txt) + padX * 2)
         pdf.setFillColor(...fill)
-        pdf.setTextColor(255,255,255)
+        pdf.setTextColor(255, 255, 255)
         pdf.roundedRect(x, y0 - 4.6, w, 7, 2, 2, 'F')
         pdf.text(txt, x + padX, y0)
         strong()
@@ -1725,64 +1726,64 @@ export default function AdminDashboard() {
 
       // Overview chips
       let cx = margin
-      cx = chip(`STATUS: ${patient.status.toUpperCase()}`, cx, y, patient.status === 'completed' ? [34,197,94] : patient.status === 'confirmed' ? [59,130,246] : patient.status === 'cancelled' ? [239,68,68] : [234,179,8])
-      cx = chip(`URGENCY: ${(patient.urgency || 'normal').toUpperCase()}`, cx, y, patient.urgency === 'emergency' ? [220,38,38] : patient.urgency === 'urgent' ? [245,158,11] : [107,114,128])
-      chip(`SESSION: ${patient.session_type === 'in_clinic' ? 'IN-CLINIC' : 'VIDEO'}`, cx, y, patient.session_type === 'in_clinic' ? [13,92,117] : [99,102,241])
+      cx = chip(`STATUS: ${patient.status.toUpperCase()}`, cx, y, patient.status === 'completed' ? [34, 197, 94] : patient.status === 'confirmed' ? [59, 130, 246] : patient.status === 'cancelled' ? [239, 68, 68] : [234, 179, 8])
+      cx = chip(`URGENCY: ${(patient.urgency || 'normal').toUpperCase()}`, cx, y, patient.urgency === 'emergency' ? [220, 38, 38] : patient.urgency === 'urgent' ? [245, 158, 11] : [107, 114, 128])
+      chip(`SESSION: ${patient.session_type === 'in_clinic' ? 'IN-CLINIC' : 'VIDEO'}`, cx, y, patient.session_type === 'in_clinic' ? [13, 92, 117] : [99, 102, 241])
 
       // Patient information table helper
       const drawInfoTable = (title: string, rows: Array<{ label: string; value: string }>) => {
         section(title)
-        
+
         const tableWidth = pageWidth - margin * 2
         const labelColWidth = tableWidth * 0.35
         const valueColWidth = tableWidth * 0.65
         const cellPadding = 3.5
         const rowHeight = 10
-        
+
         // Table border
         pdf.setDrawColor(200, 200, 200)
         pdf.setLineWidth(0.2)
-        
+
         rows.forEach((row, idx) => {
           const rowY = y + (idx * rowHeight)
-          
+
           // Alternating row background
           if (idx % 2 === 0) {
             pdf.setFillColor(249, 250, 251)
             pdf.rect(margin, rowY, tableWidth, rowHeight, 'F')
           }
-          
+
           // Draw cell borders
           pdf.setDrawColor(220, 220, 220)
           pdf.rect(margin, rowY, labelColWidth, rowHeight, 'S')
           pdf.rect(margin + labelColWidth, rowY, valueColWidth, rowHeight, 'S')
-          
+
           // Label (left column) - bold and colored
           pdf.setTextColor(55, 65, 81)
           pdf.setFont('helvetica', 'bold')
           pdf.setFontSize(9.5)
           pdf.text(row.label.toUpperCase(), margin + cellPadding, rowY + rowHeight / 2 + 1.5)
-          
+
           // Value (right column) - regular weight
           pdf.setTextColor(31, 41, 55)
           pdf.setFont('helvetica', 'normal')
           pdf.setFontSize(10)
-          
+
           // Handle text wrapping for long values
           const maxValueWidth = valueColWidth - (cellPadding * 2)
           const wrappedValue = pdf.splitTextToSize(row.value || '—', maxValueWidth)
           const valueLines = Array.isArray(wrappedValue) ? wrappedValue : [wrappedValue]
-          
+
           // Only show first line if too long, otherwise show full text
           const displayValue = valueLines.length > 1 ? valueLines[0] : valueLines[0]
           pdf.text(displayValue, margin + labelColWidth + cellPadding, rowY + rowHeight / 2 + 1.5)
         })
-        
+
         // Outer table border
         pdf.setDrawColor(180, 180, 180)
         pdf.setLineWidth(0.4)
         pdf.rect(margin, y, tableWidth, rowHeight * rows.length, 'S')
-        
+
         y += rowHeight * rows.length + 3
         strong()
       }
@@ -1812,7 +1813,7 @@ export default function AdminDashboard() {
         const nextApptDate = nextAppt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
         const nextApptTime = nextAppt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
         const nextApptDay = nextAppt.toLocaleDateString('en-US', { weekday: 'long' })
-        
+
         drawInfoTable('NEXT APPOINTMENT SCHEDULED', [
           { label: 'Date', value: nextApptDate },
           { label: 'Time', value: nextApptTime },
@@ -1825,18 +1826,18 @@ export default function AdminDashboard() {
       // Appointment History Section (if available) - Enhanced with Session Numbers & Timestamps
       if (patient.appointment_history && patient.appointment_history.length > 0) {
         section('APPOINTMENT HISTORY (ALL SESSIONS)')
-        
+
         const tableWidth = pageWidth - margin * 2
         const colWidths = [tableWidth * 0.08, tableWidth * 0.20, tableWidth * 0.18, tableWidth * 0.12, tableWidth * 0.10, tableWidth * 0.18, tableWidth * 0.14]
         const cellPadding = 2
         const rowHeight = 10
-        
+
         // Table header
         pdf.setFillColor(13, 92, 117)
         pdf.setTextColor(255, 255, 255)
         pdf.setFont('helvetica', 'bold')
         pdf.setFontSize(8)
-        
+
         const headers = ['#', 'Date', 'Time & Day', 'Type', 'Status', 'Completed At', 'Notes']
         let xPos = margin
         headers.forEach((header, idx) => {
@@ -1845,7 +1846,7 @@ export default function AdminDashboard() {
           xPos += colWidths[idx]
         })
         y += rowHeight
-        
+
         // Table rows
         pdf.setFont('helvetica', 'normal')
         pdf.setFontSize(7.5)
@@ -1854,23 +1855,23 @@ export default function AdminDashboard() {
           const dateStr = apptDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
           const timeStr = apptDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
           const dayStr = apptDate.toLocaleDateString('en-US', { weekday: 'short' })
-          
+
           // Session completion timestamp
-          const completedAtStr = appt.completed_at 
-            ? new Date(appt.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + 
-              new Date(appt.completed_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+          const completedAtStr = appt.completed_at
+            ? new Date(appt.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+            new Date(appt.completed_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
             : '—'
-          
+
           // Alternating row background
           if (idx % 2 === 0) {
             pdf.setFillColor(249, 250, 251)
             pdf.rect(margin, y, tableWidth, rowHeight, 'F')
           }
-          
+
           // Row data
           pdf.setTextColor(31, 41, 55)
           xPos = margin
-          
+
           // Session number column
           const sessionNum = appt.session_number || (idx + 1)
           pdf.setFont('helvetica', 'bold')
@@ -1879,52 +1880,52 @@ export default function AdminDashboard() {
           pdf.setDrawColor(220, 220, 220)
           pdf.line(xPos, y, xPos, y + rowHeight)
           xPos += colWidths[0]
-          
+
           // Date column
           pdf.text(dateStr, xPos + cellPadding, y + rowHeight / 2 + 1.5)
           pdf.line(xPos, y, xPos, y + rowHeight)
           xPos += colWidths[1]
-          
+
           // Time & Day column
           pdf.text(`${timeStr} (${dayStr})`, xPos + cellPadding, y + rowHeight / 2 + 1.5)
           pdf.line(xPos, y, xPos, y + rowHeight)
           xPos += colWidths[2]
-          
+
           // Session Type column
           const sessionType = appt.session_type === 'in_clinic' ? 'Clinic' : 'Video'
           pdf.text(sessionType, xPos + cellPadding, y + rowHeight / 2 + 1.5)
           pdf.line(xPos, y, xPos, y + rowHeight)
           xPos += colWidths[3]
-          
+
           // Status column
           pdf.setFont('helvetica', 'bold')
           pdf.text(appt.status.toUpperCase(), xPos + cellPadding, y + rowHeight / 2 + 1.5)
           pdf.setFont('helvetica', 'normal')
           pdf.line(xPos, y, xPos, y + rowHeight)
           xPos += colWidths[4]
-          
+
           // Completed At column
           pdf.setFontSize(7)
           pdf.text(completedAtStr, xPos + cellPadding, y + rowHeight / 2 + 1.5)
           pdf.setFontSize(7.5)
           pdf.line(xPos, y, xPos, y + rowHeight)
           xPos += colWidths[5]
-          
+
           // Notes column
           const notes = appt.notes ? pdf.splitTextToSize(appt.notes, colWidths[6] - cellPadding * 2) : ['—']
           pdf.text(Array.isArray(notes) ? notes[0] : notes, xPos + cellPadding, y + rowHeight / 2 + 1.5)
           pdf.line(xPos, y, xPos, y + rowHeight)
-          
+
           // Bottom border
           pdf.line(margin, y + rowHeight, margin + tableWidth, y + rowHeight)
           y += rowHeight
         })
-        
+
         // Outer table border
         pdf.setDrawColor(180, 180, 180)
         pdf.setLineWidth(0.4)
         pdf.rect(margin, y - (patient.appointment_history.slice(0, 10).length * rowHeight) - rowHeight, tableWidth, (patient.appointment_history.slice(0, 10).length + 1) * rowHeight, 'S')
-        
+
         y += 3
         strong()
       }
@@ -1942,7 +1943,7 @@ export default function AdminDashboard() {
         bullets.push(...arr.map((g) => `Goal: ${g}`))
       }
       bullets.push(`Progress: ${patient.treatment_plan?.progress || 'Pending'}`)
-      pdf.setFillColor(13,92,117)
+      pdf.setFillColor(13, 92, 117)
       bullets.forEach((b) => {
         const wrapped = pdf.splitTextToSize(b, pageWidth - margin * 2 - 6)
         pdf.circle(margin + 1.8, y + 1.8, 0.8, 'F')
@@ -1994,7 +1995,7 @@ export default function AdminDashboard() {
       // Header with logo
       pdf.setFillColor(42, 157, 143)
       pdf.rect(0, 0, pageWidth, 28, 'F')
-      pdf.setFillColor(255,255,255)
+      pdf.setFillColor(255, 255, 255)
       pdf.circle(18, 14, 8, 'F')
       pdf.addImage(logo, 'PNG', 11, 7, 14, 14)
 
@@ -2008,10 +2009,10 @@ export default function AdminDashboard() {
 
       // Table header
       y = 34
-      pdf.setTextColor(255,255,255)
-      pdf.setFillColor(13,92,117)
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFillColor(13, 92, 117)
       const headerH = 8
-      pdf.roundedRect(margin, y-6, pageWidth - margin*2, headerH, 2, 2, 'F')
+      pdf.roundedRect(margin, y - 6, pageWidth - margin * 2, headerH, 2, 2, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(10)
       const cols = [
@@ -2024,7 +2025,7 @@ export default function AdminDashboard() {
         { k: 'Urgency', w: 22 },
       ]
       let x = margin
-      cols.forEach(c => { pdf.text(String(c.k), x + (c.k==='Name' || c.k==='Phone' ? 0 : c.w/2), y-1.5, { align: (c.k==='Name' || c.k==='Phone') ? 'left' : 'center' }); x += c.w })
+      cols.forEach(c => { pdf.text(String(c.k), x + (c.k === 'Name' || c.k === 'Phone' ? 0 : c.w / 2), y - 1.5, { align: (c.k === 'Name' || c.k === 'Phone') ? 'left' : 'center' }); x += c.w })
 
       // Rows
       y += 2
@@ -2032,15 +2033,15 @@ export default function AdminDashboard() {
       pdf.setTextColor(33, 37, 41)
       let idx = 1
       const timeFmt = (d: string) => new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      const badge = (text: string, x: number, cw: number, yTop: number, color: [number,number,number]) => {
+      const badge = (text: string, x: number, cw: number, yTop: number, color: [number, number, number]) => {
         const padX = 2.5
         const w = pdf.getTextWidth(text) + padX * 2
         const bx = x + (cw - w) / 2
         pdf.setFillColor(...color)
-        pdf.setTextColor(255,255,255)
+        pdf.setTextColor(255, 255, 255)
         pdf.roundedRect(bx, yTop - 4.2, Math.min(w, cw), 6.5, 2, 2, 'F')
-        pdf.text(text, x + cw/2, yTop, { align: 'center' })
-        pdf.setTextColor(33,37,41)
+        pdf.text(text, x + cw / 2, yTop, { align: 'center' })
+        pdf.setTextColor(33, 37, 41)
       }
 
       rows.forEach(r => {
@@ -2058,20 +2059,20 @@ export default function AdminDashboard() {
         const nameWrapped = pdf.splitTextToSize(values[1], cols[1].w)
         const rowHeight = Math.max(7, Array.isArray(nameWrapped) ? nameWrapped.length * 4.4 : 7)
         // zebra background
-        if ((idx - 1) % 2 === 0) { pdf.setFillColor(248, 250, 252); pdf.rect(margin-1, y-5.5, pageWidth - (margin*2) + 2, rowHeight + 3, 'F') }
+        if ((idx - 1) % 2 === 0) { pdf.setFillColor(248, 250, 252); pdf.rect(margin - 1, y - 5.5, pageWidth - (margin * 2) + 2, rowHeight + 3, 'F') }
 
         values.forEach((val, i) => {
           const cw = cols[i].w
           if (i === 1) {
             pdf.text(nameWrapped, x, y)
           } else if (i === 0 || i === 3) {
-            pdf.text(String(val), x + cw/2, y, { align: 'center' })
+            pdf.text(String(val), x + cw / 2, y, { align: 'center' })
           } else if (i === 5) {
-            const c = val === 'COMPLETED' ? [34,197,94] : val === 'CONFIRMED' ? [59,130,246] : val === 'CANCELLED' ? [239,68,68] : [234,179,8]
-            badge(String(val), x, cw, y, c as [number,number,number])
+            const c = val === 'COMPLETED' ? [34, 197, 94] : val === 'CONFIRMED' ? [59, 130, 246] : val === 'CANCELLED' ? [239, 68, 68] : [234, 179, 8]
+            badge(String(val), x, cw, y, c as [number, number, number])
           } else if (i === 6) {
-            const c = val === 'EMERGENCY' ? [220,38,38] : val === 'URGENT' ? [245,158,11] : [107,114,128]
-            badge(String(val), x, cw, y, c as [number,number,number])
+            const c = val === 'EMERGENCY' ? [220, 38, 38] : val === 'URGENT' ? [245, 158, 11] : [107, 114, 128]
+            badge(String(val), x, cw, y, c as [number, number, number])
           } else {
             pdf.text(String(val), x, y)
           }
@@ -2123,8 +2124,8 @@ export default function AdminDashboard() {
         ? 'cancelled'
         : (completed >= total ? 'completed' : (completed <= 0 ? 'pending' : 'confirmed'))
 
-      const payload = { 
-        ...editingPatient, 
+      const payload = {
+        ...editingPatient,
         status: derivedStatus,
         // Only reset session counters to 0/0 if patient never attended any session
         ...(derivedStatus === 'cancelled' && (completed || 0) <= 0
@@ -2135,7 +2136,7 @@ export default function AdminDashboard() {
       const before = patients.find(p => p.id === editingPatient.id)
       await updatePatient(editingPatient.id, payload)
       // Audit: update
-      try { await addAuditLog({ action: 'update', entity_type: 'patient', entity_id: editingPatient.id, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before, after: payload } }) } catch {}
+      try { await addAuditLog({ action: 'update', entity_type: 'patient', entity_id: editingPatient.id, actor_email: localStorage.getItem('admin_email') || undefined, source: 'admin_dashboard', reversible: true, meta: { before, after: payload } }) } catch { }
       await loadPatients()
       setIsEditPatientDialogOpen(false)
       setEditingPatient(null)
@@ -2164,19 +2165,19 @@ export default function AdminDashboard() {
     setSelectedDate(date)
     const appointmentsForDate = getAppointmentsForDate(date)
     setSelectedDateAppointments(appointmentsForDate)
-    
+
     // Apply filter to main patient list - use custom date filter
     setFilterStatus("custom_date")
     setFilterUrgency("all")
     setSearchTerm("")
-    
+
     const formattedDate = new Date(date).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     })
-    
+
     toast({
       title: "📅 Date Filter Applied",
       description: `Showing appointments for ${formattedDate} (${appointmentsForDate.length} found)`,
@@ -2192,7 +2193,7 @@ export default function AdminDashboard() {
     dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2)
     const nextWeek = new Date(today)
     nextWeek.setDate(nextWeek.getDate() + 7)
-    
+
     return [
       { label: "Today", date: today.toISOString().split('T')[0], count: getAppointmentsForDate(today.toISOString().split('T')[0]).length },
       { label: "Tomorrow", date: tomorrow.toISOString().split('T')[0], count: getAppointmentsForDate(tomorrow.toISOString().split('T')[0]).length },
@@ -2205,14 +2206,14 @@ export default function AdminDashboard() {
   const toggleActionsExpanded = (patientId: string) => {
     setExpandedActions(prev => {
       const newExpanded = new Set()
-      
+
       // If the clicked patient's menu is already open, close it
       // If it's closed, open only this one (auto-close all others)
       if (!prev.has(patientId)) {
         newExpanded.add(patientId)
       }
       // If patientId is already in prev, newExpanded remains empty (closes all)
-      
+
       return newExpanded
     })
   }
@@ -2222,10 +2223,10 @@ export default function AdminDashboard() {
     // First, prioritize ALL new appointments (those not viewed, regardless of booking source)
     const aIsNew = !viewedPatients.has(a.id)
     const bIsNew = !viewedPatients.has(b.id)
-    
+
     if (aIsNew && !bIsNew) return -1
     if (!aIsNew && bIsNew) return 1
-    
+
     // If both are new or both are viewed, sort by appointment date (newest first)
     return new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime()
   })
@@ -2241,7 +2242,7 @@ export default function AdminDashboard() {
     const apptHumanDate = !isNaN(appt.getTime()) ? appt.toDateString().toLowerCase() : '' // e.g., sat nov 08 2025
     const apptHumanDateShort = !isNaN(appt.getTime()) ? appt.toLocaleDateString().toLowerCase() : ''
     const apptHumanTime12 = !isNaN(appt.getTime()) ? appt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase() : ''
-    const apptHumanTime24 = !isNaN(appt.getTime()) ? `${String(appt.getHours()).padStart(2,'0')}:${String(appt.getMinutes()).padStart(2,'0')}` : ''
+    const apptHumanTime24 = !isNaN(appt.getTime()) ? `${String(appt.getHours()).padStart(2, '0')}:${String(appt.getMinutes()).padStart(2, '0')}` : ''
 
     const lastVisit = patient.last_visit ? new Date(patient.last_visit) : null
     const lastVisitISO = (patient.last_visit || '').toLowerCase()
@@ -2429,11 +2430,11 @@ export default function AdminDashboard() {
 
   const SortIndicator = ({ k }: { k: SortKey }) => {
     if (!sortConfig || sortConfig.key !== k) return <ChevronsUpDown className="ml-1 h-3.5 w-3.5 opacity-60" />
-    return sortConfig.direction === 'asc' 
-      ? <ChevronUp className="ml-1 h-3.5 w-3.5" /> 
+    return sortConfig.direction === 'asc'
+      ? <ChevronUp className="ml-1 h-3.5 w-3.5" />
       : <ChevronDown className="ml-1 h-3.5 w-3.5" />
   }
-  
+
   // Quick Win: Clear All Filters
   const clearAllFilters = () => {
     setSearchTerm("")
@@ -2446,31 +2447,31 @@ export default function AdminDashboard() {
       description: "All filters and search have been reset",
     })
   }
-  
+
   // Quick Win: Import from CSV
   const importFromCSV = () => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.csv'
     input.style.display = 'none'
-    
+
     input.onchange = async (e: Event) => {
       const target = e.target as HTMLInputElement
       const file = target.files?.[0]
       if (!file) return
-      
+
       try {
         const text = await file.text()
         const lines = text.split('\n').filter(line => line.trim())
-        
+
         if (lines.length < 2) {
           throw new Error('CSV file is empty or invalid')
         }
-        
+
         // Parse CSV (skip header row)
         const headers = lines[0].split(',').map(h => h.trim().replace(/\"/g, ''))
         const importedData = []
-        
+
         // Helpers to normalize values
         const normalizeStatus = (v: string | undefined) => {
           const val = (v || '').toLowerCase().trim()
@@ -2490,26 +2491,26 @@ export default function AdminDashboard() {
           if (["cash", "jazzcash", "easypaisa"].includes(val)) return val
           return "cash"
         }
-        
+
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',').map(v => v.trim().replace(/\"/g, ''))
           if (values.length < 3) continue // Skip invalid rows
-          
+
           // Columns (by current export format):
           // 0: Patient Code, 1: Name, 2: Phone, 3: Email, 4: Profession, 5: Appointment Date,
           // 6: Status, 7: Urgency, 8: Session Type, 9: Sessions Completed, 10: Total Sessions, 11: Payment Method (optional)
           const rawDate = values[5]
           const parsedDate = rawDate ? new Date(rawDate) : null
           const appointmentISO = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString()
-          
+
           const rawStatus = normalizeStatus(values[6]) as any
           const rawUrgency = normalizeUrgency(values[7]) as any
           const rawSessionType = (values[8] || '').toLowerCase().includes('video') ? 'video' : 'in_clinic'
           const rawPayment = normalizePayment(values[11])
-          
+
           const sessionsCompleted = Number.isFinite(parseInt(values[9])) ? parseInt(values[9]) : 0
           const totalSessions = Number.isFinite(parseInt(values[10])) ? parseInt(values[10]) : 3
-          
+
           const patientData: any = {
             name: values[1] || '',
             phone: values[2] || '',
@@ -2525,20 +2526,20 @@ export default function AdminDashboard() {
             booking_source: 'admin_dashboard',
             patient_code: values[0] || null,
           }
-          
+
           if (patientData.name && patientData.phone) {
             importedData.push(patientData)
           }
         }
-        
+
         if (importedData.length === 0) {
           throw new Error('No valid patient records found in CSV')
         }
-        
+
         // Import patients to database
         let successCount = 0
         let failCount = 0
-        
+
         for (const patientData of importedData) {
           try {
             await createPatient(patientData)
@@ -2548,10 +2549,10 @@ export default function AdminDashboard() {
             failCount++
           }
         }
-        
+
         // Refresh patient list
         await loadPatients()
-        
+
         toast({
           title: "📥 Import Complete",
           description: `Successfully imported ${successCount} patients. ${failCount > 0 ? `Failed: ${failCount}` : ''}`,
@@ -2567,11 +2568,11 @@ export default function AdminDashboard() {
         document.body.removeChild(input)
       }
     }
-    
+
     document.body.appendChild(input)
     input.click()
   }
-  
+
   // Quick Win: Export to CSV
   const exportToCSV = () => {
     try {
@@ -2589,12 +2590,12 @@ export default function AdminDashboard() {
         patient.sessions_completed || 0,
         patient.total_sessions || 3
       ])
-      
+
       const csvContent = [
         csvHeaders.join(','),
         ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
       ].join('\n')
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const link = document.createElement('a')
       const url = URL.createObjectURL(blob)
@@ -2604,7 +2605,7 @@ export default function AdminDashboard() {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      
+
       toast({
         title: "📊 Export Successful",
         description: `Exported ${userSortedPatients.length} patients to CSV`,
@@ -2618,7 +2619,7 @@ export default function AdminDashboard() {
       })
     }
   }
-  
+
   // Quick Win: Format relative time
   const getRelativeTime = (date: Date) => {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
@@ -2641,7 +2642,7 @@ export default function AdminDashboard() {
           <div className="absolute top-[60%] right-[15%] w-24 h-24 bg-gradient-to-r from-[rgb(227,252,236)]/20 to-[#0d5c75]/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
           <div className="absolute bottom-[20%] left-[20%] w-20 h-20 bg-gradient-to-r from-[#2a9d8f]/20 to-[rgb(227,252,236)]/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
         </div>
-        
+
         {/* Main Loading Card */}
         <div className="relative z-10 max-w-md w-full mx-4">
           <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-8 text-center">
@@ -2661,7 +2662,7 @@ export default function AdminDashboard() {
                   <div className="w-3 h-3 bg-white rounded-full"></div>
                 </div>
               </div>
-              
+
               {/* Clinic Information */}
               <h1 className="text-lg font-bold text-[#0d5c75] mb-2 font-poppins">Gonstead Chiropractic</h1>
               <p className="text-sm font-semibold text-[#2a9d8f] mb-1">Dr. Bashir Khan</p>
@@ -2669,7 +2670,7 @@ export default function AdminDashboard() {
               <p className={`text-xs text-[#0d5c75] mb-1`}>Excellence in Chiropractic Care</p>
               <p className={`text-xs text-[#0d5c75] font-semibold`}>+92 304 699 6267</p>
             </div>
-            
+
             {/* Loading Animation */}
             <div className="mb-6">
               <div className="w-16 h-16 mx-auto mb-4 relative">
@@ -2687,14 +2688,14 @@ export default function AdminDashboard() {
                   : "Preparing patient management system..."}
               </p>
             </div>
-            
+
             {/* Professional Badge */}
             <div className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-6 py-2 rounded-full text-xs font-bold shadow-lg">
               ADMIN PORTAL
             </div>
           </div>
         </div>
-        
+
         {/* Bottom Info */}
         <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 text-center">
           <div className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md">
@@ -2709,1626 +2710,1626 @@ export default function AdminDashboard() {
     <React.Fragment>
 
       <div className={`admin-compact min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-[rgb(220,230,229)]"}`}>
-      {/* Mobile-Responsive Professional Header */}
-      <header className="relative bg-white/20 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.10)] border-0 p-2 sm:p-3 overflow-hidden mt-1 mx-2 sm:mx-4 rounded-xl">
-        {/* Animated Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/10 to-[#2a9d8f]/5"></div>
-        
-        {/* Glass Effect Overlay */}
-        <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-        
-        {/* Content */}
-        <div className="relative z-10 container mx-auto">
-          {/* Mobile Layout - Stack on small screens */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-            
-            {/* Top Row: Logo and Title - Mobile Optimized */}
-            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-              {/* Enhanced Clinical Logo - Clickable for Sidebar */}
-              <div className="relative group cursor-pointer" onClick={() => setIsSidebarOpen(true)}>
-                <div className="w-12 h-12 sm:w-16 sm:h-16 relative transition-transform duration-300 hover:scale-110">
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/15 to-[#2a9d8f]/15 rounded-xl sm:rounded-2xl blur-xl group-hover:blur-lg transition-all duration-300"></div>
-                  {/* Enhanced Clinical Logo with Professional Frame */}
-                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border-2 border-white/30 shadow-2xl flex items-center justify-center">
-                    <Image
-                      src="/images/gonstead-chiropractic-logo-new.png"
-                      alt="Gonstead Chiropractic Clinical Logo"
-                      width={32}
-                      height={32}
-                      className="sm:w-11 sm:h-11 object-contain relative z-10 drop-shadow-2xl"
-                    />
-                    {/* Clinical Badge */}
-                    <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full flex items-center justify-center shadow-xl border-2 border-white">
-                      <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white rounded-full"></div>
+        {/* Mobile-Responsive Professional Header */}
+        <header className="relative bg-white/20 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.10)] border-0 p-2 sm:p-3 overflow-hidden mt-1 mx-2 sm:mx-4 rounded-xl">
+          {/* Animated Background Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/10 to-[#2a9d8f]/5"></div>
+
+          {/* Glass Effect Overlay */}
+          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+
+          {/* Content */}
+          <div className="relative z-10 container mx-auto">
+            {/* Mobile Layout - Stack on small screens */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+
+              {/* Top Row: Logo and Title - Mobile Optimized */}
+              <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                {/* Enhanced Clinical Logo - Clickable for Sidebar */}
+                <div className="relative group cursor-pointer" onClick={() => setIsSidebarOpen(true)}>
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 relative transition-transform duration-300 hover:scale-110">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/15 to-[#2a9d8f]/15 rounded-xl sm:rounded-2xl blur-xl group-hover:blur-lg transition-all duration-300"></div>
+                    {/* Enhanced Clinical Logo with Professional Frame */}
+                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border-2 border-white/30 shadow-2xl flex items-center justify-center">
+                      <Image
+                        src="/images/gonstead-chiropractic-logo-new.png"
+                        alt="Gonstead Chiropractic Clinical Logo"
+                        width={32}
+                        height={32}
+                        className="sm:w-11 sm:h-11 object-contain relative z-10 drop-shadow-2xl"
+                      />
+                      {/* Clinical Badge */}
+                      <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full flex items-center justify-center shadow-xl border-2 border-white">
+                        <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white rounded-full"></div>
+                      </div>
+                      {/* Professional Ring */}
+                      <div className="absolute inset-0 rounded-xl sm:rounded-2xl border border-[#0d5c75]/30"></div>
                     </div>
-                    {/* Professional Ring */}
-                    <div className="absolute inset-0 rounded-xl sm:rounded-2xl border border-[#0d5c75]/30"></div>
+                  </div>
+                  {/* Professional Clinical Badge */}
+                  <div className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 px-1.5 py-0.5 sm:px-2 sm:py-0.5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white text-[8px] sm:text-xs font-bold rounded-full shadow-lg border border-white/50">
+                    CLINIC
                   </div>
                 </div>
-                {/* Professional Clinical Badge */}
-                <div className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 px-1.5 py-0.5 sm:px-2 sm:py-0.5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white text-[8px] sm:text-xs font-bold rounded-full shadow-lg border border-white/50">
-                  CLINIC
-                </div>
-              </div>
-              
-              {/* Compact Title Section - Mobile Optimized */}
-              <div className="space-y-0.5 flex-1">
-                <h1 className={`text-base sm:text-xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm`}>
-                  Dr. Bashir Khan
-                </h1>
-                <p className={`text-sm sm:text-base font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm hidden xs:block`}>
-                  Gonstead Chiropractic Specialist
-                </p>
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full"></div>
-                  <p className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider`}>
-                    ADMIN PORTAL
+
+                {/* Compact Title Section - Mobile Optimized */}
+                <div className="space-y-0.5 flex-1">
+                  <h1 className={`text-base sm:text-xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm`}>
+                    Dr. Bashir Khan
+                  </h1>
+                  <p className={`text-sm sm:text-base font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm hidden xs:block`}>
+                    Gonstead Chiropractic Specialist
                   </p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full"></div>
+                    <p className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider`}>
+                      ADMIN PORTAL
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Bottom Row: Controls and Action Buttons - Mobile Responsive */}
-            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
-              {/* Combined Time and Weather Display - Mobile Optimized */}
-              <div className={`flex items-center gap-1 sm:gap-3 p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex-1 sm:flex-none min-w-0`}>
-                {/* Weather Section - Hidden on very small screens */}
-                <div className="hidden md:flex items-center gap-1 sm:gap-2 border-r border-white/20 pr-2 sm:pr-3">
-                  <Cloud className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
-                  <div>
-                    <div className={`text-xs sm:text-sm font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                      28°C
+              {/* Bottom Row: Controls and Action Buttons - Mobile Responsive */}
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                {/* Combined Time and Weather Display - Mobile Optimized */}
+                <div className={`flex items-center gap-1 sm:gap-3 p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex-1 sm:flex-none min-w-0`}>
+                  {/* Weather Section - Hidden on very small screens */}
+                  <div className="hidden md:flex items-center gap-1 sm:gap-2 border-r border-white/20 pr-2 sm:pr-3">
+                    <Cloud className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
+                    <div>
+                      <div className={`text-xs sm:text-sm font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+                        28°C
+                      </div>
+                      <div className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Nowshera</div>
                     </div>
-                    <div className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Nowshera</div>
                   </div>
-                </div>
-                
-                {/* Time Section - Always visible but compact on mobile */}
-                <div className="text-center flex-1 min-w-0">
-                  <div className="text-[10px] sm:text-sm font-bold font-mono tracking-wider truncate">
-                    {typeof window !== 'undefined' ? formatTime12Hour(currentTime) : '--:--:-- --'}
-                  </div>
-                  <div className="text-[8px] sm:text-xs opacity-80 font-medium truncate">
-                    {typeof window !== 'undefined' ? formatDate(currentTime).split(',')[0] : '-- --'}
-                  </div>
-                </div>
-              </div>
 
-              {/* Header Action Buttons - Mobile Responsive */}
-              <div className="flex items-center gap-1 sm:gap-2">
-                {/* Add Patient Button */}
-                <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      size="sm" 
-                      className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white px-1.5 sm:px-3 py-1 sm:py-1.5 h-auto text-[10px] sm:text-sm min-w-0 shrink-0"
-                    >
-                      <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                      <span className="hidden md:inline ml-1">Add</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="text-[#0d5c75] font-poppins flex items-center justify-between text-sm sm:text-base">
-                        <div className="flex items-center gap-2">
-                          <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
-                          Add New Patient {isAdvancedMode ? '(Advanced Booking)' : '(Quick Registration)'}
-                        </div>
-                        {/* Mode Toggle Switch */}
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs font-medium ${ !isAdvancedMode ? 'text-[#2a9d8f]' : 'text-gray-400'}`}>Basic</span>
-                          <Switch
-                            checked={isAdvancedMode}
-                            onCheckedChange={setIsAdvancedMode}
-                            className="data-[state=checked]:bg-[#8b5cf6]"
-                          />
-                          <span className={`text-xs font-medium ${isAdvancedMode ? 'text-[#8b5cf6]' : 'text-gray-400'}`}>Advanced</span>
-                        </div>
-                      </DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleAddPatient} className="space-y-3 sm:space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                          <Label htmlFor="name" className="text-sm">Full Name *</Label>
-                          <Input
-                            id="name"
-                            value={newPatient.name}
-                            onChange={(e) => setNewPatient((prev) => ({ ...prev, name: e.target.value }))}
-                            required
-                            className="text-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="phone" className="text-sm">Phone *</Label>
-                          <Input
-                            id="phone"
-                            value={newPatient.phone}
-                            onChange={(e) => setNewPatient((prev) => ({ ...prev, phone: e.target.value }))}
-                            required
-                            className="text-sm"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="email" className="text-sm">Email</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={newPatient.email}
-                          onChange={(e) => setNewPatient((prev) => ({ ...prev, email: e.target.value }))}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                          <Label htmlFor="session_type" className="text-sm">Session Type</Label>
-                          <Select
-                            value={newPatient.session_type}
-                            onValueChange={(value: "in_clinic" | "video") =>
-                              setNewPatient((prev) => ({ ...prev, session_type: value }))
-                            }
-                          >
-                            <SelectTrigger className="text-sm">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="in_clinic">In-Clinic</SelectItem>
-                              <SelectItem value="video">Video Consultation</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="urgency" className="text-sm">Urgency</Label>
-                          <Select
-                            value={newPatient.urgency}
-                            onValueChange={(value: "normal" | "urgent" | "emergency") =>
-                              setNewPatient((prev) => ({ ...prev, urgency: value }))
-                            }
-                          >
-                            <SelectTrigger className="text-sm">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="normal">Normal</SelectItem>
-                              <SelectItem value="urgent">Urgent</SelectItem>
-                              <SelectItem value="emergency">Emergency</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div>
-                        {isAdvancedMode ? (
-                          <div className="space-y-2">
-                            <Label htmlFor="appointment_date_date" className="text-sm">Appointment Date *</Label>
-                            <Input
-                              id="appointment_date_date"
-                              type="date"
-                              value={appointmentDate ? appointmentDate.toISOString().split('T')[0] : ''}
-                              onChange={(e) => {
-                                const d = e.target.value ? new Date(e.target.value) : undefined
-                                handleAppointmentDateSelection(d)
-                                setSelectedTimeSlot(null)
-                                setNewPatient((prev) => ({ ...prev, appointment_date: '' }))
-                              }}
-                              required
-                              className="text-sm"
-                            />
-                            {appointmentDate && appointmentDate.getDay() === 0 && (
-                              <p className="text-xs text-red-600">Clinic is closed on Sundays. Please choose another date.</p>
-                            )}
-                            {appointmentDate && (
-                              <div className="space-y-1">
-                                <Label className="text-xs">Available Time Slots</Label>
-                                {availableTimeSlots.length > 0 ? (
-                                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                    {availableTimeSlots.map((slot) => (
-                                      <Button
-                                        key={slot}
-                                        size="sm"
-                                        variant={selectedTimeSlot === slot ? "default" : "outline"}
-                                        onClick={() => {
-                                          if (!appointmentDate) return
-                                          const dt = combineDateAndSlot(appointmentDate, slot)
-                                          setSelectedTimeSlot(slot)
-                                          setNewPatient((prev) => ({ ...prev, appointment_date: dt }))
-                                        }}
-                                        className={selectedTimeSlot === slot ? "bg-[#2a9d8f] text-white" : "text-xs"}
-                                      >
-                                        {slot}
-                                      </Button>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-gray-500">No available slots for this date.</p>
-                                )}
-                              </div>
-                            )}
-                            {selectedTimeSlot && newPatient.appointment_date && (
-                              <p className="text-xs text-green-600">Selected: {new Date(newPatient.appointment_date).toLocaleDateString()} at {new Date(newPatient.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                            )}
+                  {/* Time Section - Always visible but compact on mobile */}
+                  <div className="text-center flex-1 min-w-0">
+                    <div className="text-[10px] sm:text-sm font-bold font-mono tracking-wider truncate">
+                      {typeof window !== 'undefined' ? formatTime12Hour(currentTime) : '--:--:-- --'}
+                    </div>
+                    <div className="text-[8px] sm:text-xs opacity-80 font-medium truncate">
+                      {typeof window !== 'undefined' ? formatDate(currentTime).split(',')[0] : '-- --'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Header Action Buttons - Mobile Responsive */}
+                <div className="flex items-center gap-1 sm:gap-2">
+                  {/* Add Patient Button */}
+                  <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white px-1.5 sm:px-3 py-1 sm:py-1.5 h-auto text-[10px] sm:text-sm min-w-0 shrink-0"
+                      >
+                        <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                        <span className="hidden md:inline ml-1">Add</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="text-[#0d5c75] font-poppins flex items-center justify-between text-sm sm:text-base">
+                          <div className="flex items-center gap-2">
+                            <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+                            Add New Patient {isAdvancedMode ? '(Advanced Booking)' : '(Quick Registration)'}
                           </div>
-                        ) : (
+                          {/* Mode Toggle Switch */}
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-medium ${!isAdvancedMode ? 'text-[#2a9d8f]' : 'text-gray-400'}`}>Basic</span>
+                            <Switch
+                              checked={isAdvancedMode}
+                              onCheckedChange={setIsAdvancedMode}
+                              className="data-[state=checked]:bg-[#8b5cf6]"
+                            />
+                            <span className={`text-xs font-medium ${isAdvancedMode ? 'text-[#8b5cf6]' : 'text-gray-400'}`}>Advanced</span>
+                          </div>
+                        </DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleAddPatient} className="space-y-3 sm:space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                           <div>
-                            <Label htmlFor="appointment_date" className="text-sm">Appointment Date & Time *</Label>
+                            <Label htmlFor="name" className="text-sm">Full Name *</Label>
                             <Input
-                              id="appointment_date"
-                              type="datetime-local"
-                              value={newPatient.appointment_date}
-                              onChange={(e) => setNewPatient((prev) => ({ ...prev, appointment_date: e.target.value }))}
+                              id="name"
+                              value={newPatient.name}
+                              onChange={(e) => setNewPatient((prev) => ({ ...prev, name: e.target.value }))}
                               required
                               className="text-sm"
                             />
                           </div>
-                        )}
-                      </div>
-                      <div>
-                        <Label htmlFor="notes" className="text-sm">Notes</Label>
-                        <Textarea
-                          id="notes"
-                          value={newPatient.notes}
-                          onChange={(e) => setNewPatient((prev) => ({ ...prev, notes: e.target.value }))}
-                          placeholder="Chief complaint, symptoms, etc."
-                          className="text-sm min-h-[80px]"
-                        />
-                      </div>
-                      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
-                        <Button type="button" variant="outline" onClick={() => setIsAddPatientDialogOpen(false)} className="text-sm">
-                          Cancel
-                        </Button>
-                        <Button type="submit" className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-sm">
-                          Add Patient
-                        </Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-
-                {/* Location Settings Button */}
-                <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
-                    >
-                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Location</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
-                        <MapPin className="h-5 w-5" />
-                        Clinic Location Settings
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="address">Clinic Address</Label>
-                        <Input
-                          id="address"
-                          value={clinicLocation.address}
-                          onChange={(e) => setClinicLocation((prev) => ({ ...prev, address: e.target.value }))}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="lat">Latitude</Label>
-                          <Input
-                            id="lat"
-                            type="number"
-                            step="any"
-                            value={clinicLocation.coordinates.lat}
-                            onChange={(e) =>
-                              setClinicLocation((prev) => ({
-                                ...prev,
-                                coordinates: { ...prev.coordinates, lat: Number.parseFloat(e.target.value) },
-                              }))
-                            }
-                          />
+                          <div>
+                            <Label htmlFor="phone" className="text-sm">Phone *</Label>
+                            <Input
+                              id="phone"
+                              value={newPatient.phone}
+                              onChange={(e) => setNewPatient((prev) => ({ ...prev, phone: e.target.value }))}
+                              required
+                              className="text-sm"
+                            />
+                          </div>
                         </div>
                         <div>
-                          <Label htmlFor="lng">Longitude</Label>
+                          <Label htmlFor="email" className="text-sm">Email</Label>
                           <Input
-                            id="lng"
-                            type="number"
-                            step="any"
-                            value={clinicLocation.coordinates.lng}
-                            onChange={(e) =>
-                              setClinicLocation((prev) => ({
-                                ...prev,
-                                coordinates: { ...prev.coordinates, lng: Number.parseFloat(e.target.value) },
-                              }))
-                            }
+                            id="email"
+                            type="email"
+                            value={newPatient.email}
+                            onChange={(e) => setNewPatient((prev) => ({ ...prev, email: e.target.value }))}
+                            className="text-sm"
                           />
                         </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="mapUrl">Google Maps URL</Label>
-                        <Input
-                          id="mapUrl"
-                          value={clinicLocation.mapUrl}
-                          onChange={(e) => setClinicLocation((prev) => ({ ...prev, mapUrl: e.target.value }))}
-                        />
-                      </div>
-                      <div className="flex justify-end gap-3">
-                        <Button type="button" variant="outline" onClick={() => setIsLocationDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            updateClinicLocation(clinicLocation)
-                            setIsLocationDialogOpen(false)
-                          }}
-                          className="bg-[#0d5c75] hover:bg-[#0a4a5c]"
-                        >
-                          Update Location
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                          <div>
+                            <Label htmlFor="session_type" className="text-sm">Session Type</Label>
+                            <Select
+                              value={newPatient.session_type}
+                              onValueChange={(value: "in_clinic" | "video") =>
+                                setNewPatient((prev) => ({ ...prev, session_type: value }))
+                              }
+                            >
+                              <SelectTrigger className="text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="in_clinic">In-Clinic</SelectItem>
+                                <SelectItem value="video">Video Consultation</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="urgency" className="text-sm">Urgency</Label>
+                            <Select
+                              value={newPatient.urgency}
+                              onValueChange={(value: "normal" | "urgent" | "emergency") =>
+                                setNewPatient((prev) => ({ ...prev, urgency: value }))
+                              }
+                            >
+                              <SelectTrigger className="text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="urgent">Urgent</SelectItem>
+                                <SelectItem value="emergency">Emergency</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div>
+                          {isAdvancedMode ? (
+                            <div className="space-y-2">
+                              <Label htmlFor="appointment_date_date" className="text-sm">Appointment Date *</Label>
+                              <Input
+                                id="appointment_date_date"
+                                type="date"
+                                value={appointmentDate ? appointmentDate.toISOString().split('T')[0] : ''}
+                                onChange={(e) => {
+                                  const d = e.target.value ? new Date(e.target.value) : undefined
+                                  handleAppointmentDateSelection(d)
+                                  setSelectedTimeSlot(null)
+                                  setNewPatient((prev) => ({ ...prev, appointment_date: '' }))
+                                }}
+                                required
+                                className="text-sm"
+                              />
+                              {appointmentDate && appointmentDate.getDay() === 0 && (
+                                <p className="text-xs text-red-600">Clinic is closed on Sundays. Please choose another date.</p>
+                              )}
+                              {appointmentDate && (
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Available Time Slots</Label>
+                                  {availableTimeSlots.length > 0 ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                      {availableTimeSlots.map((slot) => (
+                                        <Button
+                                          key={slot}
+                                          size="sm"
+                                          variant={selectedTimeSlot === slot ? "default" : "outline"}
+                                          onClick={() => {
+                                            if (!appointmentDate) return
+                                            const dt = combineDateAndSlot(appointmentDate, slot)
+                                            setSelectedTimeSlot(slot)
+                                            setNewPatient((prev) => ({ ...prev, appointment_date: dt }))
+                                          }}
+                                          className={selectedTimeSlot === slot ? "bg-[#2a9d8f] text-white" : "text-xs"}
+                                        >
+                                          {slot}
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-gray-500">No available slots for this date.</p>
+                                  )}
+                                </div>
+                              )}
+                              {selectedTimeSlot && newPatient.appointment_date && (
+                                <p className="text-xs text-green-600">Selected: {new Date(newPatient.appointment_date).toLocaleDateString()} at {new Date(newPatient.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <div>
+                              <Label htmlFor="appointment_date" className="text-sm">Appointment Date & Time *</Label>
+                              <Input
+                                id="appointment_date"
+                                type="datetime-local"
+                                value={newPatient.appointment_date}
+                                onChange={(e) => setNewPatient((prev) => ({ ...prev, appointment_date: e.target.value }))}
+                                required
+                                className="text-sm"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <Label htmlFor="notes" className="text-sm">Notes</Label>
+                          <Textarea
+                            id="notes"
+                            value={newPatient.notes}
+                            onChange={(e) => setNewPatient((prev) => ({ ...prev, notes: e.target.value }))}
+                            placeholder="Chief complaint, symptoms, etc."
+                            className="text-sm min-h-[80px]"
+                          />
+                        </div>
+                        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+                          <Button type="button" variant="outline" onClick={() => setIsAddPatientDialogOpen(false)} className="text-sm">
+                            Cancel
+                          </Button>
+                          <Button type="submit" className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-sm">
+                            Add Patient
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
 
-                {/* Exit/Logout Button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="border-red-500 text-red-600 hover:bg-red-50 px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
-                >
-                  <LogOut className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Exit</span>
-                </Button>
-              </div>
-              
-              {/* Compact Theme Toggle - Mobile Optimized */}
-              <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg">
-                <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-600" : "bg-[rgb(227,252,236)]"} transition-all duration-300`}>
-                  <Sun className={`h-3 w-3 sm:h-4 sm:w-4 ${isDarkMode ? "text-gray-400" : "text-green-500"}`} />
+                  {/* Location Settings Button */}
+                  <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
+                      >
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Location</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
+                          <MapPin className="h-5 w-5" />
+                          Clinic Location Settings
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="address">Clinic Address</Label>
+                          <Input
+                            id="address"
+                            value={clinicLocation.address}
+                            onChange={(e) => setClinicLocation((prev) => ({ ...prev, address: e.target.value }))}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="lat">Latitude</Label>
+                            <Input
+                              id="lat"
+                              type="number"
+                              step="any"
+                              value={clinicLocation.coordinates.lat}
+                              onChange={(e) =>
+                                setClinicLocation((prev) => ({
+                                  ...prev,
+                                  coordinates: { ...prev.coordinates, lat: Number.parseFloat(e.target.value) },
+                                }))
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="lng">Longitude</Label>
+                            <Input
+                              id="lng"
+                              type="number"
+                              step="any"
+                              value={clinicLocation.coordinates.lng}
+                              onChange={(e) =>
+                                setClinicLocation((prev) => ({
+                                  ...prev,
+                                  coordinates: { ...prev.coordinates, lng: Number.parseFloat(e.target.value) },
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="mapUrl">Google Maps URL</Label>
+                          <Input
+                            id="mapUrl"
+                            value={clinicLocation.mapUrl}
+                            onChange={(e) => setClinicLocation((prev) => ({ ...prev, mapUrl: e.target.value }))}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                          <Button type="button" variant="outline" onClick={() => setIsLocationDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              updateClinicLocation(clinicLocation)
+                              setIsLocationDialogOpen(false)
+                            }}
+                            className="bg-[#0d5c75] hover:bg-[#0a4a5c]"
+                          >
+                            Update Location
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Exit/Logout Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="border-red-500 text-red-600 hover:bg-red-50 px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
+                  >
+                    <LogOut className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Exit</span>
+                  </Button>
                 </div>
-                <Switch
-                  checked={isDarkMode}
-                  onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-                  className="data-[state=checked]:bg-gray-600 scale-75 sm:scale-100"
-                />
-                <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-blue-100" : "bg-gray-200"} transition-all duration-300`}>
-                  <Moon className={`h-3 w-3 sm:h-4 sm:w-4 ${isDarkMode ? "text-blue-400" : "text-gray-400"}`} />
+
+                {/* Compact Theme Toggle - Mobile Optimized */}
+                <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg">
+                  <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-600" : "bg-[rgb(227,252,236)]"} transition-all duration-300`}>
+                    <Sun className={`h-3 w-3 sm:h-4 sm:w-4 ${isDarkMode ? "text-gray-400" : "text-green-500"}`} />
+                  </div>
+                  <Switch
+                    checked={isDarkMode}
+                    onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                    className="data-[state=checked]:bg-gray-600 scale-75 sm:scale-100"
+                  />
+                  <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-blue-100" : "bg-gray-200"} transition-all duration-300`}>
+                    <Moon className={`h-3 w-3 sm:h-4 sm:w-4 ${isDarkMode ? "text-blue-400" : "text-gray-400"}`} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </header>
-      
-
-      <main className="container mx-auto px-4 py-8">
-        {/* Stats Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <Card
-            className={`border-[#0d5c75]/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-150"}`}
-            onClick={() => {
-              setFilterStatus("all")
-              setFilterUrgency("all")
-              setSearchTerm("")
-              toast({
-                title: "📊 Filter Applied",
-                description: "Showing all registered patients",
-              })
-            }}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                Total Patients
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setIsGrowthAnalyticsOpen(true)
-                  }}
-                  className={`${isDarkMode ? "hover:bg-gray-700" : "hover:bg-blue-100"} h-7 w-7 p-0 rounded-full`}
-                  title="View Patient Growth Analytics"
-                  aria-label="View Patient Growth Analytics"
-                >
-                  <Activity className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`} />
-                </Button>
-                <Users className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                {stats.totalPatients}
-              </div>
-              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-blue-600"} mt-1`}>
-                All registered patients • Click to view
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className={`border-green-400/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 relative ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150"}`}
-            onClick={() => {
-              setFilterStatus("today")
-              setFilterUrgency("all")
-              setSearchTerm("")
-              toast({
-                title: "📅 Today's Filter Applied",
-                description: "Showing today's appointments only",
-              })
-            }}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-green-600"}`}>
-                Today's Appointments
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Calendar className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-green-600"}`} />
-                {/* Date Picker Toggle Button */}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation() // Prevent card click
-                    setIsDatePickerOpen(!isDatePickerOpen)
-                  }}
-                  className={`h-6 w-6 p-0 rounded-full hover:bg-green-200/50 ${isDarkMode ? "hover:bg-gray-600" : ""}`}
-                  title="Select different date"
-                >
-                  <Timer className={`h-3 w-3 ${isDarkMode ? "text-white" : "text-green-600"}`} />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-green-600"}`}>
-                {stats.todayAppointments}
-              </div>
-              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-green-500"} mt-1`}>Scheduled for today • Click to view</p>
-            </CardContent>
-            
-            {/* Date Picker Section */}
-            {isDatePickerOpen && (
-              <div 
-                className={`absolute top-full left-0 right-0 z-50 mt-2 p-4 rounded-lg shadow-2xl border border-green-200 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white"}`}
-                onClick={(e) => e.stopPropagation()} // Prevent card click when interacting with date picker
-              >
-                <div className="space-y-3">
-                  {/* Header */}
-                  <div className="flex items-center justify-between">
-                    <h3 className={`font-semibold text-sm ${isDarkMode ? "text-white" : "text-gray-800"}`}>
-                      📅 Select Appointment Date
-                    </h3>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setIsDatePickerOpen(false)}
-                      className="h-6 w-6 p-0"
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                  
-                  {/* Date Input */}
-                  <div className="space-y-2">
-                    <Input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => handleDatePickerSelection(e.target.value)}
-                      className={`text-sm ${isDarkMode ? "bg-gray-700 border-gray-600 text-white" : ""}`}
-                    />
-                  </div>
-                  
-                  {/* Quick Date Options */}
-                  <div className="space-y-1">
-                    <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Quick Options:</p>
-                    <div className="grid grid-cols-2 gap-1">
-                      {getQuickDateOptions().map((option) => (
-                        <Button
-                          key={option.label}
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            handleDatePickerSelection(option.date)
-                            setIsDatePickerOpen(false)
-                          }}
-                          className={`text-xs h-8 ${isDarkMode ? "border-gray-600 text-gray-300 hover:bg-gray-700" : ""}`}
-                        >
-                          {option.label} ({option.count})
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Selected Date Info */}
-                  {selectedDate !== new Date().toISOString().split('T')[0] && (
-                    <div className={`p-2 rounded text-xs ${isDarkMode ? "bg-gray-700 text-gray-300" : "bg-green-50 text-green-800"}`}>
-                      <p className="font-medium">
-                        Selected: {new Date(selectedDate).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                      <p>Appointments found: {selectedDateAppointments.length}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </Card>
-
-          <Card
-            className={`border-orange-500/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-150"}`}
-            onClick={() => {
-              setFilterStatus("pending")
-              setFilterUrgency("all")
-              setSearchTerm("")
-              toast({
-                title: "⏳ Pending Filter Applied",
-                description: "Showing pending appointments only",
-              })
-            }}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-orange-600"}`}>
-                Pending
-              </CardTitle>
-              <Clock className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-orange-600"}`} />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-orange-600"}`}>
-                {stats.pendingAppointments}
-              </div>
-              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-orange-500"} mt-1`}>
-                Awaiting confirmation • Click to view
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className={`border-green-500/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150"}`}
-            onClick={() => {
-              setFilterStatus("completed_sessions")
-              setFilterUrgency("all")
-              setSearchTerm("")
-              toast({
-                title: "✅ Completed Sessions Filter Applied",
-                description: "Showing patients with completed sessions",
-              })
-            }}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-green-600"}`}>
-                Completed Sessions
-              </CardTitle>
-              <CheckCircle className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-green-600"}`} />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-green-600"}`}>
-                {stats.completedSessions}
-              </div>
-              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-green-500"} mt-1`}>Total treatments • Click to view</p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className={`border-red-500/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-red-50 to-red-100 hover:from-red-100 hover:to-red-150"}`}
-            onClick={() => {
-              setFilterStatus("all")
-              setFilterUrgency("emergency")
-              setSearchTerm("")
-              toast({
-                title: "🚨 Emergency Filter Applied",
-                description: "Showing emergency cases only",
-              })
-            }}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-red-600"}`}>
-                Emergency
-              </CardTitle>
-              <AlertTriangle className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-red-600"}`} />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-red-600"}`}>
-                {stats.emergencyPatients}
-              </div>
-              <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-red-500"} mt-1`}>Urgent cases • Click to view</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Patient Management */}
-        <Card className={`mt-8 border-[#0d5c75]/20 shadow-xl ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
-          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 font-poppins">
-                <FileText className="h-5 w-5" />
-                Patient Records Management
-              </CardTitle>
-              <div className="flex items-center gap-3">
-                {/* Quick Win: Patient Count */}
-                <div className="text-sm text-white/80">
-                  Showing <span className="font-bold text-white">{userSortedPatients.length}</span> of <span className="font-bold text-white">{patients.length}</span> patients
-                </div>
-                {/* Quick Win: Last Updated */}
-                <div className="text-xs text-white/60">
-                  Updated {getRelativeTime(lastUpdated)}
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col md:flex-row gap-4 mt-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70" />
-                <Input
-                  placeholder="Search by name, phone, email, patient code, notes, or date/time"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/70"
-                />
-              </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterUrgency} onValueChange={setFilterUrgency}>
-                <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Urgency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Urgency</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                  <SelectItem value="emergency">Emergency</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterTimePeriod} onValueChange={setFilterTimePeriod}>
-                <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Time Period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="year">This Year</SelectItem>
-                </SelectContent>
-              </Select>
-              {/* Quick Win: Clear All Filters Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearAllFilters}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                title="Clear all filters and search"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Clear Filters
-              </Button>
-              {/* Quick Win: Import from CSV Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={importFromCSV}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                title="Import patient data from CSV file"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Import CSV
-              </Button>
-              {/* Quick Win: Export to CSV Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportToCSV}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                title="Export current view to CSV"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {filteredPatients.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-600"} mb-2`}>
-                  No Patient Records Found
-                </h3>
-                <p className={`${isDarkMode ? "text-gray-300" : "text-gray-500"}`}>
-                  {patients.length === 0
-                    ? "Patient appointments will appear here when booked through the website."
-                    : "No patients match your current search criteria."}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className={`${isDarkMode ? "bg-gray-700" : "bg-[#F8F5F0]"}`}>
-                      <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:opacity-80">
-                          Patient Info <SortIndicator k="name" />
-                        </button>
-                      </TableHead>
-                      <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        <button onClick={() => toggleSort('phone')} className="flex items-center gap-1 hover:opacity-80">
-                          Contact <SortIndicator k="phone" />
-                        </button>
-                      </TableHead>
-                      <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        <button onClick={() => toggleSort('profession')} className="flex items-center gap-1 hover:opacity-80">
-                          Profession <SortIndicator k="profession" />
-                        </button>
-                      </TableHead>
-                      <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        <button onClick={() => toggleSort('appointment_date')} className="flex items-center gap-1 hover:opacity-80">
-                          Appointment <SortIndicator k="appointment_date" />
-                        </button>
-                      </TableHead>
-                      <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        <button onClick={() => toggleSort('status')} className="flex items-center gap-1 hover:opacity-80">
-                          Status <SortIndicator k="status" />
-                        </button>
-                      </TableHead>
-                      <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        <button onClick={() => toggleSort('urgency')} className="flex items-center gap-1 hover:opacity-80">
-                          Type & Urgency <SortIndicator k="urgency" />
-                        </button>
-                      </TableHead>
-                      <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        <button onClick={() => toggleSort('sessions')} className="flex items-center gap-1 hover:opacity-80">
-                          Sessions <SortIndicator k="sessions" />
-                        </button>
-                      </TableHead>
-                      <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {userSortedPatients.map((patient) => (
-                      <TableRow
-                        key={patient.id}
-                        className={`${isDarkMode ? "hover:bg-gray-700 border-gray-600" : "hover:bg-[#F8F5F0]/50"}`}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div>
-                              <div className={`font-semibold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex items-center gap-2`}>
-                                {patient.name}
-                                {!viewedPatients.has(patient.id) && (
-                                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New appointment - not yet viewed" />
-                                )}
-                              </div>
-                              <div className="relative group">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    const btn = e.currentTarget
-                                    const dropdown = btn.nextElementSibling as HTMLElement
-                                    if (dropdown) {
-                                      dropdown.classList.toggle('hidden')
-                                    }
-                                  }}
-                                  className={`text-sm ${isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-[#0d5c75]"} flex items-center gap-1 cursor-pointer transition-colors duration-200`}
-                                >
-                                  <span className="font-mono">Code: {getOrAssignPatientCode(patient)}</span>
-                                  <ChevronDown className="h-3 w-3" />
-                                </button>
-                                <div
-                                  className={`hidden absolute top-full left-0 mt-1 z-50 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} border rounded-lg shadow-xl p-3 min-w-[280px]`}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className={`text-xs font-semibold ${isDarkMode ? "text-gray-400" : "text-gray-500"} uppercase tracking-wide`}>Patient Code</span>
-                                    <button
-                                      onClick={(e) => {
-                                        const code = getOrAssignPatientCode(patient)
-                                        navigator.clipboard.writeText(code)
-                                        toast({
-                                          title: "✅ Copied!",
-                                          description: "Patient code copied to clipboard",
-                                        })
-                                      }}
-                                      className={`text-xs ${isDarkMode ? "text-blue-400 hover:text-blue-300" : "text-[#0d5c75] hover:text-[#0a4a5c]"} font-medium transition-colors`}
-                                    >
-                                      Copy
-                                    </button>
-                                  </div>
-                                  <div className={`${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-gradient-to-r from-[#0d5c75]/5 to-[#2a9d8f]/5 border-[#0d5c75]/20"} border-2 rounded-md p-2 mb-2`}>
-                                    <code className={`text-sm font-mono ${isDarkMode ? "text-white" : "text-[#0d5c75]"} break-all select-all`}>{getOrAssignPatientCode(patient)}</code>
-                                  </div>
-                                  <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} flex items-center gap-1`}>
-                                    <UserIcon className="h-3 w-3" />
-                                    <span>Click "Copy" to copy patient code</span>
-                                  </div>
-                                </div>
-                              </div>
-                              {patient.profession && (
-                                <div className={`text-xs ${isDarkMode ? "text-blue-300" : "text-blue-600"} bg-blue-50 px-2 py-1 rounded-full`}>
-                                  {patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <a
-                              href={`tel:${patient.phone}`}
-                              className={`flex items-center gap-1 ${isDarkMode ? "text-blue-400" : "text-[#0d5c75]"} hover:underline text-sm`}
-                            >
-                              <Phone className="h-3 w-3" />
-                              {patient.phone}
-                            </a>
-                            {patient.email && (
-                              <a
-                                href={`mailto:${patient.email}`}
-                                className={`flex items-center gap-1 ${isDarkMode ? "text-blue-400" : "text-[#0d5c75]"} hover:underline text-sm`}
-                              >
-                                <Mail className="h-3 w-3" />
-                                {patient.email}
-                              </a>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className={`font-medium text-sm ${isDarkMode ? "text-white" : "text-gray-900"}`}>
-                              {patient.profession ? patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Not specified"}
-                            </div>
-                            {patient.demographics?.occupation && (
-                              <div className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                {patient.demographics.occupation}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className={`font-medium text-sm ${isDarkMode ? "text-white" : "text-gray-900"}`}>
-                              {new Date(patient.appointment_date).toLocaleDateString()}
-                            </div>
-                            <div className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                              {new Date(patient.appointment_date).toLocaleTimeString()}
-                            </div>
-                            <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                              Payment: {(patient.payment_method || 'cash').toUpperCase()}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-2">
-                            {/* Current Status Badge - Always visible */}
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-600 font-medium">Status:</span>
-                              <Badge
-                                variant={
-                                  patient.status === "completed"
-                                    ? "default"
-                                    : patient.status === "confirmed"
-                                      ? "secondary"
-                                      : patient.status === "cancelled"
-                                        ? "destructive"
-                                        : "outline"
-                                }
-                                className="text-xs font-semibold"
-                              >
-                                {patient.status.toUpperCase()}
-                              </Badge>
-                            </div>
-                            
-                            {/* Cancel Appointment Button - Only show if not already cancelled */}
-                            {patient.status !== "cancelled" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setPatientToCancel(patient)
-                                  setIsCancelConfirmDialogOpen(true)
-                                }}
-                                className="h-7 text-xs border-red-500 text-red-600 hover:bg-red-50 w-full"
-                              >
-                                <X className="h-3 w-3 mr-1" />
-                                Cancel Appointment
-                              </Button>
-                            )}
-                            
-                            {/* Show restore option if cancelled */}
-                            {patient.status === "cancelled" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleUpdatePatientStatus(patient.id, "pending")}
-                                className="h-7 text-xs border-green-500 text-green-600 hover:bg-green-50 w-full"
-                              >
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Restore Appointment
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <Badge
-                              variant={patient.session_type === "in_clinic" ? "default" : "secondary"}
-                              className="text-xs"
-                            >
-                              {patient.session_type === "in_clinic" ? "Clinic" : "Video"}
-                            </Badge>
-                            <Badge
-                              variant={
-                                patient.urgency === "emergency"
-                                  ? "destructive"
-                                  : patient.urgency === "urgent"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                              className="text-xs ml-1"
-                            >
-                              {patient.urgency}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-2">
-                            {/* Session Progress Display */}
-                            <div className="text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                                  {patient.sessions_completed || 0}
-                                </div>
-                                <div className={`text-lg ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>/</div>
-                                <div className={`text-lg font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                  {patient.total_sessions ?? (patient.sessions_completed || 0)}
-                                </div>
-                              </div>
-                              <div className="text-xs text-gray-500 mt-1">sessions</div>
-                            </div>
-                            
-                            {/* Session Control Buttons */}
-                            <div className="flex items-center justify-center gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={async () => {
-                                  if (patient.status === "cancelled") {
-                                    toast({ title: "Cannot modify sessions", description: "This patient is cancelled. Un-cancel to adjust sessions." })
-                                    return
-                                  }
-                                  const total = patient.total_sessions || 8
-                                  const newCount = Math.max(0, (patient.sessions_completed || 0) - 1)
-                                  const newStatus: Patient["status"] = newCount >= total ? "completed" : (newCount <= 0 ? "pending" : "confirmed")
-                                  await updatePatient(patient.id, { sessions_completed: newCount, status: newStatus })
-                                  
-                                  // Also update localStorage if patient exists there
-                                  try {
-                                    const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-                                    const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
-                                    if (localIndex !== -1) {
-                                      localPatients[localIndex].sessions_completed = newCount
-                                      localPatients[localIndex].status = newStatus
-                                      localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
-                                    }
-                                  } catch (e) {
-                                    console.error("Error updating localStorage:", e)
-                                  }
-                                  
-                                  await loadPatients()
-                                  toast({
-                                    title: "Session Decreased",
-                                    description: `${patient.name}: ${newCount}/${total} sessions • Status: ${newStatus.toUpperCase()}`,
-                                  })
-                                }}
-                                className="h-6 w-6 p-0 border-red-500 text-red-600 hover:bg-red-50"
-                                title="Decrease completed sessions"
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={async () => {
-                                  if (patient.status === "cancelled") {
-                                    toast({ title: "Cannot modify sessions", description: "This patient is cancelled. Un-cancel to adjust sessions." })
-                                    return
-                                  }
-                                  const total = patient.total_sessions || 8
-                                  const prev = patient.sessions_completed || 0
-                                  const capped = Math.min(total, prev + 1)
-                                  if (capped === prev) {
-                                    toast({
-                                      title: "Max Sessions Reached",
-                                      description: `${patient.name} is already at ${prev}/${total} sessions`,
-                                    })
-                                    return
-                                  }
-                                  const lastVisit = new Date().toISOString()
-                                  const newStatus: Patient["status"] = capped >= total ? "completed" : (capped <= 0 ? "pending" : "confirmed")
-                                  
-                                  await updatePatient(patient.id, { 
-                                    sessions_completed: capped,
-                                    last_visit: lastVisit,
-                                    status: newStatus
-                                  })
-                                  
-                                  // Also update localStorage if patient exists there
-                                  try {
-                                    const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-                                    const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
-                                    if (localIndex !== -1) {
-                                      localPatients[localIndex].sessions_completed = capped
-                                      localPatients[localIndex].last_visit = lastVisit
-                                      localPatients[localIndex].status = newStatus
-                                      localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
-                                    }
-                                  } catch (e) {
-                                    console.error("Error updating localStorage:", e)
-                                  }
-                                  
-                                  await loadPatients()
-                                  toast({
-                                    title: "✅ Session Added",
-                                    description: `${patient.name}: ${capped}/${total} sessions • Status: ${newStatus.toUpperCase()}`,
-                                  })
-                                }}
-                                className="h-6 w-6 p-0 border-green-600 text-green-600 hover:bg-green-50"
-                                title="Increase completed sessions"
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-6 px-2 text-xs border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
-                                    title="Set total sessions"
-                                  >
-                                    Set Total
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-sm">
-                                  <DialogHeader>
-                                    <DialogTitle className="text-[#0d5c75]">Set Total Sessions</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-4">
-                                    <div>
-                                      <Label>Total Sessions for {patient.name}</Label>
-                                      <Input
-                                        type="number"
-                                        min="1"
-                                        max="100"
-                                        defaultValue={patient.total_sessions || 8}
-                                        onChange={(e) => {
-                                          const value = parseInt(e.target.value) || 8
-                                          e.target.setAttribute('data-value', value.toString())
-                                        }}
-                                        className="mt-2"
-                                      />
-                                    </div>
-                                    <Button
-                                      onClick={async (e) => {
-                                        const input = e.currentTarget.parentElement?.querySelector('input')
-                                        const newTotal = parseInt(input?.getAttribute('data-value') || input?.value || '8')
-                                        const currentCompleted = patient.sessions_completed || 0
-                                        const finalCompleted = Math.min(currentCompleted, newTotal)
-                                        const newStatus: Patient["status"] = finalCompleted >= newTotal ? "completed" : (finalCompleted <= 0 ? "pending" : "confirmed")
-                                        
-                                        await updatePatient(patient.id, { 
-                                          total_sessions: newTotal,
-                                          sessions_completed: finalCompleted,
-                                          status: newStatus
-                                        })
-                                        
-                                        // Also update localStorage if patient exists there
-                                        try {
-                                          const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-                                          const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
-                                          if (localIndex !== -1) {
-                                            localPatients[localIndex].total_sessions = newTotal
-                                            localPatients[localIndex].sessions_completed = finalCompleted
-                                            localPatients[localIndex].status = newStatus
-                                            localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
-                                          }
-                                        } catch (err) {
-                                          console.error("Error updating localStorage:", err)
-                                        }
-                                        
-                                        await loadPatients()
-                                        toast({
-                                          title: "Total Sessions Updated",
-                                          description: `${patient.name} now has ${newTotal} total sessions prescribed • Status: ${newStatus.toUpperCase()}`,
-                                        })
-                                        // Close dialog
-                                        const closeBtn = e.currentTarget.parentElement?.parentElement?.querySelector('[aria-label="Close"]') as HTMLElement
-                                        closeBtn?.click()
-                                      }}
-                                      className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c]"
-                                    >
-                                      Save Total Sessions
-                                    </Button>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                            </div>
-                            {patient.last_visit && (
-                              <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} text-center`}>
-                                Last: {new Date(patient.last_visit).toLocaleDateString()}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="relative">
-                            {/* Smart Parent Action Button */}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => toggleActionsExpanded(patient.id)}
-                              className={`${expandedActions.has(patient.id) 
-                                ? "bg-[#0d5c75] text-white border-[#0d5c75]" 
-                                : "border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
-                              } font-medium shadow-sm transition-all duration-200`}
-                              title={expandedActions.has(patient.id) ? "Hide actions" : "Show all actions"}
-                            >
-                              <MoreVertical className="h-3 w-3 mr-1" />
-                              Actions
-                              {expandedActions.has(patient.id) ? (
-                                <ChevronUp className="h-3 w-3 ml-1" />
-                              ) : (
-                                <ChevronDown className="h-3 w-3 ml-1" />
-                              )}
-                            </Button>
-
-                            {/* Collapsible Action Buttons */}
-{expandedActions.has(patient.id) && (
-                              <div className={`absolute top-full right-0 md:left-auto md:right-0 mt-2 z-50 w-[min(20rem,calc(100vw-2rem))] md:w-96 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-3 space-y-2 transition-all duration-300 ease-in-out`}>
-                                {/* Professional Action Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {/* View Details Button */}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      // Get fresh patient data
-                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                      setSelectedPatientDetail(currentPatientData)
-                                      
-                                      // Mark patient as viewed (keeps existing red-dot behavior)
-                                      setViewedPatients(prev => new Set([...prev, patient.id]))
-                                      
-                                      // Close the action menu after selection
-                                      setExpandedActions(new Set())
-                                      
-                                      // Smooth scroll to the detail section
-                                      setTimeout(() => {
-                                        detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                                      }, 0)
-                                    }}
-                                    className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white text-xs w-full"
-                                    title="View Full Patient Details"
-                                  >
-                                    <Eye className="h-3 w-3 mr-1" />
-                                    View
-                                  </Button>
-
-                                  {/* Real-time Smart Patient History Button */}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      // Get fresh patient data to ensure accuracy
-                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                      
-                                      // Show patient history
-                                      setSelectedPatientHistory(currentPatientData)
-                                      setIsPatientHistoryDialogOpen(true)
-                                      
-                                      // Close the action menu after selection
-                                      setExpandedActions(new Set())
-                                    }}
-                                    className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full"
-                                    title="View Complete Patient History & Sessions"
-                                  >
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    History
-                                  </Button>
-
-                                  {/* Medical Record Management Button */}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      // Get fresh patient data to ensure accuracy
-                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                      
-                                      // Check if medical record already exists
-                                      const medicalRecords = JSON.parse(localStorage.getItem("medical_records") || "[]")
-                                      let medicalRecord = medicalRecords.find((record: any) => 
-                                        record.patientName === currentPatientData.name && record.phone === currentPatientData.phone
-                                      )
-                                      
-                                      if (!medicalRecord) {
-                                        // Create a new medical record from current patient data
-                                        medicalRecord = {
-                                          id: `MR${String(medicalRecords.length + 1).padStart(3, '0')}`,
-                                          patientName: currentPatientData.name,
-                                          age: currentPatientData.demographics?.age || 0,
-                                          gender: currentPatientData.demographics?.gender || 'Not specified',
-                                          phone: currentPatientData.phone,
-                                          email: currentPatientData.email || 'Not provided',
-                                          lastVisit: currentPatientData.last_visit || new Date().toISOString().split('T')[0],
-                                          diagnosis: 'Initial consultation pending',
-                                          treatmentType: currentPatientData.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
-                                          status: currentPatientData.status === 'completed' ? 'Completed' : currentPatientData.status === 'pending' ? 'Ongoing' : 'Follow-up',
-                                          sessionsCompleted: currentPatientData.sessions_completed || 0,
-                                          totalSessions: 8,
-                                          nextAppointment: currentPatientData.appointment_date ? new Date(currentPatientData.appointment_date).toLocaleDateString() : 'To be scheduled',
-                                          chiefComplaint: currentPatientData.notes || 'General consultation',
-                                          medicalHistory: currentPatientData.medical_history || 'Medical history to be collected during consultation',
-                                          currentMedications: 'To be determined during consultation',
-                                          treatmentPlan: currentPatientData.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
-                                          progress: currentPatientData.treatment_plan?.progress || 'Initial assessment pending',
-                                          doctorNotes: currentPatientData.booking_source === 'admin_dashboard' 
-                                            ? 'Patient added via admin dashboard. Assessment in progress.'
-                                            : 'Patient booked online. Initial consultation scheduled.'
-                                        }
-                                        
-                                        // Add to medical records
-                                        medicalRecords.push(medicalRecord)
-                                        localStorage.setItem("medical_records", JSON.stringify(medicalRecords))
-                                        
-                                        toast({
-                                          title: "✅ Medical Record Created",
-                                          description: `Medical record for ${currentPatientData.name} has been created and you'll be redirected to edit it.`,
-                                        })
-                                      }
-                                      
-                                      // Store the medical record ID for the medical history page
-                                      localStorage.setItem('editMedicalRecordId', medicalRecord.id)
-                                      
-                                      // Close the action menu before navigation
-                                      setExpandedActions(new Set())
-                                      
-                                      // Redirect to medical history page
-                                      router.push('/medical-history')
-                                    }}
-                                    className="border-[#6366f1] text-[#6366f1] hover:bg-[#6366f1] hover:text-white text-xs w-full"
-                                    title="Create/Edit Medical Record"
-                                  >
-                                    <FileText className="h-3 w-3 mr-1" />
-                                    Medical
-                                  </Button>
-
-                                  {/* Prescription Button */}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      // Get fresh patient data and store for prescription page
-                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                      localStorage.setItem('prescriptionPatient', JSON.stringify(currentPatientData))
-                                      
-                                      // Close the action menu before navigation
-                                      setExpandedActions(new Set())
-                                      
-                                      // Navigate to prescription page
-                                      router.push('/admin/prescription')
-                                    }}
-                                    className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs w-full"
-                                    title="Generate Prescription"
-                                  >
-                                    <Prescription className="h-3 w-3 mr-1" />
-                                    Rx
-                                  </Button>
-
-                                  {/* Video Call Button - Now available for ALL patients */}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      startVideoCall(patient)
-                                      setExpandedActions(new Set())
-                                    }}
-                                    className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white text-xs w-full"
-                                    title="Start Video Call with Patient"
-                                  >
-                                    <Video className="h-3 w-3 mr-1" />
-                                    Video Call
-                                  </Button>
-
-                                  {/* Book Next Appointment Button */}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      // Get fresh patient data
-                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                      setPatientForNextAppointment(currentPatientData)
-                                      setIsBookNextAppointmentOpen(true)
-                                      setExpandedActions(new Set())
-                                    }}
-                                    className="border-[#10b981] text-[#10b981] hover:bg-[#10b981] hover:text-white text-xs w-full"
-                                    title="Book Next Appointment for Patient"
-                                  >
-                                    <Calendar className="h-3 w-3 mr-1" />
-                                    Next Appt
-                                  </Button>
-
-                                  {/* Money Management Button */}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      // Prepare patient data for money management
-                                      const patientData = {
-                                        patientName: patient.name,
-                                        phone: patient.phone,
-                                        email: patient.email || '',
-                                        sessionType: patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation',
-                                        amount: patient.session_type === 'in_clinic' ? 1500 : 1000, // Default amounts
-                                        paymentMethod: patient.payment_method || 'cash',
-                                        description: `Payment for ${patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation'} - ${new Date().toLocaleDateString()}`,
-                                        date: new Date().toISOString().split('T')[0],
-                                        patientId: patient.id
-                                      }
-                                      
-                                      // Add to money management records in localStorage
-                                      const existingRecords = JSON.parse(localStorage.getItem('payment_records') || '[]')
-                                      const newRecord = {
-                                        id: `PM${String(existingRecords.length + 1).padStart(3, '0')}`,
-                                        ...patientData,
-                                        createdAt: new Date().toISOString()
-                                      }
-                                      
-                                      existingRecords.push(newRecord)
-                                      localStorage.setItem('payment_records', JSON.stringify(existingRecords))
-                                      
-                                      toast({
-                                        title: "✅ Payment Record Added",
-                                        description: `Payment record for ${patient.name} has been added to money management. You can manually navigate to the money management page to view and edit it.`,
-                                      })
-                                    }}
-                                    className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs w-full"
-                                    title="Add Patient to Money Management"
-                                  >
-                                    <DollarSign className="h-3 w-3 mr-1" />
-                                    Payment
-                                  </Button>
-
-                                  {/* Spinal Health Assessment Report Button */}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => generateDetailedReport(patient)}
-                                    className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full"
-                                    title="Download professional one-page PDF report for this patient"
-                                  >
-                                    <Download className="h-3 w-3 mr-1" />
-                                    PDF Report
-                                  </Button>
+        </header>
 
 
-                                  {/* Edit Patient Button */}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      // Get fresh patient data and edit
-                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                      handleEditPatient(currentPatientData)
-                                      
-                                      // Close the action menu after selection
-                                      setExpandedActions(new Set())
-                                    }}
-                                    className="border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800] hover:text-white text-xs w-full"
-                                    title="Edit Patient"
-                                  >
-                                    <Edit3 className="h-3 w-3 mr-1" />
-                                    Edit
-                                  </Button>
-
-                                  {/* Delete Patient Button */}
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => {
-                                      // Close the action menu before deletion
-                                      setExpandedActions(new Set())
-                                      
-                                      // Delete patient
-                                      handleDeletePatient(patient.id)
-                                    }}
-                                    className="bg-red-600 hover:bg-red-700 text-xs w-full"
-                                    title="Delete Patient"
-                                  >
-                                    <Trash2 className="h-3 w-3 mr-1" />
-                                    Delete
-                                  </Button>
-                                </div>
-
-                                {/* Professional Footer */}
-                                <div className="border-t pt-2 mt-3">
-                                  <p className="text-xs text-gray-500 text-center font-medium">
-                                    {expandedActions.has(patient.id) ? "Patient Management Tools" : ""}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {selectedPatientDetail && (
-          <div ref={detailsRef} className="mt-6">
-            <Card className={`border-[#0d5c75]/20 shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white flex flex-row items-center justify-between">
-                <CardTitle className="font-poppins">Selected Patient Details</CardTitle>
+        <main className="container mx-auto px-4 py-8">
+          {/* Stats Dashboard */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <Card
+              className={`border-[#0d5c75]/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-150"}`}
+              onClick={() => {
+                setFilterStatus("all")
+                setFilterUrgency("all")
+                setSearchTerm("")
+                toast({
+                  title: "📊 Filter Applied",
+                  description: "Showing all registered patients",
+                })
+              }}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+                  Total Patients
+                </CardTitle>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-white/20 text-white">
-                    {selectedPatientDetail.session_type === 'in_clinic' ? 'Clinic' : 'Video'} • {selectedPatientDetail.urgency}
-                  </Badge>
-                  <Button size="sm" variant="outline" onClick={() => setSelectedPatientDetail(null)} className="border-white/40 text-white hover:bg-white/20">
-                    Hide Details
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsGrowthAnalyticsOpen(true)
+                    }}
+                    className={`${isDarkMode ? "hover:bg-gray-700" : "hover:bg-blue-100"} h-7 w-7 p-0 rounded-full`}
+                    title="View Patient Growth Analytics"
+                    aria-label="View Patient Growth Analytics"
+                  >
+                    <Activity className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`} />
+                  </Button>
+                  <Users className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+                  {stats.totalPatients}
+                </div>
+                <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-blue-600"} mt-1`}>
+                  All registered patients • Click to view
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className={`border-green-400/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 relative ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150"}`}
+              onClick={() => {
+                setFilterStatus("today")
+                setFilterUrgency("all")
+                setSearchTerm("")
+                toast({
+                  title: "📅 Today's Filter Applied",
+                  description: "Showing today's appointments only",
+                })
+              }}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-green-600"}`}>
+                  Today's Appointments
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Calendar className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-green-600"}`} />
+                  {/* Date Picker Toggle Button */}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation() // Prevent card click
+                      setIsDatePickerOpen(!isDatePickerOpen)
+                    }}
+                    className={`h-6 w-6 p-0 rounded-full hover:bg-green-200/50 ${isDarkMode ? "hover:bg-gray-600" : ""}`}
+                    title="Select different date"
+                  >
+                    <Timer className={`h-3 w-3 ${isDarkMode ? "text-white" : "text-green-600"}`} />
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Patient Info</h4>
-                    <p className="text-sm"><span className="font-medium">Name:</span> {selectedPatientDetail.name}</p>
-                    <p className="text-sm"><span className="font-medium">Phone:</span> {selectedPatientDetail.phone}</p>
-                    <p className="text-sm"><span className="font-medium">Email:</span> {selectedPatientDetail.email || 'Not provided'}</p>
-                    <p className="text-sm"><span className="font-medium">Patient Code:</span> <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">{getPatientCodeById(selectedPatientDetail.id)}</code></p>
-                    {selectedPatientDetail.profession && (
-                      <p className="text-sm"><span className="font-medium">Profession:</span> {selectedPatientDetail.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Appointment</h4>
-                    <p className="text-sm"><span className="font-medium">Date:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleDateString()}</p>
-                    <p className="text-sm"><span className="font-medium">Time:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleTimeString()}</p>
-                    <div className="text-sm flex items-center gap-2">
-                      <span className="font-medium">Status:</span>
-                      <Badge>{selectedPatientDetail.status}</Badge>
+              <CardContent>
+                <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-green-600"}`}>
+                  {stats.todayAppointments}
+                </div>
+                <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-green-500"} mt-1`}>Scheduled for today • Click to view</p>
+              </CardContent>
+
+              {/* Date Picker Section */}
+              {isDatePickerOpen && (
+                <div
+                  className={`absolute top-full left-0 right-0 z-50 mt-2 p-4 rounded-lg shadow-2xl border border-green-200 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white"}`}
+                  onClick={(e) => e.stopPropagation()} // Prevent card click when interacting with date picker
+                >
+                  <div className="space-y-3">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                      <h3 className={`font-semibold text-sm ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+                        📅 Select Appointment Date
+                      </h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setIsDatePickerOpen(false)}
+                        className="h-6 w-6 p-0"
+                      >
+                        ✕
+                      </Button>
                     </div>
-                    <p className="text-sm"><span className="font-medium">Payment:</span> {selectedPatientDetail.payment_method?.toUpperCase?.() || 'CASH'}</p>
-                    {selectedPatientDetail.last_visit && (
-                      <p className="text-sm"><span className="font-medium">Last Visit:</span> {new Date(selectedPatientDetail.last_visit).toLocaleDateString()}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Sessions</h4>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm">
-                        <span className="font-medium">Progress:</span> 
-                        <span className={`ml-2 text-xl font-bold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>
-                          {selectedPatientDetail.status === 'cancelled' ? 0 : (selectedPatientDetail.sessions_completed || 0)}
-                        </span>
-                        <span className="text-gray-500">/</span>
-                        <span className="text-lg font-semibold text-gray-600">
-                          {selectedPatientDetail.status === 'cancelled' ? 0 : (selectedPatientDetail.total_sessions || 8)}
-                        </span>
-                        <span className="ml-1 text-sm text-gray-500">sessions</span>
-                      </p>
+
+                    {/* Date Input */}
+                    <div className="space-y-2">
+                      <Input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => handleDatePickerSelection(e.target.value)}
+                        className={`text-sm ${isDarkMode ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+                      />
                     </div>
-                    <p className="text-sm"><span className="font-medium">Prescription Generated:</span> {selectedPatientDetail.prescription_generated ? `Yes (${selectedPatientDetail.prescription_count || 0})` : 'No'}</p>
-                    {selectedPatientDetail.treatment_plan?.progress && (
-                      <p className="text-sm"><span className="font-medium">Progress:</span> {selectedPatientDetail.treatment_plan.progress}</p>
+
+                    {/* Quick Date Options */}
+                    <div className="space-y-1">
+                      <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Quick Options:</p>
+                      <div className="grid grid-cols-2 gap-1">
+                        {getQuickDateOptions().map((option) => (
+                          <Button
+                            key={option.label}
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              handleDatePickerSelection(option.date)
+                              setIsDatePickerOpen(false)
+                            }}
+                            className={`text-xs h-8 ${isDarkMode ? "border-gray-600 text-gray-300 hover:bg-gray-700" : ""}`}
+                          >
+                            {option.label} ({option.count})
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Selected Date Info */}
+                    {selectedDate !== new Date().toISOString().split('T')[0] && (
+                      <div className={`p-2 rounded text-xs ${isDarkMode ? "bg-gray-700 text-gray-300" : "bg-green-50 text-green-800"}`}>
+                        <p className="font-medium">
+                          Selected: {new Date(selectedDate).toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                        <p>Appointments found: {selectedDateAppointments.length}</p>
+                      </div>
                     )}
                   </div>
                 </div>
-                
-                {/* Next Appointment Section - Professional Display */}
-                {selectedPatientDetail.next_appointment_date && (
-                  <div className="mt-6">
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 rounded-lg shadow-md">
-                      <div className="flex items-start gap-4">
-                        <div className="bg-green-500 rounded-full p-3 flex-shrink-0">
-                          <Calendar className="h-6 w-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-green-800 text-lg mb-3 flex items-center gap-2">
-                            📅 Next Appointment Scheduled
-                            <Badge className="bg-green-600 text-white text-xs">Confirmed</Badge>
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-green-600" />
-                                <div>
-                                  <p className="text-xs text-gray-600 font-medium">Date</p>
-                                  <p className="text-sm font-bold text-gray-900">
-                                    {new Date(selectedPatientDetail.next_appointment_date).toLocaleDateString('en-US', { 
-                                      weekday: 'long', 
-                                      year: 'numeric', 
-                                      month: 'long', 
-                                      day: 'numeric' 
-                                    })}
-                                  </p>
+              )}
+            </Card>
+
+            <Card
+              className={`border-orange-500/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-150"}`}
+              onClick={() => {
+                setFilterStatus("pending")
+                setFilterUrgency("all")
+                setSearchTerm("")
+                toast({
+                  title: "⏳ Pending Filter Applied",
+                  description: "Showing pending appointments only",
+                })
+              }}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-orange-600"}`}>
+                  Pending
+                </CardTitle>
+                <Clock className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-orange-600"}`} />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-orange-600"}`}>
+                  {stats.pendingAppointments}
+                </div>
+                <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-orange-500"} mt-1`}>
+                  Awaiting confirmation • Click to view
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className={`border-green-500/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150"}`}
+              onClick={() => {
+                setFilterStatus("completed_sessions")
+                setFilterUrgency("all")
+                setSearchTerm("")
+                toast({
+                  title: "✅ Completed Sessions Filter Applied",
+                  description: "Showing patients with completed sessions",
+                })
+              }}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-green-600"}`}>
+                  Completed Sessions
+                </CardTitle>
+                <CheckCircle className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-green-600"}`} />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-green-600"}`}>
+                  {stats.completedSessions}
+                </div>
+                <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-green-500"} mt-1`}>Total treatments • Click to view</p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className={`border-red-500/20 cursor-pointer hover:shadow-lg transition-shadow duration-300 ${isDarkMode ? "bg-gray-800 text-white hover:bg-gray-750" : "bg-gradient-to-br from-red-50 to-red-100 hover:from-red-100 hover:to-red-150"}`}
+              onClick={() => {
+                setFilterStatus("all")
+                setFilterUrgency("emergency")
+                setSearchTerm("")
+                toast({
+                  title: "🚨 Emergency Filter Applied",
+                  description: "Showing emergency cases only",
+                })
+              }}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className={`text-sm font-medium ${isDarkMode ? "text-white" : "text-red-600"}`}>
+                  Emergency
+                </CardTitle>
+                <AlertTriangle className={`h-4 w-4 ${isDarkMode ? "text-white" : "text-red-600"}`} />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-red-600"}`}>
+                  {stats.emergencyPatients}
+                </div>
+                <p className={`text-xs ${isDarkMode ? "text-gray-300" : "text-red-500"} mt-1`}>Urgent cases • Click to view</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Patient Management */}
+          <Card className={`mt-8 border-[#0d5c75]/20 shadow-xl ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
+            <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 font-poppins">
+                  <FileText className="h-5 w-5" />
+                  Patient Records Management
+                </CardTitle>
+                <div className="flex items-center gap-3">
+                  {/* Quick Win: Patient Count */}
+                  <div className="text-sm text-white/80">
+                    Showing <span className="font-bold text-white">{userSortedPatients.length}</span> of <span className="font-bold text-white">{patients.length}</span> patients
+                  </div>
+                  {/* Quick Win: Last Updated */}
+                  <div className="text-xs text-white/60">
+                    Updated {getRelativeTime(lastUpdated)}
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col md:flex-row gap-4 mt-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70" />
+                  <Input
+                    placeholder="Search by name, phone, email, patient code, notes, or date/time"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/70"
+                  />
+                </div>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterUrgency} onValueChange={setFilterUrgency}>
+                  <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Urgency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Urgency</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="emergency">Emergency</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterTimePeriod} onValueChange={setFilterTimePeriod}>
+                  <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Time Period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* Quick Win: Clear All Filters Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  title="Clear all filters and search"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear Filters
+                </Button>
+                {/* Quick Win: Import from CSV Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={importFromCSV}
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  title="Import patient data from CSV file"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import CSV
+                </Button>
+                {/* Quick Win: Export to CSV Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={exportToCSV}
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  title="Export current view to CSV"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {filteredPatients.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-600"} mb-2`}>
+                    No Patient Records Found
+                  </h3>
+                  <p className={`${isDarkMode ? "text-gray-300" : "text-gray-500"}`}>
+                    {patients.length === 0
+                      ? "Patient appointments will appear here when booked through the website."
+                      : "No patients match your current search criteria."}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className={`${isDarkMode ? "bg-gray-700" : "bg-[#F8F5F0]"}`}>
+                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                          <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:opacity-80">
+                            Patient Info <SortIndicator k="name" />
+                          </button>
+                        </TableHead>
+                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                          <button onClick={() => toggleSort('phone')} className="flex items-center gap-1 hover:opacity-80">
+                            Contact <SortIndicator k="phone" />
+                          </button>
+                        </TableHead>
+                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                          <button onClick={() => toggleSort('profession')} className="flex items-center gap-1 hover:opacity-80">
+                            Profession <SortIndicator k="profession" />
+                          </button>
+                        </TableHead>
+                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                          <button onClick={() => toggleSort('appointment_date')} className="flex items-center gap-1 hover:opacity-80">
+                            Appointment <SortIndicator k="appointment_date" />
+                          </button>
+                        </TableHead>
+                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                          <button onClick={() => toggleSort('status')} className="flex items-center gap-1 hover:opacity-80">
+                            Status <SortIndicator k="status" />
+                          </button>
+                        </TableHead>
+                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                          <button onClick={() => toggleSort('urgency')} className="flex items-center gap-1 hover:opacity-80">
+                            Type & Urgency <SortIndicator k="urgency" />
+                          </button>
+                        </TableHead>
+                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                          <button onClick={() => toggleSort('sessions')} className="flex items-center gap-1 hover:opacity-80">
+                            Sessions <SortIndicator k="sessions" />
+                          </button>
+                        </TableHead>
+                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                          Actions
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {userSortedPatients.map((patient) => (
+                        <TableRow
+                          key={patient.id}
+                          className={`${isDarkMode ? "hover:bg-gray-700 border-gray-600" : "hover:bg-[#F8F5F0]/50"}`}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <div className={`font-semibold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex items-center gap-2`}>
+                                  {patient.name}
+                                  {!viewedPatients.has(patient.id) && (
+                                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New appointment - not yet viewed" />
+                                  )}
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-green-600" />
-                                <div>
-                                  <p className="text-xs text-gray-600 font-medium">Time</p>
-                                  <p className="text-sm font-bold text-gray-900">
-                                    {new Date(selectedPatientDetail.next_appointment_date).toLocaleTimeString('en-US', { 
-                                      hour: '2-digit', 
-                                      minute: '2-digit',
-                                      hour12: true 
-                                    })}
-                                  </p>
+                                <div className="relative group">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      const btn = e.currentTarget
+                                      const dropdown = btn.nextElementSibling as HTMLElement
+                                      if (dropdown) {
+                                        dropdown.classList.toggle('hidden')
+                                      }
+                                    }}
+                                    className={`text-sm ${isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-[#0d5c75]"} flex items-center gap-1 cursor-pointer transition-colors duration-200`}
+                                  >
+                                    <span className="font-mono">Code: {getOrAssignPatientCode(patient)}</span>
+                                    <ChevronDown className="h-3 w-3" />
+                                  </button>
+                                  <div
+                                    className={`hidden absolute top-full left-0 mt-1 z-50 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} border rounded-lg shadow-xl p-3 min-w-[280px]`}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className={`text-xs font-semibold ${isDarkMode ? "text-gray-400" : "text-gray-500"} uppercase tracking-wide`}>Patient Code</span>
+                                      <button
+                                        onClick={(e) => {
+                                          const code = getOrAssignPatientCode(patient)
+                                          navigator.clipboard.writeText(code)
+                                          toast({
+                                            title: "✅ Copied!",
+                                            description: "Patient code copied to clipboard",
+                                          })
+                                        }}
+                                        className={`text-xs ${isDarkMode ? "text-blue-400 hover:text-blue-300" : "text-[#0d5c75] hover:text-[#0a4a5c]"} font-medium transition-colors`}
+                                      >
+                                        Copy
+                                      </button>
+                                    </div>
+                                    <div className={`${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-gradient-to-r from-[#0d5c75]/5 to-[#2a9d8f]/5 border-[#0d5c75]/20"} border-2 rounded-md p-2 mb-2`}>
+                                      <code className={`text-sm font-mono ${isDarkMode ? "text-white" : "text-[#0d5c75]"} break-all select-all`}>{getOrAssignPatientCode(patient)}</code>
+                                    </div>
+                                    <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} flex items-center gap-1`}>
+                                      <UserIcon className="h-3 w-3" />
+                                      <span>Click "Copy" to copy patient code</span>
+                                    </div>
+                                  </div>
                                 </div>
+                                {patient.profession && (
+                                  <div className={`text-xs ${isDarkMode ? "text-blue-300" : "text-blue-600"} bg-blue-50 px-2 py-1 rounded-full`}>
+                                    {patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </div>
+                                )}
                               </div>
                             </div>
-                            <div className="space-y-2">
-                              <div>
-                                <p className="text-xs text-gray-600 font-medium mb-1">Appointment Notes</p>
-                                <p className="text-sm text-gray-800 bg-white/60 p-2 rounded border border-green-200">
-                                  {selectedPatientDetail.next_appointment_notes || 'Follow-up appointment'}
-                                </p>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <a
+                                href={`tel:${patient.phone}`}
+                                className={`flex items-center gap-1 ${isDarkMode ? "text-blue-400" : "text-[#0d5c75]"} hover:underline text-sm`}
+                              >
+                                <Phone className="h-3 w-3" />
+                                {patient.phone}
+                              </a>
+                              {patient.email && (
+                                <a
+                                  href={`mailto:${patient.email}`}
+                                  className={`flex items-center gap-1 ${isDarkMode ? "text-blue-400" : "text-[#0d5c75]"} hover:underline text-sm`}
+                                >
+                                  <Mail className="h-3 w-3" />
+                                  {patient.email}
+                                </a>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className={`font-medium text-sm ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                                {patient.profession ? patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Not specified"}
                               </div>
-                              {selectedPatientDetail.next_appointment_booked_at && (
-                                <div className="text-xs text-gray-500">
-                                  Booked on: {new Date(selectedPatientDetail.next_appointment_booked_at).toLocaleDateString()}
+                              {patient.demographics?.occupation && (
+                                <div className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                  {patient.demographics.occupation}
                                 </div>
                               )}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className={`font-medium text-sm ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                                {new Date(patient.appointment_date).toLocaleDateString()}
+                              </div>
+                              <div className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                {new Date(patient.appointment_date).toLocaleTimeString()}
+                              </div>
+                              <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                Payment: {(patient.payment_method || 'cash').toUpperCase()}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-2">
+                              {/* Current Status Badge - Always visible */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-600 font-medium">Status:</span>
+                                <Badge
+                                  variant={
+                                    patient.status === "completed"
+                                      ? "default"
+                                      : patient.status === "confirmed"
+                                        ? "secondary"
+                                        : patient.status === "cancelled"
+                                          ? "destructive"
+                                          : "outline"
+                                  }
+                                  className="text-xs font-semibold"
+                                >
+                                  {patient.status.toUpperCase()}
+                                </Badge>
+                              </div>
+
+                              {/* Cancel Appointment Button - Only show if not already cancelled */}
+                              {patient.status !== "cancelled" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setPatientToCancel(patient)
+                                    setIsCancelConfirmDialogOpen(true)
+                                  }}
+                                  className="h-7 text-xs border-red-500 text-red-600 hover:bg-red-50 w-full"
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Cancel Appointment
+                                </Button>
+                              )}
+
+                              {/* Show restore option if cancelled */}
+                              {patient.status === "cancelled" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUpdatePatientStatus(patient.id, "pending")}
+                                  className="h-7 text-xs border-green-500 text-green-600 hover:bg-green-50 w-full"
+                                >
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Restore Appointment
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <Badge
+                                variant={patient.session_type === "in_clinic" ? "default" : "secondary"}
+                                className="text-xs"
+                              >
+                                {patient.session_type === "in_clinic" ? "Clinic" : "Video"}
+                              </Badge>
+                              <Badge
+                                variant={
+                                  patient.urgency === "emergency"
+                                    ? "destructive"
+                                    : patient.urgency === "urgent"
+                                      ? "secondary"
+                                      : "outline"
+                                }
+                                className="text-xs ml-1"
+                              >
+                                {patient.urgency}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-2">
+                              {/* Session Progress Display */}
+                              <div className="text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                  <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+                                    {patient.sessions_completed || 0}
+                                  </div>
+                                  <div className={`text-lg ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>/</div>
+                                  <div className={`text-lg font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                    {patient.total_sessions ?? (patient.sessions_completed || 0)}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">sessions</div>
+                              </div>
+
+                              {/* Session Control Buttons */}
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    if (patient.status === "cancelled") {
+                                      toast({ title: "Cannot modify sessions", description: "This patient is cancelled. Un-cancel to adjust sessions." })
+                                      return
+                                    }
+                                    const total = patient.total_sessions || 8
+                                    const newCount = Math.max(0, (patient.sessions_completed || 0) - 1)
+                                    const newStatus: Patient["status"] = newCount >= total ? "completed" : (newCount <= 0 ? "pending" : "confirmed")
+                                    await updatePatient(patient.id, { sessions_completed: newCount, status: newStatus })
+
+                                    // Also update localStorage if patient exists there
+                                    try {
+                                      const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+                                      const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
+                                      if (localIndex !== -1) {
+                                        localPatients[localIndex].sessions_completed = newCount
+                                        localPatients[localIndex].status = newStatus
+                                        localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
+                                      }
+                                    } catch (e) {
+                                      console.error("Error updating localStorage:", e)
+                                    }
+
+                                    await loadPatients()
+                                    toast({
+                                      title: "Session Decreased",
+                                      description: `${patient.name}: ${newCount}/${total} sessions • Status: ${newStatus.toUpperCase()}`,
+                                    })
+                                  }}
+                                  className="h-6 w-6 p-0 border-red-500 text-red-600 hover:bg-red-50"
+                                  title="Decrease completed sessions"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    if (patient.status === "cancelled") {
+                                      toast({ title: "Cannot modify sessions", description: "This patient is cancelled. Un-cancel to adjust sessions." })
+                                      return
+                                    }
+                                    const total = patient.total_sessions || 8
+                                    const prev = patient.sessions_completed || 0
+                                    const capped = Math.min(total, prev + 1)
+                                    if (capped === prev) {
+                                      toast({
+                                        title: "Max Sessions Reached",
+                                        description: `${patient.name} is already at ${prev}/${total} sessions`,
+                                      })
+                                      return
+                                    }
+                                    const lastVisit = new Date().toISOString()
+                                    const newStatus: Patient["status"] = capped >= total ? "completed" : (capped <= 0 ? "pending" : "confirmed")
+
+                                    await updatePatient(patient.id, {
+                                      sessions_completed: capped,
+                                      last_visit: lastVisit,
+                                      status: newStatus
+                                    })
+
+                                    // Also update localStorage if patient exists there
+                                    try {
+                                      const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+                                      const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
+                                      if (localIndex !== -1) {
+                                        localPatients[localIndex].sessions_completed = capped
+                                        localPatients[localIndex].last_visit = lastVisit
+                                        localPatients[localIndex].status = newStatus
+                                        localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
+                                      }
+                                    } catch (e) {
+                                      console.error("Error updating localStorage:", e)
+                                    }
+
+                                    await loadPatients()
+                                    toast({
+                                      title: "✅ Session Added",
+                                      description: `${patient.name}: ${capped}/${total} sessions • Status: ${newStatus.toUpperCase()}`,
+                                    })
+                                  }}
+                                  className="h-6 w-6 p-0 border-green-600 text-green-600 hover:bg-green-50"
+                                  title="Increase completed sessions"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-6 px-2 text-xs border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+                                      title="Set total sessions"
+                                    >
+                                      Set Total
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-sm">
+                                    <DialogHeader>
+                                      <DialogTitle className="text-[#0d5c75]">Set Total Sessions</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div>
+                                        <Label>Total Sessions for {patient.name}</Label>
+                                        <Input
+                                          type="number"
+                                          min="1"
+                                          max="100"
+                                          defaultValue={patient.total_sessions || 8}
+                                          onChange={(e) => {
+                                            const value = parseInt(e.target.value) || 8
+                                            e.target.setAttribute('data-value', value.toString())
+                                          }}
+                                          className="mt-2"
+                                        />
+                                      </div>
+                                      <Button
+                                        onClick={async (e) => {
+                                          const input = e.currentTarget.parentElement?.querySelector('input')
+                                          const newTotal = parseInt(input?.getAttribute('data-value') || input?.value || '8')
+                                          const currentCompleted = patient.sessions_completed || 0
+                                          const finalCompleted = Math.min(currentCompleted, newTotal)
+                                          const newStatus: Patient["status"] = finalCompleted >= newTotal ? "completed" : (finalCompleted <= 0 ? "pending" : "confirmed")
+
+                                          await updatePatient(patient.id, {
+                                            total_sessions: newTotal,
+                                            sessions_completed: finalCompleted,
+                                            status: newStatus
+                                          })
+
+                                          // Also update localStorage if patient exists there
+                                          try {
+                                            const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+                                            const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
+                                            if (localIndex !== -1) {
+                                              localPatients[localIndex].total_sessions = newTotal
+                                              localPatients[localIndex].sessions_completed = finalCompleted
+                                              localPatients[localIndex].status = newStatus
+                                              localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
+                                            }
+                                          } catch (err) {
+                                            console.error("Error updating localStorage:", err)
+                                          }
+
+                                          await loadPatients()
+                                          toast({
+                                            title: "Total Sessions Updated",
+                                            description: `${patient.name} now has ${newTotal} total sessions prescribed • Status: ${newStatus.toUpperCase()}`,
+                                          })
+                                          // Close dialog
+                                          const closeBtn = e.currentTarget.parentElement?.parentElement?.querySelector('[aria-label="Close"]') as HTMLElement
+                                          closeBtn?.click()
+                                        }}
+                                        className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c]"
+                                      >
+                                        Save Total Sessions
+                                      </Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              </div>
+                              {patient.last_visit && (
+                                <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} text-center`}>
+                                  Last: {new Date(patient.last_visit).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="relative">
+                              {/* Smart Parent Action Button */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => toggleActionsExpanded(patient.id)}
+                                className={`${expandedActions.has(patient.id)
+                                  ? "bg-[#0d5c75] text-white border-[#0d5c75]"
+                                  : "border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+                                  } font-medium shadow-sm transition-all duration-200`}
+                                title={expandedActions.has(patient.id) ? "Hide actions" : "Show all actions"}
+                              >
+                                <MoreVertical className="h-3 w-3 mr-1" />
+                                Actions
+                                {expandedActions.has(patient.id) ? (
+                                  <ChevronUp className="h-3 w-3 ml-1" />
+                                ) : (
+                                  <ChevronDown className="h-3 w-3 ml-1" />
+                                )}
+                              </Button>
+
+                              {/* Collapsible Action Buttons */}
+                              {expandedActions.has(patient.id) && (
+                                <div className={`absolute top-full right-0 md:left-auto md:right-0 mt-2 z-50 w-[min(20rem,calc(100vw-2rem))] md:w-96 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-3 space-y-2 transition-all duration-300 ease-in-out`}>
+                                  {/* Professional Action Grid */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {/* View Details Button */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        // Get fresh patient data
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                        setSelectedPatientDetail(currentPatientData)
+
+                                        // Mark patient as viewed (keeps existing red-dot behavior)
+                                        setViewedPatients(prev => new Set([...prev, patient.id]))
+
+                                        // Close the action menu after selection
+                                        setExpandedActions(new Set())
+
+                                        // Smooth scroll to the detail section
+                                        setTimeout(() => {
+                                          detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                                        }, 0)
+                                      }}
+                                      className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white text-xs w-full"
+                                      title="View Full Patient Details"
+                                    >
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      View
+                                    </Button>
+
+                                    {/* Real-time Smart Patient History Button */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        // Get fresh patient data to ensure accuracy
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
+
+                                        // Show patient history
+                                        setSelectedPatientHistory(currentPatientData)
+                                        setIsPatientHistoryDialogOpen(true)
+
+                                        // Close the action menu after selection
+                                        setExpandedActions(new Set())
+                                      }}
+                                      className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full"
+                                      title="View Complete Patient History & Sessions"
+                                    >
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      History
+                                    </Button>
+
+                                    {/* Medical Record Management Button */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        // Get fresh patient data to ensure accuracy
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
+
+                                        // Check if medical record already exists
+                                        const medicalRecords = JSON.parse(localStorage.getItem("medical_records") || "[]")
+                                        let medicalRecord = medicalRecords.find((record: any) =>
+                                          record.patientName === currentPatientData.name && record.phone === currentPatientData.phone
+                                        )
+
+                                        if (!medicalRecord) {
+                                          // Create a new medical record from current patient data
+                                          medicalRecord = {
+                                            id: `MR${String(medicalRecords.length + 1).padStart(3, '0')}`,
+                                            patientName: currentPatientData.name,
+                                            age: currentPatientData.demographics?.age || 0,
+                                            gender: currentPatientData.demographics?.gender || 'Not specified',
+                                            phone: currentPatientData.phone,
+                                            email: currentPatientData.email || 'Not provided',
+                                            lastVisit: currentPatientData.last_visit || new Date().toISOString().split('T')[0],
+                                            diagnosis: 'Initial consultation pending',
+                                            treatmentType: currentPatientData.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
+                                            status: currentPatientData.status === 'completed' ? 'Completed' : currentPatientData.status === 'pending' ? 'Ongoing' : 'Follow-up',
+                                            sessionsCompleted: currentPatientData.sessions_completed || 0,
+                                            totalSessions: 8,
+                                            nextAppointment: currentPatientData.appointment_date ? new Date(currentPatientData.appointment_date).toLocaleDateString() : 'To be scheduled',
+                                            chiefComplaint: currentPatientData.notes || 'General consultation',
+                                            medicalHistory: currentPatientData.medical_history || 'Medical history to be collected during consultation',
+                                            currentMedications: 'To be determined during consultation',
+                                            treatmentPlan: currentPatientData.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
+                                            progress: currentPatientData.treatment_plan?.progress || 'Initial assessment pending',
+                                            doctorNotes: currentPatientData.booking_source === 'admin_dashboard'
+                                              ? 'Patient added via admin dashboard. Assessment in progress.'
+                                              : 'Patient booked online. Initial consultation scheduled.'
+                                          }
+
+                                          // Add to medical records
+                                          medicalRecords.push(medicalRecord)
+                                          localStorage.setItem("medical_records", JSON.stringify(medicalRecords))
+
+                                          toast({
+                                            title: "✅ Medical Record Created",
+                                            description: `Medical record for ${currentPatientData.name} has been created and you'll be redirected to edit it.`,
+                                          })
+                                        }
+
+                                        // Store the medical record ID for the medical history page
+                                        localStorage.setItem('editMedicalRecordId', medicalRecord.id)
+
+                                        // Close the action menu before navigation
+                                        setExpandedActions(new Set())
+
+                                        // Redirect to medical history page
+                                        router.push('/medical-history')
+                                      }}
+                                      className="border-[#6366f1] text-[#6366f1] hover:bg-[#6366f1] hover:text-white text-xs w-full"
+                                      title="Create/Edit Medical Record"
+                                    >
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      Medical
+                                    </Button>
+
+                                    {/* Prescription Button */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        // Get fresh patient data and store for prescription page
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                        localStorage.setItem('prescriptionPatient', JSON.stringify(currentPatientData))
+
+                                        // Close the action menu before navigation
+                                        setExpandedActions(new Set())
+
+                                        // Navigate to prescription page
+                                        router.push('/admin/prescription')
+                                      }}
+                                      className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs w-full"
+                                      title="Generate Prescription"
+                                    >
+                                      <Prescription className="h-3 w-3 mr-1" />
+                                      Rx
+                                    </Button>
+
+                                    {/* Video Call Button - Now available for ALL patients */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        startVideoCall(patient)
+                                        setExpandedActions(new Set())
+                                      }}
+                                      className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white text-xs w-full"
+                                      title="Start Video Call with Patient"
+                                    >
+                                      <Video className="h-3 w-3 mr-1" />
+                                      Video Call
+                                    </Button>
+
+                                    {/* Book Next Appointment Button */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        // Get fresh patient data
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                        setPatientForNextAppointment(currentPatientData)
+                                        setIsBookNextAppointmentOpen(true)
+                                        setExpandedActions(new Set())
+                                      }}
+                                      className="border-[#10b981] text-[#10b981] hover:bg-[#10b981] hover:text-white text-xs w-full"
+                                      title="Book Next Appointment for Patient"
+                                    >
+                                      <Calendar className="h-3 w-3 mr-1" />
+                                      Next Appt
+                                    </Button>
+
+                                    {/* Money Management Button */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        // Prepare patient data for money management
+                                        const patientData = {
+                                          patientName: patient.name,
+                                          phone: patient.phone,
+                                          email: patient.email || '',
+                                          sessionType: patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation',
+                                          amount: patient.session_type === 'in_clinic' ? 1500 : 1000, // Default amounts
+                                          paymentMethod: patient.payment_method || 'cash',
+                                          description: `Payment for ${patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation'} - ${new Date().toLocaleDateString()}`,
+                                          date: new Date().toISOString().split('T')[0],
+                                          patientId: patient.id
+                                        }
+
+                                        // Add to money management records in localStorage
+                                        const existingRecords = JSON.parse(localStorage.getItem('payment_records') || '[]')
+                                        const newRecord = {
+                                          id: `PM${String(existingRecords.length + 1).padStart(3, '0')}`,
+                                          ...patientData,
+                                          createdAt: new Date().toISOString()
+                                        }
+
+                                        existingRecords.push(newRecord)
+                                        localStorage.setItem('payment_records', JSON.stringify(existingRecords))
+
+                                        toast({
+                                          title: "✅ Payment Record Added",
+                                          description: `Payment record for ${patient.name} has been added to money management. You can manually navigate to the money management page to view and edit it.`,
+                                        })
+                                      }}
+                                      className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs w-full"
+                                      title="Add Patient to Money Management"
+                                    >
+                                      <DollarSign className="h-3 w-3 mr-1" />
+                                      Payment
+                                    </Button>
+
+                                    {/* Spinal Health Assessment Report Button */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => generateDetailedReport(patient)}
+                                      className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full"
+                                      title="Download professional one-page PDF report for this patient"
+                                    >
+                                      <Download className="h-3 w-3 mr-1" />
+                                      PDF Report
+                                    </Button>
+
+
+                                    {/* Edit Patient Button */}
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        // Get fresh patient data and edit
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
+                                        handleEditPatient(currentPatientData)
+
+                                        // Close the action menu after selection
+                                        setExpandedActions(new Set())
+                                      }}
+                                      className="border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800] hover:text-white text-xs w-full"
+                                      title="Edit Patient"
+                                    >
+                                      <Edit3 className="h-3 w-3 mr-1" />
+                                      Edit
+                                    </Button>
+
+                                    {/* Delete Patient Button */}
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => {
+                                        // Close the action menu before deletion
+                                        setExpandedActions(new Set())
+
+                                        // Delete patient
+                                        handleDeletePatient(patient.id)
+                                      }}
+                                      className="bg-red-600 hover:bg-red-700 text-xs w-full"
+                                      title="Delete Patient"
+                                    >
+                                      <Trash2 className="h-3 w-3 mr-1" />
+                                      Delete
+                                    </Button>
+                                  </div>
+
+                                  {/* Professional Footer */}
+                                  <div className="border-t pt-2 mt-3">
+                                    <p className="text-xs text-gray-500 text-center font-medium">
+                                      {expandedActions.has(patient.id) ? "Patient Management Tools" : ""}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {selectedPatientDetail && (
+            <div ref={detailsRef} className="mt-6">
+              <Card className={`border-[#0d5c75]/20 shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white flex flex-row items-center justify-between">
+                  <CardTitle className="font-poppins">Selected Patient Details</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-white/20 text-white">
+                      {selectedPatientDetail.session_type === 'in_clinic' ? 'Clinic' : 'Video'} • {selectedPatientDetail.urgency}
+                    </Badge>
+                    <Button size="sm" variant="outline" onClick={() => setSelectedPatientDetail(null)} className="border-white/40 text-white hover:bg-white/20">
+                      Hide Details
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Patient Info</h4>
+                      <p className="text-sm"><span className="font-medium">Name:</span> {selectedPatientDetail.name}</p>
+                      <p className="text-sm"><span className="font-medium">Phone:</span> {selectedPatientDetail.phone}</p>
+                      <p className="text-sm"><span className="font-medium">Email:</span> {selectedPatientDetail.email || 'Not provided'}</p>
+                      <p className="text-sm"><span className="font-medium">Patient Code:</span> <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">{getPatientCodeById(selectedPatientDetail.id)}</code></p>
+                      {selectedPatientDetail.profession && (
+                        <p className="text-sm"><span className="font-medium">Profession:</span> {selectedPatientDetail.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Appointment</h4>
+                      <p className="text-sm"><span className="font-medium">Date:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleDateString()}</p>
+                      <p className="text-sm"><span className="font-medium">Time:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleTimeString()}</p>
+                      <div className="text-sm flex items-center gap-2">
+                        <span className="font-medium">Status:</span>
+                        <Badge>{selectedPatientDetail.status}</Badge>
+                      </div>
+                      <p className="text-sm"><span className="font-medium">Payment:</span> {selectedPatientDetail.payment_method?.toUpperCase?.() || 'CASH'}</p>
+                      {selectedPatientDetail.last_visit && (
+                        <p className="text-sm"><span className="font-medium">Last Visit:</span> {new Date(selectedPatientDetail.last_visit).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Sessions</h4>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm">
+                          <span className="font-medium">Progress:</span>
+                          <span className={`ml-2 text-xl font-bold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>
+                            {selectedPatientDetail.status === 'cancelled' ? 0 : (selectedPatientDetail.sessions_completed || 0)}
+                          </span>
+                          <span className="text-gray-500">/</span>
+                          <span className="text-lg font-semibold text-gray-600">
+                            {selectedPatientDetail.status === 'cancelled' ? 0 : (selectedPatientDetail.total_sessions || 8)}
+                          </span>
+                          <span className="ml-1 text-sm text-gray-500">sessions</span>
+                        </p>
+                      </div>
+                      <p className="text-sm"><span className="font-medium">Prescription Generated:</span> {selectedPatientDetail.prescription_generated ? `Yes (${selectedPatientDetail.prescription_count || 0})` : 'No'}</p>
+                      {selectedPatientDetail.treatment_plan?.progress && (
+                        <p className="text-sm"><span className="font-medium">Progress:</span> {selectedPatientDetail.treatment_plan.progress}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Next Appointment Section - Professional Display */}
+                  {selectedPatientDetail.next_appointment_date && (
+                    <div className="mt-6">
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 rounded-lg shadow-md">
+                        <div className="flex items-start gap-4">
+                          <div className="bg-green-500 rounded-full p-3 flex-shrink-0">
+                            <Calendar className="h-6 w-6 text-white" />
                           </div>
-                          <div className="mt-3 pt-3 border-t border-green-200">
-                            <p className="text-xs text-gray-600 flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3 text-green-600" />
-                              Reminder: Patient will receive notification 24 hours before appointment
-                            </p>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-green-800 text-lg mb-3 flex items-center gap-2">
+                              📅 Next Appointment Scheduled
+                              <Badge className="bg-green-600 text-white text-xs">Confirmed</Badge>
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4 text-green-600" />
+                                  <div>
+                                    <p className="text-xs text-gray-600 font-medium">Date</p>
+                                    <p className="text-sm font-bold text-gray-900">
+                                      {new Date(selectedPatientDetail.next_appointment_date).toLocaleDateString('en-US', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                      })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-green-600" />
+                                  <div>
+                                    <p className="text-xs text-gray-600 font-medium">Time</p>
+                                    <p className="text-sm font-bold text-gray-900">
+                                      {new Date(selectedPatientDetail.next_appointment_date).toLocaleTimeString('en-US', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true
+                                      })}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div>
+                                  <p className="text-xs text-gray-600 font-medium mb-1">Appointment Notes</p>
+                                  <p className="text-sm text-gray-800 bg-white/60 p-2 rounded border border-green-200">
+                                    {selectedPatientDetail.next_appointment_notes || 'Follow-up appointment'}
+                                  </p>
+                                </div>
+                                {selectedPatientDetail.next_appointment_booked_at && (
+                                  <div className="text-xs text-gray-500">
+                                    Booked on: {new Date(selectedPatientDetail.next_appointment_booked_at).toLocaleDateString()}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-green-200">
+                              <p className="text-xs text-gray-600 flex items-center gap-1">
+                                <CheckCircle className="h-3 w-3 text-green-600" />
+                                Reminder: Patient will receive notification 24 hours before appointment
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                  )}
+
+                  <div className="mt-4">
+                    <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Clinical Notes</h4>
+                    <p className="text-sm bg-gray-50 p-3 rounded border">{selectedPatientDetail.notes || 'No complaints noted'}</p>
                   </div>
-                )}
-                
-                <div className="mt-4">
-                  <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Clinical Notes</h4>
-                  <p className="text-sm bg-gray-50 p-3 rounded border">{selectedPatientDetail.notes || 'No complaints noted'}</p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* 📝 TREATMENT NOTES SECTION */}
-            <Card className="mt-6 border-[#2a9d8f]/20 shadow-xl">
-              <CardContent className="p-6">
-                <TreatmentNotes 
-                  patient={selectedPatientDetail} 
-                  onNotesUpdated={loadPatients}
-                  isDarkMode={isDarkMode}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </main>
+                </CardContent>
+              </Card>
+
+              {/* 📝 TREATMENT NOTES SECTION */}
+              <Card className="mt-6 border-[#2a9d8f]/20 shadow-xl">
+                <CardContent className="p-6">
+                  <TreatmentNotes
+                    patient={selectedPatientDetail}
+                    onNotesUpdated={loadPatients}
+                    isDarkMode={isDarkMode}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </main>
       </div>
 
       {/* AdminSidebar */}
@@ -4337,7 +4338,7 @@ export default function AdminDashboard() {
         onClose={() => setIsSidebarOpen(false)}
         currentPath={pathname}
       />
-      
+
       {/* Scroll to Top Navigation Button */}
       <ScrollToTopButton showAfter={300} />
 
@@ -4408,7 +4409,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-3 mt-2">
                     <Input type="range" min={0} max={10} value={painLevel}
                       onChange={e => setPainLevel(Number(e.target.value))} className="cursor-pointer" />
-                    <Badge className={`${painLevel >=7 ? 'bg-red-600' : painLevel>=4 ? 'bg-orange-500' : 'bg-green-600'}`}>{painLevel}</Badge>
+                    <Badge className={`${painLevel >= 7 ? 'bg-red-600' : painLevel >= 4 ? 'bg-orange-500' : 'bg-green-600'}`}>{painLevel}</Badge>
                   </div>
                 </div>
                 {/* Affected Areas */}
@@ -4451,10 +4452,10 @@ export default function AdminDashboard() {
                 <div>
                   <Label className="text-sm font-semibold text-[#0d5c75]">Dose Schedule</Label>
                   <div className="grid grid-cols-3 gap-3 mt-2">
-                    {(['morning','afternoon','night'] as const).map(k => (
+                    {(['morning', 'afternoon', 'night'] as const).map(k => (
                       <div key={k} className="flex items-center justify-between p-2 border rounded">
                         <span className="capitalize text-sm">{k}</span>
-                        <Switch checked={doseSchedule[k]} onCheckedChange={(val)=> setDose(k, !!val)} />
+                        <Switch checked={doseSchedule[k]} onCheckedChange={(val) => setDose(k, !!val)} />
                       </div>
                     ))}
                   </div>
@@ -4473,7 +4474,7 @@ export default function AdminDashboard() {
                   <Label className="text-sm font-semibold text-[#0d5c75]">Condition Severity</Label>
                   <div className="mt-2">
                     <div className="w-full h-3 bg-gray-200 rounded">
-                      <div className={`h-3 rounded ${painLevel>=7 || redFlags.length>0 ? 'bg-red-600 w-11/12' : painLevel>=4 ? 'bg-orange-500 w-7/12' : 'bg-green-600 w-3/12'}`}></div>
+                      <div className={`h-3 rounded ${painLevel >= 7 || redFlags.length > 0 ? 'bg-red-600 w-11/12' : painLevel >= 4 ? 'bg-orange-500 w-7/12' : 'bg-green-600 w-3/12'}`}></div>
                     </div>
                     <p className="text-xs mt-1 text-gray-600">{deriveSeverity()}</p>
                   </div>
@@ -4556,7 +4557,7 @@ export default function AdminDashboard() {
 
           {/* Doctor's Signature Tool */}
           <div className="mb-6">
-            <SignatureCanvas 
+            <SignatureCanvas
               onSignatureChange={(dataUrl) => setDoctorSignature(dataUrl)}
               width={500}
               height={150}
@@ -4606,7 +4607,7 @@ export default function AdminDashboard() {
                   background: "url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><pattern id=%22grain%22 width=%22100%22 height=%22100%22 patternUnits=%22userSpaceOnUse%22><circle cx=%2250%22 cy=%2250%22 r=%221%22 fill=%22%23ffffff%22 fill-opacity=%220.1%22/></pattern></defs><rect width=%22100%22 height=%22100%22 fill=%22url(%23grain)%22/></svg>')",
                   opacity: 0.3
                 }}></div>
-                
+
                 <div style={{ display: "flex", alignItems: "center", gap: "20px", zIndex: 10, position: "relative" }}>
                   {/* Enhanced Logo */}
                   <div style={{
@@ -4627,37 +4628,37 @@ export default function AdminDashboard() {
                       style={{ width: "50px", height: "50px", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
                     />
                   </div>
-                  
+
                   {/* Clinic Information */}
                   <div>
-                    <h1 style={{ 
-                      fontSize: "28px", 
-                      margin: "0", 
+                    <h1 style={{
+                      fontSize: "28px",
+                      margin: "0",
                       fontWeight: "bold",
                       letterSpacing: "0.5px",
                       textShadow: "0 2px 4px rgba(0,0,0,0.3)"
                     }}>
                       GONSTEAD CHIROPRACTIC CLINIC
                     </h1>
-                    <p style={{ 
-                      fontSize: "16px", 
-                      margin: "2px 0 0 0", 
+                    <p style={{
+                      fontSize: "16px",
+                      margin: "2px 0 0 0",
                       fontWeight: "600",
                       opacity: 0.95
                     }}>
                       Dr. Bashir Khan - Gonstead Certified Specialist
                     </p>
-                    <p style={{ 
-                      fontSize: "14px", 
-                      margin: "2px 0 0 0", 
+                    <p style={{
+                      fontSize: "14px",
+                      margin: "2px 0 0 0",
                       opacity: 0.9
                     }}>
                       Near Peshawar Model School, Tehsil Road, Nowshera
                     </p>
                   </div>
                 </div>
-                
-                
+
+
                 {/* Decorative elements */}
                 <div style={{
                   position: "absolute",
@@ -4693,9 +4694,9 @@ export default function AdminDashboard() {
                   boxShadow: "0 4px 12px rgba(13, 92, 117, 0.3)",
                 }}
               >
-                <h2 style={{ 
-                  margin: "0", 
-                  fontSize: "24px", 
+                <h2 style={{
+                  margin: "0",
+                  fontSize: "24px",
                   fontWeight: "bold",
                   letterSpacing: "2px",
                   textShadow: "0 2px 4px rgba(0,0,0,0.3)"
@@ -4742,10 +4743,10 @@ export default function AdminDashboard() {
                     PRESCRIPTION DETAILS
                   </h3>
                   <p style={{ margin: "0 0 5px 0", fontSize: "13px" }}>
-                    <strong>Prescription ID:</strong> <span style={{ 
-                      backgroundColor: "#0d5c75", 
-                      color: "white", 
-                      padding: "2px 8px", 
+                    <strong>Prescription ID:</strong> <span style={{
+                      backgroundColor: "#0d5c75",
+                      color: "white",
+                      padding: "2px 8px",
                       borderRadius: "4px",
                       fontWeight: "bold",
                       letterSpacing: "1px"
@@ -4765,10 +4766,10 @@ export default function AdminDashboard() {
                   </p>
                   <p style={{ margin: "0", fontSize: "13px" }}>
                     <strong>Treatment Progress:</strong>{" "}
-                      <span style={{ 
-                      backgroundColor: "#22c55e", 
-                      color: "white", 
-                      padding: "2px 8px", 
+                    <span style={{
+                      backgroundColor: "#22c55e",
+                      color: "white",
+                      padding: "2px 8px",
                       borderRadius: "4px",
                       fontWeight: "bold",
                       marginLeft: "4px"
@@ -4789,10 +4790,10 @@ export default function AdminDashboard() {
                   fontSize: "16px", fontWeight: "bold", color: "#0d5c75",
                   margin: "0 0 10px 0", padding: "8px 12px", backgroundColor: "rgba(13,92,117,0.1)", borderRadius: "5px",
                 }}>SESSION PROGRESS & TREATMENT STATUS</h3>
-                <div style={{ 
-                  padding: "15px", 
-                  border: "2px solid #22c55e", 
-                  borderRadius: "8px", 
+                <div style={{
+                  padding: "15px",
+                  border: "2px solid #22c55e",
+                  borderRadius: "8px",
                   backgroundColor: "#f0fdf4",
                   marginBottom: "15px"
                 }}>
@@ -4803,10 +4804,10 @@ export default function AdminDashboard() {
                         {selectedPatient.sessions_completed || 0}
                       </p>
                     </div>
-                    <div style={{ 
-                      width: "2px", 
-                      height: "50px", 
-                      backgroundColor: "#d1d5db" 
+                    <div style={{
+                      width: "2px",
+                      height: "50px",
+                      backgroundColor: "#d1d5db"
                     }}></div>
                     <div style={{ textAlign: "center" }}>
                       <p style={{ margin: "0 0 5px 0", fontSize: "11px", color: "#6b7280", fontWeight: "600", textTransform: "uppercase" }}>Remaining Sessions</p>
@@ -4814,10 +4815,10 @@ export default function AdminDashboard() {
                         {Math.max(0, (selectedPatient.total_sessions || 8) - (selectedPatient.sessions_completed || 0))}
                       </p>
                     </div>
-                    <div style={{ 
-                      width: "2px", 
-                      height: "50px", 
-                      backgroundColor: "#d1d5db" 
+                    <div style={{
+                      width: "2px",
+                      height: "50px",
+                      backgroundColor: "#d1d5db"
                     }}></div>
                     <div style={{ textAlign: "center" }}>
                       <p style={{ margin: "0 0 5px 0", fontSize: "11px", color: "#6b7280", fontWeight: "600", textTransform: "uppercase" }}>Total Prescribed</p>
@@ -4828,15 +4829,15 @@ export default function AdminDashboard() {
                   </div>
                   <div style={{ marginTop: "15px", paddingTop: "15px", borderTop: "1px solid #d1fae5" }}>
                     <div style={{ backgroundColor: "#e5e7eb", height: "12px", borderRadius: "6px", overflow: "hidden" }}>
-                      <div style={{ 
-                        backgroundColor: "#22c55e", 
-                        height: "12px", 
-                        width: `${Math.min(100, Math.round((((selectedPatient.status==='cancelled'?0:(selectedPatient.sessions_completed || 0)) / (selectedPatient.status==='cancelled'?1:(selectedPatient.total_sessions || 8))) * 100)))}%`,
+                      <div style={{
+                        backgroundColor: "#22c55e",
+                        height: "12px",
+                        width: `${Math.min(100, Math.round((((selectedPatient.status === 'cancelled' ? 0 : (selectedPatient.sessions_completed || 0)) / (selectedPatient.status === 'cancelled' ? 1 : (selectedPatient.total_sessions || 8))) * 100)))}%`,
                         transition: "width 0.3s ease"
                       }}></div>
                     </div>
                     <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#374151", textAlign: "center", fontWeight: "600" }}>
-                      Treatment Progress: {Math.min(100, Math.round((((selectedPatient.status==='cancelled'?0:(selectedPatient.sessions_completed || 0)) / (selectedPatient.status==='cancelled'?1:(selectedPatient.total_sessions || 8))) * 100)))}% Complete
+                      Treatment Progress: {Math.min(100, Math.round((((selectedPatient.status === 'cancelled' ? 0 : (selectedPatient.sessions_completed || 0)) / (selectedPatient.status === 'cancelled' ? 1 : (selectedPatient.total_sessions || 8))) * 100)))}% Complete
                     </p>
                   </div>
                 </div>
@@ -4851,7 +4852,7 @@ export default function AdminDashboard() {
                 {/* Severity bar */}
                 <div style={{ marginBottom: "10px" }}>
                   <div style={{ height: 10, background: "#e5e7eb", borderRadius: 6, overflow: 'hidden' }}>
-                    <div style={{ height: 10, width: `${Math.min(100, (painLevel>=7?90:(painLevel>=4?60:30)))}%`, background: painLevel>=7 || redFlags.length>0 ? '#ef4444' : painLevel>=4 ? '#f59e0b' : '#22c55e' }}></div>
+                    <div style={{ height: 10, width: `${Math.min(100, (painLevel >= 7 ? 90 : (painLevel >= 4 ? 60 : 30)))}%`, background: painLevel >= 7 || redFlags.length > 0 ? '#ef4444' : painLevel >= 4 ? '#f59e0b' : '#22c55e' }}></div>
                   </div>
                   <p style={{ fontSize: 12, color: '#374151', marginTop: 6 }}>Severity: {deriveSeverity()}</p>
                 </div>
@@ -4864,7 +4865,7 @@ export default function AdminDashboard() {
                   <div>
                     <p style={{ margin: 0, fontSize: 12, color: '#374151' }}>Affected Areas</p>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {(affectedAreas.length? affectedAreas : ['None']).map(a => (
+                      {(affectedAreas.length ? affectedAreas : ['None']).map(a => (
                         <span key={a} style={{ background: '#0d5c75', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 12 }}>{a}</span>
                       ))}
                     </div>
@@ -5074,16 +5075,16 @@ export default function AdminDashboard() {
                 <span>Prescription previously generated on {selectedPatient.last_prescription_date ? new Date(selectedPatient.last_prescription_date).toLocaleDateString() : 'N/A'}</span>
               </div>
             )}
-            
+
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setIsPrescriptionDialogOpen(false)}>
                 Close
               </Button>
-              
+
               {/* Generate New Prescription Button - Only show if patient has existing prescription */}
               {selectedPatient && (selectedPatient.prescription_generated || (selectedPatient.prescription_count ?? 0) > 0) && (
-                <Button 
-                  onClick={generateNewPrescription} 
+                <Button
+                  onClick={generateNewPrescription}
                   className="bg-[#f3a800] hover:bg-[#e07c1c] text-white"
                   title="Generate a new prescription for this patient"
                 >
@@ -5091,7 +5092,7 @@ export default function AdminDashboard() {
                   Generate New Prescription
                 </Button>
               )}
-              
+
               <Button onClick={downloadPrescriptionPDF} className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white">
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
@@ -5128,7 +5129,7 @@ export default function AdminDashboard() {
               )}
             </div>
           </DialogHeader>
-          
+
           {selectedPatientHistory && (
             <div id="patient-history-content" className="space-y-8">
 
@@ -5154,22 +5155,22 @@ export default function AdminDashboard() {
                         <p><span className="font-medium">Patient Code:</span> <code className="bg-gray-100 px-2 py-1 rounded text-xs">{getPatientCodeById(selectedPatientHistory.id)}</code></p>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-4">
                       <h4 className="font-semibold text-[#0d5c75] flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         Treatment Statistics
                       </h4>
                       <div className="space-y-2 text-sm">
-                        <p><span className="font-medium">Total Sessions:</span> 
+                        <p><span className="font-medium">Total Sessions:</span>
                           <Badge variant="secondary" className="ml-2">
                             {selectedPatientHistory.sessions_completed || 0}
                           </Badge>
                         </p>
                         <p><span className="font-medium">First Visit:</span> {new Date(selectedPatientHistory.appointment_date).toLocaleDateString()}</p>
                         <p><span className="font-medium">Last Visit:</span> {selectedPatientHistory.last_visit ? new Date(selectedPatientHistory.last_visit).toLocaleDateString() : 'No visits yet'}</p>
-                        <p><span className="font-medium">Status:</span> 
-                          <Badge 
+                        <p><span className="font-medium">Status:</span>
+                          <Badge
                             variant={selectedPatientHistory.status === 'completed' ? 'default' : selectedPatientHistory.status === 'pending' ? 'secondary' : 'outline'}
                             className="ml-2"
                           >
@@ -5178,20 +5179,20 @@ export default function AdminDashboard() {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-4">
                       <h4 className="font-semibold text-[#0d5c75] flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4" />
                         Treatment Details
                       </h4>
                       <div className="space-y-2 text-sm">
-                        <p><span className="font-medium">Session Type:</span> 
+                        <p><span className="font-medium">Session Type:</span>
                           <Badge variant={selectedPatientHistory.session_type === 'in_clinic' ? 'default' : 'secondary'} className="ml-2">
                             {selectedPatientHistory.session_type === 'in_clinic' ? 'In-Clinic' : 'Video'}
                           </Badge>
                         </p>
-                        <p><span className="font-medium">Urgency:</span> 
-                          <Badge 
+                        <p><span className="font-medium">Urgency:</span>
+                          <Badge
                             variant={selectedPatientHistory.urgency === 'emergency' ? 'destructive' : selectedPatientHistory.urgency === 'urgent' ? 'secondary' : 'outline'}
                             className="ml-2"
                           >
@@ -5199,9 +5200,9 @@ export default function AdminDashboard() {
                           </Badge>
                         </p>
                         <p><span className="font-medium">Payment:</span> {(selectedPatientHistory.payment_method || 'cash').toUpperCase()}</p>
-                        <p><span className="font-medium">Prescription Generated:</span> 
-                          {selectedPatientHistory.prescription_generated ? 
-                            <Badge variant="default" className="ml-2">✓ Yes ({selectedPatientHistory.prescription_count || 0})</Badge> : 
+                        <p><span className="font-medium">Prescription Generated:</span>
+                          {selectedPatientHistory.prescription_generated ?
+                            <Badge variant="default" className="ml-2">✓ Yes ({selectedPatientHistory.prescription_count || 0})</Badge> :
                             <Badge variant="outline" className="ml-2">✗ No</Badge>
                           }
                         </p>
@@ -5210,7 +5211,7 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* Session History Timeline */}
               <Card className="border-l-4 border-l-[#2a9d8f] shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white">
@@ -5226,42 +5227,41 @@ export default function AdminDashboard() {
                       const sessions = []
                       const sessionsCount = selectedPatientHistory.sessions_completed || 0
                       const startDate = new Date(selectedPatientHistory.appointment_date)
-                      
+
                       // Create session entries
                       for (let i = 0; i <= Math.max(sessionsCount, 0); i++) {
                         const sessionDate = new Date(startDate)
                         sessionDate.setDate(sessionDate.getDate() + (i * 7)) // Weekly sessions
-                        
+
                         const isCompleted = i < sessionsCount
                         const isUpcoming = i === sessionsCount && selectedPatientHistory.status === 'confirmed'
                         const isCurrent = i === 0
-                        
+
                         sessions.push({
                           sessionNumber: i + 1,
                           date: sessionDate,
                           status: isCompleted ? 'completed' : isUpcoming ? 'upcoming' : isCurrent ? 'current' : 'scheduled',
                           type: selectedPatientHistory.session_type,
-                          notes: isCurrent ? (selectedPatientHistory.notes || 'Initial consultation') : 
-                                isCompleted ? 'Gonstead adjustment completed successfully' :
-                                'Session pending',
+                          notes: isCurrent ? (selectedPatientHistory.notes || 'Initial consultation') :
+                            isCompleted ? 'Gonstead adjustment completed successfully' :
+                              'Session pending',
                           prescription: i === 0 && selectedPatientHistory.prescription_generated ? `RX${String(selectedPatientHistory.prescription_count || 1).padStart(3, '0')}` : null
                         })
                       }
-                      
+
                       return sessions.slice(0, 10).map((session, index) => (
                         <div key={index} className="flex items-start space-x-4 relative">
                           {/* Timeline Line */}
                           {index < sessions.length - 1 && (
                             <div className="absolute left-6 top-12 w-0.5 h-16 bg-gradient-to-b from-[#2a9d8f] to-gray-300"></div>
                           )}
-                          
+
                           {/* Session Icon */}
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg ${
-                            session.status === 'completed' ? 'bg-green-500' :
-                            session.status === 'current' ? 'bg-[#2a9d8f]' :
-                            session.status === 'upcoming' ? 'bg-orange-500' :
-                            'bg-gray-400'
-                          }`}>
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg ${session.status === 'completed' ? 'bg-green-500' :
+                              session.status === 'current' ? 'bg-[#2a9d8f]' :
+                                session.status === 'upcoming' ? 'bg-orange-500' :
+                                  'bg-gray-400'
+                            }`}>
                             {session.status === 'completed' ? (
                               <CheckCircle className="h-6 w-6 text-white" />
                             ) : session.status === 'current' ? (
@@ -5272,13 +5272,13 @@ export default function AdminDashboard() {
                               <Calendar className="h-6 w-6 text-white" />
                             )}
                           </div>
-                          
+
                           {/* Session Details */}
                           <div className="flex-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                             <div className="flex items-center justify-between mb-2">
                               <h4 className="font-semibold text-[#0d5c75]">Session #{session.sessionNumber}</h4>
                               <div className="flex items-center gap-2">
-                                <Badge 
+                                <Badge
                                   variant={session.status === 'completed' ? 'default' : session.status === 'current' ? 'secondary' : 'outline'}
                                   className="text-xs"
                                 >
@@ -5291,22 +5291,22 @@ export default function AdminDashboard() {
                                 )}
                               </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                               <div>
                                 <p className="font-medium text-gray-600">Date & Time</p>
                                 <p className="text-[#0d5c75]">
-                                  {session.date.toLocaleDateString()} at {session.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  {session.date.toLocaleDateString()} at {session.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                               </div>
-                              
+
                               <div>
                                 <p className="font-medium text-gray-600">Session Type</p>
                                 <p className="text-[#0d5c75]">
                                   {session.type === 'in_clinic' ? 'In-Clinic Gonstead Adjustment' : 'Video Consultation'}
                                 </p>
                               </div>
-                              
+
                               <div>
                                 <p className="font-medium text-gray-600">Duration</p>
                                 <p className="text-[#0d5c75]">
@@ -5314,14 +5314,14 @@ export default function AdminDashboard() {
                                 </p>
                               </div>
                             </div>
-                            
+
                             <div className="mt-3">
                               <p className="font-medium text-gray-600 text-sm">Session Notes</p>
                               <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded mt-1">
                                 {session.notes}
                               </p>
                             </div>
-                            
+
                             {session.prescription && (
                               <div className="mt-3 p-3 bg-[#8b5cf6]/10 border border-[#8b5cf6]/20 rounded">
                                 <p className="text-sm font-medium text-[#8b5cf6] flex items-center gap-2">
@@ -5338,7 +5338,7 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* Treatment Progress & Notes */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-l-4 border-l-[#f3a800] shadow-lg">
@@ -5356,14 +5356,14 @@ export default function AdminDashboard() {
                           {selectedPatientHistory.notes || 'No specific complaints noted. General chiropractic consultation requested.'}
                         </p>
                       </div>
-                      
+
                       <div>
                         <h4 className="font-medium text-[#0d5c75] mb-2">Medical History</h4>
                         <p className="text-sm bg-gray-50 p-3 rounded border">
                           {selectedPatientHistory.medical_history || 'Medical history to be collected during consultation. Standard Gonstead assessment protocols to be followed.'}
                         </p>
                       </div>
-                      
+
                       <div>
                         <h4 className="font-medium text-[#0d5c75] mb-2">Booking Source</h4>
                         <Badge variant="outline" className="text-xs">
@@ -5373,7 +5373,7 @@ export default function AdminDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="border-l-4 border-l-[#22c55e] shadow-lg">
                   <CardHeader className="bg-[#22c55e] text-white">
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -5403,20 +5403,20 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </div>
-                      
+
                       <div>
                         <h4 className="font-medium text-[#0d5c75] mb-2">Current Progress</h4>
                         <div className="bg-gray-50 p-3 rounded border">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium">Treatment Progress</span>
                             <span className="text-sm text-[#22c55e] font-semibold">
-                              {Math.round((((selectedPatientHistory.status==='cancelled'?0:(selectedPatientHistory.sessions_completed || 0)) / (selectedPatientHistory.status==='cancelled'?1:(selectedPatientHistory.total_sessions || 8))) * 100))}%
+                              {Math.round((((selectedPatientHistory.status === 'cancelled' ? 0 : (selectedPatientHistory.sessions_completed || 0)) / (selectedPatientHistory.status === 'cancelled' ? 1 : (selectedPatientHistory.total_sessions || 8))) * 100))}%
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
+                            <div
                               className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${Math.round((((selectedPatientHistory.status==='cancelled'?0:(selectedPatientHistory.sessions_completed || 0)) / (selectedPatientHistory.status==='cancelled'?1:(selectedPatientHistory.total_sessions || 8))) * 100))}%` }}
+                              style={{ width: `${Math.round((((selectedPatientHistory.status === 'cancelled' ? 0 : (selectedPatientHistory.sessions_completed || 0)) / (selectedPatientHistory.status === 'cancelled' ? 1 : (selectedPatientHistory.total_sessions || 8))) * 100))}%` }}
                             ></div>
                           </div>
                           <p className="text-xs text-gray-600 mt-2">
@@ -5424,7 +5424,7 @@ export default function AdminDashboard() {
                           </p>
                         </div>
                       </div>
-                      
+
                       <div>
                         <h4 className="font-medium text-[#0d5c75] mb-2">Next Steps</h4>
                         <div className="text-xs space-y-1 text-gray-700">
@@ -5443,11 +5443,11 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
               </div>
-              
+
               {/* Action Buttons */}
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsPatientHistoryDialogOpen(false)}
                 >
                   Close
@@ -5577,17 +5577,15 @@ export default function AdminDashboard() {
           }
         }
       }}>
-        <DialogContent 
+        <DialogContent
           ref={videoCallDialogRef}
-          className={`${
-            isVideoCallFullscreen 
-              ? 'w-screen h-screen max-w-none max-h-none m-0 p-0 rounded-none' 
+          className={`${isVideoCallFullscreen
+              ? 'w-screen h-screen max-w-none max-h-none m-0 p-0 rounded-none'
               : 'max-w-6xl w-[95vw] max-h-[95vh] h-[90vh]'
-          } overflow-hidden transition-all duration-300`}
+            } overflow-hidden transition-all duration-300`}
         >
-          <DialogHeader className={`px-6 pt-6 pb-4 ${
-            isVideoCallFullscreen ? 'absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm' : ''
-          }`}>
+          <DialogHeader className={`px-6 pt-6 pb-4 ${isVideoCallFullscreen ? 'absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm' : ''
+            }`}>
             <DialogTitle className="text-[#0d5c75] font-poppins flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Video className="h-5 w-5" />
@@ -5614,11 +5612,10 @@ export default function AdminDashboard() {
               </Button>
             </DialogTitle>
           </DialogHeader>
-          <div className={`${
-            isVideoCallFullscreen 
-              ? 'h-screen w-screen' 
+          <div className={`${isVideoCallFullscreen
+              ? 'h-screen w-screen'
               : 'h-[calc(90vh-8rem)] px-6 pb-6'
-          }`}>
+            }`}>
             {selectedPatient && (
               <VideoCall
                 roomName={`GCC-${getPatientCodeById(selectedPatient.id)}`}
@@ -5639,12 +5636,12 @@ export default function AdminDashboard() {
           </div>
         </DialogContent>
       </Dialog>
-      
+
       {/* Admin App Install Prompt - Only shows when on admin routes */}
       <AdminServiceWorkerClient />
-      
+
       {/* Patient Growth Analytics Dialog */}
-      <PatientGrowthAnalytics 
+      <PatientGrowthAnalytics
         patients={patients}
         isDarkMode={isDarkMode}
         isOpen={isGrowthAnalyticsOpen}
@@ -5679,7 +5676,7 @@ export default function AdminDashboard() {
               <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse"></div>
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-yellow-200 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
             </div>
-            
+
             {/* Header Content */}
             <div className="relative z-10">
               <div className="flex items-start gap-4">
@@ -5690,7 +5687,7 @@ export default function AdminDashboard() {
                     <AlertTriangle className="h-8 w-8 text-white drop-shadow-lg" />
                   </div>
                 </div>
-                
+
                 {/* Title Section */}
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold font-poppins mb-2 tracking-tight drop-shadow-md">
@@ -5702,11 +5699,11 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
-            
+
             {/* Decorative Wave */}
             <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-b from-transparent to-white"></div>
           </div>
-          
+
           {patientToCancel && (
             <div className="p-4 md:p-6 space-y-4 md:space-y-5 bg-gradient-to-b from-gray-50 to-white">
               {/* Collapsible Section 1: Patient Information Card - Premium Design */}
@@ -5748,13 +5745,12 @@ export default function AdminDashboard() {
                   </div>
                 </button>
                 {/* Collapsible Content - Patient Details */}
-                <div 
+                <div
                   id="patient-info-section"
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedCancelSection === 'patient' || expandedCancelSection === null 
-                      ? 'max-h-[500px] opacity-100' 
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedCancelSection === 'patient' || expandedCancelSection === null
+                      ? 'max-h-[500px] opacity-100'
                       : 'max-h-0 opacity-0'
-                  }`}
+                    }`}
                   aria-hidden={expandedCancelSection !== 'patient' && expandedCancelSection !== null}
                 >
                   {/* Status Ribbon */}
@@ -5763,7 +5759,7 @@ export default function AdminDashboard() {
                       CRITICAL ACTION
                     </div>
                   </div>
-                  
+
                   <div className="p-4 md:p-5 pt-8 md:pt-10">
                     <div className="flex flex-col md:flex-row md:items-start gap-4">
                       {/* Patient Avatar/Icon - Hidden on mobile when collapsed */}
@@ -5772,7 +5768,7 @@ export default function AdminDashboard() {
                           <Users className="h-7 w-7 md:h-8 md:w-8 text-red-600" />
                         </div>
                       </div>
-                      
+
                       {/* Patient Details */}
                       <div className="flex-1">
                         <div className="mb-3">
@@ -5787,7 +5783,7 @@ export default function AdminDashboard() {
                           </h3>
                           <p className="text-xs text-gray-500 font-mono">Patient Code: {getOrAssignPatientCode(patientToCancel)}</p>
                         </div>
-                        
+
                         {/* Information Grid - Responsive */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -5803,7 +5799,7 @@ export default function AdminDashboard() {
                               </p>
                             )}
                           </div>
-                          
+
                           <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                             <div className="flex items-center gap-2 mb-1">
                               <Calendar className="h-3.5 w-3.5 text-[#0d5c75]" />
@@ -5817,7 +5813,7 @@ export default function AdminDashboard() {
                               {new Date(patientToCancel.appointment_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
-                          
+
                           <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                             <div className="flex items-center gap-2 mb-1">
                               <Activity className="h-3.5 w-3.5 text-[#0d5c75]" />
@@ -5827,7 +5823,7 @@ export default function AdminDashboard() {
                               {patientToCancel.session_type === 'in_clinic' ? 'In-Clinic Visit' : 'Video Consultation'}
                             </p>
                           </div>
-                          
+
                           <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                             <div className="flex items-center gap-2 mb-1">
                               <CheckCircle className="h-3.5 w-3.5 text-[#0d5c75]" />
@@ -5875,77 +5871,76 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </button>
-                
+
                 {/* Collapsible Content - Impact Analysis */}
-                <div 
+                <div
                   id="impact-analysis-section"
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedCancelSection === 'impact' || expandedCancelSection === null 
-                      ? 'max-h-[500px] opacity-100' 
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedCancelSection === 'impact' || expandedCancelSection === null
+                      ? 'max-h-[500px] opacity-100'
                       : 'max-h-0 opacity-0'
-                  }`}
+                    }`}
                   aria-hidden={expandedCancelSection !== 'impact' && expandedCancelSection !== null}
                 >
                   <div className="p-4 md:p-5 pt-0 space-y-3">
-                  {/* Impact Items */}
-                  <div className="flex items-start gap-3 bg-white/60 rounded-lg p-3 border border-orange-200">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                        <X className="h-4 w-4 text-red-600" />
+                    {/* Impact Items */}
+                    <div className="flex items-start gap-3 bg-white/60 rounded-lg p-3 border border-orange-200">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                          <X className="h-4 w-4 text-red-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Appointment Status Change</p>
+                        <p className="text-xs text-gray-600 mt-1">Status will be updated from <Badge variant="secondary" className="text-xs mx-1">{patientToCancel.status.toUpperCase()}</Badge> to <Badge variant="destructive" className="text-xs mx-1">CANCELLED</Badge></p>
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">Appointment Status Change</p>
-                      <p className="text-xs text-gray-600 mt-1">Status will be updated from <Badge variant="secondary" className="text-xs mx-1">{patientToCancel.status.toUpperCase()}</Badge> to <Badge variant="destructive" className="text-xs mx-1">CANCELLED</Badge></p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3 bg-white/60 rounded-lg p-3 border border-orange-200">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                        <Activity className="h-4 w-4 text-red-600" />
+
+                    <div className="flex items-start gap-3 bg-white/60 rounded-lg p-3 border border-orange-200">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                          <Activity className="h-4 w-4 text-red-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Session Counter</p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {(patientToCancel.sessions_completed || 0) > 0 ? (
+                            <>
+                              Session progress will remain at
+                              {" "}
+                              <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">
+                                {patientToCancel.sessions_completed || 0}/{patientToCancel.total_sessions || 8}
+                              </span>
+                              {" "}
+                              (completed treatment history will be preserved)
+                            </>
+                          ) : (
+                            <>
+                              Session progress will be reset from
+                              {" "}
+                              <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">
+                                0/{patientToCancel.total_sessions || 8}
+                              </span>
+                              {" "}
+                              to
+                              {" "}
+                              <span className="font-mono bg-red-100 px-2 py-0.5 rounded text-red-700">0/0</span>
+                            </>
+                          )}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">Session Counter</p>
-                      <p className="text-xs text-gray-600 mt-1">
-                        {(patientToCancel.sessions_completed || 0) > 0 ? (
-                          <>
-                            Session progress will remain at
-                            {" "}
-                            <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">
-                              {patientToCancel.sessions_completed || 0}/{patientToCancel.total_sessions || 8}
-                            </span>
-                            {" "}
-                            (completed treatment history will be preserved)
-                          </>
-                        ) : (
-                          <>
-                            Session progress will be reset from
-                            {" "}
-                            <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">
-                              0/{patientToCancel.total_sessions || 8}
-                            </span>
-                            {" "}
-                            to
-                            {" "}
-                            <span className="font-mono bg-red-100 px-2 py-0.5 rounded text-red-700">0/0</span>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3 bg-white/60 rounded-lg p-3 border border-orange-200">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-blue-600" />
+
+                    <div className="flex items-start gap-3 bg-white/60 rounded-lg p-3 border border-orange-200">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Clock className="h-4 w-4 text-blue-600" />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">Time Slot Release</p>
-                      <p className="text-xs text-gray-600 mt-1">The appointment time slot will become available for other patients to book</p>
-                    </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">Time Slot Release</p>
+                        <p className="text-xs text-gray-600 mt-1">The appointment time slot will become available for other patients to book</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -5982,33 +5977,32 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </button>
-                
+
                 {/* Collapsible Content - Recovery Steps */}
-                <div 
+                <div
                   id="recovery-steps-section"
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedCancelSection === 'recovery' || expandedCancelSection === null 
-                      ? 'max-h-[500px] opacity-100' 
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedCancelSection === 'recovery' || expandedCancelSection === null
+                      ? 'max-h-[500px] opacity-100'
                       : 'max-h-0 opacity-0'
-                  }`}
+                    }`}
                   aria-hidden={expandedCancelSection !== 'recovery' && expandedCancelSection !== null}
                 >
                   <div className="p-4 md:p-5 pt-0 space-y-2.5">
-                  <div className="flex items-start gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Reversible Action:</span> You can restore this appointment later using the <span className="font-mono bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Restore Appointment</span> button</p>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Patient Notification:</span> Remember to inform the patient about the cancellation via phone call, SMS, or email</p>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Documentation:</span> Consider adding a note in the patient's record explaining the reason for cancellation</p>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Rescheduling:</span> Patient can book a new appointment through the online booking system or by calling the clinic</p>
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Reversible Action:</span> You can restore this appointment later using the <span className="font-mono bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Restore Appointment</span> button</p>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Patient Notification:</span> Remember to inform the patient about the cancellation via phone call, SMS, or email</p>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Documentation:</span> Consider adding a note in the patient's record explaining the reason for cancellation</p>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Rescheduling:</span> Patient can book a new appointment through the online booking system or by calling the clinic</p>
                     </div>
                   </div>
                 </div>
@@ -6017,8 +6011,8 @@ export default function AdminDashboard() {
               {/* Professional Action Buttons */}
               <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-4 pt-3 md:pt-4 border-t-2 border-gray-200">
                 {/* Safe Action - Keep Appointment */}
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   variant="outline"
                   size="lg"
                   onClick={() => {
@@ -6031,10 +6025,10 @@ export default function AdminDashboard() {
                   <CheckCircle className="h-4 w-4 md:h-5 md:w-5 mr-2" />
                   <span className="text-sm md:text-base">Keep Appointment Active</span>
                 </Button>
-                
+
                 {/* Destructive Action - Confirm Cancellation */}
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   variant="destructive"
                   size="lg"
                   onClick={() => {
@@ -6043,7 +6037,7 @@ export default function AdminDashboard() {
                       setIsCancelConfirmDialogOpen(false)
                       setPatientToCancel(null)
                       setExpandedCancelSection(null)
-                      
+
                       // Enhanced success feedback
                       toast({
                         title: "✓ Appointment Cancelled Successfully",
@@ -6057,7 +6051,7 @@ export default function AdminDashboard() {
                   <span className="text-sm md:text-base">Confirm Cancellation</span>
                 </Button>
               </div>
-              
+
               {/* Footer Note */}
               <div className="text-center pt-2">
                 <p className="text-xs text-gray-500 px-2">
@@ -6070,13 +6064,9 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Perfect WhatsApp-Style Chat Interface */}
-      <PerfectWhatsAppChat 
-        currentUserId={adminUser?.id || adminUser?.email || 'admin-user'} 
-        currentUserRole={'admin'}
-        currentUserName={adminUser?.name || 'Dr. Bashir Khan'}
-      />
-      
+      {/* FLOATING REAL-TIME WHATSAPP-STYLE PATIENT-DOCTOR DIRECT CHAT INBOX */}
+      <DoctorWhatsAppChatInbox isFloating={true} />
+
       {/* Debug: Show admin user info */}
       {process.env.NODE_ENV === 'development' && (
         <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 rounded text-xs">
