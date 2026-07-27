@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Calendar,
   User,
@@ -16,38 +16,37 @@ import {
   Mail,
   FileText,
   Clock,
-  Shield,
   Home,
   Stethoscope,
-  Download,
   LogOut,
   PlusCircle,
   Activity,
   CheckCircle2,
-  AlertCircle,
   Sparkles,
-  MapPin,
   RefreshCw,
   Search,
-  ChevronRight,
-  HeartPulse,
   Printer,
   XCircle,
   Edit3,
-  Flame,
-  CheckSquare,
-  Square,
   Thermometer,
   Smartphone,
   BellRing,
+  CheckSquare,
+  Square,
+  FileCheck,
+  Pill,
+  ShieldCheck,
+  MapPin,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { logoutPatient, getPatientAppointmentsFromFirestore } from "@/lib/patient-auth"
-import { updatePatientFirestore } from "@/lib/firebase-db"
-import type { Patient } from "@/lib/firebase-db"
+import { updatePatientFirestore, getPrescriptionsFirestore, type Patient } from "@/lib/firebase-db"
+import { doc, updateDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 import { EnhancedAppointmentBooking } from "@/components/enhanced-appointment-booking"
+import { AppointmentConfirmation } from "@/components/appointment-confirmation"
 import { checkUpcomingPreAppointmentReminders, type AppointmentReminder } from "@/lib/patient-reminder-service"
-import { registerPatientServiceWorker, sendBackgroundScreenNotification } from "@/lib/pwa-service-worker"
+import { registerPatientServiceWorker } from "@/lib/pwa-service-worker"
 import { PatientChatWidget } from "@/components/PatientChatWidget"
 
 export default function PatientPortalPage() {
@@ -59,54 +58,66 @@ export default function PatientPortalPage() {
   const [patientEmail, setPatientEmail] = useState("")
   const [patientPhone, setPatientPhone] = useState("")
   const [patientUid, setPatientUid] = useState("")
+  const [patientId, setPatientId] = useState("")
 
+  // Profile Edit State
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  const [editName, setEditName] = useState("")
+  const [editPhone, setEditPhone] = useState("")
+  const [editEmail, setEditEmail] = useState("")
+  const [editDob, setEditDob] = useState("")
+  const [editGender, setEditGender] = useState("Male")
+  const [editEmergency, setEditEmergency] = useState("")
+  const [editAddress, setEditAddress] = useState("")
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
+
+  // Appointments State
   const [appointments, setAppointments] = useState<Patient[]>([])
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [isBookModalOpen, setIsBookModalOpen] = useState(false)
 
-  // Reschedule state
+  // Reschedule & Print State
   const [rescheduleApt, setRescheduleApt] = useState<Patient | null>(null)
   const [rescheduleDate, setRescheduleDate] = useState<string>("")
   const [rescheduleTime, setRescheduleTime] = useState<string>("10:00 AM")
   const [isUpdatingApt, setIsUpdatingApt] = useState(false)
-
-  // Printable slip state
   const [printSlipApt, setPrintSlipApt] = useState<Patient | null>(null)
+  const [viewConfirmationApt, setViewConfirmationApt] = useState<Patient | null>(null)
 
-  // Symptom logger state
+  // Prescriptions State
+  const [prescriptions, setPrescriptions] = useState<any[]>([])
+  const [isLoadingPrescriptions, setIsLoadingPrescriptions] = useState(false)
+  const [selectedPrescription, setSelectedPrescription] = useState<any | null>(null)
+  const [prescriptionSearch, setPrescriptionSearch] = useState("")
+
+  // Symptom Intake State
   const [painLevel, setPainLevel] = useState<number>(5)
   const [affectedRegion, setAffectedRegion] = useState<string>("Lumbar Spine (L4-L5)")
   const [symptomDescription, setSymptomDescription] = useState<string>("")
   const [isLoggingSymptom, setIsLoggingSymptom] = useState(false)
 
-  // Daily Rehab Checklist state
+  // Daily Rehab Checklist
   const [rehabTasks, setRehabTasks] = useState([
-    { id: 1, title: "Morning Cat-Cow Spinal Decompression (10 mins)", done: false },
-    { id: 2, title: "15-Min Cold Ice Compression Therapy on Lumbar Region", done: false },
-    { id: 3, title: "Ergonomic Lumbar Support & Posture Break (Walk 30 mins)", done: false },
-    { id: 4, title: "Hydration Goal: 2.5 Liters Water for Intervertebral Discs", done: false },
+    { id: 1, title: "Morning Cat-Cow Decompression (10 mins)", region: "Lumbar", done: false, desc: "Gentle spinal flexion and extension to lubricate intervertebral discs." },
+    { id: 2, title: "Prone Cobra Cervical Extension (5 mins)", region: "Neck & Upper Back", done: false, desc: "Restores cervical lordotic curve and counteracts forward head posture." },
+    { id: 3, title: "15-Min Ice Therapy on Affected Joint", region: "Lower Back / SI", done: false, desc: "Reduces localized inflammatory edema following Gonstead adjustment." },
+    { id: 4, title: "Ergonomic Walk & Posture Break (30 mins)", region: "Full Spine", done: false, desc: "Engages core spinal stabilizers and promotes fluid exchange." },
+    { id: 5, title: "Hydration Goal: 2.5 Liters Water", region: "Disc Health", done: false, desc: "Rehydrates nucleus pulposus inside spinal discs overnight." },
   ])
 
-  // PWA Install Prompt state
+  // PWA & Reminders
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
-  const [isInstallable, setIsInstallable] = useState(false)
-
-  // 24h Pre-Appointment Reminders state
   const [reminders, setReminders] = useState<AppointmentReminder[]>([])
 
-  // PWA beforeinstallprompt listener
   useEffect(() => {
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e)
-      setIsInstallable(true)
     }
-
     if (typeof window !== "undefined") {
       window.addEventListener("beforeinstallprompt", handleBeforeInstall)
     }
-
     return () => {
       if (typeof window !== "undefined") {
         window.removeEventListener("beforeinstallprompt", handleBeforeInstall)
@@ -117,25 +128,20 @@ export default function PatientPortalPage() {
   const handleInstallPwa = async () => {
     if (!deferredPrompt) {
       toast({
-        title: "Install Mobile App",
-        description: "To install: Tap your browser menu (⋮ or Share) and select 'Add to Home Screen'.",
+        title: "Install Patient App",
+        description: "Tap browser menu (⋮ or Share) and choose 'Add to Home Screen'.",
       })
       return
     }
-
     deferredPrompt.prompt()
-    const choiceResult = await deferredPrompt.userChoice
-    if (choiceResult.outcome === "accepted") {
-      toast({
-        title: "App Installed!",
-        description: "The Gonstead Patient App has been installed on your home screen.",
-      })
-      setIsInstallable(false)
+    const choice = await deferredPrompt.userChoice
+    if (choice.outcome === "accepted") {
+      toast({ title: "App Installed!", description: "Patient portal added to your home screen." })
       setDeferredPrompt(null)
     }
   }
 
-  // Auth check & load appointments from Firestore
+  // Auth Check & Initial Data Load
   useEffect(() => {
     if (typeof window !== "undefined") {
       registerPatientServiceWorker()
@@ -150,71 +156,155 @@ export default function PatientPortalPage() {
       const uEmail = localStorage.getItem("patient_email") || ""
       const uPhone = localStorage.getItem("patient_phone") || ""
       const uUid = localStorage.getItem("patient_uid") || ""
+      const uId = localStorage.getItem("patient_id") || ""
 
       setPatientName(uName)
       setPatientEmail(uEmail)
       setPatientPhone(uPhone)
       setPatientUid(uUid)
+      setPatientId(uId)
 
-      loadAppointments(uEmail, uPhone, uUid, uName)
+      setEditName(uName)
+      setEditEmail(uEmail)
+      setEditPhone(uPhone)
+
+      loadData(uEmail, uPhone, uUid, uName)
     }
   }, [router])
 
-  const loadAppointments = async (email?: string, phone?: string, uid?: string, name?: string) => {
+  const loadData = async (email?: string, phone?: string, uid?: string, name?: string) => {
     setIsLoading(true)
-    const list = await getPatientAppointmentsFromFirestore(
-      email || patientEmail,
-      phone || patientPhone,
-      uid || patientUid,
-      name || patientName
-    )
+    const em = email || patientEmail
+    const ph = phone || patientPhone
+    const uu = uid || patientUid
+    const nm = name || patientName
+
+    // Load Appointments
+    const list = await getPatientAppointmentsFromFirestore(em, ph, uu, nm)
     setAppointments(list)
 
-    // Check for 24h pre-appointment reminders
-    const rems = checkUpcomingPreAppointmentReminders(list, name || patientName)
+    // Load Reminders
+    const rems = checkUpcomingPreAppointmentReminders(list, nm)
     setReminders(rems)
+
+    // Fill profile extra details if patient object found
+    if (list.length > 0) {
+      const p = list[0] as any
+      if (p.dob) setEditDob(p.dob)
+      if (p.gender) setEditGender(p.gender)
+      if (p.address) setEditAddress(p.address)
+      if (p.demographics?.emergency_contact) setEditEmergency(p.demographics.emergency_contact)
+    }
+
+    // Load Prescriptions
+    setIsLoadingPrescriptions(true)
+    try {
+      const allRx = await getPrescriptionsFirestore()
+      const cEmail = em.trim().toLowerCase()
+      const cPhone = ph.replace(/\D/g, "")
+      const cName = nm.trim().toLowerCase()
+
+      const userRx = allRx.filter((rx) => {
+        const rxEmail = (rx.patient_email || "").toLowerCase()
+        const rxPhone = (rx.patient_phone || "").replace(/\D/g, "")
+        const rxName = (rx.patient_name || "").toLowerCase()
+        const rxPatientId = rx.patient_id || ""
+
+        return (
+          (cEmail && rxEmail === cEmail) ||
+          (cPhone && rxPhone && (rxPhone.includes(cPhone) || cPhone.includes(rxPhone))) ||
+          (cName && rxName && (rxName.includes(cName) || cName.includes(rxName))) ||
+          (patientId && rxPatientId === patientId)
+        )
+      })
+
+      setPrescriptions(userRx)
+    } catch (e) {
+      console.warn("Load Prescriptions note:", e)
+    } finally {
+      setIsLoadingPrescriptions(false)
+    }
 
     setIsLoading(false)
   }
 
   const handleLogout = async () => {
     await logoutPatient()
-    toast({
-      title: "Signed Out",
-      description: "You have been signed out of your patient portal.",
-    })
+    toast({ title: "Signed Out", description: "You have been logged out safely." })
     router.replace("/patient/auth")
+  }
+
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true)
+
+    try {
+      // 1. Update local storage
+      localStorage.setItem("patient_name", editName)
+      localStorage.setItem("patient_email", editEmail)
+      localStorage.setItem("patient_phone", editPhone)
+      setPatientName(editName)
+      setPatientEmail(editEmail)
+      setPatientPhone(editPhone)
+
+      // 2. Update Firestore patient record
+      if (appointments.length > 0) {
+        await updatePatientFirestore(appointments[0].id, {
+          name: editName,
+          email: editEmail,
+          phone: editPhone,
+          demographics: {
+            emergency_contact: editEmergency,
+            gender: editGender,
+            address: editAddress,
+          },
+        } as any)
+      }
+
+      // 3. Update Firestore account document if UID exists
+      if (patientUid && db) {
+        try {
+          const accRef = doc(db, "patient_accounts", patientUid)
+          await updateDoc(accRef, {
+            name: editName,
+            email: editEmail,
+            phone: editPhone,
+            dob: editDob,
+            gender: editGender,
+            emergency_contact: editEmergency,
+            address: editAddress,
+          })
+        } catch (e) {
+          // Skip if missing doc
+        }
+      }
+
+      toast({ title: "Profile Updated", description: "Your patient account details were saved to Firestore." })
+      setIsEditProfileOpen(false)
+      loadData()
+    } catch (err) {
+      toast({ title: "Update Failed", description: "Could not save profile updates.", variant: "destructive" })
+    } finally {
+      setIsSavingProfile(false)
+    }
   }
 
   const handleCancelAppointment = async (aptId: string) => {
     if (!confirm("Are you sure you want to cancel this appointment?")) return
-
     setIsUpdatingApt(true)
     const res = await updatePatientFirestore(aptId, { status: "cancelled" })
     setIsUpdatingApt(false)
 
     if (res) {
-      toast({
-        title: "Appointment Cancelled",
-        description: "Your appointment status has been updated to cancelled.",
-      })
-      loadAppointments()
+      toast({ title: "Appointment Cancelled", description: "Your appointment status was set to cancelled." })
+      loadData()
     } else {
-      toast({
-        title: "Update Failed",
-        description: "Could not update appointment status. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Cancel Failed", description: "Could not update appointment.", variant: "destructive" })
     }
   }
 
   const handleSaveReschedule = async () => {
     if (!rescheduleApt || !rescheduleDate) {
-      toast({
-        title: "Date Required",
-        description: "Please select a valid new appointment date.",
-        variant: "destructive",
-      })
+      toast({ title: "Select Date", description: "Please enter a valid date.", variant: "destructive" })
       return
     }
 
@@ -227,66 +317,44 @@ export default function PatientPortalPage() {
     setIsUpdatingApt(false)
 
     if (res) {
-      toast({
-        title: "Rescheduled Successfully!",
-        description: `Appointment updated to ${rescheduleDate} at ${rescheduleTime}.`,
-      })
+      toast({ title: "Rescheduled!", description: `Updated to ${rescheduleDate} at ${rescheduleTime}.` })
       setRescheduleApt(null)
-      loadAppointments()
+      loadData()
     } else {
-      toast({
-        title: "Reschedule Failed",
-        description: "Could not update appointment date.",
-        variant: "destructive",
-      })
+      toast({ title: "Reschedule Failed", description: "Could not update date.", variant: "destructive" })
     }
   }
 
   const handleLogSymptomSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (appointments.length === 0) {
-      toast({
-        title: "No Active Booking",
-        description: "Please book an appointment first to attach pre-visit symptom logs.",
-        variant: "destructive",
-      })
+      toast({ title: "No Active Record", description: "Please schedule an appointment first.", variant: "destructive" })
       return
     }
 
-    const latestApt = appointments[0]
     setIsLoggingSymptom(true)
-    const res = await updatePatientFirestore(latestApt.id, {
-      chief_complaint: `[Pre-Visit Log] Pain Level ${painLevel}/10 in ${affectedRegion}: ${symptomDescription || "No additional notes"}`,
+    const res = await updatePatientFirestore(appointments[0].id, {
+      chief_complaint: `[Pre-Visit Log] Pain Level ${painLevel}/10 in ${affectedRegion}: ${symptomDescription || "No notes"}`,
     })
     setIsLoggingSymptom(false)
 
     if (res) {
-      toast({
-        title: "Symptom Notes Saved!",
-        description: "Dr. Bashir Khan has received your pre-visit spinal complaint update.",
-      })
+      toast({ title: "Symptom Note Saved!", description: "Pre-visit note forwarded to Dr. Bashir Khan." })
       setSymptomDescription("")
-      loadAppointments()
+      loadData()
     } else {
-      toast({
-        title: "Logging Failed",
-        description: "Could not save symptom log. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Submission Failed", description: "Could not record symptom note.", variant: "destructive" })
     }
   }
 
   const toggleRehabTask = (id: number) => {
-    setRehabTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
-    )
+    setRehabTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
   }
 
   const completedRehabCount = rehabTasks.filter((t) => t.done).length
 
   const filteredAppointments = appointments.filter((apt) => {
-    const matchesStatus =
-      filterStatus === "all" || apt.status?.toLowerCase() === filterStatus.toLowerCase()
+    const matchesStatus = filterStatus === "all" || apt.status?.toLowerCase() === filterStatus.toLowerCase()
     const matchesSearch =
       !searchQuery ||
       apt.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -295,239 +363,195 @@ export default function PatientPortalPage() {
     return matchesStatus && matchesSearch
   })
 
+  const filteredPrescriptions = prescriptions.filter((rx) => {
+    if (!prescriptionSearch) return true
+    const term = prescriptionSearch.toLowerCase()
+    return (
+      rx.id?.toLowerCase().includes(term) ||
+      rx.treatment_plan?.toLowerCase().includes(term) ||
+      rx.prescribed_medicine?.toLowerCase().includes(term)
+    )
+  })
+
   const upcomingAppointment = appointments.find(
     (a) => a.status?.toLowerCase() === "confirmed" || a.status?.toLowerCase() === "scheduled"
   )
-
   const completedCount = appointments.filter((a) => a.status?.toLowerCase() === "completed").length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100 flex flex-col">
-      {/* HEADER BAR */}
-      <header className="bg-gradient-to-r from-[#173e4d] via-[#245064] to-[#1a4454] border-b border-white/10 text-white shadow-xl sticky top-0 z-40 backdrop-blur-md">
-        <div className="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-11 w-11 rounded-2xl bg-gradient-to-tr from-[#2a9d8f] to-[#38b2a0] flex items-center justify-center shadow-lg font-bold text-lg text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      {/* TOP NAVBAR */}
+      <header className="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
+        <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#2a9d8f] to-[#38b2a0] flex items-center justify-center font-bold text-white shadow-md">
               {patientName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-white">{patientName}</h1>
-                <Badge className="bg-[#2a9d8f] text-white hover:bg-[#238a7a] text-xs">Patient Portal</Badge>
+                <h1 className="text-lg font-bold text-white">{patientName}</h1>
+                <Badge className="bg-[#2a9d8f]/20 text-[#2a9d8f] border-[#2a9d8f]/30 text-[10px]">Patient Portal</Badge>
               </div>
-              <p className="text-xs text-white/70">{patientEmail || "Gonstead Chiropractic Patient"}</p>
+              <p className="text-xs text-slate-400">{patientEmail || "Gonstead Chiropractic Patient"}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
             <Button
               onClick={handleInstallPwa}
               variant="outline"
               size="sm"
-              className="border-emerald-400/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 text-xs font-semibold shadow-sm"
-              title="Install Patient App to Home Screen"
+              className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-xs hidden sm:flex"
             >
               <Smartphone className="h-4 w-4 mr-1 text-emerald-400" />
-              <span>Install App</span>
+              <span>App</span>
             </Button>
 
             <Button
               onClick={() => setIsBookModalOpen(true)}
-              className="bg-gradient-to-r from-[#2a9d8f] to-[#238a7a] hover:from-[#238a7a] hover:to-[#1d7366] text-white font-medium text-xs sm:text-sm shadow-md"
+              size="sm"
+              className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs font-semibold shadow-md"
             >
-              <PlusCircle className="h-4 w-4 mr-1 sm:mr-2" />
-              Book Appointment
+              <PlusCircle className="h-4 w-4 mr-1.5" />
+              Book Adjustment
             </Button>
 
-            <Button
-              onClick={() => router.push("/")}
-              variant="outline"
-              size="sm"
-              className="border-white/20 text-white hover:bg-white/10 hidden sm:flex"
-            >
+            <Button onClick={() => router.push("/")} variant="outline" size="sm" className="border-slate-700 text-slate-300 hidden md:flex text-xs">
               <Home className="h-4 w-4 mr-1" />
-              Site Home
+              Site
             </Button>
 
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              size="sm"
-              className="text-red-300 hover:text-red-100 hover:bg-red-500/20"
-              title="Sign Out"
-            >
+            <Button onClick={handleLogout} variant="ghost" size="sm" className="text-rose-400 hover:bg-rose-500/10 text-xs">
               <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Sign Out</span>
+              <span className="hidden sm:inline ml-1">Exit</span>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* 24-HOUR PRE-APPOINTMENT REMINDER BANNER */}
+      {/* 24-HOUR REMINDERS BANNER */}
       {reminders.length > 0 && (
-        <section className="container mx-auto px-4 sm:px-6 pt-4">
-          <div className="space-y-2">
-            {reminders.map((rem, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-teal-500/20 to-emerald-500/20 border-2 border-amber-400/40 text-amber-200 shadow-xl flex items-center justify-between gap-4 backdrop-blur-md animate-pulse"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-amber-500/30 text-amber-300">
-                    <BellRing className="h-6 w-6 animate-bounce" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-amber-100 flex items-center gap-2">
-                      Upcoming Appointment Alert ({rem.isTomorrow ? "Tomorrow" : "Today"})
-                    </h4>
-                    <p className="text-xs text-amber-200/90 mt-0.5">{rem.message}</p>
-                  </div>
+        <div className="container mx-auto px-4 pt-4">
+          {reminders.map((rem, idx) => (
+            <div key={idx} className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 flex items-center justify-between gap-4 mb-2">
+              <div className="flex items-center gap-3">
+                <BellRing className="h-6 w-6 text-amber-400 animate-bounce flex-shrink-0" />
+                <div>
+                  <h4 className="font-bold text-xs text-amber-100">Reminder: Adjustment Visit ({rem.isTomorrow ? "Tomorrow" : "Today"})</h4>
+                  <p className="text-xs text-amber-200/80">{rem.message}</p>
                 </div>
-                <Button
-                  onClick={() => setIsBookModalOpen(true)}
-                  size="sm"
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold text-xs"
-                >
-                  View Details
-                </Button>
               </div>
-            ))}
-          </div>
-        </section>
+              <Button onClick={() => setIsBookModalOpen(true)} size="sm" className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs">
+                View
+              </Button>
+            </div>
+          ))}
+        </div>
       )}
 
-      {/* QUICK STATS CARDS BAR */}
-      <section className="container mx-auto px-4 sm:px-6 pt-6 pb-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Stat 1: Next Appointment */}
-          <Card className="bg-slate-800/80 border-slate-700 text-slate-100 shadow-md">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-teal-500/20 text-teal-400">
-                <Calendar className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium">Next Appointment</p>
-                <p className="text-sm font-semibold text-slate-100 mt-0.5">
-                  {upcomingAppointment
-                    ? `${upcomingAppointment.appointment_date} (${upcomingAppointment.appointment_time || "10:00 AM"})`
-                    : "No Upcoming Visit"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+      {/* QUICK STATS CARDS */}
+      <div className="container mx-auto px-4 pt-6 pb-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-slate-900 border-slate-800">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="p-3 rounded-xl bg-[#2a9d8f]/20 text-[#2a9d8f]">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Next Adjustment</p>
+              <p className="text-sm font-semibold text-slate-100 mt-0.5">
+                {upcomingAppointment ? `${upcomingAppointment.appointment_date} (${upcomingAppointment.appointment_time || "10:00 AM"})` : "No Visit Scheduled"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Stat 2: Completed Sessions */}
-          <Card className="bg-slate-800/80 border-slate-700 text-slate-100 shadow-md">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-blue-500/20 text-blue-400">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium">Completed Adjustments</p>
-                <p className="text-xl font-bold text-slate-100 mt-0.5">{completedCount} Sessions</p>
-              </div>
-            </CardContent>
-          </Card>
+        <Card className="bg-slate-900 border-slate-800">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Completed Sessions</p>
+              <p className="text-xl font-bold text-slate-100 mt-0.5">{completedCount} Adjustments</p>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Stat 3: Spine Health Score */}
-          <Card className="bg-slate-800/80 border-slate-700 text-slate-100 shadow-md">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400">
-                <Activity className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium">Spine Alignment Index</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-xl font-bold text-emerald-400">92%</p>
-                  <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 text-[10px]">
-                    Optimal
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <Card className="bg-slate-900 border-slate-800">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="p-3 rounded-xl bg-purple-500/20 text-purple-400">
+              <Pill className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Digital Prescriptions</p>
+              <p className="text-xl font-bold text-purple-300 mt-0.5">{prescriptions.length} Records</p>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Stat 4: Primary Specialist */}
-          <Card className="bg-slate-800/80 border-slate-700 text-slate-100 shadow-md">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-purple-500/20 text-purple-400">
-                <Stethoscope className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium">Gonstead Specialist</p>
-                <p className="text-sm font-semibold text-slate-100 mt-0.5">Dr. Bashir Khan</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+        <Card className="bg-slate-900 border-slate-800">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400">
+              <Stethoscope className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Lead Specialist</p>
+              <p className="text-sm font-semibold text-slate-100 mt-0.5">Dr. Bashir Khan</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* MAIN CONTENT AREA */}
-      <main className="container mx-auto px-4 sm:px-6 py-6 flex-1">
-        <Tabs defaultValue="appointments" className="w-full space-y-6">
-          <TabsList className="bg-slate-800 border border-slate-700 p-1 rounded-xl grid grid-cols-2 sm:grid-cols-5 max-w-4xl">
-            <TabsTrigger
-              value="appointments"
-              className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-slate-300 font-medium text-xs sm:text-sm"
-            >
-              <Calendar className="h-4 w-4 mr-1.5 hidden sm:inline" />
-              Appointments
+      <main className="container mx-auto px-4 py-6 flex-1">
+        <Tabs defaultValue="appointments" className="space-y-6">
+          <TabsList className="bg-slate-900 border border-slate-800 p-1 rounded-xl grid grid-cols-2 sm:grid-cols-6 w-full max-w-5xl">
+            <TabsTrigger value="appointments" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+              <Calendar className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
+              Visits
             </TabsTrigger>
-            <TabsTrigger
-              value="rehab"
-              className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-slate-300 font-medium text-xs sm:text-sm"
-            >
-              <Activity className="h-4 w-4 mr-1.5 hidden sm:inline" />
-              Daily Care
+            <TabsTrigger value="prescriptions" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+              <Pill className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
+              Prescriptions
             </TabsTrigger>
-            <TabsTrigger
-              value="symptoms"
-              className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-slate-300 font-medium text-xs sm:text-sm"
-            >
-              <Thermometer className="h-4 w-4 mr-1.5 hidden sm:inline" />
-              Pre-Visit Intake
+            <TabsTrigger value="rehab" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+              <Activity className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
+              Rehab & Care
             </TabsTrigger>
-            <TabsTrigger
-              value="records"
-              className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-slate-300 font-medium text-xs sm:text-sm"
-            >
-              <FileText className="h-4 w-4 mr-1.5 hidden sm:inline" />
-              Spine Records
+            <TabsTrigger value="symptoms" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+              <Thermometer className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
+              Pre-Visit Note
             </TabsTrigger>
-            <TabsTrigger
-              value="profile"
-              className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-slate-300 font-medium text-xs sm:text-sm"
-            >
-              <User className="h-4 w-4 mr-1.5 hidden sm:inline" />
+            <TabsTrigger value="records" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+              <FileText className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
+              Clinical Notes
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+              <User className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
               My Profile
             </TabsTrigger>
           </TabsList>
 
-          {/* TAB 1: APPOINTMENTS & SELF-SERVICE */}
-          <TabsContent value="appointments" className="space-y-4">
-            <Card className="bg-slate-800/90 border-slate-700 text-slate-100 shadow-xl">
-              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4">
+          {/* TAB 1: APPOINTMENTS */}
+          <TabsContent value="appointments">
+            <Card className="bg-slate-900 border-slate-800">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
                 <div>
-                  <CardTitle className="text-xl text-white font-bold flex items-center gap-2">
+                  <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-[#2a9d8f]" />
-                    Personal Appointment History & Actions
+                    Appointment History & Self-Service
                   </CardTitle>
-                  <CardDescription className="text-slate-400 text-xs sm:text-sm">
-                    Manage your visits, reschedule dates, cancel appointments, or print confirmation slips.
-                  </CardDescription>
+                  <CardDescription className="text-xs text-slate-400">Reschedule, cancel, or print official clinic appointment slips.</CardDescription>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                  {/* Status Filter Buttons */}
-                  <div className="flex bg-slate-900/60 p-1 rounded-lg border border-slate-700 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
                     {["all", "scheduled", "completed", "cancelled"].map((st) => (
                       <button
                         key={st}
                         onClick={() => setFilterStatus(st)}
-                        className={`px-2.5 py-1 rounded-md capitalize transition-all ${
-                          filterStatus === st
-                            ? "bg-[#2a9d8f] text-white font-semibold"
-                            : "text-slate-400 hover:text-white"
+                        className={`px-2.5 py-1 rounded capitalize transition-all ${
+                          filterStatus === st ? "bg-[#2a9d8f] text-white font-semibold" : "text-slate-400 hover:text-white"
                         }`}
                       >
                         {st}
@@ -535,41 +559,28 @@ export default function PatientPortalPage() {
                     ))}
                   </div>
 
-                  <Button
-                    onClick={() => loadAppointments()}
-                    variant="outline"
-                    size="sm"
-                    className="border-slate-700 text-slate-300 hover:bg-slate-700 text-xs"
-                    title="Refresh List"
-                  >
+                  <Button onClick={() => loadData()} variant="outline" size="sm" className="border-slate-800 text-slate-300 text-xs">
                     <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                   </Button>
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4">
+              <CardContent>
                 {isLoading ? (
                   <div className="py-12 text-center text-slate-400 space-y-2">
                     <RefreshCw className="h-8 w-8 animate-spin mx-auto text-[#2a9d8f]" />
-                    <p className="text-sm">Loading your Firestore appointment history...</p>
+                    <p className="text-xs">Fetching your Firestore appointments...</p>
                   </div>
                 ) : filteredAppointments.length === 0 ? (
-                  <div className="py-12 text-center border-2 border-dashed border-slate-700 rounded-xl p-6">
-                    <Calendar className="h-10 w-10 text-slate-500 mx-auto mb-3" />
-                    <p className="text-base font-semibold text-slate-300">No appointments found</p>
-                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                      You haven't scheduled any appointments matching this filter yet. Click below to book your first Gonstead adjustment.
-                    </p>
-                    <Button
-                      onClick={() => setIsBookModalOpen(true)}
-                      className="mt-4 bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs"
-                    >
-                      <PlusCircle className="h-4 w-4 mr-2" />
-                      Book New Appointment
+                  <div className="py-12 text-center border border-dashed border-slate-800 rounded-xl p-6">
+                    <Calendar className="h-8 w-8 text-slate-600 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-slate-300">No matching appointments found</p>
+                    <Button onClick={() => setIsBookModalOpen(true)} className="mt-3 bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs">
+                      <PlusCircle className="h-4 w-4 mr-1.5" /> Book Adjustment
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="space-y-3">
                     {filteredAppointments.map((apt) => {
                       const st = apt.status?.toLowerCase() || "scheduled"
                       const badgeVariant =
@@ -582,51 +593,28 @@ export default function PatientPortalPage() {
                           : "bg-amber-500/20 text-amber-300 border-amber-500/30"
 
                       return (
-                        <div
-                          key={apt.id}
-                          className="p-4 rounded-xl bg-slate-900/60 border border-slate-700/80 hover:border-slate-600 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                        >
+                        <div key={apt.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <Badge className={`text-xs capitalize ${badgeVariant}`}>{st}</Badge>
-                              <span className="text-xs font-mono text-slate-400">Ref: #{apt.id.slice(-6).toUpperCase()}</span>
+                              <span className="text-[11px] font-mono text-slate-500">Ref: #{apt.id.slice(-6).toUpperCase()}</span>
                             </div>
-                            <p className="text-base font-bold text-white capitalize">
+                            <p className="text-sm font-bold text-white capitalize">
                               {apt.session_type === "video" ? "Video Consultation" : "In-Clinic Gonstead Adjustment"}
                             </p>
                             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mt-1">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3.5 w-3.5 text-[#2a9d8f]" />
-                                {apt.appointment_date}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3.5 w-3.5 text-[#2a9d8f]" />
-                                {apt.appointment_time || "10:00 AM"}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Stethoscope className="h-3.5 w-3.5 text-[#2a9d8f]" />
-                                Dr. Bashir Khan
-                              </span>
+                              <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-[#2a9d8f]" /> {apt.appointment_date}</span>
+                              <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-[#2a9d8f]" /> {apt.appointment_time || "10:00 AM"}</span>
+                              <span className="flex items-center gap-1"><Stethoscope className="h-3.5 w-3.5 text-[#2a9d8f]" /> Dr. Bashir Khan</span>
                             </div>
-                            {apt.chief_complaint && (
-                              <p className="text-xs text-slate-300 mt-1 italic">
-                                "{apt.chief_complaint}"
-                              </p>
-                            )}
+                            {apt.chief_complaint && <p className="text-xs text-slate-300 italic mt-1">"{apt.chief_complaint}"</p>}
                           </div>
 
                           <div className="flex items-center gap-2 self-end sm:self-center">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="border-slate-700 text-slate-300 hover:bg-slate-700 text-xs"
-                              onClick={() => setPrintSlipApt(apt)}
-                              title="Print Appointment Slip"
-                            >
+                            <Button size="sm" variant="outline" className="border-slate-800 text-slate-300 hover:bg-slate-800 text-xs" onClick={() => setPrintSlipApt(apt)}>
                               <Printer className="h-3.5 w-3.5 sm:mr-1" />
                               <span className="hidden sm:inline">Slip</span>
                             </Button>
-
                             {st === "scheduled" || st === "confirmed" ? (
                               <>
                                 <Button
@@ -642,13 +630,7 @@ export default function PatientPortalPage() {
                                   <Edit3 className="h-3.5 w-3.5 sm:mr-1" />
                                   <span className="hidden sm:inline">Reschedule</span>
                                 </Button>
-
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-rose-400 hover:text-rose-200 hover:bg-rose-500/10 text-xs"
-                                  onClick={() => handleCancelAppointment(apt.id)}
-                                >
+                                <Button size="sm" variant="ghost" className="text-rose-400 hover:bg-rose-500/10 text-xs" onClick={() => handleCancelAppointment(apt.id)}>
                                   <XCircle className="h-3.5 w-3.5 sm:mr-1" />
                                   <span className="hidden sm:inline">Cancel</span>
                                 </Button>
@@ -664,87 +646,149 @@ export default function PatientPortalPage() {
             </Card>
           </TabsContent>
 
-          {/* TAB 2: DAILY REHAB & CARE TRACKER */}
-          <TabsContent value="rehab" className="space-y-4">
-            <Card className="bg-slate-800/90 border-slate-700 text-slate-100 shadow-xl">
-              <CardHeader className="flex flex-row items-center justify-between">
+          {/* TAB 2: DIGITAL PRESCRIPTIONS */}
+          <TabsContent value="prescriptions">
+            <Card className="bg-slate-900 border-slate-800">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <CardTitle className="text-xl text-white font-bold flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-[#2a9d8f]" />
-                    Daily Spine Rehab & Hydration Tracker
+                  <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                    <Pill className="h-5 w-5 text-purple-400" />
+                    My Digital Prescriptions & Clinical Records
                   </CardTitle>
-                  <CardDescription className="text-slate-400 text-xs sm:text-sm">
-                    Track your daily post-adjustment care exercises prescribed by Dr. Bashir Khan.
-                  </CardDescription>
+                  <CardDescription className="text-xs text-slate-400">Official Gonstead prescriptions & treatment protocols created by Dr. Bashir Khan.</CardDescription>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xl font-bold text-emerald-400">
-                    {Math.round((completedRehabCount / rehabTasks.length) * 100)}%
-                  </span>
-                  <p className="text-[10px] text-slate-400">Daily Goal</p>
+
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                  <Input
+                    value={prescriptionSearch}
+                    onChange={(e) => setPrescriptionSearch(e.target.value)}
+                    placeholder="Search prescription..."
+                    className="pl-9 bg-slate-950 border-slate-800 text-xs text-white"
+                  />
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  {rehabTasks.map((t) => (
-                    <div
-                      key={t.id}
-                      onClick={() => toggleRehabTask(t.id)}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${
-                        t.done
-                          ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-200"
-                          : "bg-slate-900/60 border-slate-700 text-slate-300 hover:border-slate-500"
-                      }`}
-                    >
-                      {t.done ? (
-                        <CheckSquare className="h-5 w-5 text-emerald-400 flex-shrink-0" />
-                      ) : (
-                        <Square className="h-5 w-5 text-slate-500 flex-shrink-0" />
-                      )}
-                      <span className={`text-sm font-medium ${t.done ? "line-through opacity-80" : ""}`}>
-                        {t.title}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+
+              <CardContent>
+                {isLoadingPrescriptions ? (
+                  <div className="py-12 text-center text-slate-400 space-y-2">
+                    <RefreshCw className="h-8 w-8 animate-spin mx-auto text-purple-400" />
+                    <p className="text-xs">Loading digital prescriptions from Firestore...</p>
+                  </div>
+                ) : filteredPrescriptions.length === 0 ? (
+                  <div className="py-12 text-center border border-dashed border-slate-800 rounded-xl p-6">
+                    <FileCheck className="h-8 w-8 text-slate-600 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-slate-300">No prescriptions on record</p>
+                    <p className="text-xs text-slate-500 mt-1">Prescriptions issued by Dr. Bashir Khan during clinic visits will appear here automatically.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredPrescriptions.map((rx) => (
+                      <div key={rx.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px]">Rx #{rx.id}</Badge>
+                            <span className="text-[11px] text-slate-400">{rx.visit_date ? new Date(rx.visit_date).toLocaleDateString() : rx.created_at?.split("T")[0]}</span>
+                          </div>
+                          <span className="text-xs font-semibold text-emerald-400">{rx.payment_status || "Completed"}</span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-bold text-white">Diagnosis / Protocol</h4>
+                          <p className="text-xs text-slate-300 mt-0.5 line-clamp-2">{rx.treatment_plan || "Gonstead Spinal Adjustment Routine"}</p>
+                        </div>
+
+                        {rx.prescribed_medicine && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-purple-300">Prescribed Medicine / Supplements:</h4>
+                            <p className="text-xs text-slate-400 mt-0.5 italic">{rx.prescribed_medicine}</p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+                          <span className="text-slate-400">Total Sessions: <strong className="text-white">{rx.total_sessions || "1"}</strong></span>
+                          <Button size="sm" onClick={() => setSelectedPrescription(rx)} className="bg-purple-600 hover:bg-purple-700 text-white text-xs">
+                            <Printer className="h-3.5 w-3.5 mr-1" /> View & Print Rx
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* TAB 3: PRE-VISIT SYMPTOM & PAIN INTAKE */}
-          <TabsContent value="symptoms" className="space-y-4">
-            <Card className="bg-slate-800/90 border-slate-700 text-slate-100 shadow-xl">
+          {/* TAB 3: REHAB & CARE TRACKER */}
+          <TabsContent value="rehab">
+            <Card className="bg-slate-900 border-slate-800">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <div>
+                  <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-[#2a9d8f]" />
+                    Daily Gonstead Spine Rehab & Home Exercises
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-400">Post-adjustment exercise library & hydrative disc management.</CardDescription>
+                </div>
+                <div className="text-right">
+                  <span className="text-xl font-bold text-emerald-400">{Math.round((completedRehabCount / rehabTasks.length) * 100)}%</span>
+                  <p className="text-[10px] text-slate-500">Daily Completion</p>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {rehabTasks.map((t) => (
+                  <div
+                    key={t.id}
+                    onClick={() => toggleRehabTask(t.id)}
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                      t.done ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200" : "bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {t.done ? <CheckSquare className="h-5 w-5 text-emerald-400 mt-0.5 flex-shrink-0" /> : <Square className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />}
+                      <div>
+                        <span className={`text-xs font-bold ${t.done ? "line-through opacity-80" : "text-white"}`}>{t.title}</span>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{t.desc}</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="border-slate-800 text-slate-400 text-[10px] flex-shrink-0">{t.region}</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* TAB 4: PRE-VISIT SYMPTOM INTAKE */}
+          <TabsContent value="symptoms">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
-                <CardTitle className="text-xl text-white font-bold flex items-center gap-2">
+                <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
                   <Thermometer className="h-5 w-5 text-[#2a9d8f]" />
-                  Pre-Visit Symptom & Pain Level Intake
+                  Pre-Visit Pain Rating & Symptom Intake
                 </CardTitle>
-                <CardDescription className="text-slate-400 text-xs sm:text-sm">
-                  Log your current spinal pain rating so Dr. Bashir Khan can prepare your adjustment plan before your visit.
-                </CardDescription>
+                <CardDescription className="text-xs text-slate-400">Log pain scale so Dr. Bashir Khan can prepare your spinal adjustment before arrival.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleLogSymptomSubmit} className="space-y-5">
-                  {/* Pain Level Rating */}
+                <form onSubmit={handleLogSymptomSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label className="text-white text-sm font-semibold">Current Pain Level (1 to 10)</Label>
-                      <Badge className="bg-[#2a9d8f] text-white text-sm font-bold">{painLevel} / 10</Badge>
+                      <Label className="text-white text-xs font-semibold">Pain Scale Rating (1 to 10)</Label>
+                      <Badge className="bg-[#2a9d8f] text-white text-xs font-bold">{painLevel} / 10</Badge>
                     </div>
-                    <div className="grid grid-cols-10 gap-1.5 pt-1">
+                    <div className="grid grid-cols-10 gap-1 pt-1">
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                         <button
                           key={num}
                           type="button"
                           onClick={() => setPainLevel(num)}
-                          className={`py-2 rounded-lg font-bold text-xs transition-all ${
+                          className={`py-2 rounded font-bold text-xs transition-all ${
                             painLevel === num
                               ? num > 7
-                                ? "bg-rose-600 text-white shadow-lg"
+                                ? "bg-rose-600 text-white"
                                 : num > 4
-                                ? "bg-amber-500 text-white shadow-lg"
-                                : "bg-emerald-500 text-white shadow-lg"
-                              : "bg-slate-900 border border-slate-700 text-slate-400 hover:text-white"
+                                ? "bg-amber-500 text-white"
+                                : "bg-emerald-500 text-white"
+                              : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-white"
                           }`}
                         >
                           {num}
@@ -753,24 +797,16 @@ export default function PatientPortalPage() {
                     </div>
                   </div>
 
-                  {/* Primary Affected Spine Region */}
                   <div className="space-y-2">
-                    <Label className="text-white text-sm font-semibold">Primary Affected Spine Region</Label>
+                    <Label className="text-white text-xs font-semibold">Primary Affected Spine Region</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {[
-                        "Lumbar Spine (L4-L5 Lower Back)",
-                        "Cervical Spine (Neck & Shoulders)",
-                        "Thoracic Spine (Mid Back)",
-                        "Sciatica & Sacroiliac Joint",
-                      ].map((reg) => (
+                      {["Lumbar Spine (L4-L5 Lower Back)", "Cervical Spine (Neck & Shoulders)", "Thoracic Spine (Mid Back)", "Sciatica & SI Joint"].map((reg) => (
                         <button
                           key={reg}
                           type="button"
                           onClick={() => setAffectedRegion(reg)}
-                          className={`p-3 text-left text-xs font-semibold rounded-xl border transition-all ${
-                            affectedRegion === reg
-                              ? "bg-[#2a9d8f]/20 border-[#2a9d8f] text-white"
-                              : "bg-slate-900/60 border-slate-700 text-slate-400 hover:text-white"
+                          className={`p-2.5 text-left text-xs rounded-lg border transition-all ${
+                            affectedRegion === reg ? "bg-[#2a9d8f]/20 border-[#2a9d8f] text-white font-semibold" : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
                           }`}
                         >
                           {reg}
@@ -779,99 +815,99 @@ export default function PatientPortalPage() {
                     </div>
                   </div>
 
-                  {/* Additional Description */}
                   <div className="space-y-2">
-                    <Label htmlFor="symptom-notes" className="text-white text-sm font-semibold">
-                      Symptom Details / Aggravating Movements
-                    </Label>
+                    <Label className="text-white text-xs font-semibold">Aggravating Factors & Notes</Label>
                     <Input
-                      id="symptom-notes"
                       value={symptomDescription}
                       onChange={(e) => setSymptomDescription(e.target.value)}
-                      placeholder="e.g., Pain worsens when sitting for long periods, stiffness in morning..."
-                      className="bg-slate-900/60 border-slate-700 text-white placeholder:text-slate-500"
+                      placeholder="e.g., stiffness in morning, pain radiates down leg..."
+                      className="bg-slate-950 border-slate-800 text-xs text-white"
                     />
                   </div>
 
-                  <Button
-                    type="submit"
-                    disabled={isLoggingSymptom}
-                    className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-semibold py-3 rounded-xl shadow-lg"
-                  >
-                    {isLoggingSymptom ? (
-                      <div className="flex items-center gap-2">
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                        <span>Sending to Doctor...</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" />
-                        <span>Send Pre-Visit Symptom Note to Dr. Bashir Khan</span>
-                      </div>
-                    )}
+                  <Button type="submit" disabled={isLoggingSymptom} className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs font-semibold py-2.5">
+                    {isLoggingSymptom ? <RefreshCw className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                    <span>Forward Pre-Visit Note to Dr. Bashir Khan</span>
                   </Button>
                 </form>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* TAB 4: SPINE RECORDS */}
-          <TabsContent value="records" className="space-y-4">
-            <Card className="bg-slate-800/90 border-slate-700 text-slate-100 shadow-xl">
+          {/* TAB 5: CLINICAL NOTES & SPINE RECORDS */}
+          <TabsContent value="records">
+            <Card className="bg-slate-900 border-slate-800">
               <CardHeader>
-                <CardTitle className="text-xl text-white font-bold flex items-center gap-2">
+                <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
                   <FileText className="h-5 w-5 text-[#2a9d8f]" />
-                  Spinal Evaluation & Gonstead Subluxation Analysis
+                  Spinal Subluxation & Evaluation History
                 </CardTitle>
-                <CardDescription className="text-slate-400 text-xs sm:text-sm">
-                  Clinical spinal evaluation notes recorded by Dr. Bashir Khan.
-                </CardDescription>
+                <CardDescription className="text-xs text-slate-400">Recorded clinical assessments from your Gonstead spinal examinations.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-700 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
-                      Active Treatment Plan
-                    </Badge>
-                    <span className="text-xs text-slate-400">Dr. Bashir Khan</span>
+              <CardContent className="space-y-3">
+                {appointments.length > 0 && appointments[0].notes ? (
+                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Active Clinical Record</Badge>
+                      <span className="text-xs text-slate-400">Dr. Bashir Khan</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{appointments[0].notes}</p>
                   </div>
-                  <h3 className="font-bold text-white text-base">Gonstead Full-Spine Analysis & Subluxation Report</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Patient presents with mild L4-L5 lumbar spinal subluxation and cervical curvature imbalance. Recommended 6 to 8 precision Gonstead adjustments, ergonomic lumbar support, and daily neck extension stretches.
-                  </p>
-                </div>
+                ) : (
+                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Active Gonstead Care</Badge>
+                      <span className="text-xs text-slate-400">Dr. Bashir Khan</span>
+                    </div>
+                    <h3 className="font-bold text-white text-sm">Full-Spine Gonstead Analysis</h3>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Precision examination of temperature differentials, instrumentation, static palpation, motion palpation, and full-spine X-rays to locate primary vertebral subluxations.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* TAB 5: MY PROFILE */}
-          <TabsContent value="profile" className="space-y-4">
-            <Card className="bg-slate-800/90 border-slate-700 text-slate-100 shadow-xl">
-              <CardHeader>
-                <CardTitle className="text-xl text-white font-bold flex items-center gap-2">
-                  <User className="h-5 w-5 text-[#2a9d8f]" />
-                  Patient Profile Credentials
-                </CardTitle>
-                <CardDescription className="text-slate-400 text-xs sm:text-sm">
-                  Your registered patient details stored securely in Firestore.
-                </CardDescription>
+          {/* TAB 6: MY PROFILE MANAGEMENT */}
+          <TabsContent value="profile">
+            <Card className="bg-slate-900 border-slate-800">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                    <User className="h-5 w-5 text-[#2a9d8f]" />
+                    Patient Account & Profile Management
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-400">Manage your patient credentials and contact information in Firestore.</CardDescription>
+                </div>
+                <Button onClick={() => setIsEditProfileOpen(true)} size="sm" className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs">
+                  <Edit3 className="h-3.5 w-3.5 mr-1" /> Edit Profile
+                </Button>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-700">
-                  <span className="text-slate-400 font-medium">Full Name</span>
-                  <p className="text-sm font-bold text-white mt-1">{patientName}</p>
+              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Full Name</span>
+                  <p className="text-sm font-bold text-white mt-0.5">{patientName}</p>
                 </div>
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-700">
-                  <span className="text-slate-400 font-medium">Registered Email</span>
-                  <p className="text-sm font-bold text-white mt-1">{patientEmail || "Not Provided"}</p>
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Registered Email</span>
+                  <p className="text-sm font-bold text-white mt-0.5">{patientEmail || "Not Provided"}</p>
                 </div>
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-700">
-                  <span className="text-slate-400 font-medium">Phone Number</span>
-                  <p className="text-sm font-bold text-white mt-1">{patientPhone || "Not Provided"}</p>
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Phone Number</span>
+                  <p className="text-sm font-bold text-white mt-0.5">{patientPhone || "Not Provided"}</p>
                 </div>
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-700">
-                  <span className="text-slate-400 font-medium">Firebase Auth ID</span>
-                  <p className="text-xs font-mono text-slate-300 mt-1 truncate">{patientUid || "Logged In"}</p>
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Date of Birth / Gender</span>
+                  <p className="text-sm font-bold text-white mt-0.5">{editDob || "N/A"} ({editGender})</p>
+                </div>
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Emergency Contact</span>
+                  <p className="text-sm font-bold text-white mt-0.5">{editEmergency || "Not Provided"}</p>
+                </div>
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-slate-500">Clinic Address / City</span>
+                  <p className="text-sm font-bold text-white mt-0.5">{editAddress || "Nowshera, KPK"}</p>
                 </div>
               </CardContent>
             </Card>
@@ -879,119 +915,179 @@ export default function PatientPortalPage() {
         </Tabs>
       </main>
 
-      {/* RESCHEDULE DIALOG MODAL */}
-      <Dialog open={!!rescheduleApt} onOpenChange={(open) => !open && setRescheduleApt(null)}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-slate-100 max-w-md">
+      {/* EDIT PROFILE DIALOG */}
+      <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+        <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-[#2a9d8f]" />
-              Reschedule Appointment
+            <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <User className="h-5 w-5 text-[#2a9d8f]" /> Update Patient Profile
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label className="text-xs text-slate-300 font-medium">Select New Date *</Label>
-              <Input
-                type="date"
-                value={rescheduleDate}
-                onChange={(e) => setRescheduleDate(e.target.value)}
-                className="bg-slate-800 border-slate-700 text-white text-xs"
-              />
+          <div className="space-y-3 text-xs pt-2">
+            <div>
+              <Label className="text-slate-300">Full Name *</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-slate-300 font-medium">Select Preferred Time *</Label>
-              <Input
-                type="text"
-                value={rescheduleTime}
-                onChange={(e) => setRescheduleTime(e.target.value)}
-                placeholder="e.g. 11:30 AM"
-                className="bg-slate-800 border-slate-700 text-white text-xs"
-              />
+            <div>
+              <Label className="text-slate-300">Phone Number *</Label>
+              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+            </div>
+            <div>
+              <Label className="text-slate-300">Email Address *</Label>
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-slate-300">Date of Birth</Label>
+                <Input type="date" value={editDob} onChange={(e) => setEditDob(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+              </div>
+              <div>
+                <Label className="text-slate-300">Gender</Label>
+                <select value={editGender} onChange={(e) => setEditGender(e.target.value)} className="w-full h-9 bg-slate-950 border border-slate-800 rounded-md text-white text-xs px-2 mt-1">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <Label className="text-slate-300">Emergency Contact Phone</Label>
+              <Input value={editEmergency} onChange={(e) => setEditEmergency(e.target.value)} placeholder="+923001234567" className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+            </div>
+            <div>
+              <Label className="text-slate-300">Address / City</Label>
+              <Input value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Tehsil Road, Nowshera" className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
             </div>
 
-            <Button
-              onClick={handleSaveReschedule}
-              disabled={isUpdatingApt}
-              className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-semibold"
-            >
-              {isUpdatingApt ? "Updating Date..." : "Confirm Reschedule"}
+            <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-semibold py-2">
+              {isSavingProfile ? "Saving to Firestore..." : "Save Profile Updates"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* PRINTABLE APPOINTMENT SLIP MODAL */}
-      <Dialog open={!!printSlipApt} onOpenChange={(open) => !open && setPrintSlipApt(null)}>
+      {/* VIEW & PRINT DIGITAL PRESCRIPTION MODAL */}
+      <Dialog open={!!selectedPrescription} onOpenChange={(open) => !open && setSelectedPrescription(null)}>
         <DialogContent className="bg-white text-slate-900 max-w-lg p-6 rounded-2xl shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-center font-bold text-xl text-[#173e4d] flex items-center justify-center gap-2">
+            <DialogTitle className="text-center font-bold text-lg text-[#173e4d] flex items-center justify-center gap-2">
               <Stethoscope className="h-6 w-6 text-[#2a9d8f]" />
               Gonstead Chiropractic Clinic
             </DialogTitle>
-            <p className="text-center text-xs text-slate-500">Official Patient Appointment Slip</p>
+            <p className="text-center text-xs text-slate-500">Official Digital Prescription & Care Plan</p>
           </DialogHeader>
 
-          {printSlipApt && (
-            <div className="space-y-4 my-3 text-xs border-y py-4 border-slate-200">
+          {selectedPrescription && (
+            <div className="space-y-3 my-2 text-xs border-y py-4 border-slate-200">
+              <div className="flex justify-between">
+                <span className="font-semibold text-slate-600">Prescription ID:</span>
+                <span className="font-mono text-slate-900 font-bold">#{selectedPrescription.id}</span>
+              </div>
               <div className="flex justify-between">
                 <span className="font-semibold text-slate-600">Patient Name:</span>
-                <span className="font-bold text-slate-900">{patientName}</span>
+                <span className="font-bold text-slate-900">{selectedPrescription.patient_name || patientName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold text-slate-600">Reference ID:</span>
-                <span className="font-mono text-slate-900">#{printSlipApt.id.slice(-8).toUpperCase()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold text-slate-600">Date & Time:</span>
+                <span className="font-semibold text-slate-600">Visit Date:</span>
                 <span className="font-bold text-[#2a9d8f]">
-                  {printSlipApt.appointment_date} at {printSlipApt.appointment_time || "10:00 AM"}
+                  {selectedPrescription.visit_date ? new Date(selectedPrescription.visit_date).toLocaleDateString() : "Recent"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold text-slate-600">Specialist:</span>
-                <span className="font-bold text-slate-900">Dr. Bashir Khan</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold text-slate-600">Session Type:</span>
-                <span className="capitalize text-slate-900">
-                  {printSlipApt.session_type === "video" ? "Video Consultation" : "In-Clinic Gonstead Adjustment"}
-                </span>
+                <span className="font-semibold text-slate-600">Attending Specialist:</span>
+                <span className="font-bold text-slate-900">{selectedPrescription.doctor_name || "Dr. Bashir Khan"}</span>
               </div>
 
-              <div className="p-3 bg-slate-100 rounded-xl space-y-1 text-[11px] text-slate-600">
-                <p className="font-bold text-slate-800">Clinic Guidelines:</p>
-                <p>• Please arrive 10 minutes prior to your scheduled adjustment time.</p>
-                <p>• Bring previous spine X-rays or MRI reports if available.</p>
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <p className="font-bold text-slate-800">Treatment Plan / Protocol:</p>
+                <p className="text-slate-700">{selectedPrescription.treatment_plan || "Full-spine Gonstead adjusting protocol"}</p>
               </div>
+
+              {selectedPrescription.prescribed_medicine && (
+                <div className="p-3 bg-purple-50 rounded-xl space-y-1">
+                  <p className="font-bold text-purple-900">Prescribed Medicine / Supplements:</p>
+                  <p className="text-purple-800">{selectedPrescription.prescribed_medicine}</p>
+                </div>
+              )}
             </div>
           )}
 
           <div className="flex gap-2">
-            <Button
-              onClick={() => window.print()}
-              className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white"
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              Print / Save PDF
+            <Button onClick={() => window.print()} className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white">
+              <Printer className="h-4 w-4 mr-2" /> Print / Save PDF
             </Button>
-            <Button
-              onClick={() => setPrintSlipApt(null)}
-              variant="outline"
-              className="border-slate-300 text-slate-700"
-            >
+            <Button onClick={() => setSelectedPrescription(null)} variant="outline" className="border-slate-300 text-slate-700">
               Close
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* QUICK BOOKING DIALOG MODAL */}
-      <Dialog open={isBookModalOpen} onOpenChange={setIsBookModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700 text-slate-100 p-4 sm:p-6">
+      {/* RESCHEDULE DIALOG */}
+      <Dialog open={!!rescheduleApt} onOpenChange={(open) => !open && setRescheduleApt(null)}>
+        <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-              <Stethoscope className="h-5 w-5 text-[#2a9d8f]" />
-              Schedule Gonstead Appointment
+            <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-[#2a9d8f]" /> Reschedule Adjustment Visit
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-xs pt-2">
+            <div>
+              <Label className="text-slate-300">Select New Date *</Label>
+              <Input type="date" value={rescheduleDate} onChange={(e) => setRescheduleDate(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+            </div>
+            <div>
+              <Label className="text-slate-300">Select Preferred Time *</Label>
+              <Input type="text" value={rescheduleTime} onChange={(e) => setRescheduleTime(e.target.value)} placeholder="10:00 AM" className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+            </div>
+            <Button onClick={handleSaveReschedule} disabled={isUpdatingApt} className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-semibold">
+              {isUpdatingApt ? "Updating Date..." : "Confirm Reschedule"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* FULL APPOINTMENT CONFIRMATION SLIP & PDF DOWNLOAD DIALOG */}
+      <Dialog open={!!printSlipApt || !!viewConfirmationApt} onOpenChange={(open) => {
+        if (!open) {
+          setPrintSlipApt(null)
+          setViewConfirmationApt(null)
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-950 border-2 border-slate-700 text-slate-100 p-3 sm:p-6 pb-24 shadow-2xl rounded-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Appointment Confirmation Slip & PDF Download</DialogTitle>
+          </DialogHeader>
+          {(viewConfirmationApt || printSlipApt) && (
+            <AppointmentConfirmation
+              appointmentData={{
+                name: patientName,
+                phone: patientPhone,
+                sessionType: (viewConfirmationApt || printSlipApt)?.session_type || "in_clinic",
+                preferredTime: (viewConfirmationApt || printSlipApt)?.appointment_date || new Date().toISOString(),
+                profession: (viewConfirmationApt || printSlipApt)?.demographics?.occupation || "",
+                appointmentId: (viewConfirmationApt || printSlipApt)?.id
+              }}
+              onBackToHome={() => {
+                setPrintSlipApt(null)
+                setViewConfirmationApt(null)
+              }}
+              onNewAppointment={() => {
+                setPrintSlipApt(null)
+                setViewConfirmationApt(null)
+                setIsBookModalOpen(true)
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* QUICK BOOKING DIALOG */}
+      <Dialog open={isBookModalOpen} onOpenChange={setIsBookModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800 text-slate-100 p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <Stethoscope className="h-5 w-5 text-[#2a9d8f]" /> Schedule Gonstead Appointment
             </DialogTitle>
           </DialogHeader>
           <div className="mt-2">
