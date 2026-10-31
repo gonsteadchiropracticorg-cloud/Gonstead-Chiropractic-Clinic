@@ -33,6 +33,9 @@
     --spine-ivory: #f8f5f0;
     --spine-text: #0a3a47;
 
+    --font-poppins: 'Poppins', system-ui, -apple-system, sans-serif;
+    --font-open-sans: 'Open Sans', system-ui, -apple-system, sans-serif;
+
     /* Font variables */
     --font-poppins: var(--font-poppins);
     --font-open-sans: var(--font-open-sans);

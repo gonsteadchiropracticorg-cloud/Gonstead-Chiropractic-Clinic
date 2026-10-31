@@ -1,6 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Poppins, Open_Sans } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from "@/components/language-provider"
@@ -10,20 +9,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 import AnalyticsProvider from "@/components/AnalyticsProvider.optimized"
 import AntiScraping from "@/components/AntiScraping"
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "600"], // REDUCED from 6 weights to 2 for performance
-  variable: "--font-poppins",
-  display: "swap", // Prevent FOIT (Flash of Invisible Text)
-})
-
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  weight: ["400", "600"], // REDUCED from 5 weights to 2 for performance
-  variable: "--font-open-sans",
-  display: "swap", // Prevent FOIT (Flash of Invisible Text)
-})
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://gonsteadchiropractic.vercel.app/"),
@@ -77,7 +62,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${poppins.variable} ${openSans.variable}`}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
         <link rel="icon" href="/images/gonstead-logo-new.ico" />
@@ -85,8 +70,14 @@ export default function RootLayout({
         <meta name="theme-color" content="#0d5c75" />
         <meta name="mobile-web-app-capable" content="no" />
         <meta name="apple-mobile-web-app-capable" content="no" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@400;500;600;700;800&display=swap"
+        />
       </head>
-      <body className={`${openSans.className} antialiased`} suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
         <ErrorBoundary>
           <ThemeProvider>
             <AnalyticsProvider>

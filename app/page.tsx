@@ -32,6 +32,7 @@ import {
   Video,
 } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import { LanguageProvider, useLanguage } from "@/components/language-provider"
 import { LanguageToggle } from "@/components/language-toggle"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -41,47 +42,27 @@ import { EmailContactSection } from "@/components/EmailContactSection"
 import { NoSSR } from "@/components/no-ssr"
 
 // Import lightweight wrapper for feature-preserving optimization
-import { createLightweightDynamic, LightweightFallback } from "@/components/LightweightWrapper"
+import { createLightweightDynamic, LightweightFallback, LightweightWrapper } from "@/components/LightweightWrapper"
 
 // Feature-preserving lazy loading - maintains all functionality while optimizing performance
 const TechnologyShowcase = createLightweightDynamic(
   () => import("@/components/technology-showcase").then(mod => ({ default: mod.TechnologyShowcase })),
-  {
-    fallback: LightweightFallback.Technology,
-    preserveFeatures: true, // Ensures all features work
-    delay: 1000, // Small delay for performance, but still loads automatically
-    ssr: false
-  }
+  { fallback: LightweightFallback.Technology, ssr: false }
 )
 
 const AdvancedChatbot = createLightweightDynamic(
   () => import("@/components/advanced-chatbot").then(mod => ({ default: mod.AdvancedChatbot })),
-  {
-    fallback: LightweightFallback.Chatbot,
-    preserveFeatures: true, // Maintains chatbot functionality
-    delay: 500, // Quick delay for performance
-    ssr: false
-  }
+  { fallback: LightweightFallback.Chatbot, ssr: false }
 )
 
 const SportsInjuriesFloat = createLightweightDynamic(
   () => import("@/components/sports-injuries-float").then(mod => ({ default: mod.SportsInjuriesFloat })),
-  {
-    fallback: LightweightFallback.SportsFloat,
-    preserveFeatures: true, // Preserves all sports injury features
-    delay: 800, // Slightly longer delay as it's less critical
-    ssr: false
-  }
+  { fallback: LightweightFallback.SportsFloat, ssr: false }
 )
 
 const FooterWeatherWidget = createLightweightDynamic(
   () => import("@/components/footer-weather-widget").then(mod => ({ default: mod.FooterWeatherWidget })),
-  {
-    fallback: LightweightFallback.WeatherWidget,
-    preserveFeatures: true, // Maintains weather functionality
-    delay: 1200, // Load after core content
-    ssr: false
-  }
+  { fallback: LightweightFallback.WeatherWidget, ssr: false }
 )
 
 // Performance optimizations
@@ -197,7 +178,7 @@ const HomePageContent = memo(() => {
               </div>
             </div>
 
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 lg:gap-3">
               {[
                 { id: "home", label: "Home" },
                 { id: "about", label: "About" },
@@ -218,6 +199,12 @@ const HomePageContent = memo(() => {
                   {item.label}
                 </button>
               ))}
+              <Link
+                href="/faq"
+                className="text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-md hover:bg-white/15 text-white/90 hover:text-white flex items-center gap-1 border border-white/20 bg-white/10"
+              >
+                <span>FAQ</span>
+              </Link>
             </div>
             <div className="hidden md:flex items-center gap-2">
               <div className="flex items-center bg-white/10 hover:bg-white/15 rounded-md px-2 py-1 transition-all duration-200">
@@ -274,6 +261,14 @@ const HomePageContent = memo(() => {
                     {item.label}
                   </button>
                 ))}
+                <Link
+                  href="/faq"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-left text-white hover:text-white/80 font-semibold px-4 py-2 rounded transition-colors flex items-center justify-between bg-white/10"
+                >
+                  <span>FAQ & Knowledge Base</span>
+                  <span className="text-[10px] bg-emerald-400 text-slate-900 font-bold px-2 py-0.5 rounded-full">New Page</span>
+                </Link>
                 <div className="flex items-center gap-3 pt-2 px-4">
                   <div className="bg-white/10 rounded-lg p-2">
                     <ThemeToggle />
@@ -309,17 +304,19 @@ const HomePageContent = memo(() => {
 
       {/* Hero Section - Professional Medical Design with Background Image */}
       <section id="home" className="relative pt-28 sm:pt-32 min-h-[60vh] lg:min-h-[65vh] flex items-center overflow-hidden">
-            {/* Professional Background Image with a single clean overlay */}
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{
-                backgroundImage: 'url(/images/chiropractic-hero-background.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center'
-              }}
-            >
+            {/* Professional Background Image with Next.js Image for top performance */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <Image
+                src="/images/chiropractic-hero-background.jpg"
+                alt="Gonstead Chiropractic Center"
+                fill
+                priority
+                quality={75}
+                className="object-cover object-center"
+                sizes="100vw"
+              />
               {/* Primary overlay for text readability */}
-              <div className="absolute inset-0 backdrop-blur-[3px] bg-gradient-to-br from-[rgb(76,157,144)]/55 via-[rgb(56,127,134)]/50 to-[rgb(36,97,124)]/55 dark:from-[rgb(76,157,144)]/65 dark:via-[rgb(56,127,134)]/60 dark:to-[rgb(36,97,124)]/65"></div>
+              <div className="absolute inset-0 backdrop-blur-[2px] bg-gradient-to-br from-[rgb(76,157,144)]/65 via-[rgb(56,127,134)]/60 to-[rgb(36,97,124)]/65 dark:from-[rgb(76,157,144)]/75 dark:via-[rgb(56,127,134)]/70 dark:to-[rgb(36,97,124)]/75"></div>
             </div>
 
             <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-12 relative z-10">
@@ -566,9 +563,17 @@ const HomePageContent = memo(() => {
 
           {/* About Section */}
           <section id="about" className="relative py-20 bg-white dark:bg-[rgb(30,63,99)] overflow-hidden">
-            {/* Background Image */}
-            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                 style={{backgroundImage: 'url(/images/medical-background-professional.PNG)'}}>
+            {/* Background Image optimized */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <Image
+                src="/images/medical-background-professional.PNG"
+                alt="Medical Background"
+                fill
+                quality={45}
+                loading="lazy"
+                className="object-cover object-center opacity-30"
+                sizes="100vw"
+              />
               {/* Glass Blur Overlay */}
               <div className="absolute inset-0 bg-[rgba(174,193,191,0.8)] backdrop-blur-sm"></div>
             </div>
@@ -614,11 +619,17 @@ const HomePageContent = memo(() => {
                 ].map((feature, index) => (
                   <Card key={index} className="group relative overflow-hidden text-center hover:shadow-2xl transition-all duration-500 border-[#0d5c75]/20 hover:border-[#0d5c75]/40 transform hover:scale-105 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                     <CardContent className="p-6 relative z-10">
-                      {/* Glassmorphism Background with Image */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-md border border-white/30 rounded-lg">
-                        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20 group-hover:opacity-30 transition-opacity duration-500" 
-                             style={{backgroundImage: `url('${feature.image}')`}}>
-                        </div>
+                      {/* Glassmorphism Background with Next.js Image */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-md border border-white/30 rounded-lg overflow-hidden pointer-events-none">
+                        <Image
+                          src={feature.image}
+                          alt={feature.title}
+                          fill
+                          loading="lazy"
+                          quality={60}
+                          sizes="(max-width: 768px) 100vw, 25vw"
+                          className="object-cover object-center opacity-20 group-hover:opacity-30 transition-opacity duration-500"
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0d5c75]/10 via-transparent to-[#2a9d8f]/10"></div>
                       </div>
                       
@@ -644,9 +655,18 @@ const HomePageContent = memo(() => {
 
           {/* Services Section */}
           <section id="services" className="relative py-20 overflow-hidden">
-            {/* Background Image */}
-            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                 style={{backgroundImage: 'url(/images/human skeleton.png)'}}>
+            {/* Background Image optimized */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <Image
+                src="/images/human skeleton.png"
+                alt="Human Spine & Skeleton"
+                fill
+                quality={45}
+                loading="lazy"
+                className="object-cover object-center opacity-20"
+                sizes="100vw"
+              />
+              <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xs"></div>
             </div>
             <div className="container mx-auto px-4 relative z-10">
               <div className="text-center mb-16">
@@ -874,11 +894,19 @@ const HomePageContent = memo(() => {
 
           {/* Doctor Profile Section - PREMIUM REDESIGN */}
           <section id="doctor" className="relative py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/20 overflow-hidden">
-            {/* Background Image */}
-            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                 style={{backgroundImage: 'url(/images/clarence-gonstead.png)'}}>
+            {/* Background Image optimized */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <Image
+                src="/images/clarence-gonstead.png"
+                alt="Clarence Gonstead Background"
+                fill
+                quality={45}
+                loading="lazy"
+                className="object-cover object-center opacity-20"
+                sizes="100vw"
+              />
               {/* Glass Blur Overlay */}
-              <div className="absolute inset-0 bg-[rgba(174,193,191,0.8)] backdrop-blur-sm"></div>
+              <div className="absolute inset-0 bg-[rgba(174,193,191,0.85)] dark:bg-[rgb(30,63,99)]/85 backdrop-blur-sm"></div>
             </div>
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-5 dark:opacity-10">
@@ -1039,18 +1067,28 @@ const HomePageContent = memo(() => {
           {/* Technology Section */}
           <section id="technology" className="py-20">
             <div className="container mx-auto px-4">
-              <TechnologyShowcase />
+              <LightweightWrapper triggerOnScroll={true} fallback={<LightweightFallback.Technology />}>
+                <TechnologyShowcase />
+              </LightweightWrapper>
             </div>
           </section>
 
 
           {/* Contact & Booking Section */}
           <section id="contact" className="relative py-20 bg-white dark:bg-[rgb(30,63,99)] overflow-hidden">
-            {/* Background Image */}
-            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                 style={{backgroundImage: 'url(/images/spinal-nerves-subluxation-poster.jpeg)'}}>
+            {/* Background Image optimized */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <Image
+                src="/images/spinal-nerves-subluxation-poster.jpeg"
+                alt="Spinal Nerves Poster"
+                fill
+                quality={45}
+                loading="lazy"
+                className="object-cover object-center opacity-20"
+                sizes="100vw"
+              />
               {/* Glass Blur Overlay */}
-              <div className="absolute inset-0 bg-[rgba(174,193,191,0.8)] backdrop-blur-sm"></div>
+              <div className="absolute inset-0 bg-[rgba(174,193,191,0.85)] dark:bg-[rgb(30,63,99)]/85 backdrop-blur-sm"></div>
             </div>
             <div className="container mx-auto px-4 relative z-10">
               <div className="text-center mb-16 relative">
@@ -1348,9 +1386,11 @@ const HomePageContent = memo(() => {
                   </div>
                 </div>
 
-                {/* Weather Widget */}
+                {/* Weather Widget (Deferred on Scroll) */}
                 <div className="flex justify-center">
-                  <FooterWeatherWidget />
+                  <LightweightWrapper triggerOnScroll={true} fallback={<LightweightFallback.WeatherWidget />}>
+                    <FooterWeatherWidget />
+                  </LightweightWrapper>
                 </div>
 
                 {/* CTA Section */}
@@ -1363,17 +1403,40 @@ const HomePageContent = memo(() => {
                 </div>
               </div>
 
+              {/* Footer Quick Links */}
+              <div className="border-t border-white/20 mt-6 pt-4 flex flex-wrap justify-center items-center gap-4 text-xs text-white/80">
+                <button onClick={() => scrollToSection("home")} className="hover:text-white transition-colors">Home</button>
+                <span>•</span>
+                <button onClick={() => scrollToSection("about")} className="hover:text-white transition-colors">About</button>
+                <span>•</span>
+                <button onClick={() => scrollToSection("services")} className="hover:text-white transition-colors">Services</button>
+                <span>•</span>
+                <button onClick={() => scrollToSection("doctor")} className="hover:text-white transition-colors">Doctor</button>
+                <span>•</span>
+                <button onClick={() => scrollToSection("technology")} className="hover:text-white transition-colors">Technology</button>
+                <span>•</span>
+                <Link href="/faq" className="hover:text-white text-emerald-300 font-bold transition-colors">
+                  FAQ Page
+                </Link>
+                <span>•</span>
+                <button onClick={() => scrollToSection("contact")} className="hover:text-white transition-colors">Contact</button>
+                <span>•</span>
+                <Link href="/patient/auth" className="hover:text-white transition-colors">Patient Portal</Link>
+              </div>
+
               {/* Copyright */}
-              <div className="border-t border-white/20 mt-6 pt-4 text-center">
+              <div className="mt-3 text-center">
                 <p className="text-xs text-white/80">{t("footer.copyright")}</p>
               </div>
             </div>
           </footer>
         </div>
 
-        {/* Floating Components */}
-        <AdvancedChatbot />
-        <SportsInjuriesFloat />
+        {/* Lightweight Deferred Floating Components */}
+        <LightweightWrapper delay={1200} triggerOnInteraction={true} fallback={<LightweightFallback.Chatbot />}>
+          <AdvancedChatbot />
+          <SportsInjuriesFloat />
+        </LightweightWrapper>
     </>
   )
 })

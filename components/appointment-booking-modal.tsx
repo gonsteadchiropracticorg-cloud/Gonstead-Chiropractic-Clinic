@@ -3,12 +3,25 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import dynamic from "next/dynamic"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Calendar, ArrowRight, UserPlus } from "lucide-react"
-import { EnhancedAppointmentBooking } from "./enhanced-appointment-booking"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+
+const EnhancedAppointmentBooking = dynamic(
+  () => import("./enhanced-appointment-booking").then((mod) => mod.EnhancedAppointmentBooking),
+  {
+    loading: () => (
+      <div className="p-12 flex flex-col items-center justify-center min-h-[350px] text-[rgb(76,157,144)]">
+        <div className="w-10 h-10 border-4 border-[rgb(76,157,144)] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-semibold">Loading Secure Booking System...</p>
+      </div>
+    ),
+    ssr: false,
+  }
+)
 
 interface AppointmentBookingModalProps {
   trigger?: React.ReactNode
