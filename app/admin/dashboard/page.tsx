@@ -2720,11 +2720,11 @@ export default function AdminDashboard() {
 
           {/* Content */}
           <div className="relative z-10 container mx-auto">
-            {/* Mobile Layout - Stack on small screens */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            {/* Single-Row Responsive Layout - Aligned on Mobile and Desktop */}
+            <div className="flex flex-row justify-between items-center gap-2 sm:gap-4 w-full">
 
-              {/* Top Row: Logo and Title - Mobile Optimized */}
-              <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              {/* Left Side: Logo and Title */}
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 {/* Enhanced Clinical Logo - Clickable for Sidebar */}
                 <div className="relative group cursor-pointer" onClick={() => setIsSidebarOpen(true)}>
                   <div className="w-12 h-12 sm:w-16 sm:h-16 relative transition-transform duration-300 hover:scale-110">
@@ -2752,38 +2752,37 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Compact Title Section - Mobile Optimized */}
-                <div className="space-y-0.5 flex-1">
-                  <h1 className={`text-base sm:text-xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm`}>
+                {/* Compact Title Section */}
+                <div className="space-y-0.5 min-w-0 flex-1">
+                  <h1 className={`text-sm sm:text-lg md:text-xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm truncate`}>
                     Dr. Bashir Khan
                   </h1>
-                  <p className={`text-sm sm:text-base font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm hidden xs:block`}>
+                  <p className={`text-xs sm:text-sm font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm hidden md:block truncate`}>
                     Gonstead Chiropractic Specialist
                   </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full"></div>
-                    <p className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider`}>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full shrink-0"></div>
+                    <p className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider truncate`}>
                       ADMIN PORTAL
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Right Controls: Action Buttons & Rounded Theme Toggle */}
-              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
-                {/* Header Action Buttons - Mobile Responsive */}
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  {/* Add Patient Button */}
-                  <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white px-1.5 sm:px-3 py-1 sm:py-1.5 h-auto text-[10px] sm:text-sm min-w-0 shrink-0"
-                      >
-                        <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                        <span className="hidden md:inline ml-1">Add</span>
-                      </Button>
-                    </DialogTrigger>
+              {/* Right Controls: Same-Line Action Buttons & Rounded Theme Toggle */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                {/* Add Patient Button */}
+                <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white w-8 h-8 sm:w-auto sm:h-9 p-0 sm:px-3 sm:py-2 rounded-full sm:rounded-xl text-xs sm:text-sm font-medium shadow-sm shrink-0 flex items-center justify-center"
+                      title="Add New Patient"
+                    >
+                      <UserPlus className="h-4 w-4 sm:mr-1.5 shrink-0" />
+                      <span className="hidden sm:inline">Add</span>
+                    </Button>
+                  </DialogTrigger>
                     <DialogContent className="max-w-4xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle className="text-[#0d5c75] font-poppins flex items-center justify-between text-sm sm:text-base">
@@ -2962,24 +2961,24 @@ export default function AdminDashboard() {
 
 
 
-                  {/* Exit/Logout Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLogout}
-                    className="border-red-500 text-red-600 hover:bg-red-50 px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
-                  >
-                    <LogOut className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Exit</span>
-                  </Button>
-                </div>
+                {/* Exit/Logout Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="border-red-500 text-red-600 hover:bg-red-50 w-8 h-8 sm:w-auto sm:h-9 p-0 sm:px-3 sm:py-2 rounded-full sm:rounded-xl text-xs sm:text-sm font-medium shadow-sm shrink-0 flex items-center justify-center"
+                  title="Exit / Logout"
+                >
+                  <LogOut className="h-4 w-4 sm:mr-1.5 shrink-0" />
+                  <span className="hidden sm:inline">Exit</span>
+                </Button>
 
                 {/* Rounded Day and Night Mode Toggle Button */}
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setTheme(isDarkMode ? "light" : "dark")}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/30 backdrop-blur-sm transition-all duration-300 shadow-md shrink-0 ${
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/30 backdrop-blur-sm transition-all duration-300 shadow-md shrink-0 flex items-center justify-center ${
                     isDarkMode
                       ? "bg-gray-800/80 text-amber-400 hover:bg-gray-700 hover:text-amber-300"
                       : "bg-white/40 text-[#0d5c75] hover:bg-white/60 hover:text-[#0a4a5c]"
