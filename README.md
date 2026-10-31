@@ -5,7 +5,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-15.0.0-black?style=for-the-badge&logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-2.50.3-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-11.4.0-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Tailwind](https://img.shields.io/badge/Tailwind-3.4.17-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
 ![Version](https://img.shields.io/badge/Version-4.0.0-blue?style=for-the-badge)
@@ -129,7 +129,7 @@ npm run dev
 | **React** | 18.3.1 | UI library with hooks |
 | **TypeScript** | 5.8.3 | Type-safe development |
 | **Tailwind CSS** | 3.4.17 | Utility-first styling |
-| **Supabase** | 2.50.3 | Database & authentication |
+| **Firebase** | 11.4.0 | Database & authentication |
 
 ### UI & Animations
 - **Radix UI** - Accessible component primitives
@@ -139,10 +139,10 @@ npm run dev
 
 ### Backend & Database
 - **Next.js API Routes** - Serverless API endpoints
-- **PostgreSQL** - Supabase-hosted relational database
-- **Supabase Auth** - JWT-based authentication
-- **Supabase Storage** - File storage for medical images
-- **Supabase Realtime** - Live data synchronization
+- **Firebase Firestore** - Scalable cloud database
+- **Firebase Auth** - Secure authentication
+- **Firebase Storage** - File storage for medical records and images
+- **Realtime Updates** - Instant live data synchronization
 
 ### Payment & Communication
 - **Stripe** (18.5.0) - Payment processing
@@ -170,9 +170,9 @@ npm run dev
 Create `.env.local` in the root directory:
 
 ```bash
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_firebase_project_id
 
 # Stripe Payment Gateway
 STRIPE_SECRET_KEY=your_stripe_secret_key
