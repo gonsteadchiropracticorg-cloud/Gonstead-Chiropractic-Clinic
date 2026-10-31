@@ -68,19 +68,20 @@ export function TechnologyShowcase() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {technologies.map((tech, index) => (
             <div key={index} className="group relative">
-              {/* Card with Glass Effect */}
-              <Card className="relative overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border border-white/30 dark:border-gray-700/30 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:scale-105">
-                {/* Background Image with Lighter Blur */}
-                <div className="absolute inset-0 overflow-hidden">
+              {/* Card with Clean High Performance Design */}
+              <Card className="relative overflow-hidden bg-white/95 dark:bg-gray-800/95 border border-gray-100 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 group-hover:scale-[1.02]">
+                {/* Background Image */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
                   <Image
                     src={tech.image}
                     alt={tech.title}
                     fill
-                    className="object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500 blur-[1px]"
+                    loading="lazy"
+                    className="object-cover opacity-25 group-hover:opacity-40 transition-opacity duration-300"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                   />
-                  {/* Lighter glass overlay for better image visibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-white/50 to-white/30 dark:from-gray-800/70 dark:via-gray-800/50 dark:to-gray-800/30 backdrop-blur-[0.5px]"></div>
+                  {/* Clean gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/70 to-white/50 dark:from-gray-800/90 dark:via-gray-800/70 dark:to-gray-800/50"></div>
                 </div>
                 
                 {/* Content */}

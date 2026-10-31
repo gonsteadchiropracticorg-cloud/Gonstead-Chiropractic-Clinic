@@ -188,30 +188,14 @@ const HomePageContent = memo(() => {
               <div className="flex items-center bg-white/10 hover:bg-white/15 rounded-md px-2 py-1 transition-all duration-200">
                 <LanguageToggle />
               </div>
-              {isPatientAuth ? (
-                <div className="flex items-center gap-2">
-                  <Link
-                    href="/patient-portal"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-white/15 hover:bg-white/25 text-white border border-white/25 transition-all shadow-sm"
-                  >
-                    <User className="h-4 w-4 text-emerald-300" />
-                    <span>My Portal</span>
-                  </Link>
-                  <AppointmentBookingModal
-                    buttonText="Book Appointment"
-                    className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:shadow-lg transition-all text-xs sm:text-sm"
-                  />
-                </div>
-              ) : (
-                <Link
-                  href="/patient/auth"
-                  className="group inline-flex items-center gap-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-900 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-                >
-                  <UserCheck className="h-4 w-4 text-slate-900" />
-                  <span>Patient Portal & Booking</span>
-                  <ArrowRight className="h-4 w-4 text-slate-900 transition-transform group-hover:translate-x-1" />
-                </Link>
-              )}
+              <Link
+                href={isPatientAuth ? "/patient-portal" : "/patient/auth"}
+                className="group inline-flex items-center gap-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-900 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+              >
+                <UserCheck className="h-4 w-4 text-slate-900" />
+                <span>{isPatientAuth ? "My Patient Portal" : "Patient Portal & Booking"}</span>
+                <ArrowRight className="h-4 w-4 text-slate-900 transition-transform group-hover:translate-x-1" />
+              </Link>
             </div>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -259,34 +243,16 @@ const HomePageContent = memo(() => {
                     <LanguageToggle />
                   </div>
                 </div>
-                <div className="px-4 space-y-2">
-                  {isPatientAuth ? (
-                    <>
-                      <Link
-                        href="/patient-portal"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="flex items-center justify-center gap-2 w-full bg-white/20 text-white hover:bg-white/30 border border-white/30 py-2.5 rounded-lg font-semibold text-sm"
-                      >
-                        <User className="h-4 w-4 text-emerald-300" />
-                        <span>Open Patient Portal</span>
-                      </Link>
-                      <AppointmentBookingModal
-                        buttonText="Book Appointment"
-                        fullWidth={true}
-                        className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white w-full py-2.5 font-bold"
-                      />
-                    </>
-                  ) : (
-                    <Link
-                      href="/patient/auth"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-900 py-3 rounded-lg font-bold text-sm shadow-md"
-                    >
-                      <UserCheck className="h-4 w-4" />
-                      <span>Patient Portal & Booking</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  )}
+                <div className="px-4 pt-2">
+                  <Link
+                    href={isPatientAuth ? "/patient-portal" : "/patient/auth"}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-900 py-3 rounded-lg font-bold text-sm shadow-md"
+                  >
+                    <UserCheck className="h-4 w-4" />
+                    <span>{isPatientAuth ? "My Patient Portal" : "Patient Portal & Booking"}</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -410,10 +376,8 @@ const HomePageContent = memo(() => {
                 <div className="relative flex justify-center lg:justify-end z-10">
                   {/* Main Professional Container */}
                   <div className="relative">
-                    {/* Background Effects */}
-                    <div className="absolute -inset-12 bg-gradient-to-r from-blue-500/25 via-cyan-500/25 to-teal-500/25 rounded-3xl blur-3xl"></div>
-                    <div className="absolute -inset-8 bg-gradient-to-r from-blue-400/20 via-cyan-400/20 to-teal-400/20 rounded-3xl blur-2xl"></div>
-                    <div className="absolute -inset-4 bg-gradient-to-br from-blue-600/35 to-cyan-600/35 rounded-2xl shadow-2xl"></div>
+                    {/* Clean Lightweight Background Glow */}
+                    <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/25 via-cyan-500/25 to-blue-500/25 rounded-2xl blur-md"></div>
                     
                     {/* Professional Image Frame */}
                     <div className="relative w-64 h-80 md:w-80 md:h-96 overflow-hidden rounded-2xl border-2 border-blue-400/40 shadow-2xl shadow-blue-500/30 bg-gradient-to-br from-gray-800 to-gray-900 transition-all duration-700">
@@ -555,10 +519,10 @@ const HomePageContent = memo(() => {
 
           {/* About Section */}
           <section id="about" className="relative py-20 bg-gradient-to-b from-white via-emerald-50/20 to-white dark:from-[rgb(20,45,75)] dark:via-[rgb(30,63,99)] dark:to-[rgb(20,45,75)] overflow-hidden">
-            {/* Smooth background decorative accents */}
+            {/* Smooth ambient gradient accents */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
-              <div className="absolute -top-24 -left-24 w-72 h-72 bg-teal-200/40 dark:bg-teal-900/30 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-cyan-200/40 dark:bg-cyan-900/30 rounded-full blur-3xl"></div>
+              <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-radial from-teal-200/40 dark:from-teal-900/30 to-transparent"></div>
+              <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-radial from-cyan-200/40 dark:from-cyan-900/30 to-transparent"></div>
             </div>
             <div className="container mx-auto px-4 relative z-10">
               <div className="text-center mb-16">
@@ -600,10 +564,10 @@ const HomePageContent = memo(() => {
                     image: "/images/Safe & Proven.jpg",
                   },
                 ].map((feature, index) => (
-                  <Card key={index} className="group relative overflow-hidden text-center hover:shadow-2xl transition-all duration-500 border-[#0d5c75]/20 hover:border-[#0d5c75]/40 transform hover:scale-105 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                  <Card key={index} className="group relative overflow-hidden text-center hover:shadow-xl transition-all duration-300 border-[#0d5c75]/20 hover:border-[#0d5c75]/40 transform hover:scale-[1.02] bg-white/95 dark:bg-gray-800/95">
                     <CardContent className="p-6 relative z-10">
-                      {/* Glassmorphism Background with Next.js Image */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-md border border-white/30 rounded-lg overflow-hidden pointer-events-none">
+                      {/* Clean high-perf background with Next.js Image */}
+                      <div className="absolute inset-0 bg-white/40 dark:bg-gray-800/40 rounded-lg overflow-hidden pointer-events-none">
                         <Image
                           src={feature.image}
                           alt={feature.title}
@@ -611,23 +575,18 @@ const HomePageContent = memo(() => {
                           loading="lazy"
                           quality={60}
                           sizes="(max-width: 768px) 100vw, 25vw"
-                          className="object-cover object-center opacity-20 group-hover:opacity-30 transition-opacity duration-500"
+                          className="object-cover object-center opacity-15 group-hover:opacity-25 transition-opacity duration-300"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0d5c75]/10 via-transparent to-[#2a9d8f]/10"></div>
                       </div>
                       
                       {/* Content */}
                       <div className="relative z-20">
-                        <div className="w-20 h-20 bg-gradient-to-br from-[#0d5c75]/20 to-[#2a9d8f]/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6 border border-white/30 shadow-lg group-hover:shadow-xl transition-all duration-300">
-                          <feature.icon className="h-10 w-10 text-[#0d5c75] dark:text-blue-400 group-hover:scale-110 transition-transform duration-300" />
+                        <div className="w-20 h-20 bg-[#0d5c75]/10 dark:bg-[#0d5c75]/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-teal-500/20 shadow-md group-hover:shadow-lg transition-all duration-300">
+                          <feature.icon className="h-10 w-10 text-[#0d5c75] dark:text-blue-400 group-hover:scale-105 transition-transform duration-300" />
                         </div>
                         <h3 className="text-xl font-bold text-[#0d5c75] dark:text-white mb-4 group-hover:text-[#2a9d8f] transition-colors duration-300">{feature.title}</h3>
                         <p className="text-gray-700 dark:text-gray-200 leading-relaxed">{feature.description}</p>
-                      </div>
-                      
-                      {/* Animated Border */}
-                      <div className="absolute inset-0 rounded-lg border-2 border-transparent bg-gradient-to-r from-[#0d5c75] via-[#2a9d8f] to-[#0d5c75] bg-clip-border opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                        <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-lg m-[2px]"></div>
                       </div>
                     </CardContent>
                   </Card>
@@ -640,7 +599,7 @@ const HomePageContent = memo(() => {
           <section id="services" className="relative py-20 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/80 dark:from-slate-900 dark:via-slate-850 dark:to-slate-900 overflow-hidden">
             {/* Smooth background decorative accents */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-25">
-              <div className="absolute top-1/4 -right-20 w-80 h-80 bg-emerald-200/40 dark:bg-emerald-900/20 rounded-full blur-3xl"></div>
+              <div className="absolute top-1/4 -right-20 w-80 h-80 rounded-full bg-radial from-emerald-200/40 dark:from-emerald-900/20 to-transparent"></div>
             </div>
             <div className="container mx-auto px-4 relative z-10">
               <div className="text-center mb-16">
@@ -882,12 +841,6 @@ const HomePageContent = memo(() => {
               {/* Overlay */}
               <div className="absolute inset-0 bg-[rgba(174,193,191,0.88)] dark:bg-[rgb(30,63,99)]/90"></div>
             </div>
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-5 dark:opacity-10">
-              <div className="absolute top-10 left-10 w-32 h-32 bg-[#0d5c75] rounded-full blur-3xl"></div>
-              <div className="absolute bottom-10 right-10 w-40 h-40 bg-[#2a9d8f] rounded-full blur-3xl"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 rounded-full blur-3xl"></div>
-            </div>
             
             <div className="container mx-auto px-4 relative z-20">
               <div className="text-center mb-16">
@@ -931,8 +884,8 @@ const HomePageContent = memo(() => {
                         alt="Dr. Bashir Khan - Gonstead Chiropractor"
                         fill
                         className="object-cover object-center scale-110 group-hover:scale-115 transition-transform duration-700"
-                        priority
-                        quality={80}
+                        loading="lazy"
+                        quality={75}
                         sizes="(max-width: 768px) 280px, (max-width: 1024px) 320px, 400px"
                       />
                       {/* Professional Overlay */}
@@ -1047,23 +1000,11 @@ const HomePageContent = memo(() => {
 
           {/* Contact & Booking Section */}
           <section id="contact" className="relative py-20 bg-gradient-to-b from-white via-cyan-50/20 to-white dark:from-[rgb(20,45,75)] dark:via-[rgb(30,63,99)] dark:to-[rgb(20,45,75)] overflow-hidden">
-            {/* Smooth background decorative accents */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
-              <div className="absolute -top-20 left-1/3 w-80 h-80 bg-teal-200/30 dark:bg-teal-900/20 rounded-full blur-3xl"></div>
-            </div>
             <div className="container mx-auto px-4 relative z-10">
               <div className="text-center mb-16 relative">
-                {/* Animated Background Pattern */}
-                <div className="absolute inset-0 overflow-hidden">
-                  <div className="absolute -top-24 -left-24 w-48 h-48 bg-gradient-to-br from-[#0d5c75]/10 to-[#2a9d8f]/10 rounded-full blur-3xl"></div>
-                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br from-[#2a9d8f]/15 to-[#0d5c75]/15 rounded-full blur-2xl"></div>
-                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-64 h-24 bg-gradient-to-r from-transparent via-[#0d5c75]/5 to-transparent rounded-full blur-xl"></div>
-                </div>
-                
-                {/* Professional Badge with 3D Effect */}
+                {/* Professional Badge */}
                 <div className="relative inline-block mb-6">
-                  <div className="absolute -inset-2 bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 rounded-full blur-md opacity-70"></div>
-                  <Badge className="relative bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 text-[#0d5c75] dark:bg-blue-900/20 dark:text-blue-400 border-2 border-[#0d5c75]/30 px-6 py-3 text-base font-bold shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  <Badge className="relative bg-gradient-to-r from-[#0d5c75]/15 to-[#2a9d8f]/15 text-[#0d5c75] dark:bg-blue-900/20 dark:text-blue-400 border border-[#0d5c75]/30 px-6 py-3 text-base font-bold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-[#0d5c75] rounded-full"></div>
                       <span className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] bg-clip-text text-transparent font-bold">Book Your Appointment</span>
@@ -1076,32 +1017,24 @@ const HomePageContent = memo(() => {
                 <div className="relative mb-6">
                   <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold font-poppins leading-tight relative z-10">
                     <span className="block">
-                      <span className="relative inline-block">
-                        <span className="bg-gradient-to-r from-[#0d5c75] via-[#2a9d8f] to-[#0d5c75] bg-clip-text text-transparent animate-gradient bg-300% font-black tracking-tight hover:scale-105 transition-transform duration-300">
-                          Start Your Journey
-                        </span>
-                        <div className="absolute -inset-2 bg-gradient-to-r from-[#0d5c75]/20 via-[#2a9d8f]/20 to-[#0d5c75]/20 rounded-lg blur-lg opacity-30"></div>
+                      <span className="bg-gradient-to-r from-[#0d5c75] via-[#2a9d8f] to-[#0d5c75] bg-clip-text text-transparent font-black tracking-tight">
+                        Start Your Journey
                       </span>
                     </span>
                     <span className="block mt-2">
-                      <span className="relative inline-block">
-                        <span className="bg-gradient-to-r from-[#2a9d8f] via-[#0d5c75] to-[#2a9d8f] bg-clip-text text-transparent animate-gradient bg-300% font-black tracking-tight hover:scale-105 transition-transform duration-300">
-                          to Better Spinal Health
-                        </span>
-                        <div className="absolute -inset-2 bg-gradient-to-r from-[#2a9d8f]/20 via-[#0d5c75]/20 to-[#2a9d8f]/20 rounded-lg blur-lg opacity-30"></div>
+                      <span className="bg-gradient-to-r from-[#2a9d8f] via-[#0d5c75] to-[#2a9d8f] bg-clip-text text-transparent font-black tracking-tight">
+                        to Better Spinal Health
                       </span>
                     </span>
                   </h2>
                   
                   {/* Animated Underline */}
                   <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full"></div>
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-0.5 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] rounded-full"></div>
                 </div>
                 
-                {/* Enhanced Description with Professional Styling */}
+                {/* Description */}
                 <div className="relative max-w-4xl mx-auto">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-[#0d5c75]/5 via-transparent to-[#2a9d8f]/5 rounded-2xl blur-xl opacity-50"></div>
-                  <p className="relative text-lg md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed font-medium bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-2xl px-8 py-6 shadow-lg">
+                  <p className="relative text-lg md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed font-medium bg-white/70 dark:bg-gray-800/70 border border-white/20 dark:border-gray-700/20 rounded-2xl px-8 py-6 shadow-sm">
                     <span className="block">
                       <span className="text-[#0d5c75] dark:text-[#2a9d8f] font-bold">Ready to experience</span> the precision of Gonstead chiropractic care?
                     </span>
@@ -1109,12 +1042,6 @@ const HomePageContent = memo(() => {
                       <span className="text-[#2a9d8f] dark:text-[#0d5c75] font-bold">Book your consultation today</span> and take the first step towards a pain-free life.
                     </span>
                   </p>
-                  
-                  {/* Floating Elements */}
-                  <div className="absolute -top-4 -left-4 w-8 h-8 bg-[#0d5c75]/20 rounded-full opacity-60"></div>
-                  <div className="absolute -top-2 -right-6 w-6 h-6 bg-[#2a9d8f]/20 rounded-full opacity-60"></div>
-                  <div className="absolute -bottom-4 left-1/4 w-4 h-4 bg-[#0d5c75]/20 rounded-full opacity-60"></div>
-                  <div className="absolute -bottom-2 right-1/4 w-5 h-5 bg-[#2a9d8f]/20 rounded-full opacity-60"></div>
                 </div>
                 
                 {/* Professional Stats with Animation */}
@@ -1138,10 +1065,8 @@ const HomePageContent = memo(() => {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 {/* Professional Email Contact Section */}
-<div className="space-y-8" suppressHydrationWarning>
-                  <NoSSR>
-                    <EmailContactSection />
-                  </NoSSR>
+                <div className="space-y-8">
+                  <EmailContactSection />
                 </div>
 
                 {/* Contact Information & Map */}

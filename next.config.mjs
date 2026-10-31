@@ -8,7 +8,6 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
     esmExternals: true,
-    cpus: 1,
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -87,14 +86,6 @@ const nextConfig = {
             value: '86400',
           },
         ],
-      },
-    ]
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/sitemap.xml',
-        destination: '/api/sitemap',
       },
     ]
   },

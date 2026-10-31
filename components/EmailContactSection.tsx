@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState } from 'react';
-import emailjs from '@emailjs/browser';
 import { Mail, User, MessageCircle, Send, CheckCircle, Stethoscope, ArrowRight } from 'lucide-react';
 
 export const EmailContactSection = () => {
@@ -31,7 +30,8 @@ export const EmailContactSection = () => {
         to_email: "gonsteadchiropractic.org@gmail.com",
       }
 
-      // Send email using EmailJS
+      // Send email using dynamically loaded EmailJS
+      const emailjs = (await import('@emailjs/browser')).default
       await emailjs.send(serviceId, templateId, templateParams, publicKey)
 
       setConfirmation('Thank you for reaching out! Your message has been sent successfully. Our team will contact you within 24 hours.');
@@ -78,22 +78,13 @@ export const EmailContactSection = () => {
   }
 
   return (
-    <div className="w-full bg-[rgb(205,223,222)] dark:from-slate-800 dark:via-slate-700 dark:to-blue-900 rounded-2xl shadow-2xl border border-blue-200/30 dark:border-blue-700/30 p-8 transform transition-all duration-500 hover:shadow-3xl hover:scale-[1.02] relative overflow-hidden backdrop-blur-sm">
-      {/* Unique Get in Touch Background Pattern */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-[rgb(49,83,113)]/10 dark:bg-white/10 rounded-full blur-2xl animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-[rgb(49,83,113)]/5 dark:bg-white/5 rounded-full blur-3xl animate-pulse animation-delay-1500"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[rgb(49,83,113)]/2 dark:from-white/2 via-transparent to-[rgb(49,83,113)]/2 dark:to-white/2 transform rotate-45"></div>
-      </div>
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5 dark:opacity-10">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#0d5c75] rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#2a9d8f] rounded-full blur-2xl"></div>
-      </div>
+    <div className="w-full bg-[rgb(205,223,222)] dark:bg-slate-800 rounded-2xl shadow-xl border border-teal-500/20 p-8 transform transition-all duration-300 hover:shadow-2xl relative overflow-hidden">
+      {/* Subtle Ambient Background Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-cyan-500/5 to-transparent pointer-events-none"></div>
       
       {/* Header */}
       <div className="relative z-10 text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-[rgb(49,83,113)]/20 dark:bg-white/20 backdrop-blur-sm rounded-full shadow-lg mb-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-[rgb(49,83,113)]/20 dark:bg-white/20 rounded-full shadow-md mb-4">
           <Mail className="h-8 w-8 text-[rgb(49,83,113)] dark:text-white" />
         </div>
         <h2 className="text-xl font-bold text-[rgb(49,83,113)] dark:text-white mb-2">Get in Touch</h2>
