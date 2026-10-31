@@ -646,7 +646,7 @@
   scrollbar-color: var(--spine-primary) var(--spine-ivory);
 }
 
-/* AdminSidebar scrolling enhancements */
+/* AdminSidebar scrolling enhancements - Full sidebar moves smoothly as one unified unit */
 .admin-sidebar-scroll {
   /* Enhanced scrolling for webkit browsers */
   -webkit-overflow-scrolling: touch;
@@ -657,18 +657,15 @@
   /* Smooth scrolling behavior */
   scroll-behavior: smooth;
   
-  /* Dynamic height that adapts to content */
-  height: auto;
-  min-height: 0;
-  flex: 1 1 auto;
-  max-height: calc(100vh - 290px);
+  /* Full viewport height for sidebar container */
+  height: 100vh;
+  max-height: 100vh;
   
-  /* Additional mobile optimizations */
+  /* Touch optimizations */
   touch-action: pan-y;
   
   /* Performance optimization */
   will-change: scroll-position;
-  contain: layout style paint;
 }
 
 /* Scrollbar styling specifically for AdminSidebar */
@@ -704,8 +701,8 @@
 /* Mobile responsive scrolling */
 @media (max-width: 768px) {
   .admin-sidebar-scroll {
-    max-height: calc(100vh - 270px);
-    /* Improved touch scrolling on mobile */
+    height: 100vh;
+    max-height: 100vh;
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
   }
@@ -719,7 +716,8 @@
 /* Extra small screens */
 @media (max-width: 480px) {
   .admin-sidebar-scroll {
-    max-height: calc(100vh - 250px);
+    height: 100vh;
+    max-height: 100vh;
   }
 }
 

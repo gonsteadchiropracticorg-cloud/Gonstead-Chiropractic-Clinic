@@ -241,17 +241,17 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
         aria-hidden="true"
       />
       
-      {/* Sidebar with smooth slide animation - Responsive width */}
+      {/* Sidebar with smooth slide animation - Responsive width with unified natural scrolling */}
       <aside 
-        className={`fixed top-0 left-0 h-screen w-full sm:w-80 md:w-72 lg:w-80 bg-white dark:bg-gray-900 shadow-2xl z-50 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-out flex flex-col ${
+        className={`fixed top-0 left-0 h-screen w-full sm:w-80 md:w-72 lg:w-80 bg-white dark:bg-gray-900 shadow-2xl z-50 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-out admin-sidebar-scroll ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`} 
-        style={{ maxHeight: '100vh', overflowY: 'hidden' }}
         role="navigation"
         aria-label="Admin Navigation"
       >
-        {/* Professional Header - Fixed height with better mobile sizing */}
-        <div className="flex-shrink-0 bg-gradient-to-br from-[#0d5c75] via-[#1a6b7d] to-[#2a9d8f] text-white relative overflow-hidden">
+        <div className="min-h-full flex flex-col">
+          {/* Professional Header - Moves naturally with scrolling */}
+          <div className="flex-shrink-0 bg-gradient-to-br from-[#0d5c75] via-[#1a6b7d] to-[#2a9d8f] text-white relative overflow-hidden">
           {/* Subtle background pattern - Hidden on mobile for performance */}
           <div className="absolute inset-0 opacity-10 hidden sm:block">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full -translate-y-8 translate-x-8"></div>
@@ -361,7 +361,7 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
         </div>
 
       {/* Scrollable Navigation Menu - Takes remaining space */}
-        <nav className="admin-sidebar-scroll" aria-label="Main menu">
+        <nav className="flex-1" aria-label="Main menu">
           <div className="p-2 sm:p-3 space-y-1">
             {filteredItems.length === 0 && searchQuery && (
               <div className="text-center py-8 text-gray-500 text-sm">
@@ -497,12 +497,12 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
             })}
           </div>
           
-          {/* Extra padding at the bottom to ensure last items are accessible */}
-          <div className="h-12 sm:h-16"></div>
+          {/* Bottom spacing before footer */}
+          <div className="h-4"></div>
         </nav>
 
-        {/* Professional Footer - Fixed at bottom with mobile optimization */}
-        <footer className="flex-shrink-0 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700">
+        {/* Professional Footer - Moves with scrolling at bottom of sidebar content */}
+        <footer className="flex-shrink-0 mt-auto bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700">
           <div className="p-3 sm:p-4">
             {/* Help and Logout */}
             <div className="flex gap-2 mb-2 sm:mb-3">
@@ -537,6 +537,7 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
             </div>
           </div>
         </footer>
+        </div>
       </aside>
     </>
   )
