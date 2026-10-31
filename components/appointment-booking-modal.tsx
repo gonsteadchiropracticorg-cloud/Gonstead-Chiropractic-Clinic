@@ -95,8 +95,8 @@ export function AppointmentBookingModal({
       )}
     >
       <div className="flex items-center gap-2">
-        {showIcon && (isAuthenticated ? <Calendar className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />)}
-        <span>{isAuthenticated ? buttonText : "Create Account to Book"}</span>
+        {showIcon && <Calendar className="h-4 w-4" />}
+        <span>{buttonText}</span>
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
       </div>
     </Button>

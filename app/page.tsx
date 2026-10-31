@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Stethoscope,
   User,
+  UserCheck,
   Users,
   Clock,
   MapPin,
@@ -40,81 +41,55 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { AppointmentBookingModal } from "@/components/appointment-booking-modal"
 import { EmailContactSection } from "@/components/EmailContactSection"
 import { NoSSR } from "@/components/no-ssr"
+import { TechnologyShowcase } from "@/components/technology-showcase"
+import { FooterWeatherWidget } from "@/components/footer-weather-widget"
 
-// Import lightweight wrapper for feature-preserving optimization
-import { createLightweightDynamic, LightweightFallback, LightweightWrapper } from "@/components/LightweightWrapper"
-
-// Feature-preserving lazy loading - maintains all functionality while optimizing performance
-const TechnologyShowcase = createLightweightDynamic(
-  () => import("@/components/technology-showcase").then(mod => ({ default: mod.TechnologyShowcase })),
-  { fallback: LightweightFallback.Technology, ssr: false }
+// Floating Interactive Features - Loaded without blocking core UI
+const AdvancedChatbot = dynamic(
+  () => import("@/components/advanced-chatbot").then(mod => mod.AdvancedChatbot),
+  { ssr: false }
 )
 
-const AdvancedChatbot = createLightweightDynamic(
-  () => import("@/components/advanced-chatbot").then(mod => ({ default: mod.AdvancedChatbot })),
-  { fallback: LightweightFallback.Chatbot, ssr: false }
+const SportsInjuriesFloat = dynamic(
+  () => import("@/components/sports-injuries-float").then(mod => mod.SportsInjuriesFloat),
+  { ssr: false }
 )
-
-const SportsInjuriesFloat = createLightweightDynamic(
-  () => import("@/components/sports-injuries-float").then(mod => ({ default: mod.SportsInjuriesFloat })),
-  { fallback: LightweightFallback.SportsFloat, ssr: false }
-)
-
-const FooterWeatherWidget = createLightweightDynamic(
-  () => import("@/components/footer-weather-widget").then(mod => ({ default: mod.FooterWeatherWidget })),
-  { fallback: LightweightFallback.WeatherWidget, ssr: false }
-)
-
-// Performance optimizations
-const throttle = (func: Function, limit: number) => {
-  let inThrottle: boolean
-  return function (this: any, ...args: any[]) {
-    if (!inThrottle) {
-      func.apply(this, args)
-      inThrottle = true
-      setTimeout(() => (inThrottle = false), limit)
-    }
-  }
-}
 
 // Feature-preserving optimized component with React.memo for performance
 const HomePageContent = memo(() => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeSection, setActiveSection] = useState(null as string | null)
+  const [isPatientAuth, setIsPatientAuth] = useState(false)
   const { t } = useLanguage()
 
-  // Throttled scroll handler for better performance
-  const handleScroll = useCallback(
-    throttle(() => {
-      // Client-side only checks
-      if (typeof window === 'undefined') return
-      
-      const sections = ["home", "about", "services", "doctor", "technology", "contact"]
-      const scrollPosition = window.scrollY + 100
+  // Check patient auth state on mount for header action button
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsPatientAuth(localStorage.getItem("patient_authenticated") === "true")
+    }
+  }, [])
 
-      for (const section of sections) {
-        const element = document.getElementById(section)
-        if (element) {
-          const offsetTop = element.offsetTop
-          const offsetHeight = element.offsetHeight
-
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            setActiveSection(section)
+  // Passive IntersectionObserver for active section (zero scroll lag, zero layout reflows)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const sections = ["home", "about", "services", "doctor", "technology", "contact"]
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id)
             break
           }
         }
-      }
-    }, 100),
-    []
-  )
-
-  useEffect(() => {
-    // Initialize active section on mount
-    handleScroll()
-    
-    window.addEventListener("scroll", handleScroll, { passive: true })
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [handleScroll])
+      },
+      { rootMargin: "-20% 0px -60% 0px", threshold: 0 }
+    )
+    sections.forEach((id) => {
+      const el = document.getElementById(id)
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [])
 
   const scrollToSection = (sectionId: string) => {
     // Client-side only
@@ -213,23 +188,30 @@ const HomePageContent = memo(() => {
               <div className="flex items-center bg-white/10 hover:bg-white/15 rounded-md px-2 py-1 transition-all duration-200">
                 <LanguageToggle />
               </div>
-              <Button
-                onClick={() => {
-                  if (typeof window !== "undefined") {
-                    const isAuth = localStorage.getItem("patient_authenticated")
-                    window.location.href = isAuth === "true" ? "/patient-portal" : "/patient/auth"
-                  }
-                }}
-                variant="outline"
-                className="border-white/30 text-white hover:bg-white/20 px-3 py-2 rounded-md font-medium text-xs sm:text-sm backdrop-blur-sm"
-              >
-                <User className="h-4 w-4 mr-1.5" />
-                Patient Portal
-              </Button>
-              <AppointmentBookingModal
-                buttonText="Book Now"
-                className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#1e7a6b] text-white px-4 py-2 rounded-md font-medium shadow-md hover:shadow-lg transition-all duration-200 text-sm"
-              />
+              {isPatientAuth ? (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/patient-portal"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-white/15 hover:bg-white/25 text-white border border-white/25 transition-all shadow-sm"
+                  >
+                    <User className="h-4 w-4 text-emerald-300" />
+                    <span>My Portal</span>
+                  </Link>
+                  <AppointmentBookingModal
+                    buttonText="Book Appointment"
+                    className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:shadow-lg transition-all text-xs sm:text-sm"
+                  />
+                </div>
+              ) : (
+                <Link
+                  href="/patient/auth"
+                  className="group inline-flex items-center gap-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-900 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+                >
+                  <UserCheck className="h-4 w-4 text-slate-900" />
+                  <span>Patient Portal & Booking</span>
+                  <ArrowRight className="h-4 w-4 text-slate-900 transition-transform group-hover:translate-x-1" />
+                </Link>
+              )}
             </div>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -278,23 +260,33 @@ const HomePageContent = memo(() => {
                   </div>
                 </div>
                 <div className="px-4 space-y-2">
-                  <Button
-                    onClick={() => {
-                      if (typeof window !== "undefined") {
-                        const isAuth = localStorage.getItem("patient_authenticated")
-                        window.location.href = isAuth === "true" ? "/patient-portal" : "/patient/auth"
-                      }
-                    }}
-                    className="w-full bg-white/20 text-white hover:bg-white/30 border border-white/30"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Patient Portal / Sign In
-                  </Button>
-                  <AppointmentBookingModal
-                    buttonText="Book Appointment"
-                    fullWidth={true}
-                    className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#1e7a6b] text-white w-full"
-                  />
+                  {isPatientAuth ? (
+                    <>
+                      <Link
+                        href="/patient-portal"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center justify-center gap-2 w-full bg-white/20 text-white hover:bg-white/30 border border-white/30 py-2.5 rounded-lg font-semibold text-sm"
+                      >
+                        <User className="h-4 w-4 text-emerald-300" />
+                        <span>Open Patient Portal</span>
+                      </Link>
+                      <AppointmentBookingModal
+                        buttonText="Book Appointment"
+                        fullWidth={true}
+                        className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white w-full py-2.5 font-bold"
+                      />
+                    </>
+                  ) : (
+                    <Link
+                      href="/patient/auth"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-900 py-3 rounded-lg font-bold text-sm shadow-md"
+                    >
+                      <UserCheck className="h-4 w-4" />
+                      <span>Patient Portal & Booking</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
@@ -562,20 +554,11 @@ const HomePageContent = memo(() => {
           </section>
 
           {/* About Section */}
-          <section id="about" className="relative py-20 bg-white dark:bg-[rgb(30,63,99)] overflow-hidden">
-            {/* Background Image optimized */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <Image
-                src="/images/medical-background-professional.PNG"
-                alt="Medical Background"
-                fill
-                quality={45}
-                loading="lazy"
-                className="object-cover object-center opacity-30"
-                sizes="100vw"
-              />
-              {/* Glass Blur Overlay */}
-              <div className="absolute inset-0 bg-[rgba(174,193,191,0.8)] backdrop-blur-sm"></div>
+          <section id="about" className="relative py-20 bg-gradient-to-b from-white via-emerald-50/20 to-white dark:from-[rgb(20,45,75)] dark:via-[rgb(30,63,99)] dark:to-[rgb(20,45,75)] overflow-hidden">
+            {/* Smooth background decorative accents */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+              <div className="absolute -top-24 -left-24 w-72 h-72 bg-teal-200/40 dark:bg-teal-900/30 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-cyan-200/40 dark:bg-cyan-900/30 rounded-full blur-3xl"></div>
             </div>
             <div className="container mx-auto px-4 relative z-10">
               <div className="text-center mb-16">
@@ -654,19 +637,10 @@ const HomePageContent = memo(() => {
           </section>
 
           {/* Services Section */}
-          <section id="services" className="relative py-20 overflow-hidden">
-            {/* Background Image optimized */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <Image
-                src="/images/human skeleton.png"
-                alt="Human Spine & Skeleton"
-                fill
-                quality={45}
-                loading="lazy"
-                className="object-cover object-center opacity-20"
-                sizes="100vw"
-              />
-              <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xs"></div>
+          <section id="services" className="relative py-20 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/80 dark:from-slate-900 dark:via-slate-850 dark:to-slate-900 overflow-hidden">
+            {/* Smooth background decorative accents */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-25">
+              <div className="absolute top-1/4 -right-20 w-80 h-80 bg-emerald-200/40 dark:bg-emerald-900/20 rounded-full blur-3xl"></div>
             </div>
             <div className="container mx-auto px-4 relative z-10">
               <div className="text-center mb-16">
@@ -905,8 +879,8 @@ const HomePageContent = memo(() => {
                 className="object-cover object-center opacity-20"
                 sizes="100vw"
               />
-              {/* Glass Blur Overlay */}
-              <div className="absolute inset-0 bg-[rgba(174,193,191,0.85)] dark:bg-[rgb(30,63,99)]/85 backdrop-blur-sm"></div>
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-[rgba(174,193,191,0.88)] dark:bg-[rgb(30,63,99)]/90"></div>
             </div>
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-5 dark:opacity-10">
@@ -1067,28 +1041,15 @@ const HomePageContent = memo(() => {
           {/* Technology Section */}
           <section id="technology" className="py-20">
             <div className="container mx-auto px-4">
-              <LightweightWrapper triggerOnScroll={true} fallback={<LightweightFallback.Technology />}>
-                <TechnologyShowcase />
-              </LightweightWrapper>
+              <TechnologyShowcase />
             </div>
           </section>
 
-
           {/* Contact & Booking Section */}
-          <section id="contact" className="relative py-20 bg-white dark:bg-[rgb(30,63,99)] overflow-hidden">
-            {/* Background Image optimized */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <Image
-                src="/images/spinal-nerves-subluxation-poster.jpeg"
-                alt="Spinal Nerves Poster"
-                fill
-                quality={45}
-                loading="lazy"
-                className="object-cover object-center opacity-20"
-                sizes="100vw"
-              />
-              {/* Glass Blur Overlay */}
-              <div className="absolute inset-0 bg-[rgba(174,193,191,0.85)] dark:bg-[rgb(30,63,99)]/85 backdrop-blur-sm"></div>
+          <section id="contact" className="relative py-20 bg-gradient-to-b from-white via-cyan-50/20 to-white dark:from-[rgb(20,45,75)] dark:via-[rgb(30,63,99)] dark:to-[rgb(20,45,75)] overflow-hidden">
+            {/* Smooth background decorative accents */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+              <div className="absolute -top-20 left-1/3 w-80 h-80 bg-teal-200/30 dark:bg-teal-900/20 rounded-full blur-3xl"></div>
             </div>
             <div className="container mx-auto px-4 relative z-10">
               <div className="text-center mb-16 relative">
@@ -1386,11 +1347,9 @@ const HomePageContent = memo(() => {
                   </div>
                 </div>
 
-                {/* Weather Widget (Deferred on Scroll) */}
+                {/* Weather Widget */}
                 <div className="flex justify-center">
-                  <LightweightWrapper triggerOnScroll={true} fallback={<LightweightFallback.WeatherWidget />}>
-                    <FooterWeatherWidget />
-                  </LightweightWrapper>
+                  <FooterWeatherWidget />
                 </div>
 
                 {/* CTA Section */}
@@ -1432,11 +1391,11 @@ const HomePageContent = memo(() => {
           </footer>
         </div>
 
-        {/* Lightweight Deferred Floating Components */}
-        <LightweightWrapper delay={1200} triggerOnInteraction={true} fallback={<LightweightFallback.Chatbot />}>
+        {/* Floating Interactive Features - Loaded smoothly without blocking or skeleton flash */}
+        <NoSSR>
           <AdvancedChatbot />
           <SportsInjuriesFloat />
-        </LightweightWrapper>
+        </NoSSR>
     </>
   )
 })
