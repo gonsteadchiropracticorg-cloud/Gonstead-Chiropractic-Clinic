@@ -112,13 +112,13 @@ const sidebarItems: MenuItem[] = [
     category: "insights"
   },
   {
-    id: "administration",
-    title: "Administration",
+    id: "settings",
+    title: "Settings",
     icon: Settings,
-    description: "System management",
+    description: "Clinic & location configuration",
     category: "admin",
     children: [
-      { id: "settings", title: "Basic Settings", href: "/admin/settings", icon: Settings },
+      { id: "settings-general", title: "Clinic Settings", href: "/admin/settings", icon: Settings },
       { id: "location-settings", title: "Location & Maps", href: "/admin/location-settings", icon: MapPin },
       { id: "audit-logs", title: "Audit Logs", href: "/admin/audit-logs", icon: Activity },
       { id: "staff-access", title: "Staff Access", href: "/admin/staff-access", icon: UserCheck },
@@ -504,24 +504,33 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
         {/* Professional Footer - Moves with scrolling at bottom of sidebar content */}
         <footer className="flex-shrink-0 mt-auto bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700">
           <div className="p-3 sm:p-4">
-            {/* Help and Logout */}
-            <div className="flex gap-2 mb-2 sm:mb-3">
+            {/* Settings, Help and Logout */}
+            <div className="grid grid-cols-3 gap-2 mb-2 sm:mb-3">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleNavigation('/admin/settings')}
+                className="text-gray-600 dark:text-gray-300 hover:text-[#0d5c75] dark:hover:text-[#2a9d8f] hover:bg-[#0d5c75]/5 dark:hover:bg-[#2a9d8f]/10 transition-all duration-200 touch-manipulation active:scale-95 text-xs sm:text-sm px-1 sm:px-2"
+              >
+                <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
+                <span className="font-medium">Settings</span>
+              </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => handleNavigation('/admin/help')}
-                className="flex-1 text-gray-600 dark:text-gray-300 hover:text-[#0d5c75] dark:hover:text-[#2a9d8f] hover:bg-[#0d5c75]/5 dark:hover:bg-[#2a9d8f]/10 transition-all duration-200 touch-manipulation active:scale-95 text-xs sm:text-sm"
+                className="text-gray-600 dark:text-gray-300 hover:text-[#0d5c75] dark:hover:text-[#2a9d8f] hover:bg-[#0d5c75]/5 dark:hover:bg-[#2a9d8f]/10 transition-all duration-200 touch-manipulation active:scale-95 text-xs sm:text-sm px-1 sm:px-2"
               >
-                <HelpCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                <HelpCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
                 <span className="font-medium">Help</span>
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={handleLogout}
-                className="flex-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 touch-manipulation active:scale-95 text-xs sm:text-sm"
+                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 touch-manipulation active:scale-95 text-xs sm:text-sm px-1 sm:px-2"
               >
-                <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
                 <span className="font-medium">Logout</span>
               </Button>
             </div>

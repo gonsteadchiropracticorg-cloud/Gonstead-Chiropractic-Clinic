@@ -2769,34 +2769,10 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Bottom Row: Controls and Action Buttons - Mobile Responsive */}
-              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                {/* Combined Time and Weather Display - Mobile Optimized */}
-                <div className={`flex items-center gap-1 sm:gap-3 p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex-1 sm:flex-none min-w-0`}>
-                  {/* Weather Section - Hidden on very small screens */}
-                  <div className="hidden md:flex items-center gap-1 sm:gap-2 border-r border-white/20 pr-2 sm:pr-3">
-                    <Cloud className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
-                    <div>
-                      <div className={`text-xs sm:text-sm font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                        28°C
-                      </div>
-                      <div className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Nowshera</div>
-                    </div>
-                  </div>
-
-                  {/* Time Section - Always visible but compact on mobile */}
-                  <div className="text-center flex-1 min-w-0">
-                    <div className="text-[10px] sm:text-sm font-bold font-mono tracking-wider truncate">
-                      {typeof window !== 'undefined' ? formatTime12Hour(currentTime) : '--:--:-- --'}
-                    </div>
-                    <div className="text-[8px] sm:text-xs opacity-80 font-medium truncate">
-                      {typeof window !== 'undefined' ? formatDate(currentTime).split(',')[0] : '-- --'}
-                    </div>
-                  </div>
-                </div>
-
+              {/* Right Controls: Action Buttons & Rounded Theme Toggle */}
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
                 {/* Header Action Buttons - Mobile Responsive */}
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   {/* Add Patient Button */}
                   <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
                     <DialogTrigger asChild>
@@ -2984,91 +2960,7 @@ export default function AdminDashboard() {
                     </DialogContent>
                   </Dialog>
 
-                  {/* Location Settings Button */}
-                  <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white px-2 sm:px-3 py-1.5 sm:py-2 h-auto text-xs sm:text-sm"
-                      >
-                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Location</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
-                          <MapPin className="h-5 w-5" />
-                          Clinic Location Settings
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="address">Clinic Address</Label>
-                          <Input
-                            id="address"
-                            value={clinicLocation.address}
-                            onChange={(e) => setClinicLocation((prev) => ({ ...prev, address: e.target.value }))}
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="lat">Latitude</Label>
-                            <Input
-                              id="lat"
-                              type="number"
-                              step="any"
-                              value={clinicLocation.coordinates.lat}
-                              onChange={(e) =>
-                                setClinicLocation((prev) => ({
-                                  ...prev,
-                                  coordinates: { ...prev.coordinates, lat: Number.parseFloat(e.target.value) },
-                                }))
-                              }
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="lng">Longitude</Label>
-                            <Input
-                              id="lng"
-                              type="number"
-                              step="any"
-                              value={clinicLocation.coordinates.lng}
-                              onChange={(e) =>
-                                setClinicLocation((prev) => ({
-                                  ...prev,
-                                  coordinates: { ...prev.coordinates, lng: Number.parseFloat(e.target.value) },
-                                }))
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="mapUrl">Google Maps URL</Label>
-                          <Input
-                            id="mapUrl"
-                            value={clinicLocation.mapUrl}
-                            onChange={(e) => setClinicLocation((prev) => ({ ...prev, mapUrl: e.target.value }))}
-                          />
-                        </div>
-                        <div className="flex justify-end gap-3">
-                          <Button type="button" variant="outline" onClick={() => setIsLocationDialogOpen(false)}>
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              updateClinicLocation(clinicLocation)
-                              setIsLocationDialogOpen(false)
-                            }}
-                            className="bg-[#0d5c75] hover:bg-[#0a4a5c]"
-                          >
-                            Update Location
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+
 
                   {/* Exit/Logout Button */}
                   <Button
@@ -3082,20 +2974,25 @@ export default function AdminDashboard() {
                   </Button>
                 </div>
 
-                {/* Compact Theme Toggle - Mobile Optimized */}
-                <div className="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg">
-                  <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-gray-600" : "bg-[rgb(227,252,236)]"} transition-all duration-300`}>
-                    <Sun className={`h-3 w-3 sm:h-4 sm:w-4 ${isDarkMode ? "text-gray-400" : "text-green-500"}`} />
-                  </div>
-                  <Switch
-                    checked={isDarkMode}
-                    onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-                    className="data-[state=checked]:bg-gray-600 scale-75 sm:scale-100"
-                  />
-                  <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${isDarkMode ? "bg-blue-100" : "bg-gray-200"} transition-all duration-300`}>
-                    <Moon className={`h-3 w-3 sm:h-4 sm:w-4 ${isDarkMode ? "text-blue-400" : "text-gray-400"}`} />
-                  </div>
-                </div>
+                {/* Rounded Day and Night Mode Toggle Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(isDarkMode ? "light" : "dark")}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/30 backdrop-blur-sm transition-all duration-300 shadow-md shrink-0 ${
+                    isDarkMode
+                      ? "bg-gray-800/80 text-amber-400 hover:bg-gray-700 hover:text-amber-300"
+                      : "bg-white/40 text-[#0d5c75] hover:bg-white/60 hover:text-[#0a4a5c]"
+                  }`}
+                  aria-label="Toggle day and night mode"
+                  title={isDarkMode ? "Switch to Day Mode" : "Switch to Night Mode"}
+                >
+                  {isDarkMode ? (
+                    <Sun className="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-300" />
+                  ) : (
+                    <Moon className="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-300" />
+                  )}
+                </Button>
               </div>
             </div>
           </div>
