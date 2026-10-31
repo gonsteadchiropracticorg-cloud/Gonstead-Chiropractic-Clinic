@@ -3240,34 +3240,38 @@ export default function AdminDashboard() {
           {/* Patient Management */}
           <Card className={`mt-8 border-[#0d5c75]/20 shadow-xl ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
             <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 font-poppins">
-                  <FileText className="h-5 w-5" />
-                  Patient Records Management
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <CardTitle className="flex items-center gap-2 font-poppins text-base sm:text-lg">
+                  <FileText className="h-5 w-5 shrink-0" />
+                  <span className="truncate">Patient Records Management</span>
                 </CardTitle>
-                <div className="flex items-center gap-3">
-                  {/* Quick Win: Patient Count */}
-                  <div className="text-sm text-white/80">
+                <div className="flex items-center gap-2.5 text-xs text-white/80 shrink-0">
+                  <div>
                     Showing <span className="font-bold text-white">{userSortedPatients.length}</span> of <span className="font-bold text-white">{patients.length}</span> patients
                   </div>
-                  {/* Quick Win: Last Updated */}
-                  <div className="text-xs text-white/60">
-                    Updated {getRelativeTime(lastUpdated)}
+                  <span className="opacity-40">•</span>
+                  <div className="text-white/60">
+                    {getRelativeTime(lastUpdated)}
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col md:flex-row gap-4 mt-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70" />
+
+              {/* Single-Line Horizontally Scrollable Filters Toolbar */}
+              <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto flex-nowrap mt-3 sm:mt-4 pb-2 pt-0.5 no-scrollbar sm:scrollbar-thin sm:scrollbar-thumb-white/20">
+                {/* Search Input */}
+                <div className="relative w-56 sm:w-64 md:w-72 shrink-0">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-white/70" />
                   <Input
-                    placeholder="Search by name, phone, email, patient code, notes, or date/time"
+                    placeholder="Search by name, phone, code..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/70"
+                    className="pl-8 sm:pl-9 pr-3 bg-white/10 border-white/20 text-white placeholder:text-white/70 rounded-xl h-8 sm:h-9 text-xs sm:text-sm"
                   />
                 </div>
+
+                {/* Status Dropdown */}
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
+                  <SelectTrigger className="w-32 sm:w-36 shrink-0 bg-white/10 border-white/20 text-white rounded-xl h-8 sm:h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -3278,8 +3282,10 @@ export default function AdminDashboard() {
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {/* Urgency Dropdown */}
                 <Select value={filterUrgency} onValueChange={setFilterUrgency}>
-                  <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
+                  <SelectTrigger className="w-32 sm:w-36 shrink-0 bg-white/10 border-white/20 text-white rounded-xl h-8 sm:h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="Urgency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -3289,8 +3295,10 @@ export default function AdminDashboard() {
                     <SelectItem value="emergency">Emergency</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {/* Time Period Dropdown */}
                 <Select value={filterTimePeriod} onValueChange={setFilterTimePeriod}>
-                  <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
+                  <SelectTrigger className="w-32 sm:w-36 shrink-0 bg-white/10 border-white/20 text-white rounded-xl h-8 sm:h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="Time Period" />
                   </SelectTrigger>
                   <SelectContent>
@@ -3301,37 +3309,40 @@ export default function AdminDashboard() {
                     <SelectItem value="year">This Year</SelectItem>
                   </SelectContent>
                 </Select>
-                {/* Quick Win: Clear All Filters Button */}
+
+                {/* Clear All Filters Button */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={clearAllFilters}
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-xl h-8 sm:h-9 text-xs sm:text-sm shrink-0 whitespace-nowrap px-2.5 sm:px-3"
                   title="Clear all filters and search"
                 >
-                  <X className="h-4 w-4 mr-2" />
+                  <X className="h-3.5 w-3.5 mr-1" />
                   Clear Filters
                 </Button>
-                {/* Quick Win: Import from CSV Button */}
+
+                {/* Import from CSV Button */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={importFromCSV}
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-xl h-8 sm:h-9 text-xs sm:text-sm shrink-0 whitespace-nowrap px-2.5 sm:px-3"
                   title="Import patient data from CSV file"
                 >
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="h-3.5 w-3.5 mr-1" />
                   Import CSV
                 </Button>
-                {/* Quick Win: Export to CSV Button */}
+
+                {/* Export to CSV Button */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={exportToCSV}
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-xl h-8 sm:h-9 text-xs sm:text-sm shrink-0 whitespace-nowrap px-2.5 sm:px-3"
                   title="Export current view to CSV"
                 >
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-3.5 w-3.5 mr-1" />
                   Export CSV
                 </Button>
               </div>
