@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
+import { usePathname } from "next/navigation"
 import {
   Mic,
   MicOff,
@@ -32,6 +33,8 @@ interface PipelineExecution {
 }
 
 export function SystemAutomationCopilot() {
+  const pathname = usePathname()
+  const isPatientPortal = pathname?.startsWith("/patient-portal")
   const [isOpen, setIsOpen] = useState(false)
   const [inputText, setInputText] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -282,31 +285,44 @@ Respond ONLY with valid JSON with format:
 
   return (
     <>
-      {/* Floating System-Wide Copilot Trigger Button */}
-      <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2">
+      {/* Floating System-Wide Copilot Trigger Button (Perfect Rounded Icon Stacked on top of Chatbot) */}
+      <div
+        className={`fixed z-[99990] flex items-center transition-all duration-300 ${
+          isPatientPortal
+            ? "bottom-20 left-6"
+            : "bottom-22 right-5 md:bottom-24 md:right-7"
+        }`}
+      >
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`flex items-center gap-2.5 px-4 py-3 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+          className={`relative h-12 w-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 active:scale-95 border-2 border-teal-300/40 ${
             isOpen
-              ? "bg-[#0d5c75] text-white ring-4 ring-[#2a9d8f]/30"
-              : "bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white hover:from-[#116e8c] hover:to-[#34b3a4]"
+              ? "bg-[#0d5c75] text-white ring-4 ring-[#2a9d8f]/40"
+              : "bg-gradient-to-tr from-[#0d5c75] via-[#15728a] to-[#2a9d8f] text-white hover:brightness-110"
           }`}
-          title="Open System Voice & Text Automation Copilot"
+          title="Open AI System Automation Copilot (Voice & Text)"
+          aria-label="Open AI System Automation Copilot"
         >
-          <div className="relative">
-            <Sparkles className="w-5 h-5 text-teal-200 animate-pulse" />
-            {isListening && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping" />
-            )}
-          </div>
-          <span className="font-semibold text-sm tracking-wide hidden sm:inline">AI System Copilot</span>
-          <span className="bg-white/20 text-xs px-2 py-0.5 rounded-full font-mono">Auto</span>
+          <Sparkles className="w-5 h-5 text-teal-200 animate-pulse" />
+          {isListening && (
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full animate-ping border border-white" />
+          )}
+          <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400"></span>
+          </span>
         </button>
       </div>
 
       {/* Floating Copilot Modal/Console */}
       {isOpen && (
-        <div className="fixed bottom-20 right-6 w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 border border-teal-600/30 dark:border-teal-500/30 rounded-2xl shadow-2xl z-[9999] overflow-hidden flex flex-col transition-all">
+        <div
+          className={`fixed w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 border border-teal-600/30 dark:border-teal-500/30 rounded-2xl shadow-2xl z-[99995] overflow-hidden flex flex-col transition-all duration-300 animate-in fade-in zoom-in-95 ${
+            isPatientPortal
+              ? "bottom-34 left-6"
+              : "bottom-36 right-4 md:right-6"
+          }`}
+        >
           {/* Header */}
           <div className="p-3.5 bg-gradient-to-r from-[#0d5c75] to-[#1a758e] text-white flex items-center justify-between">
             <div className="flex items-center gap-2.5">
