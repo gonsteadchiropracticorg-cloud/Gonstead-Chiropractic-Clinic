@@ -107,53 +107,38 @@ const HomePageContent = memo(() => {
       {/* Lightweight optimized main container */}
       <div className="min-h-screen bg-gradient-to-br from-[#F1F5F9] via-[#E0F2F1] to-[#F8F5F0] dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900">
           {/* Enhanced Professional Navigation - COMPREHENSIVE MODERN DESIGN */}
-      <nav className="fixed top-0 left-0 right-0 z-[9999] bg-[rgb(70,146,138)]/95 dark:bg-[rgb(70,146,138)]/95 backdrop-blur-xl border-b border-white/20 shadow-[0_4px_32px_rgba(70,146,138,0.25)]">
-        <div className="container mx-auto px-2 sm:px-4">
-          <div className="flex items-center justify-between h-20 sm:h-24">
-            <div className="flex items-center gap-2 sm:gap-3 -ml-2 sm:-ml-4">
-              {/* Professional Logo - Clean and Simple */}
-              <div className="flex-shrink-0">
+      <nav className="fixed top-0 left-0 right-0 z-[9999] bg-[#0d5c75]/95 dark:bg-[#07242f]/95 backdrop-blur-xl border-b border-white/15 shadow-[0_4px_24px_rgba(13,92,117,0.25)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Left: Brand Identity */}
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 p-1.5 border border-white/20 shadow-md group-hover:scale-105 transition-transform flex items-center justify-center">
                 <Image
-                  src="/images/gonstead-logo-new.png"
+                  src="/images/gonstead-chiropractic-logo-new.png"
                   alt="Gonstead Chiropractic Logo"
-                  width={80}
-                  height={80}
-                  className="object-contain w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20"
+                  width={44}
+                  height={44}
+                  className="object-contain drop-shadow"
                   priority
-                  quality={75}
-                  sizes="(max-width: 768px) 64px, (max-width: 1024px) 72px, 80px"
                 />
               </div>
-              {/* Professional Medical Brand - Compact Design */}
-              <div className="flex flex-col justify-center">
-                {/* Main Clinic Name - Compact */}
-                <div className="leading-none">
-                  <h1 className="text-xs sm:text-sm lg:text-base font-bold font-poppins">
-                    {/* Main title with gradient */}
-                    <span className="block bg-gradient-to-r from-white via-cyan-100 to-white bg-clip-text text-transparent font-black tracking-wide">
-                      GONSTEAD CHIROPRACTIC
-                    </span>
-                    {/* Compact clinic badge */}
-                    <span className="inline-flex items-center bg-gradient-to-r from-emerald-400/15 to-cyan-400/15 backdrop-blur-sm border border-white/15 rounded-full px-2 py-0.5 text-white font-medium tracking-wide text-xs mt-0.5">
-                      <span className="w-1 h-1 bg-emerald-400 rounded-full mr-1.5"></span>
-                      CLINIC
-                    </span>
-                  </h1>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-base lg:text-lg tracking-wide text-white font-poppins">
+                    Dr. Bashir Khan
+                  </span>
+                  <span className="inline-flex items-center bg-teal-400/20 text-teal-200 border border-teal-300/30 text-[10px] font-semibold px-2 py-0.2 rounded-full">
+                    Clinic
+                  </span>
                 </div>
-                
-                {/* Doctor Name - Compact */}
-                <div className="mt-1">
-                  <p className="text-xs font-medium text-white/90 tracking-wide">
-                    Bashir Khan Chiropractic
-                  </p>
-                  <p className="text-xs font-medium text-emerald-300 tracking-wide mt-0.5">
-                    SPINAL HEALTH SPECIALIST
-                  </p>
-                </div>
+                <span className="text-[11px] text-teal-100 font-medium tracking-wide">
+                  Gonstead Chiropractic Specialist V
+                </span>
               </div>
-            </div>
+            </Link>
 
-            <div className="hidden md:flex items-center gap-2 lg:gap-3">
+            {/* Center: Desktop Navigation Links */}
+            <div className="hidden lg:flex items-center gap-1.5 xl:gap-2">
               {[
                 { id: "home", label: "Home" },
                 { id: "about", label: "About" },
@@ -165,10 +150,10 @@ const HomePageContent = memo(() => {
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-md hover:bg-white/15 ${
+                  className={`text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-lg ${
                     activeSection === item.id
-                      ? "text-white bg-white/15 border border-white/20"
-                      : "text-white/85 hover:text-white"
+                      ? "text-white bg-white/20 font-semibold shadow-sm border border-white/20"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
                   }`}
                 >
                   {item.label}
@@ -176,30 +161,32 @@ const HomePageContent = memo(() => {
               ))}
               <Link
                 href="/faq"
-                className="text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-md hover:bg-white/15 text-white/90 hover:text-white flex items-center gap-1 border border-white/20 bg-white/10"
+                className="text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10"
               >
-                <span>FAQ</span>
+                FAQ
               </Link>
             </div>
-            <div className="hidden md:flex items-center gap-2">
-              <div className="flex items-center bg-white/10 hover:bg-white/15 rounded-md px-2 py-1 transition-all duration-200">
-                <ThemeToggle />
-              </div>
-              <div className="flex items-center bg-white/10 hover:bg-white/15 rounded-md px-2 py-1 transition-all duration-200">
-                <LanguageToggle />
-              </div>
+
+            {/* Right: Actions, Theme, Language & Portal CTA */}
+            <div className="hidden md:flex items-center gap-2.5">
+              <ThemeToggle />
+              <LanguageToggle />
+
               <Link
                 href={isPatientAuth ? "/patient-portal" : "/patient/auth"}
-                className="group inline-flex items-center gap-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-900 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+                className="group inline-flex items-center gap-2 bg-[#2a9d8f] hover:bg-[#238276] text-white px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm shadow-md hover:shadow-teal-900/30 transition-all duration-200 transform hover:scale-[1.02] border border-teal-300/30"
               >
-                <UserCheck className="h-4 w-4 text-slate-900" />
-                <span>{isPatientAuth ? "My Patient Portal" : "Patient Portal & Booking"}</span>
-                <ArrowRight className="h-4 w-4 text-slate-900 transition-transform group-hover:translate-x-1" />
+                <UserCheck className="h-4 w-4 text-white" />
+                <span>{isPatientAuth ? "Patient Portal" : "Book Adjustment"}</span>
+                <ArrowRight className="h-4 w-4 text-white transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
+
+            {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-white hover:text-white/80 transition-colors"
+              className="md:hidden p-2 text-white hover:text-white/80 transition-colors rounded-lg bg-white/10"
+              aria-label="Toggle menu"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -1162,7 +1149,7 @@ const HomePageContent = memo(() => {
 
 
           {/* Compact Patient Education Resources Section */}
-          <section className="relative py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-[#0d5c75]/5 via-white to-[#2a9d8f]/5 dark:from-gray-900/50 dark:to-gray-800/50">
+          <section id="education" className="relative py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-[#0d5c75]/5 via-white to-[#2a9d8f]/5 dark:from-gray-900/50 dark:to-gray-800/50">
             <div className="max-w-5xl mx-auto">
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-[#0d5c75]/10 dark:border-gray-700 overflow-hidden">
                 <div className="flex flex-col md:flex-row items-center">

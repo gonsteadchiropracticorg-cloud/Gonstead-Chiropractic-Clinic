@@ -65,21 +65,22 @@ export default function ScrollToTopButton({ showAfter = 200, className = "" }: S
   if (!isVisible || isChatOpen) return null
 
   return (
-    <div className={`fixed bottom-20 right-4 z-[9998] ${className}`}>
+    <div className={`fixed bottom-20 right-6 z-[9998] ${className}`}>
       <Button
         onClick={scrollToTop}
         className={`
-          relative w-12 h-12 rounded-full shadow-lg transition-all duration-300 ease-in-out
-          bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 hover:from-[#0d5c75]/30 hover:to-[#2a9d8f]/30
-          text-white border-2 border-white/20 backdrop-blur-xl
-          hover:scale-110 active:scale-95
+          relative w-11 h-11 rounded-full p-0 shadow-md transition-all duration-300 ease-in-out flex items-center justify-center
+          bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800
+          border border-[#0d5c75]/25 dark:border-teal-500/30 backdrop-blur-md
+          hover:scale-105 active:scale-95
           ${isAnimating ? 'animate-pulse' : ''}
         `}
         title="Scroll to Top"
+        aria-label="Scroll to Top"
       >
         <ChevronUp 
           className={`
-            relative z-10 h-5 w-5 text-[#0d5c75] transition-all duration-300
+            h-5 w-5 text-[#0d5c75] dark:text-teal-300 transition-transform duration-300
             ${isAnimating ? 'translate-y-[-2px]' : ''}
           `} 
         />

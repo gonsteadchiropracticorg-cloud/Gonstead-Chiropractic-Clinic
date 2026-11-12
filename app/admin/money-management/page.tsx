@@ -1221,7 +1221,7 @@ function MoneyManagementContent() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleEditRecord(record)}
-                            className="border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800] hover:text-white"
+                            className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
                           >
                             <Edit3 className="h-3 w-3" />
                           </Button>
@@ -1511,8 +1511,8 @@ function MoneyManagementContent() {
           >
             <Plus className="h-6 w-6 text-white" />
           </Button>
-          <div className="absolute -top-3 -right-3 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center animate-pulse shadow-lg">
-            <DollarSign className="h-4 w-4 text-yellow-900" />
+          <div className="absolute -top-3 -right-3 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse shadow-lg">
+            <DollarSign className="h-4 w-4 text-white" />
           </div>
         </div>
       )}

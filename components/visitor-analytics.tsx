@@ -372,10 +372,10 @@ export function VisitorAnalytics() {
                 <span className="text-sm text-gray-600">Tablet</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-[#f3a800]">{stats.deviceStats.tablet}%</span>
+                <span className="font-bold text-[#2a9d8f]">{stats.deviceStats.tablet}%</span>
                 <div className="w-16 h-2 bg-gray-200 rounded-full">
                   <div 
-                    className="h-2 bg-[#f3a800] rounded-full"
+                    className="h-2 bg-[#2a9d8f] rounded-full"
                     style={{ width: `${stats.deviceStats.tablet}%` }}
                   />
                 </div>
@@ -386,7 +386,7 @@ export function VisitorAnalytics() {
 
         {/* Top Pages */}
         <Card className="border-[#0d5c75]/20">
-          <CardHeader className="bg-gradient-to-r from-[#f3a800] to-[#e67e22] text-white">
+          <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#e67e22] text-white">
             <CardTitle className="flex items-center gap-2">
               <Globe className="h-5 w-5" />
               Top Pages

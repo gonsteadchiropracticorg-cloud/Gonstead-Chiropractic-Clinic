@@ -1,33 +1,24 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { useLanguage } from "./language-provider"
 
 export function LanguageToggle() {
   const { language, setLanguage, mounted } = useLanguage()
 
-  // Prevent hydration mismatch by not rendering until mounted
-  if (!mounted) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
-        disabled
-      >
-        English
-      </Button>
-    )
+  const toggleLanguage = () => {
+    setLanguage(language === "en" ? "ur" : "en")
   }
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setLanguage(language === "en" ? "ur" : "en")}
-      className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
+    <button
+      type="button"
+      onClick={toggleLanguage}
+      title={language === "en" ? "اردو میں دیکھیں" : "Switch to English"}
+      aria-label="Toggle language"
+      className="flex items-center justify-center h-8 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold shadow-sm transition-all duration-200 hover:scale-105 active:scale-95"
     >
-      {language === "en" ? "اردو" : "English"}
-    </Button>
+      {mounted && language === "en" ? "اردو" : "ENG"}
+    </button>
   )
 }
+

@@ -101,13 +101,9 @@ export async function registerPatient(params: {
     }
     await setDoc(accountDocRef, accountPayload)
 
-    // 4. Store active patient session in localStorage for smooth client rendering
-    if (typeof window !== "undefined") {
-      localStorage.setItem("patient_authenticated", "true")
-      localStorage.setItem("patient_uid", user.uid)
-      localStorage.setItem("patient_email", cleanEmail)
-      localStorage.setItem("patient_name", cleanName)
-      localStorage.setItem("patient_id", patientDocRef.id)
+    // 4. Do not auto-login to session during registration: patient must log in with their credentials
+    if (auth) {
+      await signOut(auth).catch(() => {})
     }
 
     return { user, account: accountPayload, error: null }
@@ -238,8 +234,8 @@ export async function getPatientAppointmentsFromFirestore(
     if (cleanEmail) {
       queries.push(query(collection(db, PATIENTS), where("email", "==", cleanEmail)))
     }
-    if (phone) {
-      queries.push(query(collection(db, PATIENTS), where("phone", "==", phone)))
+    if (cleanPhone) {
+      queries.push(query(collection(db, PATIENTS), where("phone", "==", cleanPhone)))
     }
 
     for (const q of queries) {
@@ -247,7 +243,11 @@ export async function getPatientAppointmentsFromFirestore(
         const snap = await getDocs(q)
         snap.docs.forEach((d) => {
           if (!resultsMap.has(d.id)) {
-            resultsMap.set(d.id, normalizeFirestorePatient(d.id, d.data()))
+            const data = d.data()
+            // Do not show placeholder registration records that have no scheduled appointment date
+            if (data.appointment_date || data.booking_source === "admin_dashboard" || data.status === "completed") {
+              resultsMap.set(d.id, normalizeFirestorePatient(d.id, data))
+            }
           }
         })
       } catch (e) {
@@ -255,10 +255,10 @@ export async function getPatientAppointmentsFromFirestore(
       }
     }
 
-    // 2. Queue & Doctor-Booked Queries
-    if (phone) {
+    // 2. Queue Queries
+    if (cleanPhone) {
       try {
-        const qQueue = query(collection(db, "appointment_queue"), where("patient_phone", "==", phone))
+        const qQueue = query(collection(db, "appointment_queue"), where("patient_phone", "==", cleanPhone))
         const snapQueue = await getDocs(qQueue)
         snapQueue.docs.forEach((d) => {
           if (!resultsMap.has(d.id)) {
@@ -268,27 +268,28 @@ export async function getPatientAppointmentsFromFirestore(
       } catch (e) {}
     }
 
-    // 3. Smart Doctor-Booked Match (Scan recent documents if email/phone query returned few matches)
+    // 3. Match only by exact Email or exact Phone (never by name alone, which pulls unrelated patients)
     try {
-      const allDocsSnap = await getDocs(collection(db, PATIENTS))
-      allDocsSnap.docs.forEach((d) => {
-        if (!resultsMap.has(d.id)) {
-          const data = d.data()
-          const docEmail = (data.email || data.patient_email || "").toString().trim().toLowerCase()
-          const docPhone = (data.phone || data.patient_phone || "").toString().replace(/\D/g, "")
-          const docName = (data.patient_name || data.name || data.full_name || "").toString().trim().toLowerCase()
+      if (cleanEmail || cleanPhone) {
+        const allDocsSnap = await getDocs(collection(db, PATIENTS))
+        allDocsSnap.docs.forEach((d) => {
+          if (!resultsMap.has(d.id)) {
+            const data = d.data()
+            const docEmail = (data.email || data.patient_email || "").toString().trim().toLowerCase()
+            const docPhone = (data.phone || data.patient_phone || "").toString().replace(/\D/g, "")
 
-          const isEmailMatch = cleanEmail && docEmail && docEmail === cleanEmail
-          const isPhoneMatch = cleanPhone && docPhone && (docPhone.includes(cleanPhone) || cleanPhone.includes(docPhone))
-          const isNameMatch = cleanName && docName && (docName === cleanName || docName.includes(cleanName) || cleanName.includes(docName))
+            const isEmailMatch = cleanEmail && docEmail && docEmail === cleanEmail
+            const isPhoneMatch = cleanPhone && docPhone && cleanPhone.length >= 8 && docPhone === cleanPhone
 
-          if (isEmailMatch || isPhoneMatch || isNameMatch) {
-            resultsMap.set(d.id, normalizeFirestorePatient(d.id, data))
+            // Ensure we only link appointments with actual dates/details
+            if ((isEmailMatch || isPhoneMatch) && (data.appointment_date || data.booking_source === "admin_dashboard")) {
+              resultsMap.set(d.id, normalizeFirestorePatient(d.id, data))
+            }
           }
-        }
-      })
+        })
+      }
     } catch (scanErr) {
-      console.warn("Smart Doctor Match note:", scanErr)
+      console.warn("Patient match note:", scanErr)
     }
 
     const list = Array.from(resultsMap.values())

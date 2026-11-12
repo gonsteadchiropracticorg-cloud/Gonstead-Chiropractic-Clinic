@@ -328,7 +328,7 @@ export function EnhancedAppointmentBooking() {
         }
       }
 
-      // Create patient record in Supabase
+      // Create patient record in Supabase / Firestore
       const patientData = {
         name: formData.name,
         phone: formData.phone,
@@ -341,6 +341,7 @@ export function EnhancedAppointmentBooking() {
         payment_method: formData.paymentMethod,
         notes: formData.notes,
         sessions_completed: 0,
+        total_sessions: 8,
       }
 
       const newPatient = await createPatient(patientData)
@@ -369,6 +370,7 @@ export function EnhancedAppointmentBooking() {
         payment_method: formData.paymentMethod || "cash" as const,
         notes: formData.notes,
         sessions_completed: 0,
+        total_sessions: 8,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         last_visit: null,
@@ -534,92 +536,56 @@ export function EnhancedAppointmentBooking() {
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto border-2 sm:border-4 border-[rgb(66,139,124)]/20 shadow-xl sm:shadow-2xl bg-gradient-to-br from-white via-[rgb(66,139,124)]/5 to-[rgb(66,139,124)]/10 dark:from-gray-900 dark:to-gray-800 overflow-hidden relative">
-      {/* Animated Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-[rgb(66,139,124)] rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-10 right-10 w-40 h-40 bg-[rgb(76,157,144)] rounded-full blur-3xl animate-pulse animation-delay-1000"></div>
-        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-[rgb(56,137,124)] rounded-full blur-2xl animate-pulse animation-delay-2000"></div>
-      </div>
-      
-      <CardHeader className="bg-gradient-to-r from-[rgb(66,139,124)] via-[rgb(76,157,144)] to-[rgb(66,139,124)] text-white p-4 md:p-6 relative overflow-hidden">
-        {/* Enhanced Aesthetic Background */}
+    <Card className="w-full max-w-4xl mx-auto border-2 border-[#1b4356] shadow-2xl bg-[#091e2b] text-slate-100 rounded-2xl overflow-hidden relative">
+      <CardHeader className="bg-gradient-to-r from-[#0d5c75] via-[#2a9d8f] to-[#0d5c75] text-white p-4 md:p-6 relative overflow-hidden">
+        {/* Subtle Aesthetic Background */}
         <div className="absolute inset-0 opacity-15">
-          {/* Animated geometric patterns */}
-          <div className="absolute top-0 left-0 w-full h-full">
-            <div className="absolute top-2 left-2 w-8 h-8 border-2 border-white/30 rotate-45 animate-pulse"></div>
-            <div className="absolute top-4 right-4 w-6 h-6 border-2 border-white/20 rotate-12 animate-pulse animation-delay-1000"></div>
-            <div className="absolute bottom-2 left-4 w-4 h-4 border-2 border-white/25 rotate-90 animate-pulse animation-delay-2000"></div>
-            <div className="absolute bottom-4 right-2 w-10 h-10 border-2 border-white/15 rotate-180 animate-pulse animation-delay-3000"></div>
-          </div>
-          
-          {/* Floating orbs with enhanced styling */}
-          <div className="absolute -top-6 -right-6 w-20 h-20 bg-gradient-to-br from-white/20 to-transparent rounded-full blur-lg animate-pulse"></div>
-          <div className="absolute -bottom-6 -left-6 w-16 h-16 bg-gradient-to-br from-white/15 to-transparent rounded-full blur-lg animate-pulse animation-delay-1000"></div>
-          
-          {/* Medical cross pattern */}
-          <div className="absolute top-1/2 left-1/4 w-3 h-12 bg-white/10 rounded-full animate-pulse animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/4 w-12 h-3 bg-white/10 rounded-full animate-pulse animation-delay-2000"></div>
-          <div className="absolute top-1/3 right-1/4 w-2 h-8 bg-white/8 rounded-full animate-pulse animation-delay-3000"></div>
-          <div className="absolute top-1/3 right-1/4 w-8 h-2 bg-white/8 rounded-full animate-pulse animation-delay-3000"></div>
+          <div className="absolute -top-6 -right-6 w-20 h-20 bg-gradient-to-br from-white/20 to-transparent rounded-full blur-lg"></div>
+          <div className="absolute -bottom-6 -left-6 w-16 h-16 bg-gradient-to-br from-white/15 to-transparent rounded-full blur-lg"></div>
         </div>
         
         <div className="relative z-10 text-center">
-          {/* Compact Clinic Logo with aesthetic frame */}
-          <div className="flex items-center justify-center mb-4">
-            <div className="relative">
-              {/* Aesthetic logo frame */}
-              <div className="absolute -inset-2 bg-white/10 rounded-full animate-pulse"></div>
-              <div className="absolute -inset-1 bg-white/5 rounded-full animate-pulse animation-delay-500"></div>
-              
-              <div className="w-12 h-12 md:w-16 md:h-16 relative bg-white/10 rounded-full p-2 backdrop-blur-sm">
-                <img
-                  src="/images/gonstead-logo-new.png"
-                  alt="Gonstead Chiropractic Logo"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              
-              {/* Glowing dots around logo */}
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
-              <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse animation-delay-1000"></div>
+          {/* Compact Clinic Logo */}
+          <div className="flex items-center justify-center mb-3">
+            <div className="w-12 h-12 md:w-14 md:h-14 relative bg-[#091e2b]/10 rounded-full p-2 backdrop-blur-sm border border-white/20">
+              <img
+                src="/images/gonstead-logo-new.png"
+                alt="Gonstead Chiropractic Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
           
-          {/* Elegant title with enhanced typography */}
-          <CardTitle className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 text-white drop-shadow-lg tracking-wide">
-            <span className="bg-gradient-to-r from-white via-white to-white/90 bg-clip-text text-transparent">
-              {t("book.appointment")}
-            </span>
+          {/* Title */}
+          <CardTitle className="text-xl md:text-2xl font-bold mb-1 text-white tracking-wide">
+            {t("book.appointment")}
           </CardTitle>
           
-          {/* Stylized subtitle */}
-          <p className="text-white/80 text-sm md:text-base max-w-xl mx-auto leading-relaxed font-light">
+          {/* Subtitle */}
+          <p className="text-white/80 text-xs md:text-sm max-w-xl mx-auto font-light">
             {language === "ur" ? "پیشہ ورانہ اور آسان اپائنٹمنٹ بکنگ" : "Professional & Streamlined Booking"}
           </p>
           
           {/* Clinic Schedule Notice */}
-          <div className="mt-4 p-3 bg-orange-400/20 border border-orange-400/30 rounded-lg backdrop-blur-sm">
-            <div className="text-sm text-white">
-              <strong>CLINIC SCHEDULE NOTICE</strong>
-              <p className="mt-1">{language === "ur" ? "براہ کرم نوٹ کریں: ہمارا کلینک اتوار کو بند رہتا ہے۔ اپائنٹمنٹ کے لیے پیر سے ہفتہ تک کا دن منتخب کریں۔" : "Please note: Our clinic is closed on Sundays. Kindly schedule your appointments for Monday through Saturday."}</p>
-              <p className="mt-1"><strong>{language === "ur" ? "کھلنے کے اوقات:" : "Operating Hours:"}  </strong>{language === "ur" ? "پیر سے ہفتہ" : "Monday - Saturday"} | <strong>{language === "ur" ? "بند:" : "Closed:"}</strong> {language === "ur" ? "اتوار اور عوامی تعطیلات" : "Sundays & Public Holidays"}</p>
-            </div>
+          <div className="mt-4 p-3 bg-teal-950/50 border border-teal-500/30 rounded-lg text-xs text-teal-100">
+            <strong>CLINIC SCHEDULE NOTICE</strong>
+            <p className="mt-1">{language === "ur" ? "براہ کرم نوٹ کریں: ہمارا کلینک اتوار کو بند رہتا ہے۔ اپائنٹمنٹ کے لیے پیر سے ہفتہ تک کا دن منتخب کریں۔" : "Please note: Our clinic is closed on Sundays. Kindly schedule your appointments for Monday through Saturday."}</p>
+            <p className="mt-1"><strong>{language === "ur" ? "کھلنے کے اوقات:" : "Operating Hours:"}  </strong>{language === "ur" ? "پیر سے ہفتہ" : "Monday - Saturday"} | <strong>{language === "ur" ? "بند:" : "Closed:"}</strong> {language === "ur" ? "اتوار اور عوامی تعطیلات" : "Sundays & Public Holidays"}</p>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent className="p-4 sm:p-6 md:p-8 relative z-10">
+      <CardContent className="p-4 sm:p-6 md:p-8 bg-[#091e2b] text-slate-100 relative z-10">
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 md:space-y-8">
           {/* Personal Information */}
           <div className="space-y-3 sm:space-y-4 md:space-y-6">
-            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-[rgb(66,139,124)] dark:text-[rgb(66,139,124)] border-b-2 border-[rgb(66,139,124)]/20 pb-2 sm:pb-3">
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-teal-300 border-b border-[#1b4356] pb-2 sm:pb-3">
               {language === "ur" ? "ذاتی معلومات" : "Personal Information"}
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               <div className="space-y-3">
-                <Label htmlFor="name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <Label htmlFor="name" className="text-sm font-semibold text-slate-200">
                   {language === "ur" ? "مکمل نام" : "Full Name"} *
                 </Label>
                 <Input
@@ -627,13 +593,13 @@ export function EnhancedAppointmentBooking() {
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder={language === "ur" ? "اپنا مکمل نام درج کریں" : "Enter your full name"}
-                  className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] h-10 md:h-12 text-sm md:text-base"
+                  className="bg-[#0e2c3d] border-[#1b4356] text-white placeholder-slate-400 focus:border-[#2a9d8f] h-10 md:h-12 text-sm md:text-base"
                   required
                 />
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="phone" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <Label htmlFor="phone" className="text-sm font-semibold text-slate-200">
                   {language === "ur" ? "فون نمبر" : "Phone Number"} *
                 </Label>
                 <Input
@@ -641,7 +607,7 @@ export function EnhancedAppointmentBooking() {
                   value={formData.phone}
                   onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                   placeholder="03001234567"
-                  className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] h-10 md:h-12 text-sm md:text-base"
+                  className="bg-[#0e2c3d] border-[#1b4356] text-white placeholder-slate-400 focus:border-[#2a9d8f] h-10 md:h-12 text-sm md:text-base"
                   required
                 />
               </div>
@@ -658,7 +624,7 @@ export function EnhancedAppointmentBooking() {
                   value={formData.email}
                   onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder={language === "ur" ? "آپ کا ای میل ایڈریس" : "your.email@example.com"}
-                  className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)] h-10 md:h-12 text-sm md:text-base"
+                  className="border-[#1b4356] bg-[#0e2c3d] text-white focus:border-[#2a9d8f] focus:ring-[#2a9d8f] h-10 md:h-12 text-sm md:text-base"
                 />
               </div>
               
@@ -670,7 +636,7 @@ export function EnhancedAppointmentBooking() {
                   value={formData.profession} 
                   onValueChange={(value) => setFormData((prev) => ({ ...prev, profession: value }))}
                 >
-                  <SelectTrigger className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] h-10 md:h-12 text-sm md:text-base">
+                  <SelectTrigger className="border-[#1b4356] bg-[#0e2c3d] text-white focus:border-[#2a9d8f] h-10 md:h-12 text-sm md:text-base">
                     <SelectValue placeholder={language === "ur" ? "اپنا پیشہ منتخب کریں" : "Select your profession"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -803,7 +769,7 @@ export function EnhancedAppointmentBooking() {
 
           {/* Urgency Level */}
           <div className="space-y-4 md:space-y-6">
-            <h3 className="text-lg md:text-xl font-semibold text-[rgb(66,139,124)] dark:text-[rgb(66,139,124)] border-b-2 border-[rgb(66,139,124)]/20 pb-3">
+            <h3 className="text-lg md:text-xl font-semibold text-teal-300 dark:text-teal-300 border-b-2 border-[#1b4356] pb-3">
               {language === "ur" ? "فوریت کی سطح" : "Urgency Level"}
             </h3>
             <RadioGroup
@@ -851,7 +817,7 @@ export function EnhancedAppointmentBooking() {
 
           {/* Session Type */}
           <div className="space-y-4 md:space-y-6">
-            <h3 className="text-lg md:text-xl font-semibold text-[rgb(66,139,124)] dark:text-[rgb(66,139,124)] border-b-2 border-[rgb(66,139,124)]/20 pb-3">
+            <h3 className="text-lg md:text-xl font-semibold text-teal-300 dark:text-teal-300 border-b-2 border-[#1b4356] pb-3">
               {language === "ur" ? "سیشن کی قسم" : "Session Type"} *
             </h3>
             <RadioGroup
@@ -859,10 +825,10 @@ export function EnhancedAppointmentBooking() {
               onValueChange={(value: "in_clinic" | "video") => setFormData((prev) => ({ ...prev, sessionType: value }))}
               className="space-y-3 md:space-y-4"
             >
-              <div className="flex items-center space-x-4 p-4 md:p-6 border-2 border-[rgb(66,139,124)]/20 rounded-2xl hover:border-[rgb(66,139,124)]/50 hover:bg-[rgb(66,139,124)]/5 transition-all duration-300 cursor-pointer">
+              <div className="flex items-center space-x-4 p-4 md:p-6 border-2 border-[#1b4356] rounded-2xl hover:border-[rgb(66,139,124)]/50 hover:bg-[rgb(66,139,124)]/5 transition-all duration-300 cursor-pointer">
                 <RadioGroupItem value="in_clinic" id="clinic" className="border-[rgb(50,106,122)] data-[state=checked]:bg-[rgb(50,106,122)] data-[state=checked]:border-[rgb(50,106,122)] text-[rgb(50,106,122)] w-5 h-5" />
                 <Label htmlFor="clinic" className="flex items-center gap-3 md:gap-4 cursor-pointer flex-1">
-                  <CalendarIcon className="h-6 w-6 md:h-8 md:w-8 text-[rgb(66,139,124)]" />
+                  <CalendarIcon className="h-6 w-6 md:h-8 md:w-8 text-teal-300" />
                   <div>
                     <div className="font-bold text-base md:text-lg text-gray-800 dark:text-gray-200">
                       {language === "ur" ? "کلینک میں گونسٹیڈ ایڈجسٹمنٹ" : "In-clinic Gonstead Adjustment"}
@@ -870,7 +836,7 @@ export function EnhancedAppointmentBooking() {
                     <div className="text-sm text-gray-600 dark:text-gray-400">
                       {language === "ur" ? "جدید مشینری کی مدد سے علاج" : "Advanced machine-assisted treatment"}
                     </div>
-                    <div className="text-xs text-[rgb(66,139,124)] font-medium mt-1 flex items-center gap-1">
+                    <div className="text-xs text-teal-300 font-medium mt-1 flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
                       {language === "ur" ? "تحصیل روڈ، نوشہرہ" : "Tehsil Road, Nowshera"}
                     </div>
@@ -966,7 +932,7 @@ export function EnhancedAppointmentBooking() {
                   selectedTime: timeStr || ''
                 }))
               }}
-              className={`border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)] h-10 md:h-12 text-sm md:text-base ${
+              className={`border-[#1b4356] bg-[#0e2c3d] text-white focus:border-[#2a9d8f] focus:ring-[#2a9d8f] h-10 md:h-12 text-sm md:text-base ${
                 isSundaySelected ? 'border-red-500 bg-red-50' : ''
               }`}
               min={new Date().toISOString().slice(0, 16)}
@@ -1006,36 +972,36 @@ export function EnhancedAppointmentBooking() {
                   ? "اپنی تکلیف، درد کی جگہ، یا خاص ضروریات بتائیں..."
                   : "Describe your pain, problem area, or specific requirements..."
               }
-              className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)] min-h-[100px] md:min-h-[120px] text-sm md:text-base"
+              className="border-[#1b4356] bg-[#0e2c3d] text-white focus:border-[#2a9d8f] focus:ring-[#2a9d8f] min-h-[100px] md:min-h-[120px] text-sm md:text-base"
             />
           </div>
 
             <div className="space-y-4">
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-[rgb(66,139,124)] border-b-2 border-[rgb(66,139,124)]/20 pb-2">
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-teal-300 border-b-2 border-[#1b4356] pb-2">
                 {language === "ur" ? "بکنگ کا جائزہ" : "Review Your Booking"}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70">
+                <div className="p-3 rounded-lg border border-[#1b4356] bg-[#0e2c3d]">
                   <p className="text-xs text-gray-500">{language === "ur" ? "نام" : "Name"}</p>
                   <p className="font-semibold text-sm">{formData.name || '-'}</p>
                 </div>
-                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70">
+                <div className="p-3 rounded-lg border border-[#1b4356] bg-[#0e2c3d]">
                   <p className="text-xs text-gray-500">{language === "ur" ? "فون" : "Phone"}</p>
                   <p className="font-semibold text-sm">{formData.phone || '-'}</p>
                 </div>
-                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70">
+                <div className="p-3 rounded-lg border border-[#1b4356] bg-[#0e2c3d]">
                   <p className="text-xs text-gray-500">{language === "ur" ? "سیشن" : "Session"}</p>
                   <p className="font-semibold text-sm">{formData.sessionType === 'in_clinic' ? (language === "ur" ? "کلینک میں" : "In-Clinic") : (language === "ur" ? "ویڈیو" : "Video")}</p>
                 </div>
-                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70">
+                <div className="p-3 rounded-lg border border-[#1b4356] bg-[#0e2c3d]">
                   <p className="text-xs text-gray-500">{language === "ur" ? "فوریت" : "Urgency"}</p>
                   <p className="font-semibold text-sm capitalize">{formData.urgency}</p>
                 </div>
-                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70 sm:col-span-2">
+                <div className="p-3 rounded-lg border border-[#1b4356] bg-[#0e2c3d] sm:col-span-2">
                   <p className="text-xs text-gray-500">{language === "ur" ? "اپائنٹمنٹ کا وقت" : "Appointment Date & Time"}</p>
                   <p className="font-semibold text-sm">{formData.preferredTime || '-'}</p>
                 </div>
-                <div className="p-3 rounded-lg border border-[rgb(66,139,124)]/20 bg-white/70 dark:bg-gray-800/70 sm:col-span-2">
+                <div className="p-3 rounded-lg border border-[#1b4356] bg-[#0e2c3d] sm:col-span-2">
                   <p className="text-xs text-gray-500">{language === "ur" ? "نوٹس" : "Notes"}</p>
                   <p className="font-semibold text-sm">{formData.notes || (language === "ur" ? 'کوئی اضافی نوٹس نہیں' : 'No additional notes')}</p>
                 </div>

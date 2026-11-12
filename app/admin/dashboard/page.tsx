@@ -293,6 +293,17 @@ export default function AdminDashboard() {
     }
   }, [viewedPatients])
 
+  // Mark patient appointment as viewed (dismisses the unread red dot)
+  const markPatientAsViewed = (patientId: string) => {
+    setViewedPatients(prev => {
+      const next = new Set([...prev, patientId])
+      try {
+        localStorage.setItem('viewedPatients', JSON.stringify([...next]))
+      } catch (e) {}
+      return next
+    })
+  }
+
   // Load saved sort config on mount
   useEffect(() => {
     try {
@@ -754,6 +765,7 @@ export default function AdminDashboard() {
         ...newPatient,
         status: "pending" as const,
         sessions_completed: 0,
+        total_sessions: 8,
         booking_source: "admin_dashboard" as const, // Mark as admin-created
       }
 
@@ -2236,8 +2248,18 @@ export default function AdminDashboard() {
     const q = searchTerm.toLowerCase().trim()
 
     // Pre-compute common date/time strings for matching
+    const safeDateStr = (val: any): string => {
+      if (!val) return ''
+      if (typeof val === 'string') return val.toLowerCase()
+      if (val instanceof Date) return val.toISOString().toLowerCase()
+      if (typeof val === 'object' && typeof val.toDate === 'function') {
+        try { return val.toDate().toISOString().toLowerCase() } catch (e) { return '' }
+      }
+      return String(val).toLowerCase()
+    }
+
     const appt = new Date(patient.appointment_date)
-    const apptISO = (patient.appointment_date || '').toLowerCase()
+    const apptISO = safeDateStr(patient.appointment_date)
     const apptDateOnly = !isNaN(appt.getTime()) ? appt.toISOString().slice(0, 10) : '' // YYYY-MM-DD
     const apptHumanDate = !isNaN(appt.getTime()) ? appt.toDateString().toLowerCase() : '' // e.g., sat nov 08 2025
     const apptHumanDateShort = !isNaN(appt.getTime()) ? appt.toLocaleDateString().toLowerCase() : ''
@@ -2245,14 +2267,14 @@ export default function AdminDashboard() {
     const apptHumanTime24 = !isNaN(appt.getTime()) ? `${String(appt.getHours()).padStart(2, '0')}:${String(appt.getMinutes()).padStart(2, '0')}` : ''
 
     const lastVisit = patient.last_visit ? new Date(patient.last_visit) : null
-    const lastVisitISO = (patient.last_visit || '').toLowerCase()
+    const lastVisitISO = safeDateStr(patient.last_visit)
     const lastVisitDateOnly = lastVisit && !isNaN(lastVisit.getTime()) ? lastVisit.toISOString().slice(0, 10) : ''
     const lastVisitHuman = lastVisit && !isNaN(lastVisit.getTime()) ? lastVisit.toDateString().toLowerCase() : ''
 
-    const createdISO = (patient.created_at || '').toLowerCase()
-    const updatedISO = (patient.updated_at || '').toLowerCase()
+    const createdISO = safeDateStr(patient.created_at)
+    const updatedISO = safeDateStr(patient.updated_at)
 
-    const lastRxISO = (patient.last_prescription_date || '').toLowerCase()
+    const lastRxISO = safeDateStr(patient.last_prescription_date)
 
     // Generated human code used in UI (GCC-...-YYYYMM-####)
     const code = getOrAssignPatientCode(patient).toLowerCase()
@@ -3361,46 +3383,36 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
+                <div className="w-full">
+                  <Table className="w-full table-fixed text-xs">
                     <TableHeader>
-                      <TableRow className={`${isDarkMode ? "bg-gray-700" : "bg-[#F8F5F0]"}`}>
-                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                      <TableRow className={`${isDarkMode ? "bg-gray-700/80" : "bg-[#F8F5F0]"} border-b`}>
+                        <TableHead className={`w-[22%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
                           <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:opacity-80">
                             Patient Info <SortIndicator k="name" />
                           </button>
                         </TableHead>
-                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                        <TableHead className={`w-[19%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
                           <button onClick={() => toggleSort('phone')} className="flex items-center gap-1 hover:opacity-80">
                             Contact <SortIndicator k="phone" />
                           </button>
                         </TableHead>
-                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                          <button onClick={() => toggleSort('profession')} className="flex items-center gap-1 hover:opacity-80">
-                            Profession <SortIndicator k="profession" />
-                          </button>
-                        </TableHead>
-                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                        <TableHead className={`w-[16%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
                           <button onClick={() => toggleSort('appointment_date')} className="flex items-center gap-1 hover:opacity-80">
                             Appointment <SortIndicator k="appointment_date" />
                           </button>
                         </TableHead>
-                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                        <TableHead className={`w-[14%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
                           <button onClick={() => toggleSort('status')} className="flex items-center gap-1 hover:opacity-80">
                             Status <SortIndicator k="status" />
                           </button>
                         </TableHead>
-                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                          <button onClick={() => toggleSort('urgency')} className="flex items-center gap-1 hover:opacity-80">
-                            Type & Urgency <SortIndicator k="urgency" />
-                          </button>
-                        </TableHead>
-                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
-                          <button onClick={() => toggleSort('sessions')} className="flex items-center gap-1 hover:opacity-80">
+                        <TableHead className={`w-[14%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs text-center`}>
+                          <button onClick={() => toggleSort('sessions')} className="flex items-center justify-center gap-1 hover:opacity-80 mx-auto">
                             Sessions <SortIndicator k="sessions" />
                           </button>
                         </TableHead>
-                        <TableHead className={`${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold`}>
+                        <TableHead className={`w-[15%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs text-right pr-3`}>
                           Actions
                         </TableHead>
                       </TableRow>
@@ -3409,670 +3421,363 @@ export default function AdminDashboard() {
                       {userSortedPatients.map((patient) => (
                         <TableRow
                           key={patient.id}
-                          className={`${isDarkMode ? "hover:bg-gray-700 border-gray-600" : "hover:bg-[#F8F5F0]/50"}`}
+                          className={`${isDarkMode ? "hover:bg-gray-700/60 border-gray-700" : "hover:bg-[#F8F5F0]/60 border-gray-100"} border-b transition-colors`}
                         >
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div>
-                                <div className={`font-semibold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex items-center gap-2`}>
-                                  {patient.name}
-                                  {!viewedPatients.has(patient.id) && (
-                                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="New appointment - not yet viewed" />
-                                  )}
-                                </div>
-                                <div className="relative group">
+                          {/* Col 1: Patient Info + Code + Profession */}
+                          <TableCell className="py-2.5 px-2 align-middle max-w-0">
+                            <div className="min-w-0">
+                              <div
+                                onClick={() => markPatientAsViewed(patient.id)}
+                                className={`font-semibold text-xs sm:text-sm ${isDarkMode ? "text-white" : "text-[#0d5c75]"} truncate flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity`}
+                                title={`${patient.name} - Click name to mark as viewed`}
+                              >
+                                <span className="truncate">{patient.name}</span>
+                                {!viewedPatients.has(patient.id) && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      const btn = e.currentTarget
-                                      const dropdown = btn.nextElementSibling as HTMLElement
-                                      if (dropdown) {
-                                        dropdown.classList.toggle('hidden')
-                                      }
+                                      markPatientAsViewed(patient.id)
                                     }}
-                                    className={`text-sm ${isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-[#0d5c75]"} flex items-center gap-1 cursor-pointer transition-colors duration-200`}
+                                    className="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0 hover:scale-125 transition-transform"
+                                    title="Unread appointment • Click to dismiss"
+                                  />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const code = getOrAssignPatientCode(patient);
+                                    navigator.clipboard.writeText(code);
+                                    toast({ title: "Copied!", description: `Code ${code} copied to clipboard` });
+                                  }}
+                                  className={`text-[10px] font-mono px-1 py-0.2 rounded border ${isDarkMode ? "bg-gray-800 text-gray-300 border-gray-700" : "bg-gray-100 text-gray-600 border-gray-200"} hover:text-[#0d5c75] transition-colors shrink-0`}
+                                  title="Click to copy Patient Code"
+                                >
+                                  {getOrAssignPatientCode(patient)}
+                                </button>
+                                {(patient.profession || patient.demographics?.occupation) && (
+                                  <span
+                                    className="text-[10px] text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.2 rounded-full truncate max-w-[110px]"
+                                    title={patient.profession || patient.demographics?.occupation}
                                   >
-                                    <span className="font-mono">Code: {getOrAssignPatientCode(patient)}</span>
-                                    <ChevronDown className="h-3 w-3" />
-                                  </button>
-                                  <div
-                                    className={`hidden absolute top-full left-0 mt-1 z-50 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} border rounded-lg shadow-xl p-3 min-w-[280px]`}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className={`text-xs font-semibold ${isDarkMode ? "text-gray-400" : "text-gray-500"} uppercase tracking-wide`}>Patient Code</span>
-                                      <button
-                                        onClick={(e) => {
-                                          const code = getOrAssignPatientCode(patient)
-                                          navigator.clipboard.writeText(code)
-                                          toast({
-                                            title: "✅ Copied!",
-                                            description: "Patient code copied to clipboard",
-                                          })
-                                        }}
-                                        className={`text-xs ${isDarkMode ? "text-blue-400 hover:text-blue-300" : "text-[#0d5c75] hover:text-[#0a4a5c]"} font-medium transition-colors`}
-                                      >
-                                        Copy
-                                      </button>
-                                    </div>
-                                    <div className={`${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-gradient-to-r from-[#0d5c75]/5 to-[#2a9d8f]/5 border-[#0d5c75]/20"} border-2 rounded-md p-2 mb-2`}>
-                                      <code className={`text-sm font-mono ${isDarkMode ? "text-white" : "text-[#0d5c75]"} break-all select-all`}>{getOrAssignPatientCode(patient)}</code>
-                                    </div>
-                                    <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} flex items-center gap-1`}>
-                                      <UserIcon className="h-3 w-3" />
-                                      <span>Click "Copy" to copy patient code</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                {patient.profession && (
-                                  <div className={`text-xs ${isDarkMode ? "text-blue-300" : "text-blue-600"} bg-blue-50 px-2 py-1 rounded-full`}>
-                                    {patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                  </div>
+                                    {(patient.profession || patient.demographics?.occupation || "").replace(/_/g, " ")}
+                                  </span>
                                 )}
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
+
+                          {/* Col 2: Contact Info */}
+                          <TableCell className="py-2.5 px-2 align-middle max-w-0">
+                            <div className="space-y-0.5 min-w-0">
                               <a
                                 href={`tel:${patient.phone}`}
-                                className={`flex items-center gap-1 ${isDarkMode ? "text-blue-400" : "text-[#0d5c75]"} hover:underline text-sm`}
+                                className={`flex items-center gap-1 ${isDarkMode ? "text-blue-400" : "text-[#0d5c75]"} hover:underline text-xs truncate font-medium`}
+                                title={patient.phone}
                               >
-                                <Phone className="h-3 w-3" />
-                                {patient.phone}
+                                <Phone className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{patient.phone}</span>
                               </a>
-                              {patient.email && (
+                              {patient.email ? (
                                 <a
                                   href={`mailto:${patient.email}`}
-                                  className={`flex items-center gap-1 ${isDarkMode ? "text-blue-400" : "text-[#0d5c75]"} hover:underline text-sm`}
+                                  className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:underline text-[11px] truncate"
+                                  title={patient.email}
                                 >
-                                  <Mail className="h-3 w-3" />
-                                  {patient.email}
+                                  <Mail className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="truncate">{patient.email}</span>
                                 </a>
+                              ) : (
+                                <span className="text-[10px] text-gray-400 dark:text-gray-600 italic block">No email</span>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className={`font-medium text-sm ${isDarkMode ? "text-white" : "text-gray-900"}`}>
-                                {patient.profession ? patient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Not specified"}
+
+                          {/* Col 3: Appointment Date & Type */}
+                          <TableCell className="py-2.5 px-2 align-middle max-w-0">
+                            <div className="min-w-0">
+                              <div className={`font-medium text-xs ${isDarkMode ? "text-white" : "text-gray-900"} truncate`}>
+                                {new Date(patient.appointment_date).toLocaleDateString([], { month: "short", day: "numeric", year: "2-digit" })}
                               </div>
-                              {patient.demographics?.occupation && (
-                                <div className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                  {patient.demographics.occupation}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className={`font-medium text-sm ${isDarkMode ? "text-white" : "text-gray-900"}`}>
-                                {new Date(patient.appointment_date).toLocaleDateString()}
+                              <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                                {new Date(patient.appointment_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                               </div>
-                              <div className={`text-xs ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                {new Date(patient.appointment_date).toLocaleTimeString()}
-                              </div>
-                              <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                                Payment: {(patient.payment_method || 'cash').toUpperCase()}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-2">
-                              {/* Current Status Badge - Always visible */}
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-600 font-medium">Status:</span>
+                              <div className="flex items-center gap-1 mt-0.5">
                                 <Badge
-                                  variant={
-                                    patient.status === "completed"
-                                      ? "default"
-                                      : patient.status === "confirmed"
-                                        ? "secondary"
-                                        : patient.status === "cancelled"
-                                          ? "destructive"
-                                          : "outline"
-                                  }
-                                  className="text-xs font-semibold"
+                                  variant={patient.session_type === "in_clinic" ? "default" : "secondary"}
+                                  className="text-[9px] px-1 py-0 h-4 leading-none"
                                 >
-                                  {patient.status.toUpperCase()}
+                                  {patient.session_type === "in_clinic" ? "Clinic" : "Video"}
                                 </Badge>
+                                {patient.urgency && patient.urgency !== "normal" && (
+                                  <Badge
+                                    variant={patient.urgency === "emergency" ? "destructive" : "secondary"}
+                                    className="text-[9px] px-1 py-0 h-4 leading-none"
+                                  >
+                                    {patient.urgency}
+                                  </Badge>
+                                )}
                               </div>
-
-                              {/* Cancel Appointment Button - Only show if not already cancelled */}
-                              {patient.status !== "cancelled" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setPatientToCancel(patient)
-                                    setIsCancelConfirmDialogOpen(true)
-                                  }}
-                                  className="h-7 text-xs border-red-500 text-red-600 hover:bg-red-50 w-full"
-                                >
-                                  <X className="h-3 w-3 mr-1" />
-                                  Cancel Appointment
-                                </Button>
-                              )}
-
-                              {/* Show restore option if cancelled */}
-                              {patient.status === "cancelled" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleUpdatePatientStatus(patient.id, "pending")}
-                                  className="h-7 text-xs border-green-500 text-green-600 hover:bg-green-50 w-full"
-                                >
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Restore Appointment
-                                </Button>
-                              )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Badge
-                                variant={patient.session_type === "in_clinic" ? "default" : "secondary"}
-                                className="text-xs"
-                              >
-                                {patient.session_type === "in_clinic" ? "Clinic" : "Video"}
-                              </Badge>
+
+                          {/* Col 4: Status + Quick Cancel/Restore */}
+                          <TableCell className="py-2.5 px-2 align-middle max-w-0">
+                            <div className="space-y-1 min-w-0">
                               <Badge
                                 variant={
-                                  patient.urgency === "emergency"
-                                    ? "destructive"
-                                    : patient.urgency === "urgent"
+                                  patient.status === "completed"
+                                    ? "default"
+                                    : patient.status === "confirmed"
                                       ? "secondary"
-                                      : "outline"
+                                      : patient.status === "cancelled"
+                                        ? "destructive"
+                                        : "outline"
                                 }
-                                className="text-xs ml-1"
+                                className="text-[10px] font-semibold px-1.5 py-0.5"
                               >
-                                {patient.urgency}
+                                {patient.status.toUpperCase()}
                               </Badge>
+
+                              {patient.status !== "cancelled" ? (
+                                <button
+                                  onClick={() => {
+                                    setPatientToCancel(patient);
+                                    setIsCancelConfirmDialogOpen(true);
+                                  }}
+                                  className="text-[10px] text-rose-500 hover:text-rose-700 hover:underline flex items-center gap-0.5 block"
+                                >
+                                  <X className="h-2.5 w-2.5" /> Cancel
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleUpdatePatientStatus(patient.id, "pending")}
+                                  className="text-[10px] text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-0.5 block"
+                                >
+                                  <CheckCircle className="h-2.5 w-2.5" /> Restore
+                                </button>
+                              )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <div className="space-y-2">
-                              {/* Session Progress Display */}
-                              <div className="text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                  <div className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
-                                    {patient.sessions_completed || 0}
-                                  </div>
-                                  <div className={`text-lg ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>/</div>
-                                  <div className={`text-lg font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
-                                    {patient.total_sessions ?? (patient.sessions_completed || 0)}
-                                  </div>
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">sessions</div>
+
+                          {/* Col 5: Sessions Progress & Controls */}
+                          <TableCell className="py-2.5 px-2 align-middle text-center">
+                            <div className="flex flex-col items-center">
+                              <div className="flex items-center gap-1 justify-center">
+                                <span className={`text-sm font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+                                  {patient.sessions_completed || 0}
+                                </span>
+                                <span className="text-xs text-gray-400">/</span>
+                                <span className={`text-xs font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                                  {patient.status === "cancelled" ? 0 : (patient.total_sessions || 8)}
+                                </span>
                               </div>
 
-                              {/* Session Control Buttons */}
-                              <div className="flex items-center justify-center gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
+                              <div className="flex items-center gap-1 mt-1">
+                                <button
                                   onClick={async () => {
                                     if (patient.status === "cancelled") {
-                                      toast({ title: "Cannot modify sessions", description: "This patient is cancelled. Un-cancel to adjust sessions." })
-                                      return
+                                      toast({ title: "Cannot modify sessions", description: "Patient is cancelled." });
+                                      return;
                                     }
-                                    const total = patient.total_sessions || 8
-                                    const newCount = Math.max(0, (patient.sessions_completed || 0) - 1)
-                                    const newStatus: Patient["status"] = newCount >= total ? "completed" : (newCount <= 0 ? "pending" : "confirmed")
-                                    await updatePatient(patient.id, { sessions_completed: newCount, status: newStatus })
-
-                                    // Also update localStorage if patient exists there
-                                    try {
-                                      const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-                                      const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
-                                      if (localIndex !== -1) {
-                                        localPatients[localIndex].sessions_completed = newCount
-                                        localPatients[localIndex].status = newStatus
-                                        localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
-                                      }
-                                    } catch (e) {
-                                      console.error("Error updating localStorage:", e)
-                                    }
-
-                                    await loadPatients()
-                                    toast({
-                                      title: "Session Decreased",
-                                      description: `${patient.name}: ${newCount}/${total} sessions • Status: ${newStatus.toUpperCase()}`,
-                                    })
+                                    const total = patient.total_sessions || 8;
+                                    const newCount = Math.max(0, (patient.sessions_completed || 0) - 1);
+                                    const newStatus = newCount >= total ? "completed" : (newCount <= 0 ? "pending" : "confirmed");
+                                    await updatePatient(patient.id, { sessions_completed: newCount, status: newStatus });
+                                    await loadPatients();
                                   }}
-                                  className="h-6 w-6 p-0 border-red-500 text-red-600 hover:bg-red-50"
-                                  title="Decrease completed sessions"
+                                  className="w-5 h-5 rounded border border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-center transition-colors"
+                                  title="Decrease Session"
                                 >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
+                                  <Minus className="h-2.5 w-2.5" />
+                                </button>
+                                <button
                                   onClick={async () => {
                                     if (patient.status === "cancelled") {
-                                      toast({ title: "Cannot modify sessions", description: "This patient is cancelled. Un-cancel to adjust sessions." })
-                                      return
+                                      toast({ title: "Cannot modify sessions", description: "Patient is cancelled." });
+                                      return;
                                     }
-                                    const total = patient.total_sessions || 8
-                                    const prev = patient.sessions_completed || 0
-                                    const capped = Math.min(total, prev + 1)
-                                    if (capped === prev) {
-                                      toast({
-                                        title: "Max Sessions Reached",
-                                        description: `${patient.name} is already at ${prev}/${total} sessions`,
-                                      })
-                                      return
-                                    }
-                                    const lastVisit = new Date().toISOString()
-                                    const newStatus: Patient["status"] = capped >= total ? "completed" : (capped <= 0 ? "pending" : "confirmed")
-
-                                    await updatePatient(patient.id, {
-                                      sessions_completed: capped,
-                                      last_visit: lastVisit,
-                                      status: newStatus
-                                    })
-
-                                    // Also update localStorage if patient exists there
-                                    try {
-                                      const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-                                      const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
-                                      if (localIndex !== -1) {
-                                        localPatients[localIndex].sessions_completed = capped
-                                        localPatients[localIndex].last_visit = lastVisit
-                                        localPatients[localIndex].status = newStatus
-                                        localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
-                                      }
-                                    } catch (e) {
-                                      console.error("Error updating localStorage:", e)
-                                    }
-
-                                    await loadPatients()
-                                    toast({
-                                      title: "✅ Session Added",
-                                      description: `${patient.name}: ${capped}/${total} sessions • Status: ${newStatus.toUpperCase()}`,
-                                    })
+                                    const total = patient.total_sessions || 8;
+                                    const prev = patient.sessions_completed || 0;
+                                    const capped = Math.min(total, prev + 1);
+                                    const lastVisit = new Date().toISOString();
+                                    const newStatus = capped >= total ? "completed" : (capped <= 0 ? "pending" : "confirmed");
+                                    await updatePatient(patient.id, { sessions_completed: capped, last_visit: lastVisit, status: newStatus });
+                                    await loadPatients();
                                   }}
-                                  className="h-6 w-6 p-0 border-green-600 text-green-600 hover:bg-green-50"
-                                  title="Increase completed sessions"
+                                  className="w-5 h-5 rounded border border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center justify-center transition-colors"
+                                  title="Add Session"
                                 >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
+                                  <Plus className="h-2.5 w-2.5" />
+                                </button>
                                 <Dialog>
                                   <DialogTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-6 px-2 text-xs border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
-                                      title="Set total sessions"
+                                    <button
+                                      className="text-[9px] px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                      title="Set Total Sessions"
                                     >
-                                      Set Total
-                                    </Button>
+                                      Edit
+                                    </button>
                                   </DialogTrigger>
                                   <DialogContent className="max-w-sm">
                                     <DialogHeader>
                                       <DialogTitle className="text-[#0d5c75]">Set Total Sessions</DialogTitle>
                                     </DialogHeader>
                                     <div className="space-y-4">
-                                      <div>
-                                        <Label>Total Sessions for {patient.name}</Label>
-                                        <Input
-                                          type="number"
-                                          min="1"
-                                          max="100"
-                                          defaultValue={patient.total_sessions || 8}
-                                          onChange={(e) => {
-                                            const value = parseInt(e.target.value) || 8
-                                            e.target.setAttribute('data-value', value.toString())
-                                          }}
-                                          className="mt-2"
-                                        />
-                                      </div>
+                                      <Label>Total Sessions for {patient.name}</Label>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        max="100"
+                                        defaultValue={patient.total_sessions || 8}
+                                        id={`set-total-${patient.id}`}
+                                      />
                                       <Button
-                                        onClick={async (e) => {
-                                          const input = e.currentTarget.parentElement?.querySelector('input')
-                                          const newTotal = parseInt(input?.getAttribute('data-value') || input?.value || '8')
-                                          const currentCompleted = patient.sessions_completed || 0
-                                          const finalCompleted = Math.min(currentCompleted, newTotal)
-                                          const newStatus: Patient["status"] = finalCompleted >= newTotal ? "completed" : (finalCompleted <= 0 ? "pending" : "confirmed")
-
-                                          await updatePatient(patient.id, {
-                                            total_sessions: newTotal,
-                                            sessions_completed: finalCompleted,
-                                            status: newStatus
-                                          })
-
-                                          // Also update localStorage if patient exists there
-                                          try {
-                                            const localPatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-                                            const localIndex = localPatients.findIndex((p: Patient) => p.id === patient.id)
-                                            if (localIndex !== -1) {
-                                              localPatients[localIndex].total_sessions = newTotal
-                                              localPatients[localIndex].sessions_completed = finalCompleted
-                                              localPatients[localIndex].status = newStatus
-                                              localStorage.setItem("gonstead_patients", JSON.stringify(localPatients))
-                                            }
-                                          } catch (err) {
-                                            console.error("Error updating localStorage:", err)
-                                          }
-
-                                          await loadPatients()
-                                          toast({
-                                            title: "Total Sessions Updated",
-                                            description: `${patient.name} now has ${newTotal} total sessions prescribed • Status: ${newStatus.toUpperCase()}`,
-                                          })
-                                          // Close dialog
-                                          const closeBtn = e.currentTarget.parentElement?.parentElement?.querySelector('[aria-label="Close"]') as HTMLElement
-                                          closeBtn?.click()
+                                        onClick={async () => {
+                                          const el = document.getElementById(`set-total-${patient.id}`);
+                                          const newTotal = parseInt(el?.value || "8");
+                                          const finalCompleted = Math.min(patient.sessions_completed || 0, newTotal);
+                                          const newStatus = finalCompleted >= newTotal ? "completed" : (finalCompleted <= 0 ? "pending" : "confirmed");
+                                          await updatePatient(patient.id, { total_sessions: newTotal, sessions_completed: finalCompleted, status: newStatus });
+                                          await loadPatients();
+                                          toast({ title: "Updated", description: `Prescribed ${newTotal} sessions` });
                                         }}
                                         className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c]"
                                       >
-                                        Save Total Sessions
+                                        Save
                                       </Button>
                                     </div>
                                   </DialogContent>
                                 </Dialog>
                               </div>
-                              {patient.last_visit && (
-                                <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} text-center`}>
-                                  Last: {new Date(patient.last_visit).toLocaleDateString()}
-                                </div>
-                              )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <div className="relative">
-                              {/* Smart Parent Action Button */}
+
+                          {/* Col 6: Actions Menu */}
+                          <TableCell className="py-2.5 px-2 align-middle text-right pr-3">
+                            <div className="relative inline-block text-right">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => toggleActionsExpanded(patient.id)}
-                                className={`${expandedActions.has(patient.id)
-                                  ? "bg-[#0d5c75] text-white border-[#0d5c75]"
-                                  : "border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
-                                  } font-medium shadow-sm transition-all duration-200`}
-                                title={expandedActions.has(patient.id) ? "Hide actions" : "Show all actions"}
+                                className={`h-7 px-2 text-xs ${
+                                  expandedActions.has(patient.id)
+                                    ? "bg-[#0d5c75] text-white border-[#0d5c75]"
+                                    : "border-[#0d5c75]/50 text-[#0d5c75] dark:text-teal-300 hover:bg-[#0d5c75] hover:text-white"
+                                } font-medium transition-colors`}
                               >
                                 <MoreVertical className="h-3 w-3 mr-1" />
-                                Actions
-                                {expandedActions.has(patient.id) ? (
-                                  <ChevronUp className="h-3 w-3 ml-1" />
-                                ) : (
-                                  <ChevronDown className="h-3 w-3 ml-1" />
-                                )}
+                                Action
                               </Button>
 
-                              {/* Collapsible Action Buttons */}
                               {expandedActions.has(patient.id) && (
-                                <div className={`absolute top-full right-0 md:left-auto md:right-0 mt-2 z-50 w-[min(20rem,calc(100vw-2rem))] md:w-96 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-3 space-y-2 transition-all duration-300 ease-in-out`}>
-                                  {/* Professional Action Grid */}
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {/* View Details Button */}
+                                <div className={`absolute top-full right-0 mt-1 z-50 w-72 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-2.5 space-y-1.5`}>
+                                  <div className="grid grid-cols-2 gap-1.5 text-left">
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => {
-                                        // Get fresh patient data
-                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                        setSelectedPatientDetail(currentPatientData)
-
-                                        // Mark patient as viewed (keeps existing red-dot behavior)
-                                        setViewedPatients(prev => new Set([...prev, patient.id]))
-
-                                        // Close the action menu after selection
-                                        setExpandedActions(new Set())
-
-                                        // Smooth scroll to the detail section
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                        setSelectedPatientDetail(currentPatientData);
+                                        setViewedPatients(prev => new Set([...prev, patient.id]));
+                                        setExpandedActions(new Set());
                                         setTimeout(() => {
-                                          detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                                        }, 0)
+                                          detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }, 0);
                                       }}
-                                      className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white text-xs w-full"
-                                      title="View Full Patient Details"
+                                      className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white text-xs justify-start h-7"
                                     >
-                                      <Eye className="h-3 w-3 mr-1" />
-                                      View
+                                      <Eye className="h-3 w-3 mr-1" /> View
                                     </Button>
 
-                                    {/* Real-time Smart Patient History Button */}
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => {
-                                        // Get fresh patient data to ensure accuracy
-                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
-
-                                        // Show patient history
-                                        setSelectedPatientHistory(currentPatientData)
-                                        setIsPatientHistoryDialogOpen(true)
-
-                                        // Close the action menu after selection
-                                        setExpandedActions(new Set())
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                        setSelectedPatientHistory(currentPatientData);
+                                        setIsPatientHistoryDialogOpen(true);
+                                        setExpandedActions(new Set());
                                       }}
-                                      className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full"
-                                      title="View Complete Patient History & Sessions"
+                                      className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs justify-start h-7"
                                     >
-                                      <Clock className="h-3 w-3 mr-1" />
-                                      History
+                                      <Clock className="h-3 w-3 mr-1" /> History
                                     </Button>
 
-                                    {/* Medical Record Management Button */}
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => {
-                                        // Get fresh patient data to ensure accuracy
-                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
-
-                                        // Check if medical record already exists
-                                        const medicalRecords = JSON.parse(localStorage.getItem("medical_records") || "[]")
-                                        let medicalRecord = medicalRecords.find((record: any) =>
-                                          record.patientName === currentPatientData.name && record.phone === currentPatientData.phone
-                                        )
-
-                                        if (!medicalRecord) {
-                                          // Create a new medical record from current patient data
-                                          medicalRecord = {
-                                            id: `MR${String(medicalRecords.length + 1).padStart(3, '0')}`,
-                                            patientName: currentPatientData.name,
-                                            age: currentPatientData.demographics?.age || 0,
-                                            gender: currentPatientData.demographics?.gender || 'Not specified',
-                                            phone: currentPatientData.phone,
-                                            email: currentPatientData.email || 'Not provided',
-                                            lastVisit: currentPatientData.last_visit || new Date().toISOString().split('T')[0],
-                                            diagnosis: 'Initial consultation pending',
-                                            treatmentType: currentPatientData.session_type === 'in_clinic' ? 'Gonstead Adjustment' : 'Video Consultation',
-                                            status: currentPatientData.status === 'completed' ? 'Completed' : currentPatientData.status === 'pending' ? 'Ongoing' : 'Follow-up',
-                                            sessionsCompleted: currentPatientData.sessions_completed || 0,
-                                            totalSessions: 8,
-                                            nextAppointment: currentPatientData.appointment_date ? new Date(currentPatientData.appointment_date).toLocaleDateString() : 'To be scheduled',
-                                            chiefComplaint: currentPatientData.notes || 'General consultation',
-                                            medicalHistory: currentPatientData.medical_history || 'Medical history to be collected during consultation',
-                                            currentMedications: 'To be determined during consultation',
-                                            treatmentPlan: currentPatientData.treatment_plan?.goals || 'Gonstead chiropractic assessment and treatment plan',
-                                            progress: currentPatientData.treatment_plan?.progress || 'Initial assessment pending',
-                                            doctorNotes: currentPatientData.booking_source === 'admin_dashboard'
-                                              ? 'Patient added via admin dashboard. Assessment in progress.'
-                                              : 'Patient booked online. Initial consultation scheduled.'
-                                          }
-
-                                          // Add to medical records
-                                          medicalRecords.push(medicalRecord)
-                                          localStorage.setItem("medical_records", JSON.stringify(medicalRecords))
-
-                                          toast({
-                                            title: "✅ Medical Record Created",
-                                            description: `Medical record for ${currentPatientData.name} has been created and you'll be redirected to edit it.`,
-                                          })
-                                        }
-
-                                        // Store the medical record ID for the medical history page
-                                        localStorage.setItem('editMedicalRecordId', medicalRecord.id)
-
-                                        // Close the action menu before navigation
-                                        setExpandedActions(new Set())
-
-                                        // Redirect to medical history page
-                                        router.push('/medical-history')
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                        localStorage.setItem('prescriptionPatient', JSON.stringify(currentPatientData));
+                                        setExpandedActions(new Set());
+                                        router.push('/admin/prescription');
                                       }}
-                                      className="border-[#6366f1] text-[#6366f1] hover:bg-[#6366f1] hover:text-white text-xs w-full"
-                                      title="Create/Edit Medical Record"
+                                      className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs justify-start h-7"
                                     >
-                                      <FileText className="h-3 w-3 mr-1" />
-                                      Medical
+                                      <Prescription className="h-3 w-3 mr-1" /> Rx
                                     </Button>
 
-                                    {/* Prescription Button */}
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => {
-                                        // Get fresh patient data and store for prescription page
-                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                        localStorage.setItem('prescriptionPatient', JSON.stringify(currentPatientData))
-
-                                        // Close the action menu before navigation
-                                        setExpandedActions(new Set())
-
-                                        // Navigate to prescription page
-                                        router.push('/admin/prescription')
+                                        startVideoCall(patient);
+                                        setExpandedActions(new Set());
                                       }}
-                                      className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs w-full"
-                                      title="Generate Prescription"
+                                      className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white text-xs justify-start h-7"
                                     >
-                                      <Prescription className="h-3 w-3 mr-1" />
-                                      Rx
+                                      <Video className="h-3 w-3 mr-1" /> Video
                                     </Button>
 
-                                    {/* Video Call Button - Now available for ALL patients */}
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => {
-                                        startVideoCall(patient)
-                                        setExpandedActions(new Set())
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                        setPatientForNextAppointment(currentPatientData);
+                                        setIsBookNextAppointmentOpen(true);
+                                        setExpandedActions(new Set());
                                       }}
-                                      className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white text-xs w-full"
-                                      title="Start Video Call with Patient"
+                                      className="border-[#10b981] text-[#10b981] hover:bg-[#10b981] hover:text-white text-xs justify-start h-7"
                                     >
-                                      <Video className="h-3 w-3 mr-1" />
-                                      Video Call
+                                      <Calendar className="h-3 w-3 mr-1" /> Next
                                     </Button>
 
-                                    {/* Book Next Appointment Button */}
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        // Get fresh patient data
-                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                        setPatientForNextAppointment(currentPatientData)
-                                        setIsBookNextAppointmentOpen(true)
-                                        setExpandedActions(new Set())
-                                      }}
-                                      className="border-[#10b981] text-[#10b981] hover:bg-[#10b981] hover:text-white text-xs w-full"
-                                      title="Book Next Appointment for Patient"
-                                    >
-                                      <Calendar className="h-3 w-3 mr-1" />
-                                      Next Appt
-                                    </Button>
-
-                                    {/* Money Management Button */}
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => {
-                                        // Prepare patient data for money management
-                                        const patientData = {
-                                          patientName: patient.name,
-                                          phone: patient.phone,
-                                          email: patient.email || '',
-                                          sessionType: patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation',
-                                          amount: patient.session_type === 'in_clinic' ? 1500 : 1000, // Default amounts
-                                          paymentMethod: patient.payment_method || 'cash',
-                                          description: `Payment for ${patient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation'} - ${new Date().toLocaleDateString()}`,
-                                          date: new Date().toISOString().split('T')[0],
-                                          patientId: patient.id
-                                        }
-
-                                        // Add to money management records in localStorage
-                                        const existingRecords = JSON.parse(localStorage.getItem('payment_records') || '[]')
-                                        const newRecord = {
-                                          id: `PM${String(existingRecords.length + 1).padStart(3, '0')}`,
-                                          ...patientData,
-                                          createdAt: new Date().toISOString()
-                                        }
-
-                                        existingRecords.push(newRecord)
-                                        localStorage.setItem('payment_records', JSON.stringify(existingRecords))
-
-                                        toast({
-                                          title: "✅ Payment Record Added",
-                                          description: `Payment record for ${patient.name} has been added to money management. You can manually navigate to the money management page to view and edit it.`,
-                                        })
-                                      }}
-                                      className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs w-full"
-                                      title="Add Patient to Money Management"
-                                    >
-                                      <DollarSign className="h-3 w-3 mr-1" />
-                                      Payment
-                                    </Button>
-
-                                    {/* Spinal Health Assessment Report Button */}
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => generateDetailedReport(patient)}
-                                      className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs w-full"
-                                      title="Download professional one-page PDF report for this patient"
+                                      className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs justify-start h-7"
                                     >
-                                      <Download className="h-3 w-3 mr-1" />
-                                      PDF Report
+                                      <Download className="h-3 w-3 mr-1" /> PDF
                                     </Button>
 
-
-                                    {/* Edit Patient Button */}
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => {
-                                        // Get fresh patient data and edit
-                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                        handleEditPatient(currentPatientData)
-
-                                        // Close the action menu after selection
-                                        setExpandedActions(new Set())
+                                        const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                        handleEditPatient(currentPatientData);
+                                        setExpandedActions(new Set());
                                       }}
-                                      className="border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800] hover:text-white text-xs w-full"
-                                      title="Edit Patient"
+                                      className="border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white text-xs justify-start h-7"
                                     >
-                                      <Edit3 className="h-3 w-3 mr-1" />
-                                      Edit
+                                      <Edit3 className="h-3 w-3 mr-1" /> Edit
                                     </Button>
 
-                                    {/* Delete Patient Button */}
                                     <Button
                                       size="sm"
                                       variant="destructive"
                                       onClick={() => {
-                                        // Close the action menu before deletion
-                                        setExpandedActions(new Set())
-
-                                        // Delete patient
-                                        handleDeletePatient(patient.id)
+                                        setExpandedActions(new Set());
+                                        handleDeletePatient(patient.id);
                                       }}
-                                      className="bg-red-600 hover:bg-red-700 text-xs w-full"
-                                      title="Delete Patient"
+                                      className="bg-red-600 hover:bg-red-700 text-xs justify-start h-7"
                                     >
-                                      <Trash2 className="h-3 w-3 mr-1" />
-                                      Delete
+                                      <Trash2 className="h-3 w-3 mr-1" /> Delete
                                     </Button>
-                                  </div>
-
-                                  {/* Professional Footer */}
-                                  <div className="border-t pt-2 mt-3">
-                                    <p className="text-xs text-gray-500 text-center font-medium">
-                                      {expandedActions.has(patient.id) ? "Patient Management Tools" : ""}
-                                    </p>
                                   </div>
                                 </div>
                               )}
@@ -4239,13 +3944,6 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      {/* AdminSidebar */}
-      <AdminSidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        currentPath={pathname}
-      />
-
       {/* Scroll to Top Navigation Button */}
       <ScrollToTopButton showAfter={300} />
 
@@ -4350,7 +4048,7 @@ export default function AdminDashboard() {
                     {exerciseBank.map(ex => (
                       <Button key={ex} size="sm" variant={selectedExercises.includes(ex) ? 'default' : 'outline'}
                         onClick={() => toggleExercise(ex)}
-                        className={selectedExercises.includes(ex) ? 'bg-[#f3a800] text-white' : ''}
+                        className={selectedExercises.includes(ex) ? 'bg-[#2a9d8f] text-white' : ''}
                       >{ex}</Button>
                     ))}
                   </div>
@@ -4409,7 +4107,7 @@ export default function AdminDashboard() {
                   <Label className="text-sm font-semibold text-[#0d5c75]">Medication Times</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {doseSchedule.morning && <Badge className="bg-[#0d5c75] text-white">Morning</Badge>}
-                    {doseSchedule.afternoon && <Badge className="bg-[#f3a800] text-white">Afternoon</Badge>}
+                    {doseSchedule.afternoon && <Badge className="bg-[#2a9d8f] text-white">Afternoon</Badge>}
                     {doseSchedule.night && <Badge className="bg-[#2a9d8f] text-white">Night</Badge>}
                     {!doseSchedule.morning && !doseSchedule.afternoon && !doseSchedule.night && (
                       <span className="text-xs text-gray-500">No dose timing selected</span>
@@ -4992,7 +4690,7 @@ export default function AdminDashboard() {
               {selectedPatient && (selectedPatient.prescription_generated || (selectedPatient.prescription_count ?? 0) > 0) && (
                 <Button
                   onClick={generateNewPrescription}
-                  className="bg-[#f3a800] hover:bg-[#e07c1c] text-white"
+                  className="bg-[#2a9d8f] hover:bg-[#e07c1c] text-white"
                   title="Generate a new prescription for this patient"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -5248,8 +4946,8 @@ export default function AdminDashboard() {
 
               {/* Treatment Progress & Notes */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-l-4 border-l-[#f3a800] shadow-lg">
-                  <CardHeader className="bg-[#f3a800] text-white">
+                <Card className="border-l-4 border-l-[#2a9d8f] shadow-lg">
+                  <CardHeader className="bg-[#2a9d8f] text-white">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <FileText className="h-5 w-5" />
                       Clinical Notes & Chief Complaint
@@ -5581,7 +5279,7 @@ export default function AdminDashboard() {
             {/* Animated Background Pattern */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-yellow-200 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-teal-200 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
             </div>
 
             {/* Header Content */}
@@ -5748,7 +5446,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Collapsible Section 2: Cancellation Impact Analysis */}
-              <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl shadow-md transition-all duration-300">
+              <div className="bg-gradient-to-br from-teal-50/50 to-slate-50 border-2 border-orange-200 rounded-xl shadow-md transition-all duration-300">
                 {/* Collapsible Header - Clickable */}
                 <button
                   onClick={() => setExpandedCancelSection(expandedCancelSection === 'impact' ? null : 'impact')}

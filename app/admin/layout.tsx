@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next"
+import { AdminAutoSidebar } from "@/components/AdminAutoSidebar"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard - Gonstead Chiropractic",
@@ -20,6 +21,13 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return (
+    <div className="relative min-h-screen bg-slate-50 dark:bg-gray-950">
+      <AdminAutoSidebar />
+      <div className="pl-16 transition-all duration-300">
+        {children}
+      </div>
+    </div>
+  )
 }
 

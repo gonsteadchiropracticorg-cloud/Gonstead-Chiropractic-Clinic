@@ -124,7 +124,7 @@ export function TemplateGallery({
                 {/* Premium Badge */}
                 {template.isPremium && (
                   <div className="absolute top-2 right-2 z-10">
-                    <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white flex items-center gap-1">
+                    <Badge className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />
                       Premium
                     </Badge>
@@ -150,7 +150,7 @@ export function TemplateGallery({
                     ${template.id === 'modern' ? 'bg-teal-50' : ''}
                     ${template.id === 'detailed' ? 'bg-indigo-50' : ''}
                     ${template.id === 'compact' ? 'bg-green-50' : ''}
-                    ${template.id === 'premium' ? 'bg-gradient-to-br from-yellow-50 to-orange-50' : ''}
+                    ${template.id === 'premium' ? 'bg-gradient-to-br from-teal-50 to-slate-50' : ''}
                     ${template.id === 'gonstead-special' ? 'bg-gradient-to-br from-blue-50 to-cyan-50' : ''}
                   `}>
                     <div className="flex items-center justify-center mb-2">
@@ -251,7 +251,7 @@ export function TemplateGallery({
         </div>
 
         {/* Premium Info */}
-        <div className="mt-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg">
+        <div className="mt-4 p-4 bg-gradient-to-r from-teal-50 to-slate-50 border-2 border-teal-300 rounded-lg">
           <h4 className="text-sm font-semibold text-orange-800 mb-2 flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             Unlock Premium Templates
@@ -261,7 +261,7 @@ export function TemplateGallery({
           </p>
           <Button 
             size="sm" 
-            className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+            className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-yellow-600 hover:to-orange-600 text-white"
           >
             Upgrade Now
           </Button>

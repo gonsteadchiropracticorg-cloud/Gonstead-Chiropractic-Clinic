@@ -250,6 +250,7 @@ export async function POST(request: NextRequest) {
       payment_method: appointmentData.payment_method || 'cash',
       notes: appointmentData.notes || '',
       sessions_completed: 0,
+      total_sessions: 8,
     })
 
     if (!newPatient) {

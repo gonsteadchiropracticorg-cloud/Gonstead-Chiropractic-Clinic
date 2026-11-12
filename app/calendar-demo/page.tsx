@@ -57,7 +57,7 @@ export default function CalendarDemo() {
       {/* Demo Information */}
       <div className="container mx-auto px-4 py-8">
         <Card className="mb-8 border-[#0d5c75]/20 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-[#f3a800] to-[#e07c1c] text-white">
+          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
             <CardTitle className="text-xl font-bold">
               📋 Calendar Demo Features
             </CardTitle>
@@ -76,9 +76,9 @@ export default function CalendarDemo() {
                 <div className="text-sm text-green-700 font-medium">Status Types</div>
               </div>
               
-              <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600 mb-1">3</div>
-                <div className="text-sm text-yellow-700 font-medium">Urgency Levels</div>
+              <div className="text-center p-4 bg-gradient-to-br from-emerald-50 to-teal-100 rounded-lg">
+                <div className="text-2xl font-bold text-teal-700 mb-1">3</div>
+                <div className="text-sm text-teal-800 font-medium">Urgency Levels</div>
               </div>
               
               <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
@@ -99,7 +99,7 @@ export default function CalendarDemo() {
                   Color-coded appointment status
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
                   Emergency and urgent indicators
                 </li>
                 <li className="flex items-center gap-2">

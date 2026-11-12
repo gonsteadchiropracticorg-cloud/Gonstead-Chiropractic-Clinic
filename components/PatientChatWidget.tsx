@@ -202,7 +202,7 @@ export function PatientChatWidget({
   }
 
   return (
-    <div ref={widgetRef} className="fixed bottom-6 right-6 z-50 w-[92vw] sm:w-[400px] h-[550px] max-h-[85vh] shadow-2xl rounded-3xl overflow-hidden border border-white/20 bg-slate-900/95 backdrop-blur-xl flex flex-col transition-all duration-300">
+    <div ref={widgetRef} className="fixed bottom-6 right-6 z-50 w-[92vw] sm:w-[400px] h-[550px] max-h-[85vh] shadow-2xl rounded-3xl overflow-hidden border border-white/20 bg-[#0e2c3d]/95 backdrop-blur-xl flex flex-col transition-all duration-300">
       {/* CHAT HEADER */}
       <div className="p-4 bg-gradient-to-r from-[#173e4d] via-[#245064] to-[#0f2d3a] border-b border-white/10 text-white flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
@@ -235,7 +235,7 @@ export function PatientChatWidget({
       {/* MESSAGES LIST AREA */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950">
         <div className="text-center my-2">
-          <span className="text-[10px] bg-slate-800/80 border border-slate-700 text-slate-300 px-3 py-1 rounded-full shadow-sm">
+          <span className="text-[10px] bg-[#143d52]/80 border border-[#22556d] text-slate-300 px-3 py-1 rounded-full shadow-sm">
             🔒 End-to-End Encrypted Private Consultation Channel
           </span>
         </div>
@@ -261,7 +261,7 @@ export function PatientChatWidget({
                   className={`max-w-[82%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm shadow-md leading-relaxed break-words ${
                     isPatient
                       ? "bg-gradient-to-r from-[#2a9d8f] to-[#1e7a6b] text-white rounded-br-none border border-teal-400/30"
-                      : "bg-slate-800 border border-slate-700 text-slate-100 rounded-bl-none"
+                      : "bg-[#143d52] border border-[#22556d] text-slate-100 rounded-bl-none"
                   }`}
                 >
                   {!isPatient && (
@@ -284,13 +284,13 @@ export function PatientChatWidget({
       </div>
 
       {/* CHAT INPUT FORM */}
-      <div className="p-3 bg-slate-900 border-t border-white/10 flex items-center gap-2">
+      <div className="p-3 bg-[#0e2c3d] border-t border-white/10 flex items-center gap-2">
         <Input
           placeholder="Type message for Dr. Bashir Khan..."
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          className="bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-400 text-xs sm:text-sm rounded-xl focus-visible:ring-teal-500"
+          className="bg-[#143d52]/80 border-[#22556d] text-white placeholder:text-slate-400 text-xs sm:text-sm rounded-xl focus-visible:ring-teal-500"
         />
         <Button
           onClick={handleSend}

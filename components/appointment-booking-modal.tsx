@@ -67,19 +67,23 @@ export function AppointmentBookingModal({
   }, [isOpen])
 
   const handleBookingClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     if (typeof window !== "undefined") {
       const isAuth = localStorage.getItem("patient_authenticated") === "true"
       if (!isAuth) {
-        e.preventDefault()
-        e.stopPropagation()
         toast({
           title: "Patient Account Required",
-          description: "Please create a free patient account or sign in to book your appointment.",
+          description: "Please sign in or create an account to book an appointment through your patient portal.",
         })
         router.push("/patient/auth")
-        return
+      } else {
+        toast({
+          title: "Redirecting to Patient Portal",
+          description: "Appointments are booked directly within your secure patient portal.",
+        })
+        router.push("/patient-portal")
       }
-      setIsOpen(true)
     }
   }
 

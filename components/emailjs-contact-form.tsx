@@ -156,10 +156,10 @@ export function EmailJSContactForm() {
 
   if (isSubmitted) {
     return (
-      <Card className="border-[#f3a800] bg-gradient-to-br from-[#f8f5f0] to-white shadow-2xl">
+      <Card className="border-[#2a9d8f] bg-gradient-to-br from-[#f8f5f0] to-white shadow-2xl">
         <CardContent className="text-center p-6 md:p-8">
           <div className="animate-bounce mb-6">
-            <CheckCircle className="h-16 w-16 md:h-24 md:w-24 text-[#f3a800] mx-auto" />
+            <CheckCircle className="h-16 w-16 md:h-24 md:w-24 text-[#2a9d8f] mx-auto" />
           </div>
           <h3 className="text-2xl md:text-4xl font-bold text-[#0d5c75] mb-4 font-poppins">
             {language === "ur" ? "کامیابی!" : "Message Sent!"}
@@ -241,7 +241,7 @@ export function EmailJSContactForm() {
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder={language === "ur" ? "اپنا نام درج کریں" : "Enter your full name"}
-                className="border-[#0d5c75]/30 focus:border-[#f3a800] spine-input font-open-sans"
+                className="border-[#0d5c75]/30 focus:border-[#2a9d8f] spine-input font-open-sans"
                 required
               />
             </div>
@@ -256,7 +256,7 @@ export function EmailJSContactForm() {
                 value={formData.email}
                 onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                 placeholder={language === "ur" ? "آپ کا ای میل" : "your.email@example.com"}
-                className="border-[#0d5c75]/30 focus:border-[#f3a800] spine-input font-open-sans"
+                className="border-[#0d5c75]/30 focus:border-[#2a9d8f] spine-input font-open-sans"
                 required
               />
             </div>
@@ -272,7 +272,7 @@ export function EmailJSContactForm() {
                 value={formData.phone}
                 onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                 placeholder="+92 304 699 6267"
-                className="border-[#0d5c75]/30 focus:border-[#f3a800] spine-input font-open-sans"
+                className="border-[#0d5c75]/30 focus:border-[#2a9d8f] spine-input font-open-sans"
               />
             </div>
 
@@ -285,7 +285,7 @@ export function EmailJSContactForm() {
                 value={formData.subject}
                 onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
                 placeholder={language === "ur" ? "پیغام کا موضوع" : "Message subject"}
-                className="border-[#0d5c75]/30 focus:border-[#f3a800] spine-input font-open-sans"
+                className="border-[#0d5c75]/30 focus:border-[#2a9d8f] spine-input font-open-sans"
                 required
               />
             </div>
@@ -304,14 +304,14 @@ export function EmailJSContactForm() {
                 placeholder={
                   language === "ur" ? "اپنی صحت کی پریشانیاں بیان کریں..." : "Describe your health concerns..."
                 }
-                className="border-[#0d5c75]/30 focus:border-[#f3a800] spine-input min-h-[80px] font-open-sans"
+                className="border-[#0d5c75]/30 focus:border-[#2a9d8f] spine-input min-h-[80px] font-open-sans"
                 onFocus={() => setShowSuggestions(true)}
               />
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                className="absolute top-2 right-2 border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800] hover:text-white"
+                className="absolute top-2 right-2 border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
                 onClick={() => setShowSuggestions(!showSuggestions)}
               >
                 AI Suggestions
@@ -345,7 +345,7 @@ export function EmailJSContactForm() {
                 value={formData.message}
                 onChange={(e) => setFormData((prev) => ({ ...prev, message: e.target.value }))}
                 placeholder={language === "ur" ? "اپنا تفصیلی پیغام لکھیں..." : "Write your detailed message..."}
-                className="border-[#0d5c75]/30 focus:border-[#f3a800] spine-input min-h-[120px] pr-12 font-open-sans"
+                className="border-[#0d5c75]/30 focus:border-[#2a9d8f] spine-input min-h-[120px] pr-12 font-open-sans"
                 required
               />
               <Button
@@ -355,7 +355,7 @@ export function EmailJSContactForm() {
                 className={`absolute top-2 right-2 ${
                   isListening
                     ? "border-red-500 text-red-500 animate-pulse"
-                    : "border-[#f3a800] text-[#f3a800] hover:bg-[#f3a800] hover:text-white"
+                    : "border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
                 }`}
                 onClick={startVoiceInput}
                 disabled={isListening}
@@ -404,7 +404,7 @@ export function EmailJSContactForm() {
           </div>
 
           <div className="text-center p-4 bg-white rounded-lg border border-[#0d5c75]/20">
-            <Mail className="h-6 w-6 text-[#f3a800] mx-auto mb-2" />
+            <Mail className="h-6 w-6 text-[#2a9d8f] mx-auto mb-2" />
             <p className="text-sm font-poppins font-semibold text-[#0A3A47]">
               {language === "ur" ? "ای میل" : "Email"}
             </p>

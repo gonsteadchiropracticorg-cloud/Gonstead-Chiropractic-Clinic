@@ -27,7 +27,7 @@ export function EnhancedDoctorProfile() {
 
   const achievements = [
     {
-      icon: <Trophy className="h-6 w-6 text-[#f3a800]" />,
+      icon: <Trophy className="h-6 w-6 text-[#2a9d8f]" />,
       title: language === "ur" ? "گونسٹیڈ سرٹیفیکیشن V" : "Gonstead Certification V",
       description: language === "ur" ? "اعلیٰ ترین سطح کی تصدیق" : "Highest level certification",
     },
@@ -37,7 +37,7 @@ export function EnhancedDoctorProfile() {
       description: language === "ur" ? "کامیاب علاج کے ساتھ" : "With successful outcomes",
     },
     {
-      icon: <Star className="h-6 w-6 text-[#f3a800]" />,
+      icon: <Star className="h-6 w-6 text-teal-600" />,
       title: language === "ur" ? "98% کامیابی کی شرح" : "98% Success Rate",
       description: language === "ur" ? "مریضوں کی بہتری میں" : "In patient improvement",
     },
@@ -76,8 +76,8 @@ export function EnhancedDoctorProfile() {
                 className={`relative transition-all duration-300 ${isHovered ? "animate-pulse" : ""}`}
                 style={{
                   filter: isHovered
-                    ? "drop-shadow(0 0 20px #f3a800) drop-shadow(0 0 40px #f3a800)"
-                    : "drop-shadow(0 0 10px rgba(243, 168, 0, 0.3))",
+                    ? "drop-shadow(0 0 20px #2a9d8f) drop-shadow(0 0 40px #2a9d8f)"
+                    : "drop-shadow(0 0 10px rgba(42, 157, 143, 0.3))",
                 }}
               >
                 <Image
@@ -113,7 +113,7 @@ export function EnhancedDoctorProfile() {
                 </h2>
 
                 <div className="flex flex-wrap justify-center lg:justify-start gap-2 mb-4">
-                  <Badge className="bg-[#f3a800] text-white hover:bg-[#e09700] font-poppins credential-badge">
+                  <Badge className="bg-[#2a9d8f] text-white hover:bg-[#238a7a] font-poppins credential-badge">
                     <Award className="h-3 w-3 mr-1" />
                     {language === "ur" ? "گونسٹیڈ سپیشلسٹ V" : "Gonstead Specialist V"}
                   </Badge>
@@ -133,7 +133,7 @@ export function EnhancedDoctorProfile() {
                 </div>
 
                 <div className="flex items-center justify-center lg:justify-start gap-2">
-                  <Award className="h-5 w-5 text-[#f3a800]" />
+                  <Award className="h-5 w-5 text-[#2a9d8f]" />
                   <span className="text-[#0A3A47] dark:text-gray-300 font-open-sans">{t("doctor.expertise")}</span>
                 </div>
 
@@ -143,7 +143,7 @@ export function EnhancedDoctorProfile() {
                 </div>
 
                 <div className="flex items-center justify-center lg:justify-start gap-2">
-                  <Mail className="h-5 w-5 text-[#f3a800]" />
+                  <Mail className="h-5 w-5 text-[#2a9d8f]" />
                   <span className="text-[#0A3A47] dark:text-gray-300 font-open-sans">{t("clinic.email")}</span>
                 </div>
 
@@ -195,7 +195,7 @@ export function EnhancedDoctorProfile() {
         {achievements.map((achievement, index) => (
           <Card
             key={index}
-            className="border-[#0d5c75]/20 hover:border-[#f3a800] hover:shadow-lg transition-all duration-300 vertebra-reveal bg-white"
+            className="border-[#0d5c75]/20 hover:border-[#2a9d8f] hover:shadow-lg transition-all duration-300 vertebra-reveal bg-white"
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <CardContent className="p-4 md:p-6 text-center">

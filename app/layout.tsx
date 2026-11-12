@@ -9,6 +9,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 import AnalyticsProvider from "@/components/AnalyticsProvider.optimized"
 import AntiScraping from "@/components/AntiScraping"
+import { SystemAutomationCopilot } from "@/components/SystemAutomationCopilot"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://gonsteadchiropractic.vercel.app/"),
@@ -85,6 +86,7 @@ export default function RootLayout({
               {children}
             </AnalyticsProvider>
             <Toaster />
+            <SystemAutomationCopilot />
             <SpeedInsights />
             <Analytics />
           </ThemeProvider>

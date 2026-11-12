@@ -565,14 +565,14 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="border-[#f3a800]/20 bg-gradient-to-br from-yellow-50 to-yellow-100">
+          <Card className="border-[#2a9d8f]/20 bg-gradient-to-br from-emerald-50 to-teal-100">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-[#f3a800]">Growth Rate</CardTitle>
-              <TrendingUp className="h-4 w-4 text-[#f3a800]" />
+              <CardTitle className="text-sm font-medium text-[#2a9d8f]">Growth Rate</CardTitle>
+              <TrendingUp className="h-4 w-4 text-[#2a9d8f]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-[#f3a800]">+{analytics.monthlyGrowth}%</div>
-              <p className="text-xs text-yellow-600 mt-1">Monthly growth</p>
+              <div className="text-2xl font-bold text-[#2a9d8f]">+{analytics.monthlyGrowth}%</div>
+              <p className="text-xs text-emerald-700 mt-1">Monthly growth</p>
             </CardContent>
           </Card>
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -49,6 +49,31 @@ export default function FAQPage() {
   const filteredFAQs = useMemo(() => {
     return searchFAQs(searchQuery, selectedCategory)
   }, [searchQuery, selectedCategory])
+
+  // Handle URL hash or query action (e.g. ?open=last or ?expandAll=true or #last)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    const openParam = params.get("open")
+    const hash = window.location.hash
+
+    if (openParam === "last" || hash === "#last") {
+      setTimeout(() => {
+        if (filteredFAQs.length > 0) {
+          const lastFaq = filteredFAQs[filteredFAQs.length - 1]
+          setOpenItems({ [lastFaq.id]: true })
+          const el = document.getElementById(lastFaq.id) || document.querySelector(`[data-faq-id="${lastFaq.id}"]`)
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" })
+          } else {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })
+          }
+        }
+      }, 400)
+    } else if (openParam === "all") {
+      expandAll()
+    }
+  }, [filteredFAQs])
 
   const toggleItem = (id: string) => {
     setOpenItems((prev) => ({

@@ -37,7 +37,10 @@ import {
   Pill,
   ShieldCheck,
   MapPin,
+  Sun,
+  Moon,
 } from "lucide-react"
+import { useTheme } from "@/components/theme-provider"
 import { useToast } from "@/hooks/use-toast"
 import { logoutPatient, getPatientAppointmentsFromFirestore } from "@/lib/patient-auth"
 import { updatePatientFirestore, getPrescriptionsFirestore, type Patient } from "@/lib/firebase-db"
@@ -48,10 +51,13 @@ import { AppointmentConfirmation } from "@/components/appointment-confirmation"
 import { checkUpcomingPreAppointmentReminders, type AppointmentReminder } from "@/lib/patient-reminder-service"
 import { registerPatientServiceWorker } from "@/lib/pwa-service-worker"
 import { PatientChatWidget } from "@/components/PatientChatWidget"
+import { PatientPortalAiBooking } from "@/components/PatientPortalAiBooking"
 
 export default function PatientPortalPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { theme, setTheme } = useTheme()
+  const isDarkMode = theme === "dark"
 
   const [isLoading, setIsLoading] = useState(true)
   const [patientName, setPatientName] = useState("Patient")
@@ -379,29 +385,34 @@ export default function PatientPortalPage() {
   const completedCount = appointments.filter((a) => a.status?.toLowerCase() === "completed").length
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${
+      isDarkMode ? "bg-[#091e2b] text-slate-100" : "bg-[rgb(220,230,229)] text-[#0d5c75]"
+    }`}>
       {/* TOP NAVBAR */}
-      <header className="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
+      <header className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors duration-300 ${
+        isDarkMode
+          ? "bg-[#0e2c3d]/90 border-[#1b4356]"
+          : "bg-white/90 border-[#0d5c75]/20 shadow-[0_2px_12px_rgba(13,92,117,0.08)]"
+      }`}>
         <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#2a9d8f] to-[#38b2a0] flex items-center justify-center font-bold text-white shadow-md">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center font-bold text-white shadow-md">
               {patientName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-white">{patientName}</h1>
+                <h1 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>{patientName}</h1>
                 <Badge className="bg-[#2a9d8f]/20 text-[#2a9d8f] border-[#2a9d8f]/30 text-[10px]">Patient Portal</Badge>
               </div>
-              <p className="text-xs text-slate-400">{patientEmail || "Gonstead Chiropractic Patient"}</p>
+              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{patientEmail || "Gonstead Chiropractic Patient"}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <Button
               onClick={handleInstallPwa}
-              variant="outline"
               size="sm"
-              className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-xs hidden sm:flex"
+              className="border border-emerald-500/30 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs hidden sm:flex"
             >
               <Smartphone className="h-4 w-4 mr-1 text-emerald-400" />
               <span>App</span>
@@ -416,9 +427,24 @@ export default function PatientPortalPage() {
               Book Adjustment
             </Button>
 
-            <Button onClick={() => router.push("/")} variant="outline" size="sm" className="border-slate-700 text-slate-300 hidden md:flex text-xs">
+            <Button onClick={() => router.push("/")} size="sm" className={isDarkMode ? "bg-[#143d52] hover:bg-[#1a4f6a] border border-[#22556d] text-slate-200 hidden md:flex text-xs" : "bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 hidden md:flex text-xs"}>
               <Home className="h-4 w-4 mr-1" />
               Site
+            </Button>
+
+            {/* Rounded Theme Switcher */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(isDarkMode ? "light" : "dark")}
+              className={`w-8 h-8 rounded-full border transition-all duration-300 shadow-sm shrink-0 flex items-center justify-center ${
+                isDarkMode
+                  ? "bg-gray-800/80 border-gray-700 text-amber-300 hover:bg-gray-700"
+                  : "bg-white/80 border-slate-300 text-[#0d5c75] hover:bg-slate-100"
+              }`}
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
 
             <Button onClick={handleLogout} variant="ghost" size="sm" className="text-rose-400 hover:bg-rose-500/10 text-xs">
@@ -433,15 +459,15 @@ export default function PatientPortalPage() {
       {reminders.length > 0 && (
         <div className="container mx-auto px-4 pt-4">
           {reminders.map((rem, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 flex items-center justify-between gap-4 mb-2">
+            <div key={idx} className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-200 flex items-center justify-between gap-4 mb-2">
               <div className="flex items-center gap-3">
-                <BellRing className="h-6 w-6 text-amber-400 animate-bounce flex-shrink-0" />
+                <BellRing className="h-6 w-6 text-teal-400 animate-bounce flex-shrink-0" />
                 <div>
-                  <h4 className="font-bold text-xs text-amber-100">Reminder: Adjustment Visit ({rem.isTomorrow ? "Tomorrow" : "Today"})</h4>
-                  <p className="text-xs text-amber-200/80">{rem.message}</p>
+                  <h4 className="font-bold text-xs text-teal-100">Reminder: Adjustment Visit ({rem.isTomorrow ? "Tomorrow" : "Today"})</h4>
+                  <p className="text-xs text-teal-200/80">{rem.message}</p>
                 </div>
               </div>
-              <Button onClick={() => setIsBookModalOpen(true)} size="sm" className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs">
+              <Button onClick={() => setIsBookModalOpen(true)} size="sm" className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-bold text-xs">
                 View
               </Button>
             </div>
@@ -451,7 +477,7 @@ export default function PatientPortalPage() {
 
       {/* QUICK STATS CARDS */}
       <div className="container mx-auto px-4 pt-6 pb-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-[#0e2c3d] border-[#1b4356]">
           <CardContent className="p-4 flex items-center gap-3.5">
             <div className="p-3 rounded-xl bg-[#2a9d8f]/20 text-[#2a9d8f]">
               <Calendar className="h-5 w-5" />
@@ -465,7 +491,7 @@ export default function PatientPortalPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-[#0e2c3d] border-[#1b4356]">
           <CardContent className="p-4 flex items-center gap-3.5">
             <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">
               <CheckCircle2 className="h-5 w-5" />
@@ -477,7 +503,7 @@ export default function PatientPortalPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-[#0e2c3d] border-[#1b4356]">
           <CardContent className="p-4 flex items-center gap-3.5">
             <div className="p-3 rounded-xl bg-purple-500/20 text-purple-400">
               <Pill className="h-5 w-5" />
@@ -489,7 +515,7 @@ export default function PatientPortalPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-[#0e2c3d] border-[#1b4356]">
           <CardContent className="p-4 flex items-center gap-3.5">
             <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400">
               <Stethoscope className="h-5 w-5" />
@@ -505,7 +531,7 @@ export default function PatientPortalPage() {
       {/* MAIN CONTENT AREA */}
       <main className="container mx-auto px-4 py-6 flex-1">
         <Tabs defaultValue="appointments" className="space-y-6">
-          <TabsList className="bg-slate-900 border border-slate-800 p-1 rounded-xl grid grid-cols-2 sm:grid-cols-6 w-full max-w-5xl">
+          <TabsList className="bg-[#0e2c3d] border border-[#1b4356] p-1 rounded-xl grid grid-cols-2 sm:grid-cols-6 w-full max-w-5xl">
             <TabsTrigger value="appointments" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
               <Calendar className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
               Visits
@@ -534,7 +560,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 1: APPOINTMENTS */}
           <TabsContent value="appointments">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-[#0e2c3d] border-[#1b4356]">
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
                 <div>
                   <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
@@ -545,7 +571,7 @@ export default function PatientPortalPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+                  <div className="flex bg-[#091e2b] p-1 rounded-lg border border-[#1b4356] text-xs">
                     {["all", "scheduled", "completed", "cancelled"].map((st) => (
                       <button
                         key={st}
@@ -559,7 +585,7 @@ export default function PatientPortalPage() {
                     ))}
                   </div>
 
-                  <Button onClick={() => loadData()} variant="outline" size="sm" className="border-slate-800 text-slate-300 text-xs">
+                  <Button onClick={() => loadData()} size="sm" className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white border-0 text-xs">
                     <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                   </Button>
                 </div>
@@ -572,7 +598,7 @@ export default function PatientPortalPage() {
                     <p className="text-xs">Fetching your Firestore appointments...</p>
                   </div>
                 ) : filteredAppointments.length === 0 ? (
-                  <div className="py-12 text-center border border-dashed border-slate-800 rounded-xl p-6">
+                  <div className="py-12 text-center border border-dashed border-[#1b4356] rounded-xl p-6">
                     <Calendar className="h-8 w-8 text-slate-600 mx-auto mb-2" />
                     <p className="text-sm font-semibold text-slate-300">No matching appointments found</p>
                     <Button onClick={() => setIsBookModalOpen(true)} className="mt-3 bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs">
@@ -593,7 +619,7 @@ export default function PatientPortalPage() {
                           : "bg-amber-500/20 text-amber-300 border-amber-500/30"
 
                       return (
-                        <div key={apt.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div key={apt.id} className="p-4 rounded-xl bg-[#091e2b] border border-[#1b4356] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <Badge className={`text-xs capitalize ${badgeVariant}`}>{st}</Badge>
@@ -611,7 +637,7 @@ export default function PatientPortalPage() {
                           </div>
 
                           <div className="flex items-center gap-2 self-end sm:self-center">
-                            <Button size="sm" variant="outline" className="border-slate-800 text-slate-300 hover:bg-slate-800 text-xs" onClick={() => setPrintSlipApt(apt)}>
+                            <Button size="sm" className="bg-[#143d52] hover:bg-[#1a4f6a] text-teal-200 border border-[#22556d] text-xs" onClick={() => setPrintSlipApt(apt)}>
                               <Printer className="h-3.5 w-3.5 sm:mr-1" />
                               <span className="hidden sm:inline">Slip</span>
                             </Button>
@@ -619,8 +645,7 @@ export default function PatientPortalPage() {
                               <>
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10 text-xs"
+                                  className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white border-0 text-xs"
                                   onClick={() => {
                                     setRescheduleApt(apt)
                                     setRescheduleDate(apt.appointment_date)
@@ -630,7 +655,7 @@ export default function PatientPortalPage() {
                                   <Edit3 className="h-3.5 w-3.5 sm:mr-1" />
                                   <span className="hidden sm:inline">Reschedule</span>
                                 </Button>
-                                <Button size="sm" variant="ghost" className="text-rose-400 hover:bg-rose-500/10 text-xs" onClick={() => handleCancelAppointment(apt.id)}>
+                                <Button size="sm" className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs" onClick={() => handleCancelAppointment(apt.id)}>
                                   <XCircle className="h-3.5 w-3.5 sm:mr-1" />
                                   <span className="hidden sm:inline">Cancel</span>
                                 </Button>
@@ -648,7 +673,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 2: DIGITAL PRESCRIPTIONS */}
           <TabsContent value="prescriptions">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-[#0e2c3d] border-[#1b4356]">
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
@@ -664,7 +689,7 @@ export default function PatientPortalPage() {
                     value={prescriptionSearch}
                     onChange={(e) => setPrescriptionSearch(e.target.value)}
                     placeholder="Search prescription..."
-                    className="pl-9 bg-slate-950 border-slate-800 text-xs text-white"
+                    className="pl-9 bg-[#091e2b] border-[#1b4356] text-xs text-white"
                   />
                 </div>
               </CardHeader>
@@ -676,7 +701,7 @@ export default function PatientPortalPage() {
                     <p className="text-xs">Loading digital prescriptions from Firestore...</p>
                   </div>
                 ) : filteredPrescriptions.length === 0 ? (
-                  <div className="py-12 text-center border border-dashed border-slate-800 rounded-xl p-6">
+                  <div className="py-12 text-center border border-dashed border-[#1b4356] rounded-xl p-6">
                     <FileCheck className="h-8 w-8 text-slate-600 mx-auto mb-2" />
                     <p className="text-sm font-semibold text-slate-300">No prescriptions on record</p>
                     <p className="text-xs text-slate-500 mt-1">Prescriptions issued by Dr. Bashir Khan during clinic visits will appear here automatically.</p>
@@ -684,8 +709,8 @@ export default function PatientPortalPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {filteredPrescriptions.map((rx) => (
-                      <div key={rx.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <div key={rx.id} className="p-4 rounded-xl bg-[#091e2b] border border-[#1b4356] space-y-3">
+                        <div className="flex items-center justify-between border-b border-[#1b4356] pb-2">
                           <div className="flex items-center gap-2">
                             <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px]">Rx #{rx.id}</Badge>
                             <span className="text-[11px] text-slate-400">{rx.visit_date ? new Date(rx.visit_date).toLocaleDateString() : rx.created_at?.split("T")[0]}</span>
@@ -705,7 +730,7 @@ export default function PatientPortalPage() {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+                        <div className="flex items-center justify-between pt-2 border-t border-[#1b4356] text-xs">
                           <span className="text-slate-400">Total Sessions: <strong className="text-white">{rx.total_sessions || "1"}</strong></span>
                           <Button size="sm" onClick={() => setSelectedPrescription(rx)} className="bg-purple-600 hover:bg-purple-700 text-white text-xs">
                             <Printer className="h-3.5 w-3.5 mr-1" /> View & Print Rx
@@ -721,7 +746,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 3: REHAB & CARE TRACKER */}
           <TabsContent value="rehab">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-[#0e2c3d] border-[#1b4356]">
               <CardHeader className="flex flex-row items-center justify-between pb-4">
                 <div>
                   <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
@@ -741,7 +766,7 @@ export default function PatientPortalPage() {
                     key={t.id}
                     onClick={() => toggleRehabTask(t.id)}
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
-                      t.done ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200" : "bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700"
+                      t.done ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200" : "bg-[#091e2b] border-[#1b4356] text-slate-300 hover:border-[#22556d]"
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -751,7 +776,7 @@ export default function PatientPortalPage() {
                         <p className="text-[11px] text-slate-400 mt-0.5">{t.desc}</p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="border-slate-800 text-slate-400 text-[10px] flex-shrink-0">{t.region}</Badge>
+                    <Badge variant="outline" className="border-[#1b4356] text-slate-400 text-[10px] flex-shrink-0">{t.region}</Badge>
                   </div>
                 ))}
               </CardContent>
@@ -760,7 +785,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 4: PRE-VISIT SYMPTOM INTAKE */}
           <TabsContent value="symptoms">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-[#0e2c3d] border-[#1b4356]">
               <CardHeader>
                 <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
                   <Thermometer className="h-5 w-5 text-[#2a9d8f]" />
@@ -788,7 +813,7 @@ export default function PatientPortalPage() {
                                 : num > 4
                                 ? "bg-amber-500 text-white"
                                 : "bg-emerald-500 text-white"
-                              : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-white"
+                              : "bg-[#091e2b] border border-[#1b4356] text-slate-400 hover:text-white"
                           }`}
                         >
                           {num}
@@ -806,7 +831,7 @@ export default function PatientPortalPage() {
                           type="button"
                           onClick={() => setAffectedRegion(reg)}
                           className={`p-2.5 text-left text-xs rounded-lg border transition-all ${
-                            affectedRegion === reg ? "bg-[#2a9d8f]/20 border-[#2a9d8f] text-white font-semibold" : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                            affectedRegion === reg ? "bg-[#2a9d8f]/20 border-[#2a9d8f] text-white font-semibold" : "bg-[#091e2b] border-[#1b4356] text-slate-400 hover:text-white"
                           }`}
                         >
                           {reg}
@@ -821,7 +846,7 @@ export default function PatientPortalPage() {
                       value={symptomDescription}
                       onChange={(e) => setSymptomDescription(e.target.value)}
                       placeholder="e.g., stiffness in morning, pain radiates down leg..."
-                      className="bg-slate-950 border-slate-800 text-xs text-white"
+                      className="bg-[#091e2b] border-[#1b4356] text-xs text-white"
                     />
                   </div>
 
@@ -836,7 +861,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 5: CLINICAL NOTES & SPINE RECORDS */}
           <TabsContent value="records">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-[#0e2c3d] border-[#1b4356]">
               <CardHeader>
                 <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
                   <FileText className="h-5 w-5 text-[#2a9d8f]" />
@@ -846,7 +871,7 @@ export default function PatientPortalPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {appointments.length > 0 && appointments[0].notes ? (
-                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div className="p-4 rounded-xl bg-[#091e2b] border border-[#1b4356] space-y-2">
                     <div className="flex items-center justify-between">
                       <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Active Clinical Record</Badge>
                       <span className="text-xs text-slate-400">Dr. Bashir Khan</span>
@@ -854,7 +879,7 @@ export default function PatientPortalPage() {
                     <p className="text-xs text-slate-300 leading-relaxed">{appointments[0].notes}</p>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div className="p-4 rounded-xl bg-[#091e2b] border border-[#1b4356] space-y-2">
                     <div className="flex items-center justify-between">
                       <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Active Gonstead Care</Badge>
                       <span className="text-xs text-slate-400">Dr. Bashir Khan</span>
@@ -871,7 +896,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 6: MY PROFILE MANAGEMENT */}
           <TabsContent value="profile">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-[#0e2c3d] border-[#1b4356]">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
@@ -885,27 +910,27 @@ export default function PatientPortalPage() {
                 </Button>
               </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
                   <span className="text-slate-500">Full Name</span>
                   <p className="text-sm font-bold text-white mt-0.5">{patientName}</p>
                 </div>
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
                   <span className="text-slate-500">Registered Email</span>
                   <p className="text-sm font-bold text-white mt-0.5">{patientEmail || "Not Provided"}</p>
                 </div>
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
                   <span className="text-slate-500">Phone Number</span>
                   <p className="text-sm font-bold text-white mt-0.5">{patientPhone || "Not Provided"}</p>
                 </div>
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
                   <span className="text-slate-500">Date of Birth / Gender</span>
                   <p className="text-sm font-bold text-white mt-0.5">{editDob || "N/A"} ({editGender})</p>
                 </div>
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
                   <span className="text-slate-500">Emergency Contact</span>
                   <p className="text-sm font-bold text-white mt-0.5">{editEmergency || "Not Provided"}</p>
                 </div>
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
                   <span className="text-slate-500">Clinic Address / City</span>
                   <p className="text-sm font-bold text-white mt-0.5">{editAddress || "Nowshera, KPK"}</p>
                 </div>
@@ -917,7 +942,7 @@ export default function PatientPortalPage() {
 
       {/* EDIT PROFILE DIALOG */}
       <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-md">
+        <DialogContent className="bg-[#0e2c3d] border-[#1b4356] text-slate-100 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
               <User className="h-5 w-5 text-[#2a9d8f]" /> Update Patient Profile
@@ -926,24 +951,24 @@ export default function PatientPortalPage() {
           <div className="space-y-3 text-xs pt-2">
             <div>
               <Label className="text-slate-300">Full Name *</Label>
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
             </div>
             <div>
               <Label className="text-slate-300">Phone Number *</Label>
-              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
             </div>
             <div>
               <Label className="text-slate-300">Email Address *</Label>
-              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-slate-300">Date of Birth</Label>
-                <Input type="date" value={editDob} onChange={(e) => setEditDob(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+                <Input type="date" value={editDob} onChange={(e) => setEditDob(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
               </div>
               <div>
                 <Label className="text-slate-300">Gender</Label>
-                <select value={editGender} onChange={(e) => setEditGender(e.target.value)} className="w-full h-9 bg-slate-950 border border-slate-800 rounded-md text-white text-xs px-2 mt-1">
+                <select value={editGender} onChange={(e) => setEditGender(e.target.value)} className="w-full h-9 bg-[#091e2b] border border-[#1b4356] rounded-md text-white text-xs px-2 mt-1">
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
@@ -952,11 +977,11 @@ export default function PatientPortalPage() {
             </div>
             <div>
               <Label className="text-slate-300">Emergency Contact Phone</Label>
-              <Input value={editEmergency} onChange={(e) => setEditEmergency(e.target.value)} placeholder="+923001234567" className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+              <Input value={editEmergency} onChange={(e) => setEditEmergency(e.target.value)} placeholder="+923001234567" className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
             </div>
             <div>
               <Label className="text-slate-300">Address / City</Label>
-              <Input value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Tehsil Road, Nowshera" className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+              <Input value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Tehsil Road, Nowshera" className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
             </div>
 
             <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-semibold py-2">
@@ -1025,7 +1050,7 @@ export default function PatientPortalPage() {
 
       {/* RESCHEDULE DIALOG */}
       <Dialog open={!!rescheduleApt} onOpenChange={(open) => !open && setRescheduleApt(null)}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-md">
+        <DialogContent className="bg-[#0e2c3d] border-[#1b4356] text-slate-100 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
               <Calendar className="h-5 w-5 text-[#2a9d8f]" /> Reschedule Adjustment Visit
@@ -1034,11 +1059,11 @@ export default function PatientPortalPage() {
           <div className="space-y-3 text-xs pt-2">
             <div>
               <Label className="text-slate-300">Select New Date *</Label>
-              <Input type="date" value={rescheduleDate} onChange={(e) => setRescheduleDate(e.target.value)} className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+              <Input type="date" value={rescheduleDate} onChange={(e) => setRescheduleDate(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
             </div>
             <div>
               <Label className="text-slate-300">Select Preferred Time *</Label>
-              <Input type="text" value={rescheduleTime} onChange={(e) => setRescheduleTime(e.target.value)} placeholder="10:00 AM" className="bg-slate-950 border-slate-800 text-white text-xs mt-1" />
+              <Input type="text" value={rescheduleTime} onChange={(e) => setRescheduleTime(e.target.value)} placeholder="10:00 AM" className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
             </div>
             <Button onClick={handleSaveReschedule} disabled={isUpdatingApt} className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-semibold">
               {isUpdatingApt ? "Updating Date..." : "Confirm Reschedule"}
@@ -1054,7 +1079,7 @@ export default function PatientPortalPage() {
           setViewConfirmationApt(null)
         }
       }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-950 border-2 border-slate-700 text-slate-100 p-3 sm:p-6 pb-24 shadow-2xl rounded-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[#091e2b] border-2 border-[#22556d] text-slate-100 p-3 sm:p-6 pb-24 shadow-2xl rounded-2xl">
           <DialogHeader className="sr-only">
             <DialogTitle>Appointment Confirmation Slip & PDF Download</DialogTitle>
           </DialogHeader>
@@ -1084,7 +1109,7 @@ export default function PatientPortalPage() {
 
       {/* QUICK BOOKING DIALOG */}
       <Dialog open={isBookModalOpen} onOpenChange={setIsBookModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800 text-slate-100 p-4 sm:p-6">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#0e2c3d] border-[#1b4356] text-slate-100 p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
               <Stethoscope className="h-5 w-5 text-[#2a9d8f]" /> Schedule Gonstead Appointment
@@ -1096,12 +1121,20 @@ export default function PatientPortalPage() {
         </DialogContent>
       </Dialog>
 
-      {/* REAL-TIME 1-ON-1 PATIENT-DOCTOR CHAT WIDGET */}
+      {/* REAL-TIME 1-ON-1 PATIENT-DOCTOR CHAT WIDGET (RIGHT SIDE) */}
       <PatientChatWidget
         patientId={patientUid || patientEmail || patientPhone || "patient_guest"}
         patientName={patientName}
         patientEmail={patientEmail}
         patientPhone={patientPhone}
+      />
+
+      {/* SMART AI VOICE & PROMPT BOOKING ASSISTANT (LEFT SIDE - OPPOSITE) */}
+      <PatientPortalAiBooking
+        patientName={patientName}
+        patientPhone={patientPhone}
+        patientEmail={patientEmail}
+        onAppointmentBooked={() => loadData()}
       />
     </div>
   )

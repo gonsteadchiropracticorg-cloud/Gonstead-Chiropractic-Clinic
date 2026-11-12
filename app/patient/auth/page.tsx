@@ -152,10 +152,15 @@ export default function PatientAuthPage() {
       })
     } else {
       toast({
-        title: "Account Created!",
-        description: "Your patient account and Firestore record have been registered successfully.",
+        title: "Account Created Successfully!",
+        description: "Please log in using your registered email and password.",
       })
-      router.replace("/patient-portal")
+      // Switch to login tab and prefill the email for the user
+      setLoginEmail(regEmail)
+      setLoginPassword("")
+      setRegPassword("")
+      setRegConfirmPassword("")
+      setActiveTab("login")
     }
   }
 

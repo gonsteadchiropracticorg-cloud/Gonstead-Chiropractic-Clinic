@@ -943,7 +943,7 @@ export default function WebsiteAnalyticsPage() {
                           </div>
                           <div className={`text-xs ${
                             page.avgLoadTime < 2000 ? 'text-green-600' : 
-                            page.avgLoadTime < 4000 ? 'text-yellow-600' : 'text-red-600'
+                            page.avgLoadTime < 4000 ? 'text-[#2a9d8f]' : 'text-red-600'
                           }`}>
                             {page.avgLoadTime < 2000 ? 'Fast' : page.avgLoadTime < 4000 ? 'Average' : 'Slow'}
                           </div>

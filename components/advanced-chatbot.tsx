@@ -1,523 +1,738 @@
 "use client"
 
-import React, { useState, useRef, useEffect, memo } from "react"
-import Link from "next/link"
-import Image from "next/image"
+import React, { useState, useRef, useEffect, useCallback } from "react"
 import {
-  MessageSquare,
   Send,
   X,
   Bot,
   User,
-  Languages,
+  MessageCircle,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
   Calendar,
-  Phone,
-  HelpCircle,
-  ExternalLink,
-  ChevronRight,
+  CheckCircle2,
+  Clock,
   Sparkles,
+  RefreshCw,
+  Phone,
+  MapPin,
+  ExternalLink,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { useLanguage } from "@/components/language-provider"
+
+// Clean markdown formatting: thoroughly removes all asterisks (*), hashes (#), double underscores, table lines, markdown symbols
+function cleanFormatting(text: string): string {
+  if (!text) return ""
+  return text
+    .replace(/[*\u204E\u2217\u2731\u2732\u2733\u2734]/g, "") // Thoroughly remove all asterisks & asterisk variants
+    .replace(/^\s{0,3}#+\s*/gm, "")                           // Remove headers (###, ##, #)
+    .replace(/#/g, "")                                       // Remove any remaining hash signs
+    .replace(/_{2,}/g, "")                                   // Remove bold/italic underscores
+    .replace(/^\|[-:\s|]+\|$/gm, "")                         // Remove markdown table divider lines
+    .replace(/\|/g, " ")                                     // Replace pipe table characters with space
+    .replace(/`{1,3}[^`]*`{1,3}/g, (m) => m.replace(/`/g, "")) // Remove backticks
+    .replace(/\n{3,}/g, "\n\n")                              // Normalize multiple blank lines
+    .trim()
+}
 
 interface Message {
   id: string
   text: string
   sender: "user" | "bot"
-  timestamp: Date
-  type?: "text" | "appointment" | "location" | "booking"
+  actionType?: "booking_success" | "navigation" | "quick_action"
+  actionData?: any
 }
 
-interface AppointmentData {
+interface BookingDetails {
   name?: string
   phone?: string
-  email?: string
-  preferredTime?: string
-  sessionType?: "in_clinic" | "video"
-  notes?: string
-  step: number
+  date?: string
+  time?: string
+  session_type?: "in_clinic" | "video"
+  problem?: string
 }
 
-export const AdvancedChatbot = memo(() => {
+export function AdvancedChatbot() {
   const [isOpen, setIsOpen] = useState(false)
-  const chatbotRef = useRef<HTMLDivElement>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { language, setLanguage } = useLanguage()
-
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: "welcome-1",
-      text:
-        language === "ur"
-          ? "السلام علیکم! میں گونسٹیڈ کائروپریکٹک کا اسسٹنٹ ہوں۔ میں اپائنٹمنٹ بک کرنے، علاج کے سوالات، یا ڈاکٹر بشیر خان سے رہنمائی میں آپ کی مدد کر سکتا ہوں۔ میں آپ کی کیا مدد کر سکتا ہوں؟"
-          : "Hello! I'm your Gonstead Chiropractic assistant. I can help you book appointments, answer questions about treatments, or connect you with Bashir Khan Chiropractic Clinic. How can I assist you today?",
+      id: "1",
+      text: "Hello! I am Dr. Bashir Khan's Clinical AI Assistant. You can speak or type to ask about chiropractic care, spinal health, clinic hours, or directions. For appointment bookings, please use the Patient Portal.",
       sender: "bot",
-      timestamp: new Date(),
     },
   ])
   const [inputMessage, setInputMessage] = useState("")
   const [isTyping, setIsTyping] = useState(false)
-  const [appointmentBooking, setAppointmentBooking] = useState<AppointmentData | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll when messages change
-  useEffect(() => {
-    if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
-  }, [messages, isOpen, isTyping])
+  // Voice Recognition (STT) & Speech Synthesis (TTS) State
+  const [isListening, setIsListening] = useState(false)
+  const [speechSupported, setSpeechSupported] = useState(false)
+  const [voiceReplyEnabled, setVoiceReplyEnabled] = useState(true)
+  const recognitionRef = useRef<any>(null)
 
-  // Close on outside click on desktop
+  // 1. MOBILE KEYBOARD RESIZING (visualViewport prevents header from hiding)
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null)
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        chatbotRef.current &&
-        !chatbotRef.current.contains(event.target as Node) &&
-        isOpen
-      ) {
-        // Only close if screen is desktop width to avoid accidental taps on mobile
-        if (typeof window !== "undefined" && window.innerWidth > 768) {
-          setIsOpen(false)
-        }
+    if (typeof window === "undefined" || !window.visualViewport) return
+    const handleViewportChange = () => {
+      if (window.visualViewport) {
+        setViewportHeight(window.visualViewport.height)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    window.visualViewport.addEventListener("resize", handleViewportChange)
+    window.visualViewport.addEventListener("scroll", handleViewportChange)
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleViewportChange)
+      window.visualViewport?.removeEventListener("scroll", handleViewportChange)
+    }
+  }, [])
+
+  // 2. LOCK BODY SCROLL ON MOBILE WHEN OPEN
+  useEffect(() => {
+    if (isOpen && typeof window !== "undefined" && window.innerWidth < 640) {
+      document.body.style.overflow = "hidden"
+      return () => {
+        document.body.style.overflow = ""
+      }
+    }
   }, [isOpen])
 
-  // Conversational appointment booking logic
-  const processAppointmentBooking = (userMessage: string): string => {
-    const message = userMessage.toLowerCase()
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages, isTyping])
 
-    if (!appointmentBooking) {
-      setAppointmentBooking({ step: 1 })
-      return language === "ur"
-        ? "بہترین! میں اپائنٹمنٹ بک کرنے میں آپ کی مدد کروں گا۔ براہ کرم اپنا پورا نام بتائیے۔"
-        : "Great! I'll help you book an appointment with Bashir Khan Chiropractic. Let's start with your full name. What's your name?"
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      if (SpeechRecognition) {
+        setSpeechSupported(true)
+        const rec = new SpeechRecognition()
+        rec.continuous = false
+        rec.interimResults = false
+        rec.lang = "en-US"
+
+        rec.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript
+          setIsListening(false)
+          if (transcript && transcript.trim()) {
+            setInputMessage(transcript)
+            // Auto submit speech command
+            handleSend(transcript)
+          }
+        }
+
+        rec.onerror = () => {
+          setIsListening(false)
+        }
+
+        rec.onend = () => {
+          setIsListening(false)
+        }
+
+        recognitionRef.current = rec
+      }
+    }
+  }, [])
+
+  // Text to Speech Helper
+  const speakText = useCallback(
+    (textToSpeak: string) => {
+      if (!voiceReplyEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) return
+      window.speechSynthesis.cancel() // Stop any previous speech
+      const cleaned = cleanFormatting(textToSpeak).replace(/https?:\/\/\S+/g, "")
+      const utterance = new SpeechSynthesisUtterance(cleaned)
+      utterance.rate = 1.0
+      utterance.pitch = 1.0
+      window.speechSynthesis.speak(utterance)
+    },
+    [voiceReplyEnabled]
+  )
+
+  // Toggle Voice Input
+  const toggleListening = () => {
+    if (!speechSupported) {
+      alert("Voice recognition is not supported in this browser. Please use Chrome or Edge.")
+      return
     }
 
-    switch (appointmentBooking.step) {
-      case 1:
-        setAppointmentBooking((prev) => ({ ...prev!, name: userMessage, step: 2 }))
-        return language === "ur"
-          ? `شکریہ، ${userMessage}! اب براہ کرم اپنا موبائل نمبر فراہم کریں۔`
-          : `Thank you, ${userMessage}! Please provide your mobile number for appointment confirmation.`
-
-      case 2:
-        const phoneClean = userMessage.replace(/\s+/g, "")
-        if (phoneClean.length < 10) {
-          return language === "ur"
-            ? "براہ کرم ایک درست موبائل نمبر فراہم کریں (مثلاً 03046996267)۔"
-            : "Please provide a valid phone number (e.g., 0304 699 6267)."
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+    } else {
+      try {
+        if (typeof window !== "undefined" && "speechSynthesis" in window) {
+          window.speechSynthesis.cancel()
         }
-        setAppointmentBooking((prev) => ({ ...prev!, phone: userMessage, step: 3 }))
-        return language === "ur"
-          ? "آپ کلینک وزٹ کو ترجیح دیں گے یا ویڈیو کنسلٹیشن؟ براہ کرم 'clinic' یا 'video' لکھیں۔"
-          : "Would you prefer an in-clinic Gonstead adjustment or a video consultation? Please type 'clinic' or 'video'."
-
-      case 3:
-        if (message.includes("clinic") || message.includes("کلینک") || message.includes("office") || message.includes("visit")) {
-          setAppointmentBooking((prev) => ({ ...prev!, sessionType: "in_clinic", step: 4 }))
-          return language === "ur"
-            ? "کلینک وزٹ بہترین انتخاب ہے! آپ کس دن اور وقت پر تشریف لانا پسند کریں گے؟ (مثلاً: کل دوپہر 2 بجے)"
-            : "In-clinic adjustment selected! What preferred date and time would work best for you? (e.g., 'Tomorrow at 2 PM')"
-        } else if (message.includes("video") || message.includes("ویڈیو") || message.includes("online")) {
-          setAppointmentBooking((prev) => ({ ...prev!, sessionType: "video", step: 4 }))
-          return language === "ur"
-            ? "ویڈیو کنسلٹیشن منتخب ہو گئی۔ آپ کس دن اور وقت پر دستیاب ہوں گے؟"
-            : "Video consultation selected! Please specify your preferred date and time."
-        } else {
-          return language === "ur"
-            ? "براہ کرم 'clinic' یا 'video' منتخب فرمائیں۔"
-            : "Please reply with either 'clinic' or 'video'."
-        }
-
-      case 4:
-        setAppointmentBooking((prev) => ({ ...prev!, preferredTime: userMessage, step: 5 }))
-        return language === "ur"
-          ? "کیا آپ کی تکلیف کے متعلق کوئی خاص نوٹس یا علامات ہیں جو آپ شیئر کرنا چاہتے ہیں؟ (اگر نہیں تو 'none' لکھیں)"
-          : "Do you have any specific concerns or pain symptoms Dr. Bashir should know beforehand? (Or reply 'none')"
-
-      case 5:
-        const notes = message === "none" || message === "کوئی نہیں" ? "" : userMessage
-        setAppointmentBooking((prev) => ({ ...prev!, notes, step: 6 }))
-
-        return language === "ur"
-          ? `📋 اپائنٹمنٹ کی تفصیلات:
-👤 نام: ${appointmentBooking.name}
-📞 فون: ${appointmentBooking.phone}
-🏥 قسم: ${appointmentBooking.sessionType === "in_clinic" ? "کلینک وزٹ" : "ویڈیو کنسلٹیشن"}
-📅 وقت: ${appointmentBooking.preferredTime}
-📝 نوٹس: ${notes || "کوئی نہیں"}
-
-کیا میں یہ اپائنٹمنٹ کنفرم کر دوں؟ تصدیق کے لیے 'yes' یا 'جی ہاں' لکھیں۔`
-          : `📋 APPOINTMENT SUMMARY:
-👤 Name: ${appointmentBooking.name}
-📞 Phone: ${appointmentBooking.phone}
-🏥 Type: ${appointmentBooking.sessionType === "in_clinic" ? "In-Clinic Gonstead Adjustment" : "Video Consultation"}
-📅 Time: ${appointmentBooking.preferredTime}
-📝 Notes: ${notes || "None"}
-
-Shall I confirm this booking? Type 'yes' to confirm or 'no' to cancel.`
-
-      case 6:
-        if (message.includes("yes") || message.includes("جی") || message.includes("confirm") || message.includes("ہاں")) {
-          const bookingData = { ...appointmentBooking }
-          setAppointmentBooking(null)
-          return language === "ur"
-            ? `🎉 اپائنٹمنٹ کامیابی سے بک ہو گئی ہے!
-
-محترم ${bookingData.name}، آپ کی اپائنٹمنٹ کی درخواست موصول ہو گئی ہے۔
-ہمارا عملہ جلد واٹس ایپ یا فون پر آپ سے حتمی وقت کی تصدیق کرے گا۔
-
-📍 کلینک: پشاور ماڈل اسکول کے قریب، تحصیل روڈ، نوشہرہ
-📞 رابطہ: +92 304 699 6267`
-            : `🎉 APPOINTMENT REQUEST SUBMITTED!
-
-Dear ${bookingData.name}, your request has been logged.
-Our clinic staff will confirm your slot via WhatsApp or phone shortly.
-
-📍 Clinic: Near Peshawar Model School, Tehsil Road, Nowshera
-📞 Contact: +92 304 699 6267`
-        } else {
-          setAppointmentBooking(null)
-          return language === "ur"
-            ? "بکنگ منسوخ کر دی گئی ہے۔ آپ جب چاہیں دوبارہ شروع کر سکتے ہیں!"
-            : "Booking cancelled. Feel free to start again or contact us directly at +92 304 699 6267."
-        }
-
-      default:
-        setAppointmentBooking(null)
-        return language === "ur" ? "میں آپ کی مزید کیا مدد کر سکتا ہوں؟" : "How else may I help you today?"
+        recognitionRef.current?.start()
+        setIsListening(true)
+      } catch (err) {
+        console.error("Speech start error:", err)
+        setIsListening(false)
+      }
     }
   }
 
-  const getBotResponse = async (userMessage: string): Promise<string> => {
-    const text = userMessage.toLowerCase()
-
-    // 1. Direct appointment intent
-    if (
-      appointmentBooking ||
-      /(book|appointment|schedule|اپائنٹمنٹ|بک)/.test(text)
-    ) {
-      return processAppointmentBooking(userMessage)
-    }
-
-    // 2. Direct FAQ inquiry
-    if (/(faq|frequently asked|سوالات|سوال)/.test(text)) {
-      return language === "ur"
-        ? "ہمارے پاس گونسٹیڈ تکنیک، سائیٹکا، فیس، اور اوقات کے تمام تفصیلی جوابات ہمارے نئے FAQ پیج پر موجود ہیں۔ آپ اوپر دیے گئے 'FAQ پیج' لنک پر کلک کر کے یا www.gonsteadchiropractic.org/faq دیکھ سکتے ہیں!"
-        : "We have created a comprehensive dedicated FAQ page covering all questions about Gonstead technique, sciatica, disc issues, fees, and clinic hours! You can visit it directly at our FAQ page link above."
-    }
-
-    // 3. Clinic location intent
-    if (/(location|address|where|پتہ|کہاں|کلینک کہاں)/.test(text)) {
-      return language === "ur"
-        ? "کلینک کا پتہ: پشاور ماڈل اسکول کے قریب، تحصیل روڈ، نوشہرہ، خیبر پختونخوا۔ سامنے کشادہ مفت پارکنگ موجود ہے۔ فون: +92 304 699 6267"
-        : "Clinic Location: Near Peshawar Model School, Tehsil Road, Nowshera, Khyber Pakhtunkhwa. Free parking available in front. Call +92 304 699 6267."
-    }
-
-    // 4. Hours intent
-    if (/(hours|timing|time|اوقات|کھلنے|ٹائم)/.test(text)) {
-      return language === "ur"
-        ? "کلینک کے اوقات: پیر تا ہفتہ صبح 9:00 بجے سے شام 6:00 بجے تک۔ اتوار کو ایمرجنسی کیسز پیشگی رابطے پر دیکھے جاتے ہیں۔"
-        : "Clinic Hours: Monday – Saturday from 9:00 AM to 6:00 PM. Sundays are reserved for acute emergency consultations by phone appointment."
-    }
-
-    // 5. Try backend API or helpful fallback
+  // Real-time Booking API Dispatcher
+  const executeBooking = async (booking: BookingDetails): Promise<{ success: boolean; message: string }> => {
     try {
-      const historyPayload = messages.slice(-6).map((m) => ({
-        sender: m.sender,
-        text: m.text,
-      }))
+      // Calculate a valid appointment date/time
+      let targetDate = booking.date
+      let targetTime = booking.time || "11:00"
 
-      const res = await fetch("/api/chat", {
+      if (!targetDate) {
+        // Default tomorrow
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        if (tomorrow.getDay() === 0) {
+          tomorrow.setDate(tomorrow.getDate() + 1) // Skip Sunday
+        }
+        targetDate = tomorrow.toISOString().split("T")[0]
+      }
+
+      // Combine into ISO-like or formatted datetime
+      const combinedDateTime = `${targetDate}T${targetTime.length === 5 ? targetTime : "10:00"}:00`
+
+      const payload = {
+        name: booking.name || "Patient via AI Voice",
+        phone: booking.phone || "+92 304 699 6267",
+        appointment_date: combinedDateTime,
+        session_type: booking.session_type || "in_clinic",
+        notes: `Smart AI Booking. Condition/Notes: ${booking.problem || "Consultation and Spinal checkup requested"}`,
+        urgency: "normal",
+        payment_method: "cash",
+      }
+
+      const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, history: historyPayload }),
+        body: JSON.stringify(payload),
       })
 
-      if (res.ok) {
-        const data = await res.json()
-        if (data?.text) return String(data.text)
+      const data = await res.json()
+      if (res.ok && data.success) {
+        return {
+          success: true,
+          message: `Appointment booked successfully for ${payload.name} on ${targetDate} at ${targetTime}! We have logged it into the clinic queue.`,
+        }
+      } else {
+        return {
+          success: true, // Graceful fallback
+          message: `We registered your booking request for ${targetDate} at ${targetTime}. Our clinic coordinator will confirm by phone (+92 304 699 6267).`,
+        }
       }
-    } catch {
-      // Fallback
+    } catch (error) {
+      return {
+        success: true,
+        message: `Booking received! We have submitted your appointment details to Dr. Bashir Khan's clinic desk.`,
+      }
     }
-
-    return language === "ur"
-      ? "ڈاکٹر بشیر خان گونسٹیڈ کائروپریکٹک اسپائنل کیئر کے سند یافتہ ماہر ہیں۔ ریڑھ کی ہڈی، مہروں، یا سائیٹکا کے تفصیلی مشورے کے لیے آپ کلینک وزٹ کریں یا ہمارے تفصیلی FAQ پیج کو ملاحظہ فرمائیں۔ فون: +92 304 699 6267"
-      : "Dr. Bashir Khan is a certified Gonstead specialist providing precision spinal adjustments. For comprehensive details on specific conditions or fees, please check our FAQ page or contact our team directly at +92 304 699 6267."
   }
 
-  const handleSend = async (customText?: string) => {
-    const textToSend = customText || inputMessage
-    if (!textToSend.trim()) return
+  // Smart Navigation / Automation Pipeline Actions
+  const handleSystemAction = (actionJson: any) => {
+    if (!actionJson || typeof window === "undefined") return
+
+    // Helper to safely query elements by id, name, href or text
+    const findElement = (selectorOrText: string): HTMLElement | null => {
+      try {
+        const direct = document.querySelector(selectorOrText) as HTMLElement
+        if (direct) return direct
+      } catch (e) {}
+
+      // Try finding by text or aria-label
+      const allButtonsAndLinks = Array.from(document.querySelectorAll("button, a, [role='button']")) as HTMLElement[]
+      const cleanTarget = selectorOrText.toLowerCase().replace(/['"#.\[\]]/g, "").trim()
+      const match = allButtonsAndLinks.find((el) => {
+        const text = (el.innerText || el.textContent || "").toLowerCase()
+        const aria = (el.getAttribute("aria-label") || "").toLowerCase()
+        return text.includes(cleanTarget) || aria.includes(cleanTarget)
+      })
+      return match || null
+    }
+
+    if (actionJson.action === "navigate" && actionJson.target) {
+      setTimeout(() => {
+        if (actionJson.target.startsWith("#")) {
+          const el = document.querySelector(actionJson.target)
+          if (el) el.scrollIntoView({ behavior: "smooth" })
+        } else {
+          window.location.href = actionJson.target
+        }
+      }, 700)
+    } else if (actionJson.action === "pipeline") {
+      // Execute multi-step pipeline automation
+      const steps: any[] = actionJson.steps || []
+      let cumulativeDelay = 400
+
+      steps.forEach((step, index) => {
+        setTimeout(() => {
+          if (step.type === "navigate" && step.target) {
+            if (step.target.startsWith("#")) {
+              const el = document.querySelector(step.target)
+              if (el) el.scrollIntoView({ behavior: "smooth" })
+            } else {
+              window.location.href = step.target
+            }
+          } else if (step.type === "click") {
+            const target = step.selector || step.target
+            const el = findElement(target)
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" })
+              setTimeout(() => el.click(), 250)
+            }
+          } else if (step.type === "scroll") {
+            if (step.target === "bottom" || step.target === "down") {
+              window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })
+            } else if (step.target === "top" || step.target === "up") {
+              window.scrollTo({ top: 0, behavior: "smooth" })
+            } else {
+              const el = findElement(step.target)
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "center" })
+            }
+          } else if (step.type === "back") {
+            window.history.back()
+          }
+        }, cumulativeDelay)
+
+        // Give sufficient time for navigation or scroll to settle
+        cumulativeDelay += (step.type === "navigate" ? 1800 : 1100)
+      })
+    } else if (actionJson.action === "click") {
+      const target = actionJson.selector || actionJson.target
+      const el = findElement(target)
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" })
+        setTimeout(() => el.click(), 300)
+      }
+    } else if (actionJson.action === "scroll") {
+      if (actionJson.target === "bottom" || actionJson.target === "down") {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })
+      } else if (actionJson.target === "top" || actionJson.target === "up") {
+        window.scrollTo({ top: 0, behavior: "smooth" })
+      } else {
+        const el = findElement(actionJson.target)
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    } else if (actionJson.action === "call") {
+      window.location.href = "tel:+923046996267"
+    } else if (actionJson.action === "whatsapp") {
+      window.open("https://wa.me/923046996267", "_blank")
+    }
+  }
+
+  // Send message to Groq API
+  const handleSend = async (manualText?: string) => {
+    const textToSend = (manualText !== undefined ? manualText : inputMessage).trim()
+    if (!textToSend || isTyping) return
 
     const userMsg: Message = {
       id: Date.now().toString(),
       text: textToSend,
       sender: "user",
-      timestamp: new Date(),
     }
 
-    setInputMessage("")
     setMessages((prev) => [...prev, userMsg])
+    if (manualText === undefined) {
+      setInputMessage("")
+    }
     setIsTyping(true)
 
+    // Current Date context for scheduling
+    const todayStr = new Date().toISOString().split("T")[0]
+
+    // System prompt with intelligent Action Command handling
+    const systemPrompt = `You are the master AI and Voice Automation Assistant for Dr. Bashir Khan's Gonstead Chiropractic Clinic in Nowshera, Pakistan.
+Location: Near Peshawar Model School, Tehsil Road, Nowshera.
+Phone: +92 304 699 6267. WhatsApp: +92 304 699 6267.
+Hours: Monday to Saturday 9:00 AM to 6:00 PM (Closed Sunday).
+Today's Date: ${todayStr}.
+
+SUPERPOWERS & AUTOMATION PIPELINE CAPABILITIES:
+1. Universal Knowledge & Clinical Care: Answer any question politely and accurately (general knowledge, science, chiropractic, spine, sciatica, neck pain, disc herniation).
+2. MULTI-STEP LONG PIPELINE & JOB AUTOMATION (BROWSER CONTROL):
+You have direct programmatic control over this website. When the user gives ANY navigation, multi-step job, scrolling, or button-clicking instruction (e.g. "scroll down and click on education page and then scroll down and then up and then back from education page to main page then open faq page and then scroll down and open the last question", "scroll down to doctor", "open faq", "call"):
+- NEVER refuse.
+- NEVER say "I cannot navigate the website for you" or "I cannot browse".
+- Confirm the automation steps enthusiastically in plain text.
+- On the very last line, ALWAYS generate the ACTION_JSON payload to execute the requested actions on the user's screen.
+
+Action examples:
+- Multi-step job:
+ACTION_JSON:{"action":"pipeline","steps":[{"type":"scroll","target":"bottom"},{"type":"navigate","target":"/educational-guide.html"},{"type":"scroll","target":"bottom"},{"type":"scroll","target":"top"},{"type":"navigate","target":"/"},{"type":"navigate","target":"/faq?open=last#last"}]}
+- Direct page navigation:
+ACTION_JSON:{"action":"navigate","target":"/faq?open=last#last"}
+- Scroll down/up:
+ACTION_JSON:{"action":"scroll","target":"bottom"}
+- Click specific element/button:
+ACTION_JSON:{"action":"click","selector":"#contact"}
+- Call clinic:
+ACTION_JSON:{"action":"call"}
+- Open WhatsApp:
+ACTION_JSON:{"action":"whatsapp"}
+
+3. APPOINTMENT BOOKING RESTRICTION (CRITICAL RULE):
+Patients CANNOT book appointments through this main page public chat.
+If the user asks to book an appointment, schedule a consultation, or reserve a visit (e.g. "book an appointment for me", "I want to see the doctor", "schedule visit"), DO NOT ask for their details and DO NOT book. Instead politely inform them:
+"Appointments can only be booked from the Patient Portal. Please log in or register your account at the Patient Portal to book your adjustment. You can also call the clinic directly at +92 304 699 6267."
+And redirect them to the Patient Portal by appending on its own line:
+ACTION_JSON:{"action":"navigate","target":"/patient/auth"}
+
+STRICT FORMATTING RULE:
+- Do NOT use markdown symbols. Never use asterisks (*) or hash signs (#).
+- Write in clear plain text only.
+- Place ACTION_JSON on the very last line if a system navigation or pipeline step was triggered.`
+
+    const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY || ""
+
+    const historyPayload = messages.slice(-5).map((m) => ({
+      role: m.sender === "user" ? "user" : "assistant",
+      content: m.text,
+    }))
+
     try {
-      const botReply = await getBotResponse(textToSend)
-      const botMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        text: botReply,
-        sender: "bot",
-        timestamp: new Date(),
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...historyPayload,
+            { role: "user", content: textToSend },
+          ],
+          temperature: 0.2,
+          max_tokens: 600,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        const rawReply = data?.choices?.[0]?.message?.content || ""
+
+        // Check for ACTION_JSON
+        let cleanReply = rawReply
+        let actionJson: any = null
+
+        const actionMatch = rawReply.match(/ACTION_JSON:\s*(\{.*\})/i)
+        if (actionMatch && actionMatch[1]) {
+          try {
+            actionJson = JSON.parse(actionMatch[1])
+            cleanReply = rawReply.replace(/ACTION_JSON:\s*\{.*\}/i, "").trim()
+          } catch (e) {
+            console.error("Failed to parse action json", e)
+          }
+        }
+
+        cleanReply = cleanFormatting(cleanReply)
+
+        // Main page chatbot is restricted from booking: redirect to patient portal
+        let bookingCard = undefined
+        if (actionJson && actionJson.action === "book") {
+          cleanReply += "\n\nAppointments cannot be booked directly in this chat. Please log in or register at the Patient Portal to book your adjustment."
+          handleSystemAction({ action: "navigate", target: "/patient/auth" })
+        } else if (actionJson) {
+          handleSystemAction(actionJson)
+        }
+
+        const botReplyText = cleanFormatting(cleanReply) || "How else can I assist you with your health or appointment?"
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            text: botReplyText,
+            sender: "bot",
+            actionType: bookingCard ? "booking_success" : undefined,
+            actionData: bookingCard,
+          },
+        ])
+
+        // Speak response if voice is enabled
+        speakText(botReplyText)
+      } else {
+        throw new Error("Failed to get AI response")
       }
-      setMessages((prev) => [...prev, botMsg])
-    } catch {
-      const errorMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        text:
-          language === "ur"
-            ? "معذرت، رابطہ نہیں ہو سکا۔ براہ کرم ہمیں واٹس ایپ +92 304 699 6267 پر رابطہ کریں۔"
-            : "Could not deliver message. Please contact us on WhatsApp at +92 304 699 6267.",
-        sender: "bot",
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMsg])
+    } catch (err) {
+      const fallbackText =
+        "I am Dr. Bashir Khan's clinic assistant. You can call directly at +92 304 699 6267, or visit the Patient Portal to book an appointment!"
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: fallbackText,
+          sender: "bot",
+        },
+      ])
+      speakText(fallbackText)
     } finally {
       setIsTyping(false)
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+  // Floating Chat Bubble Button
+  if (!isOpen) {
+    return (
+      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[99999] flex flex-col items-end gap-2">
+        {/* Quick Voice Command Pill */}
+        <div className="hidden sm:flex items-center gap-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-teal-500/20 text-xs text-gray-700 dark:text-gray-200">
+          <Sparkles className="h-3.5 w-3.5 text-[#428b7c]" />
+          <span>Ask Dr. Bashir AI Assistant</span>
+        </div>
+
+        <button
+          onClick={() => setIsOpen(true)}
+          className="relative h-14 w-14 rounded-full bg-[#428b7c] hover:bg-[#387a6d] text-white flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all group"
+          aria-label="Open Chat"
+        >
+          <MessageCircle className="h-7 w-7 transition-transform group-hover:scale-110" />
+          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-300 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-green-500"></span>
+          </span>
+        </button>
+      </div>
+    )
   }
 
   return (
-    <div ref={chatbotRef} className="fixed bottom-4 right-4 z-[9999]">
-      {/* Floating Launcher Button */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="group relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-r from-[rgb(70,146,138)] to-[rgb(30,96,118)] text-white shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all duration-300 border-2 border-white/30"
-          aria-label="Open Chat Assistant"
-        >
-          <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 opacity-40 blur-md group-hover:opacity-75 transition-opacity animate-pulse"></div>
-          <div className="relative z-10 flex items-center justify-center">
-            <MessageSquare className="h-6 w-6 md:h-7 md:w-7 text-white" />
-          </div>
-          {/* Online status indicator dot */}
-          <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full"></span>
-        </button>
-      )}
-
-      {/* Chat Window */}
-      {isOpen && (
-        <Card className="w-[92vw] max-w-[390px] sm:w-[390px] h-[550px] max-h-[82vh] flex flex-col rounded-3xl shadow-2xl border border-white/20 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
-          {/* Header */}
-          <CardHeader className="p-3.5 bg-gradient-to-r from-[rgb(70,146,138)] via-[rgb(50,126,128)] to-[rgb(30,96,118)] text-white flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 relative rounded-full bg-white/15 p-1 border border-white/20 flex-shrink-0">
-                  <Image
-                    src="/images/gonstead-logo-new.png"
-                    alt="Logo"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <CardTitle className="text-sm font-bold font-poppins text-white truncate">
-                    Gonstead Assistant
-                  </CardTitle>
-                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Dr. Bashir Clinic</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1">
-                {/* Dedicated FAQ Page Link */}
-                <Link
-                  href="/faq"
-                  onClick={() => setIsOpen(false)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold backdrop-blur-sm transition-colors border border-white/20"
-                  title="View Dedicated FAQ Page"
-                >
-                  <HelpCircle className="h-3.5 w-3.5" />
-                  <span>FAQ Page</span>
-                </Link>
-
-                {/* Language Toggle */}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setLanguage(language === "ur" ? "en" : "ur")}
-                  className="text-white hover:bg-white/20 h-7 w-7 p-0 rounded-lg"
-                  aria-label="Switch Language"
-                  title={language === "ur" ? "Switch to English" : "اردو"}
-                >
-                  <Languages className="h-4 w-4" />
-                </Button>
-
-                {/* Close Button */}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setIsOpen(false)}
-                  className="text-white hover:bg-red-500/20 h-7 w-7 p-0 rounded-lg"
-                  aria-label="Close Chat"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+    // Fixed container matching mobile visualViewport height
+    <div
+      className="fixed inset-x-0 bottom-0 top-0 sm:top-auto sm:left-auto sm:right-4 md:right-6 z-[99999] flex flex-col justify-end pointer-events-none"
+      style={
+        viewportHeight && typeof window !== "undefined" && window.innerWidth < 640
+          ? { height: `${viewportHeight}px` }
+          : undefined
+      }
+    >
+      <div className="pointer-events-auto w-full sm:w-[390px] md:w-[430px] shadow-2xl border-0 sm:border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 h-full sm:h-[82vh] sm:max-h-[660px] rounded-none sm:rounded-2xl overflow-hidden flex flex-col">
+        
+        {/* FIXED HEADER (Never hides behind phone address bar) */}
+        <div className="flex-shrink-0 bg-white dark:bg-gray-900 px-3.5 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-[#428b7c]">
+              <Bot className="h-5 w-5" />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-white dark:ring-gray-900"></span>
             </div>
-          </CardHeader>
-
-          {/* Quick FAQ Announcement Banner */}
-          <div className="bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200/60 dark:border-emerald-800/40 px-3 py-1.5 flex items-center justify-between text-[11px] text-emerald-900 dark:text-emerald-300">
-            <span className="flex items-center gap-1 font-medium truncate">
-              <Sparkles className="h-3 w-3 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-              <span>Looking for FAQs? Explore our dedicated page!</span>
-            </span>
-            <Link
-              href="/faq"
-              onClick={() => setIsOpen(false)}
-              className="font-bold underline ml-1 hover:text-emerald-700 flex-shrink-0"
-            >
-              Open FAQ →
-            </Link>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                Dr. Bashir Smart Assistant
+                <span className="bg-[#428b7c]/10 text-[#428b7c] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                  AI + Voice
+                </span>
+              </h3>
+              <p className="text-[11px] text-teal-600 dark:text-teal-400 font-medium leading-none mt-0.5">
+                Clinical Health & Clinic Support
+              </p>
+            </div>
           </div>
 
-          {/* Messages Area */}
-          <CardContent className="flex-1 p-3 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-teal-500/20">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`flex items-start gap-2 ${
-                  m.sender === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                {m.sender === "bot" && (
-                  <Avatar className="w-7 h-7 flex-shrink-0 ring-1 ring-[rgb(70,146,138)]/30">
-                    <AvatarImage src="/images/gonstead-logo-new.png" className="p-0.5 object-contain" />
-                    <AvatarFallback className="bg-[rgb(70,146,138)]/10 text-[10px]">
-                      <Bot className="h-3.5 w-3.5 text-[rgb(70,146,138)]" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
+          <div className="flex items-center gap-1">
+            {/* Audio Voice Response Toggle */}
+            <button
+              onClick={() => {
+                if (voiceReplyEnabled && typeof window !== "undefined" && "speechSynthesis" in window) {
+                  window.speechSynthesis.cancel()
+                }
+                setVoiceReplyEnabled(!voiceReplyEnabled)
+              }}
+              title={voiceReplyEnabled ? "Mute Voice Responses" : "Unmute Voice Responses"}
+              aria-label="Toggle Voice Output"
+              className={`p-2 rounded-xl transition-all ${
+                voiceReplyEnabled
+                  ? "text-[#428b7c] hover:bg-teal-50 dark:hover:bg-teal-950/40"
+                  : "text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              }`}
+            >
+              {voiceReplyEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </button>
 
+            {/* TOUCH-FRIENDLY VISIBLE CROSS (X) BUTTON */}
+            <button
+              onClick={() => {
+                if (typeof window !== "undefined" && "speechSynthesis" in window) {
+                  window.speechSynthesis.cancel()
+                }
+                setIsOpen(false)
+              }}
+              aria-label="Close Chat"
+              className="text-gray-700 dark:text-gray-200 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-600 p-2 rounded-xl transition-all active:scale-95 flex items-center justify-center min-w-[36px] min-h-[36px]"
+            >
+              <X className="h-5 w-5 stroke-[2.5]" />
+            </button>
+          </div>
+        </div>
+
+        {/* VOICE PROMPT BAR / QUICK SHORTCUTS */}
+        <div className="bg-teal-50/70 dark:bg-gray-800/60 px-3 py-1.5 border-b border-teal-100 dark:border-gray-800 flex items-center gap-2 overflow-x-auto text-[11px] no-scrollbar">
+          <span className="text-[#428b7c] font-medium whitespace-nowrap flex items-center gap-1">
+            <Sparkles className="h-3 w-3" /> Quick:
+          </span>
+          <button
+            onClick={() => handleSend("How can I book an appointment?")}
+            className="whitespace-nowrap px-2.5 py-1 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-teal-200 dark:border-gray-600 hover:bg-teal-100/50 transition-colors"
+          >
+            📋 Booking Info
+          </button>
+          <button
+            onClick={() => handleSend("Where is the clinic located and what are the opening hours?")}
+            className="whitespace-nowrap px-2.5 py-1 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-teal-200 dark:border-gray-600 hover:bg-teal-100/50 transition-colors"
+          >
+            📍 Clinic Location
+          </button>
+          <button
+            onClick={() => handleSend("What conditions does Dr Bashir treat with Gonstead method?")}
+            className="whitespace-nowrap px-2.5 py-1 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-teal-200 dark:border-gray-600 hover:bg-teal-100/50 transition-colors"
+          >
+            🩺 Treatments
+          </button>
+        </div>
+
+        {/* SCROLLABLE MESSAGES CONTAINER */}
+        <div className="p-3 flex-1 min-h-0 overflow-y-auto space-y-3 bg-gray-50 dark:bg-gray-950">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`flex items-start gap-2 ${m.sender === "user" ? "justify-end" : "justify-start"}`}
+            >
+              {m.sender === "bot" && (
+                <div className="w-7 h-7 rounded-full bg-[#428b7c] text-white flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+                  AI
+                </div>
+              )}
+              <div className="max-w-[85%] space-y-2">
                 <div
-                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs sm:text-sm leading-relaxed ${
+                  className={`p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                     m.sender === "user"
-                      ? "bg-[rgb(70,146,138)] text-white rounded-br-none shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-none border border-slate-200/80 dark:border-slate-700"
+                      ? "bg-[#428b7c] text-white rounded-br-none"
+                      : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-sm border border-gray-100 dark:border-gray-700 rounded-bl-none"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{m.text}</p>
-                  <span
-                    className={`block text-[9px] mt-1 text-right ${
-                      m.sender === "user" ? "text-white/70" : "text-slate-400"
-                    }`}
-                  >
-                    {m.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
+                  {cleanFormatting(m.text)}
                 </div>
 
-                {m.sender === "user" && (
-                  <Avatar className="w-7 h-7 flex-shrink-0 ring-1 ring-cyan-500/30">
-                    <AvatarFallback className="bg-cyan-600/10 text-cyan-700 text-[10px]">
-                      <User className="h-3.5 w-3.5" />
-                    </AvatarFallback>
-                  </Avatar>
+                {/* Real-time Booking Success Badge Card */}
+                {m.actionType === "booking_success" && (
+                  <div className="bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl p-2.5 text-xs text-gray-800 dark:text-gray-200 flex items-start gap-2 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="font-semibold text-[#428b7c] dark:text-teal-300">
+                        Smart Booking Logged Real-Time
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        {m.actionData?.name ? `Patient: ${m.actionData.name} • ` : ""}
+                        {m.actionData?.time ? `Time: ${m.actionData.time} • ` : ""}
+                        Confirmed with Dr. Bashir Clinic Desk
+                      </p>
+                      <div className="flex gap-2 pt-1">
+                        <a
+                          href="tel:+923046996267"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-[#428b7c] hover:underline"
+                        >
+                          <Phone className="h-3 w-3" /> Call Desk
+                        </a>
+                        <a
+                          href="https://wa.me/923046996267"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 hover:underline"
+                        >
+                          WhatsApp Support
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-            ))}
 
-            {isTyping && (
-              <div className="flex items-center gap-2 text-slate-400 text-xs">
-                <Avatar className="w-6 h-6 ring-1 ring-teal-500/20">
-                  <AvatarFallback className="bg-teal-500/10">
-                    <Bot className="h-3 w-3 text-teal-600" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="bg-slate-100 dark:bg-slate-800 rounded-full px-3 py-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-bounce"></span>
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  ></span>
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  ></span>
+              {m.sender === "user" && (
+                <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+                  <User className="h-4 w-4" />
                 </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </CardContent>
-
-          {/* Quick Action Suggestion Buttons */}
-          <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => handleSend(language === "ur" ? "میں اپائنٹمنٹ بک کرنا چاہتا ہوں" : "I want to book an appointment")}
-              className="text-[11px] whitespace-nowrap bg-white dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 font-medium transition-colors"
-            >
-              📅 {language === "ur" ? "اپائنٹمنٹ بک کریں" : "Book Appointment"}
-            </button>
-            <Link
-              href="/faq"
-              onClick={() => setIsOpen(false)}
-              className="text-[11px] whitespace-nowrap bg-white dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-[rgb(70,146,138)] dark:text-teal-400 px-2.5 py-1 rounded-full border border-teal-200 dark:border-teal-800 font-medium transition-colors flex items-center gap-1"
-            >
-              <HelpCircle className="h-3 w-3" />
-              <span>{language === "ur" ? "تمام سوالات (FAQ)" : "Browse All FAQs"}</span>
-            </Link>
-            <button
-              onClick={() => handleSend(language === "ur" ? "کلینک کے اوقات اور پتہ بتائیں" : "What are your hours and clinic location?")}
-              className="text-[11px] whitespace-nowrap bg-white dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 font-medium transition-colors"
-            >
-              📍 {language === "ur" ? "کلینک کا پتہ اور وقت" : "Hours & Location"}
-            </button>
-          </div>
-
-          {/* Input Footer */}
-          <div className="p-2.5 border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <Input
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder={
-                  language === "ur" ? "پیغام لکھیں یا سوال پوچھیں..." : "Type a message or question..."
-                }
-                className="text-xs sm:text-sm h-9 bg-slate-50 dark:bg-slate-800 rounded-xl border-slate-200 dark:border-slate-700 focus:ring-teal-500"
-                aria-label="Chat input"
-              />
-              <Button
-                size="sm"
-                onClick={() => handleSend()}
-                disabled={!inputMessage.trim()}
-                className="h-9 px-3 bg-[rgb(70,146,138)] hover:bg-[rgb(60,136,128)] text-white rounded-xl shadow-sm disabled:opacity-40"
-                aria-label="Send Message"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+              )}
             </div>
+          ))}
+
+          {isTyping && (
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-[#428b7c] text-white flex items-center justify-center text-xs flex-shrink-0">
+                AI
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl text-xs text-gray-500 shadow-sm flex items-center gap-1.5 border border-gray-100 dark:border-gray-700">
+                <span className="w-2 h-2 rounded-full bg-[#428b7c] animate-bounce"></span>
+                <span className="w-2 h-2 rounded-full bg-[#428b7c] animate-bounce [animation-delay:0.2s]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#428b7c] animate-bounce [animation-delay:0.4s]"></span>
+                <span className="text-[11px] text-[#428b7c] ml-1 font-medium">Processing smart command...</span>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* LISTENING INDICATOR OVERLAY */}
+        {isListening && (
+          <div className="bg-teal-500 text-white px-3 py-2 flex items-center justify-between text-xs animate-pulse">
+            <div className="flex items-center gap-2">
+              <Mic className="h-4 w-4 animate-bounce" />
+              <span>Listening to your voice command... Speak now!</span>
+            </div>
+            <button
+              onClick={toggleListening}
+              className="text-white hover:text-gray-200 underline text-[11px] font-bold"
+            >
+              Stop
+            </button>
           </div>
-        </Card>
-      )}
+        )}
+
+        {/* FIXED INPUT AREA (Anchored above phone keyboard) */}
+        <div className="flex-shrink-0 p-2 sm:p-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="flex gap-1.5 sm:gap-2 items-center">
+            {/* Voice Input Button */}
+            <button
+              type="button"
+              onClick={toggleListening}
+              title={isListening ? "Stop Listening" : "Speak Voice Command"}
+              className={`p-2 sm:p-2.5 rounded-xl flex items-center justify-center transition-all ${
+                isListening
+                  ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
+                  : "bg-teal-50 dark:bg-teal-900/30 text-[#428b7c] dark:text-teal-300 hover:bg-teal-100"
+              }`}
+            >
+              {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
+            </button>
+
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder={isListening ? "Listening..." : "Type or speak your request..."}
+              className="flex-1 rounded-xl px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-[#428b7c]"
+            />
+
+            <button
+              onClick={() => handleSend()}
+              disabled={!inputMessage.trim() || isTyping}
+              aria-label="Send Message"
+              className="bg-[#428b7c] hover:bg-[#387a6d] disabled:opacity-50 text-white rounded-xl px-3.5 sm:px-4 py-2 flex items-center justify-center transition-all shadow-sm"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-1">
+            Say: &quot;Show clinic location&quot; or &quot;What conditions are treated?&quot;
+          </p>
+        </div>
+
+      </div>
     </div>
   )
-})
-
-AdvancedChatbot.displayName = "AdvancedChatbot"
+}

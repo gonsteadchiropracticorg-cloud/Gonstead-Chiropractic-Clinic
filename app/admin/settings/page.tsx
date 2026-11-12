@@ -51,7 +51,7 @@ export default function AdminSettings() {
     theme: "light",
     primaryColor: "#0d5c75",
     secondaryColor: "#2a9d8f",
-    accentColor: "#f3a800",
+    accentColor: "#2a9d8f",
   })
 
   const [paginationSettings, setPaginationSettings] = useState({
@@ -357,7 +357,7 @@ export default function AdminSettings() {
 
           {/* Location Settings */}
           <Card className="border-[#0d5c75]/20">
-            <CardHeader className="bg-gradient-to-r from-[#f3a800] to-[#e67e22] text-white">
+            <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#e67e22] text-white">
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
                 Location & Maps
@@ -873,9 +873,9 @@ export default function AdminSettings() {
                     Update Staff Credentials
                   </Button>
 
-                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <h4 className="text-sm font-semibold text-yellow-800 mb-2">Staff Portal Features</h4>
-                    <ul className="text-xs text-yellow-700 space-y-1">
+                  <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200">
+                    <h4 className="text-sm font-semibold text-teal-900 mb-2">Staff Portal Features</h4>
+                    <ul className="text-xs text-teal-700 space-y-1">
                       <li>• Read-only access to patient data</li>
                       <li>• Real-time patient information updates</li>
                       <li>• Secure authentication system</li>

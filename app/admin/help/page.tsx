@@ -658,13 +658,13 @@ function ProTips({ tips }: { tips: string[] }) {
   return (
     <div className="space-y-2">
       <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-        <Lightbulb className="h-5 w-5 text-yellow-600" />
+        <Lightbulb className="h-5 w-5 text-[#2a9d8f]" />
         Pro Tips
       </h4>
       <ul className="space-y-2">
         {tips.map((tip, i) => (
           <li key={i} className="flex gap-2 text-sm text-gray-700">
-            <Target className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <Target className="h-4 w-4 text-[#2a9d8f] flex-shrink-0 mt-0.5" />
             <span>{tip}</span>
           </li>
         ))}
