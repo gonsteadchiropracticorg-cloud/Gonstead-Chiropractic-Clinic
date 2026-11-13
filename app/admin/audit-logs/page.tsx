@@ -479,43 +479,30 @@ export default function AuditLogsPage() {
   return (
     <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6 text-slate-800 flex flex-col">
       {/* ─── UNIFIED ONE-PAGE TOP COMMAND HEADER ──────────────────────────── */}
-      <header className="bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          {/* Left: Branding & Back Button */}
-          <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/admin/dashboard")}
-              className="border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white transition-all font-medium h-9 px-2.5 sm:px-3 text-xs sm:text-sm shrink-0 bg-white/70 rounded-xl"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1 sm:mr-1.5" />
-              <span>Dashboard</span>
-            </Button>
-
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] text-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
-                <History className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-base sm:text-lg font-bold text-[#0d5c75] leading-tight font-poppins">
-                  System Audit Logs
-                </h1>
-                <p className="text-[10px] sm:text-xs text-[#2a9d8f] font-medium hidden sm:block">
-                  Live Clinic Audit Trail & Security Records
-                </p>
+      <header className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Left: Perfectly Left-Aligned Header Text without Back Button or Icon */}
+          <div className="space-y-0.5 text-left">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight">
+                System Audit Logs
+              </h1>
+              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-emerald-700 text-[10px] font-semibold shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Live Sync</span>
               </div>
             </div>
-
-            {/* Live Indicator */}
-            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full text-emerald-700 text-[11px] font-semibold shrink-0">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="hidden xs:inline">Live Sync</span>
-            </div>
+            <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+              Live Clinic Audit Trail & Security Records
+            </p>
+            <p className="text-[11px] text-gray-500 font-medium">
+              Real-time activity logs, actor tracing, clinical entity tracking & compliance
+            </p>
           </div>
 
           {/* Right: Quick Action Controls */}
-          <div className="flex items-center justify-end gap-1.5 sm:gap-2 flex-wrap">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2 flex-wrap self-end md:self-auto">
             {/* Auto refresh toggle */}
             <Button
               variant="outline"

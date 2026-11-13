@@ -214,37 +214,38 @@ export default function StaffAccessPage() {
     <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header - Unified Glass Style Matching Dashboard */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-4 rounded-2xl">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center text-white shadow-md">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins">
+        <div className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-0.5 text-left">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight">
                 Staff Access Management
               </h1>
-              <p className="text-xs sm:text-sm text-[#2a9d8f] font-medium">
+              <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
                 Create, manage, and audit clinic team credentials securely
               </p>
+              <p className="text-[11px] text-gray-500 font-medium">
+                Role-based privileges, credential management & access monitoring
+              </p>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-            <Button
-              onClick={() => { resetForm(); setEditing(null); setOpenDialog(true) }}
-              className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white shadow-md text-xs sm:text-sm rounded-xl h-9 sm:h-10 px-4"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              New Staff
-            </Button>
-            <Button
-              variant="outline"
-              onClick={load}
-              className="border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75]/10 text-xs sm:text-sm rounded-xl h-9 sm:h-10 px-3 bg-white/70"
-            >
-              <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2 w-full md:w-auto flex-wrap self-end md:self-auto">
+              <Button
+                onClick={() => { resetForm(); setEditing(null); setOpenDialog(true) }}
+                className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white shadow-md text-xs sm:text-sm rounded-xl h-9 sm:h-10 px-4"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                New Staff
+              </Button>
+              <Button
+                variant="outline"
+                onClick={load}
+                className="border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75]/10 text-xs sm:text-sm rounded-xl h-9 sm:h-10 px-3 bg-white/70"
+              >
+                <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
 
