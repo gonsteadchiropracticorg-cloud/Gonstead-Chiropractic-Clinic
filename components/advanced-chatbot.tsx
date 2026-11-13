@@ -65,6 +65,7 @@ export function AdvancedChatbot() {
   const [inputMessage, setInputMessage] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatWindowRef = useRef<HTMLDivElement>(null)
 
   // Voice Recognition (STT) & Speech Synthesis (TTS) State
   const [isListening, setIsListening] = useState(false)
@@ -89,11 +90,34 @@ export function AdvancedChatbot() {
     }
   }, [])
 
-  // 2. LOCK BODY SCROLL ON MOBILE WHEN OPEN
+  // 2. LOCK BODY SCROLL ON MOBILE WHEN OPEN & CLICK OUTSIDE TO CLOSE
   useEffect(() => {
-    if (isOpen && typeof window !== "undefined" && window.innerWidth < 640) {
+    if (!isOpen) return
+
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
       document.body.style.overflow = "hidden"
-      return () => {
+    }
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (chatWindowRef.current && !chatWindowRef.current.contains(event.target as Node)) {
+        if (typeof window !== "undefined" && "speechSynthesis" in window) {
+          window.speechSynthesis.cancel()
+        }
+        setIsOpen(false)
+      }
+    }
+
+    // Add listener on next tick to avoid immediate close from the opening click
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside)
+      document.addEventListener("touchstart", handleClickOutside)
+    }, 50)
+
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("touchstart", handleClickOutside)
+      if (typeof window !== "undefined") {
         document.body.style.overflow = ""
       }
     }
@@ -506,7 +530,10 @@ STRICT FORMATTING RULE:
           : undefined
       }
     >
-      <div className="pointer-events-auto w-full sm:w-[390px] md:w-[430px] shadow-2xl border-0 sm:border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 h-full sm:h-[82vh] sm:max-h-[660px] rounded-none sm:rounded-2xl overflow-hidden flex flex-col">
+      <div
+        ref={chatWindowRef}
+        className="pointer-events-auto w-full sm:w-[390px] md:w-[430px] shadow-2xl border-0 sm:border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 h-full sm:h-[82vh] sm:max-h-[660px] rounded-none sm:rounded-2xl overflow-hidden flex flex-col"
+      >
         
         {/* FIXED HEADER (Never hides behind phone address bar) */}
         <div className="flex-shrink-0 bg-white dark:bg-gray-900 px-3.5 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
