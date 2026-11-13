@@ -477,31 +477,31 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(244,247,246)] text-slate-800 flex flex-col">
+    <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6 text-slate-800 flex flex-col">
       {/* ─── UNIFIED ONE-PAGE TOP COMMAND HEADER ──────────────────────────── */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <header className="bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           {/* Left: Branding & Back Button */}
           <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4">
             <Button
               variant="outline"
               size="sm"
               onClick={() => router.push("/admin/dashboard")}
-              className="border-[#0d5c75]/40 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white transition-all font-medium h-9 px-2.5 sm:px-3 text-xs sm:text-sm shrink-0"
+              className="border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white transition-all font-medium h-9 px-2.5 sm:px-3 text-xs sm:text-sm shrink-0 bg-white/70 rounded-xl"
             >
               <ArrowLeft className="h-4 w-4 mr-1 sm:mr-1.5" />
               <span>Dashboard</span>
             </Button>
 
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#0d5c75]/10 rounded-lg flex items-center justify-center shrink-0 border border-[#0d5c75]/20">
-                <History className="h-4 w-4 sm:h-5 sm:w-5 text-[#0d5c75]" />
+              <div className="w-9 h-9 bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] text-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
+                <History className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-base sm:text-lg font-bold text-[#0d5c75] leading-tight">
+                <h1 className="text-base sm:text-lg font-bold text-[#0d5c75] leading-tight font-poppins">
                   System Audit Logs
                 </h1>
-                <p className="text-[10px] sm:text-xs text-slate-500 font-medium hidden sm:block">
+                <p className="text-[10px] sm:text-xs text-[#2a9d8f] font-medium hidden sm:block">
                   Live Clinic Audit Trail & Security Records
                 </p>
               </div>
@@ -521,8 +521,8 @@ export default function AuditLogsPage() {
               variant="outline"
               size="sm"
               onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`h-8 sm:h-9 text-xs font-medium px-2.5 sm:px-3 border-slate-200 ${
-                autoRefresh ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "text-slate-600"
+              className={`h-8 sm:h-9 text-xs font-medium px-2.5 sm:px-3 rounded-xl border-[#0d5c75]/20 ${
+                autoRefresh ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-white/70 text-slate-600"
               }`}
               title={autoRefresh ? "Auto-refresh is ON" : "Auto-refresh is paused"}
             >
@@ -535,7 +535,7 @@ export default function AuditLogsPage() {
               variant="outline"
               size="sm"
               onClick={loadLogs}
-              className="h-8 sm:h-9 text-xs text-slate-700 hover:text-[#0d5c75] border-slate-200 px-2.5"
+              className="h-8 sm:h-9 text-xs text-[#0d5c75] hover:text-[#0d5c75] hover:bg-[#0d5c75]/10 border-[#0d5c75]/20 bg-white/70 rounded-xl px-2.5"
               title="Refresh logs now"
             >
               <RefreshCw className="h-3.5 w-3.5" />
@@ -546,7 +546,7 @@ export default function AuditLogsPage() {
               variant="outline"
               size="sm"
               onClick={exportCSV}
-              className="h-8 sm:h-9 text-xs text-slate-700 hover:text-[#0d5c75] hover:bg-slate-50 border-slate-200 px-2 sm:px-2.5"
+              className="h-8 sm:h-9 text-xs text-slate-700 hover:text-[#0d5c75] hover:bg-[#0d5c75]/10 border-[#0d5c75]/20 bg-white/70 rounded-xl px-2 sm:px-2.5"
               title="Export as CSV spreadsheet"
             >
               <Download className="h-3.5 w-3.5 mr-1 text-[#2a9d8f]" />
@@ -558,7 +558,7 @@ export default function AuditLogsPage() {
               variant="outline"
               size="sm"
               onClick={exportJSON}
-              className="h-8 sm:h-9 text-xs text-slate-700 hover:text-[#0d5c75] hover:bg-slate-50 border-slate-200 px-2 sm:px-2.5 hidden sm:flex"
+              className="h-8 sm:h-9 text-xs text-slate-700 hover:text-[#0d5c75] hover:bg-[#0d5c75]/10 border-[#0d5c75]/20 bg-white/70 rounded-xl px-2 sm:px-2.5 hidden sm:flex"
               title="Export as JSON raw data"
             >
               <Download className="h-3.5 w-3.5 mr-1 text-[#0d5c75]" />
@@ -570,7 +570,7 @@ export default function AuditLogsPage() {
               variant="outline"
               size="sm"
               onClick={() => setShowClearAllConfirm(true)}
-              className="h-8 sm:h-9 text-xs text-rose-600 hover:bg-rose-50 border-rose-200 px-2 sm:px-2.5"
+              className="h-8 sm:h-9 text-xs text-rose-600 hover:bg-rose-50 border-rose-200 bg-white/70 rounded-xl px-2 sm:px-2.5"
               title="Clear all stored audit logs"
             >
               <Trash2 className="h-3.5 w-3.5 mr-1" />

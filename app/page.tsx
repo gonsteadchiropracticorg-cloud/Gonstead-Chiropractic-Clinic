@@ -1194,8 +1194,8 @@ const HomePageContent = memo(() => {
                       <div className="w-16 h-16 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                         <BookOpen className="w-8 h-8 text-white" />
                       </div>
-                      <a
-                        href="/educational-guide.html"
+                      <Link
+                        href="/education"
                         className="group inline-flex flex-col items-center px-8 py-4 bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white font-semibold rounded-xl 
                                  hover:from-[#20b2aa] hover:to-[#155e63] transition-all duration-300 shadow-lg hover:shadow-xl
                                  transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#2a9d8f]/30"
@@ -1206,7 +1206,7 @@ const HomePageContent = memo(() => {
                         <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <ArrowRight className="w-4 h-4" />
                         </div>
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { BookOpen, Award, Clock, Users } from 'lucide-react';
 
 const PatientEducationAccess: React.FC = () => {
@@ -50,8 +51,8 @@ const PatientEducationAccess: React.FC = () => {
           
           {/* Right CTA */}
           <div className="flex-shrink-0">
-            <a
-              href="/educational-guide.html"
+            <Link
+              href="/education"
               className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl 
                        hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-xl hover:shadow-2xl
                        transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 focus:ring-offset-2 focus:ring-offset-slate-900
@@ -63,7 +64,7 @@ const PatientEducationAccess: React.FC = () => {
                 View Guide
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white/50 group-hover:w-full transition-all duration-300"></span>
               </span>
-            </a>
+            </Link>
           </div>
         </div>
       </div>
