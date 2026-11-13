@@ -394,13 +394,17 @@ Respond ONLY with valid JSON with format:
 
   return (
     <div ref={containerRef}>
-      {/* Small, Perfect Circular Futuristic Automation Orb */}
-      <div
-        className={`fixed z-[99990] flex items-center transition-all duration-300 ${
+      {/* Small, Perfect Circular Futuristic Automation Orb - Freely Draggable Across Mobile Touch & Desktop Cursor */}
+      <motion.div
+        drag
+        dragMomentum={false}
+        whileDrag={{ scale: 1.15, cursor: "grabbing" }}
+        className={`fixed z-[99990] flex items-center touch-none cursor-grab ${
           isPatientPortal
             ? "bottom-20 left-6"
             : "bottom-18 right-4 md:bottom-20 md:right-6"
         }`}
+        title="Drag anywhere on screen with mouse or finger"
       >
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
@@ -411,7 +415,7 @@ Respond ONLY with valid JSON with format:
               ? "bg-[#083344] ring-2 ring-teal-400 shadow-[0_0_24px_rgba(42,157,143,0.55)]"
               : "bg-gradient-to-tr from-[#0d5c75] via-[#116e8c] to-[#2a9d8f]"
           }`}
-          title="Open AI Autonomous Copilot (Voice & Workflow)"
+          title="Open AI Autonomous Copilot (Voice & Workflow) - Drag with finger or cursor"
           aria-label="Open AI Autonomous Copilot"
         >
           {/* Subtle Ambient Pulse Ring */}
@@ -446,7 +450,7 @@ Respond ONLY with valid JSON with format:
             )}
           </div>
         </motion.button>
-      </div>
+      </motion.div>
 
       {/* Pro Perplexity-Style Floating Workflow Console */}
       <AnimatePresence>

@@ -961,51 +961,55 @@ function MoneyManagementContent() {
                     Add Payment Record
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl rounded-2xl">
-                  <DialogHeader>
-                    <DialogTitle className="text-[#0d5c75] flex items-center gap-2">
-                      <Receipt className="h-5 w-5" />
+                <DialogContent className="max-w-2xl rounded-2xl bg-white border border-[#0d5c75]/20 shadow-2xl p-6 text-slate-800">
+                  <DialogHeader className="border-b border-slate-100 pb-3">
+                    <DialogTitle className="text-[#0d5c75] font-bold text-lg flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-teal-50 text-[#0d5c75] flex items-center justify-center border border-[#0d5c75]/15">
+                        <Receipt className="h-4 w-4" />
+                      </div>
                       Add New Payment Record
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4 mt-2">
                   <div>
-                    <Label htmlFor="patientName">Patient Name *</Label>
+                    <Label htmlFor="patientName" className="text-xs font-semibold text-slate-700">Patient Name *</Label>
                     <Input
                       id="patientName"
                       value={newRecord.patientName}
                       onChange={(e) => setNewRecord(prev => ({ ...prev, patientName: e.target.value }))}
                       placeholder="Enter patient name"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75]"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone" className="text-xs font-semibold text-slate-700">Phone</Label>
                     <Input
                       id="phone"
                       value={newRecord.phone}
                       onChange={(e) => setNewRecord(prev => ({ ...prev, phone: e.target.value }))}
                       placeholder="Enter phone number"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75]"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="sessionType">Session Type</Label>
+                    <Label htmlFor="sessionType" className="text-xs font-semibold text-slate-700">Session Type</Label>
                     <Select 
                       value={newRecord.sessionType}
                       onValueChange={(value: "in_clinic" | "video") => 
                         setNewRecord(prev => ({ ...prev, sessionType: value }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white border-slate-200">
                         <SelectItem value="in_clinic">In-Clinic</SelectItem>
                         <SelectItem value="video">Video Consultation</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="amount">Amount (PKR) *</Label>
+                    <Label htmlFor="amount" className="text-xs font-semibold text-slate-700">Amount (PKR) *</Label>
                     <Input
                       id="amount"
                       type="number"
@@ -1014,20 +1018,21 @@ function MoneyManagementContent() {
                       value={newRecord.amount}
                       onChange={(e) => setNewRecord(prev => ({ ...prev, amount: e.target.value }))}
                       placeholder="Enter amount"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75]"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="paymentMethod">Payment Method</Label>
+                    <Label htmlFor="paymentMethod" className="text-xs font-semibold text-slate-700">Payment Method</Label>
                     <Select 
                       value={newRecord.paymentMethod}
                       onValueChange={(value: "cash" | "jazzcash" | "easypaisa" | "card") => 
                         setNewRecord(prev => ({ ...prev, paymentMethod: value }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white border-slate-200">
                         <SelectItem value="cash">Cash</SelectItem>
                         <SelectItem value="jazzcash">JazzCash</SelectItem>
                         <SelectItem value="easypaisa">EasyPaisa</SelectItem>
@@ -1036,17 +1041,17 @@ function MoneyManagementContent() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="category">Category</Label>
+                    <Label htmlFor="category" className="text-xs font-semibold text-slate-700">Category</Label>
                     <Select 
                       value={newRecord.category}
                       onValueChange={(value: "consultation" | "treatment" | "medication" | "other") => 
                         setNewRecord(prev => ({ ...prev, category: value }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white border-slate-200">
                         <SelectItem value="consultation">Consultation</SelectItem>
                         <SelectItem value="treatment">Treatment</SelectItem>
                         <SelectItem value="medication">Medication</SelectItem>
@@ -1055,17 +1060,17 @@ function MoneyManagementContent() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="status">Status</Label>
+                    <Label htmlFor="status" className="text-xs font-semibold text-slate-700">Status</Label>
                     <Select 
                       value={newRecord.status}
                       onValueChange={(value: "completed" | "pending" | "refunded") => 
                         setNewRecord(prev => ({ ...prev, status: value }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white border-slate-200">
                         <SelectItem value="completed">Completed</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="refunded">Refunded</SelectItem>
@@ -1073,20 +1078,21 @@ function MoneyManagementContent() {
                     </Select>
                   </div>
                   <div className="col-span-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description" className="text-xs font-semibold text-slate-700">Description</Label>
                     <Textarea
                       id="description"
                       value={newRecord.description}
                       onChange={(e) => setNewRecord(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Enter payment description or notes"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 text-xs focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75] min-h-[70px]"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={() => setIsAddRecordDialogOpen(false)}>
+                <div className="flex justify-end gap-2 mt-5 pt-3 border-t border-slate-100">
+                  <Button variant="outline" onClick={() => setIsAddRecordDialogOpen(false)} className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium h-9">
                     Cancel
                   </Button>
-                  <Button onClick={handleAddRecord} className="bg-[#0d5c75] hover:bg-[#0a4a5c]">
+                  <Button onClick={handleAddRecord} className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white rounded-xl text-xs font-semibold shadow-md h-9 px-5">
                     Add Record
                   </Button>
                 </div>
@@ -1351,33 +1357,37 @@ function MoneyManagementContent() {
 
       {/* Edit Record Dialog */}
       <Dialog open={isEditRecordDialogOpen} onOpenChange={setIsEditRecordDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-[#0d5c75] flex items-center gap-2">
-              <Edit3 className="h-5 w-5" />
+        <DialogContent className="max-w-2xl rounded-2xl bg-white border border-[#0d5c75]/20 shadow-2xl p-6 text-slate-800">
+          <DialogHeader className="border-b border-slate-100 pb-3">
+            <DialogTitle className="text-[#0d5c75] font-bold text-lg flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-teal-50 text-[#0d5c75] flex items-center justify-center border border-[#0d5c75]/15">
+                <Edit3 className="h-4 w-4" />
+              </div>
               Edit Payment Record
             </DialogTitle>
           </DialogHeader>
           {editingRecord && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mt-2">
               <div>
-                <Label htmlFor="editPatientName">Patient Name *</Label>
+                <Label htmlFor="editPatientName" className="text-xs font-semibold text-slate-700">Patient Name *</Label>
                 <Input
                   id="editPatientName"
                   value={editingRecord.patientName}
                   onChange={(e) => setEditingRecord(prev => prev ? ({ ...prev, patientName: e.target.value }) : null)}
+                  className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75]"
                 />
               </div>
               <div>
-                <Label htmlFor="editPhone">Phone</Label>
+                <Label htmlFor="editPhone" className="text-xs font-semibold text-slate-700">Phone</Label>
                 <Input
                   id="editPhone"
                   value={editingRecord.phone}
                   onChange={(e) => setEditingRecord(prev => prev ? ({ ...prev, phone: e.target.value }) : null)}
+                  className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75]"
                 />
               </div>
               <div>
-                <Label htmlFor="editAmount">Amount (PKR) *</Label>
+                <Label htmlFor="editAmount" className="text-xs font-semibold text-slate-700">Amount (PKR) *</Label>
                 <Input
                   id="editAmount"
                   type="number"
@@ -1385,20 +1395,21 @@ function MoneyManagementContent() {
                   step="0.01"
                   value={editingRecord.amount}
                   onChange={(e) => setEditingRecord(prev => prev ? ({ ...prev, amount: parseFloat(e.target.value) }) : null)}
+                  className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75]"
                 />
               </div>
               <div>
-                <Label htmlFor="editPaymentMethod">Payment Method</Label>
+                <Label htmlFor="editPaymentMethod" className="text-xs font-semibold text-slate-700">Payment Method</Label>
                 <Select 
                   value={editingRecord.paymentMethod}
                   onValueChange={(value: "cash" | "jazzcash" | "easypaisa" | "card") => 
-                    setEditingRecord(prev => prev ? ({ ...prev, paymentMethod: value }) : null)
+                    setEditingRecord(prev => (prev ? { ...prev, paymentMethod: value } : null))
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-slate-200">
                     <SelectItem value="cash">Cash</SelectItem>
                     <SelectItem value="jazzcash">JazzCash</SelectItem>
                     <SelectItem value="easypaisa">EasyPaisa</SelectItem>
@@ -1407,17 +1418,17 @@ function MoneyManagementContent() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="editCategory">Category</Label>
+                <Label htmlFor="editCategory" className="text-xs font-semibold text-slate-700">Category</Label>
                 <Select 
                   value={editingRecord.category}
                   onValueChange={(value: "consultation" | "treatment" | "medication" | "other") => 
-                    setEditingRecord(prev => prev ? ({ ...prev, category: value }) : null)
+                    setEditingRecord(prev => (prev ? { ...prev, category: value } : null))
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-slate-200">
                     <SelectItem value="consultation">Consultation</SelectItem>
                     <SelectItem value="treatment">Treatment</SelectItem>
                     <SelectItem value="medication">Medication</SelectItem>
@@ -1426,17 +1437,17 @@ function MoneyManagementContent() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="editStatus">Status</Label>
+                <Label htmlFor="editStatus" className="text-xs font-semibold text-slate-700">Status</Label>
                 <Select 
                   value={editingRecord.status}
                   onValueChange={(value: "completed" | "pending" | "refunded") => 
-                    setEditingRecord(prev => prev ? ({ ...prev, status: value }) : null)
+                    setEditingRecord(prev => (prev ? { ...prev, status: value } : null))
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-slate-200">
                     <SelectItem value="completed">Completed</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="refunded">Refunded</SelectItem>
@@ -1444,20 +1455,21 @@ function MoneyManagementContent() {
                 </Select>
               </div>
               <div className="col-span-2">
-                <Label htmlFor="editDescription">Description</Label>
+                <Label htmlFor="editDescription" className="text-xs font-semibold text-slate-700">Description</Label>
                 <Textarea
                   id="editDescription"
                   value={editingRecord.description}
                   onChange={(e) => setEditingRecord(prev => prev ? ({ ...prev, description: e.target.value }) : null)}
+                  className="bg-white border-slate-200 text-slate-900 rounded-xl mt-1 text-xs focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75] min-h-[70px]"
                 />
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setIsEditRecordDialogOpen(false)}>
+          <div className="flex justify-end gap-2 mt-5 pt-3 border-t border-slate-100">
+            <Button variant="outline" onClick={() => setIsEditRecordDialogOpen(false)} className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium h-9">
               Cancel
             </Button>
-            <Button onClick={handleUpdateRecord} className="bg-[#0d5c75] hover:bg-[#0a4a5c]">
+            <Button onClick={handleUpdateRecord} className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white rounded-xl text-xs font-semibold shadow-md h-9 px-5">
               Update Record
             </Button>
           </div>
@@ -1536,15 +1548,15 @@ function MoneyManagementContent() {
 
       {/* Quick Add Money Record Floating Button */}
       {isAuthenticated && (
-        <div className="fixed bottom-6 left-6 z-40">
+        <div className="fixed bottom-6 left-20 sm:left-24 z-40">
           <Button
             onClick={() => setIsAddRecordDialogOpen(true)}
-            className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2a9d8f] to-[#0d5c75] hover:from-[#238a7a] hover:to-[#0a4a5c] shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 border-4 border-white/30"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#2a9d8f] to-[#0d5c75] hover:from-[#238a7a] hover:to-[#0a4a5c] shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 border-4 border-white/30"
             title="Quick Add Payment Record"
           >
             <Plus className="h-6 w-6 text-white" />
           </Button>
-          <div className="absolute -top-3 -right-3 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse shadow-lg">
+          <div className="absolute -top-2.5 -right-2.5 w-7 h-7 sm:w-8 sm:h-8 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse shadow-lg">
             <DollarSign className="h-4 w-4 text-white" />
           </div>
         </div>

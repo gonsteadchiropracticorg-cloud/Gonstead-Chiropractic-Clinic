@@ -54,9 +54,9 @@ export function SystemLimitsSettings({ settings, onUpdate }: { settings: any; on
 export function IntegrationSettings({ settings, onUpdate }: { settings: any; onUpdate: (path: string, value: any) => void }) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <Card className="border-yellow-200 bg-yellow-50/30">
+      <Card className="border-[#0d5c75]/15 bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="text-yellow-900">Integration Settings</CardTitle>
+          <CardTitle className="text-[#0d5c75]">Integration Settings</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-gray-600">WhatsApp, SMS, email, calendar, and voice service integrations will be managed here.</p>

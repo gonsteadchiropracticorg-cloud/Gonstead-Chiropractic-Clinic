@@ -1061,3 +1061,10 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
+/* Force Radix and Shadcn dialog/modal overlays to modern frosted dark and clean white card */
+[data-radix-portal] [role="dialog"],
+div[role="dialog"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+

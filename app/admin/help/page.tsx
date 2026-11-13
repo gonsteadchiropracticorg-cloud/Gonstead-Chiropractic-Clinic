@@ -116,14 +116,35 @@ export default function AdminHelpPageEnhanced() {
           </CardContent>
         </Card>
 
+        {/* Horizontal Quick-Access Category Strip for Instant Navigation */}
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 border border-[#0d5c75]/15 shadow-sm overflow-x-auto">
+          <div className="flex items-center gap-2 min-w-max">
+            <span className="text-[11px] font-bold text-[#0d5c75] uppercase tracking-wider px-2 shrink-0 flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5 text-[#2a9d8f]" />
+              Quick Jump:
+            </span>
+            {sections.slice(0, 10).map((sec) => (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => go(sec.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-[#0d5c75] border border-slate-200/80 hover:border-[#0d5c75]/30 transition-all shadow-2xs"
+              >
+                <sec.icon className="h-3.5 w-3.5 text-[#0d5c75]" />
+                <span>{sec.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Main Content Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Quick Navigation Sidebar */}
-          <Card className={`lg:col-span-1 h-fit border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl transition-all duration-300 ${isSidebarOpen ? 'fixed inset-4 z-50 overflow-auto' : 'hidden lg:block'}`}>
+          {/* Quick Navigation Sidebar - Sticky for Instant Access */}
+          <Card className={`lg:col-span-1 h-fit lg:sticky lg:top-4 border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl transition-all duration-300 ${isSidebarOpen ? 'fixed inset-4 z-50 overflow-auto' : 'hidden lg:block'}`}>
             <CardHeader className="py-3 px-4 border-b border-slate-100 flex-row justify-between items-center bg-slate-50/50">
               <CardTitle className="text-sm font-bold text-[#0d5c75] flex items-center gap-2">
                 <BookMarked className="h-4 w-4 text-[#2a9d8f]" />
-                <span>Quick Navigation</span>
+                <span>Documentation Index</span>
               </CardTitle>
               {isSidebarOpen && (
                 <Button
@@ -137,7 +158,7 @@ export default function AdminHelpPageEnhanced() {
               )}
             </CardHeader>
             <CardContent className="p-2">
-              <ScrollArea className="h-[60vh] lg:h-[500px] pr-2">
+              <ScrollArea className="h-[60vh] lg:h-[calc(100vh-280px)] pr-2">
                 <div className="space-y-1">
                   {filtered.map(s => (
                     <Button 
