@@ -134,6 +134,11 @@ export default function PatientTrackingPage() {
           existingIds.add(localPatient.id)
         }
       })
+
+      // Sync merged records to localStorage
+      try {
+        localStorage.setItem("gonstead_patients", JSON.stringify(mergedPatients))
+      } catch (e) {}
     } catch (error) {
       console.error("Error loading patients:", error)
     } finally {

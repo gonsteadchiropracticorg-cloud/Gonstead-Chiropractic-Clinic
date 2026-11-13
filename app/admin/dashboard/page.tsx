@@ -474,7 +474,7 @@ export default function AdminDashboard() {
       setIsLoading(true)
       console.log("Dashboard: Loading patients...")
 
-      // Load from Supabase
+      // Load from Firebase via getPatients
       const { data, error } = await getPatients()
 
       if (error) {
@@ -487,18 +487,17 @@ export default function AdminDashboard() {
         return
       }
 
-      const supabasePatients = data || []
-      console.log("Dashboard: Loaded Supabase patients:", supabasePatients.length)
+      const firebasePatients = data || []
+      console.log("Dashboard: Loaded Firebase patients:", firebasePatients.length)
 
-      // Load from localStorage (for appointment bookings from the form)
+      // Load from localStorage as fallback / local additions
       const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
       console.log("Dashboard: Loaded localStorage patients:", localStoragePatients.length)
 
-      // Merge patients with proper deduplication - prioritize Supabase data
-      const mergedPatients = [...supabasePatients]
-      const existingIds = new Set(supabasePatients.map(p => p.id))
+      // Merge patients with deduplication, prioritizing fresh Firebase records
+      const mergedPatients = [...firebasePatients]
+      const existingIds = new Set(firebasePatients.map(p => p.id))
 
-      // Add localStorage patients that aren't already in Supabase (by ID)
       localStoragePatients.forEach((localPatient: Patient) => {
         if (!existingIds.has(localPatient.id)) {
           mergedPatients.push(localPatient)
@@ -506,7 +505,14 @@ export default function AdminDashboard() {
         }
       })
 
-      console.log("Dashboard: Total merged patients:", mergedPatients.length)
+      // ALWAYS save the merged/displayed data to localStorage
+      try {
+        localStorage.setItem("gonstead_patients", JSON.stringify(mergedPatients))
+      } catch (err) {
+        console.warn("Failed to sync to localStorage:", err)
+      }
+
+      console.log("Dashboard: Total merged & cached patients:", mergedPatients.length)
       setPatients(mergedPatients)
 
       // Calculate stats from merged data

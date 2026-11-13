@@ -1,5 +1,11 @@
 import { createClient } from "@supabase/supabase-js"
-import { getPatientsFirestore } from "./firebase-db"
+import {
+  getPatientsFirestore,
+  updatePatientFirestore,
+  deletePatientFirestore,
+  getPatientByIdFirestore,
+  type Patient,
+} from "./firebase-db"
 
 // Get environment variables - allow build to proceed, fail at runtime if needed
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
@@ -562,8 +568,25 @@ export async function processSyncQueue() {
 export const getPatients = async () => {
   try {
     const data = await getPatientsFirestore()
+    // Persist latest data fetched from Firebase into localStorage for instant offline access
+    if (typeof window !== "undefined" && data && data.length > 0) {
+      try {
+        localStorage.setItem("gonstead_patients", JSON.stringify(data))
+      } catch (err) {
+        console.warn("[Storage] Failed to cache patients in localStorage:", err)
+      }
+    }
     return { data, error: null }
   } catch (error: any) {
+    // If fetching fails, serve from localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("gonstead_patients")
+        if (cached) {
+          return { data: JSON.parse(cached), error: null }
+        }
+      } catch (e) {}
+    }
     return {
       data: [],
       error: null,
@@ -573,38 +596,20 @@ export const getPatients = async () => {
 
 export const updatePatient = async (id: string, updates: Partial<Patient>) => {
   try {
-    // Get existing patient data for audit log
-    const { data: existingPatient } = await supabase
-      .from("patients")
-      .select("*")
-      .eq("id", id)
-      .single()
-
-    const { data, error } = await supabase
-      .from("patients")
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-      .single()
-
-    if (error) throw error
+    const data = await updatePatientFirestore(id, updates)
     
-    // Log audit entry for patient update
-    if (data && existingPatient) {
-      await addAuditLog({
-        action: 'update',
-        entity_type: 'patient',
-        entity_id: id,
-        actor_email: typeof window !== 'undefined' ? localStorage.getItem('admin_email') || undefined : undefined,
-        source: 'admin_dashboard',
-        reversible: true,
-        meta: { before: existingPatient, after: data }
-      }).catch(err => console.warn('Audit log failed:', err))
+    // Also sync to localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const cached = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+        const idx = cached.findIndex((p: any) => p.id === id)
+        if (idx !== -1) {
+          cached[idx] = { ...cached[idx], ...updates, updated_at: new Date().toISOString() }
+          localStorage.setItem("gonstead_patients", JSON.stringify(cached))
+        }
+      } catch (e) {}
     }
-    
+
     return data
   } catch (error) {
     console.error("Update patient error:", error)
@@ -614,30 +619,19 @@ export const updatePatient = async (id: string, updates: Partial<Patient>) => {
 
 export const deletePatient = async (id: string) => {
   try {
-    // Get existing patient data for audit log before deletion
-    const { data: existingPatient } = await supabase
-      .from("patients")
-      .select("*")
-      .eq("id", id)
-      .single()
-
-    const { error } = await supabase.from("patients").delete().eq("id", id)
-    if (error) throw error
+    await deletePatientFirestore(id)
     
-    // Log audit entry for patient deletion
-    if (existingPatient) {
-      await addAuditLog({
-        action: 'delete',
-        entity_type: 'patient',
-        entity_id: id,
-        actor_email: typeof window !== 'undefined' ? localStorage.getItem('admin_email') || undefined : undefined,
-        source: 'admin_dashboard',
-        reversible: true,
-        meta: { before: existingPatient }
-      }).catch(err => console.warn('Audit log failed:', err))
+    // Also remove from localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const cached = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+        const filtered = cached.filter((p: any) => p.id !== id)
+        localStorage.setItem("gonstead_patients", JSON.stringify(filtered))
+      } catch (e) {}
     }
   } catch (error) {
     console.error("Delete patient error:", error)
+    throw error
   }
 }
 
