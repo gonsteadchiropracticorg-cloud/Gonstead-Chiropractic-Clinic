@@ -52,7 +52,7 @@ export function AdminAutoSidebar() {
 
   const [isHovered, setIsHovered] = useState(false)
   const [isPinnedOpen, setIsPinnedOpen] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
 
   useEffect(() => {
     // Check client-side authentication state
@@ -67,8 +67,13 @@ export function AdminAutoSidebar() {
     return () => window.removeEventListener("storage", handleStorage)
   }, [])
 
-  // Don't render on auth pages or when not authenticated
-  if (pathname === "/admin/auth" || pathname === "/staff-login" || isAuthenticated === false) {
+  // Never render on auth/login pages or when not authenticated
+  const isLoginPage = pathname === "/admin/auth" || 
+                      pathname === "/staff-login" || 
+                      pathname?.includes("/auth") || 
+                      pathname?.includes("/login")
+
+  if (isLoginPage || !isAuthenticated) {
     return null
   }
 

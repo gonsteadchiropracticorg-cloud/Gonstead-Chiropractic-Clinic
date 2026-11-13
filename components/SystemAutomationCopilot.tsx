@@ -102,10 +102,16 @@ export function SystemAutomationCopilot() {
     }
   }, [isOpen])
 
-  // Check for queued automation after page transitions
+  // Check for queued automation or direct open flag after page transitions
   useEffect(() => {
     if (typeof window === "undefined") return
     try {
+      if (sessionStorage.getItem("gonstead_open_copilot") === "true") {
+        sessionStorage.removeItem("gonstead_open_copilot")
+        setIsOpen(true)
+        setStatusMessage("Automation copilot active. How may I assist you?")
+      }
+
       const queuedStr = sessionStorage.getItem("gonstead_automation_pipeline")
       if (queuedStr) {
         const queued = JSON.parse(queuedStr)

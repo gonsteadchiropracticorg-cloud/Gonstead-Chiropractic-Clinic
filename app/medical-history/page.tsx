@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -59,6 +60,8 @@ interface MedicalRecord {
 }
 
 export default function MedicalHistoryPage() {
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [records, setRecords] = useState<MedicalRecord[]>([])
   const [filteredRecords, setFilteredRecords] = useState<MedicalRecord[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -67,6 +70,18 @@ export default function MedicalHistoryPage() {
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Protect route against unauthenticated access
+  useEffect(() => {
+    const auth = localStorage.getItem("admin_authenticated") === "true"
+    const email = localStorage.getItem("admin_email")
+    if (!auth || !email) {
+      setIsAuthenticated(false)
+      router.replace("/admin/auth")
+    } else {
+      setIsAuthenticated(true)
+    }
+  }, [router])
   
   // New Record Dialog State
   const [isNewRecordDialogOpen, setIsNewRecordDialogOpen] = useState(false)
@@ -583,6 +598,10 @@ export default function MedicalHistoryPage() {
   const completedRecords = records.filter((r) => r.status === "Completed").length
   const ongoingRecords = records.filter((r) => r.status === "Ongoing").length
   const followUpRecords = records.filter((r) => r.status === "Follow-up").length
+
+  if (isAuthenticated === false) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
