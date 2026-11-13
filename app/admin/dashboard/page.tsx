@@ -2745,47 +2745,19 @@ export default function AdminDashboard() {
             {/* Single-Row Responsive Layout - Aligned on Mobile and Desktop */}
             <div className="flex flex-row justify-between items-center gap-2 sm:gap-4 w-full">
 
-              {/* Left Side: Logo and Title */}
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                {/* Enhanced Clinical Logo - Clickable for Sidebar */}
-                <div className="relative group cursor-pointer" onClick={() => setIsSidebarOpen(true)}>
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 relative transition-transform duration-300 hover:scale-110">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#0d5c75]/15 to-[#2a9d8f]/15 rounded-xl sm:rounded-2xl blur-xl group-hover:blur-lg transition-all duration-300"></div>
-                    {/* Enhanced Clinical Logo with Professional Frame */}
-                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border-2 border-white/30 shadow-2xl flex items-center justify-center">
-                      <Image
-                        src="/images/gonstead-chiropractic-logo-new.png"
-                        alt="Gonstead Chiropractic Clinical Logo"
-                        width={32}
-                        height={32}
-                        className="sm:w-11 sm:h-11 object-contain relative z-10 drop-shadow-2xl"
-                      />
-                      {/* Clinical Badge */}
-                      <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] rounded-full flex items-center justify-center shadow-xl border-2 border-white">
-                        <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white rounded-full"></div>
-                      </div>
-                      {/* Professional Ring */}
-                      <div className="absolute inset-0 rounded-xl sm:rounded-2xl border border-[#0d5c75]/30"></div>
-                    </div>
-                  </div>
-                  {/* Professional Clinical Badge */}
-                  <div className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 px-1.5 py-0.5 sm:px-2 sm:py-0.5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white text-[8px] sm:text-xs font-bold rounded-full shadow-lg border border-white/50">
-                    CLINIC
-                  </div>
-                </div>
-
-                {/* Compact Title Section */}
-                <div className="space-y-0.5 min-w-0 flex-1">
-                  <h1 className={`text-sm sm:text-lg md:text-xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm truncate`}>
+              {/* Left Side: Title perfectly aligned to the left (Logo removed) */}
+              <div className="flex items-center min-w-0 flex-1">
+                <div className="space-y-0.5 min-w-0 flex-1 text-left">
+                  <h1 className={`text-base sm:text-xl md:text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm truncate`}>
                     Dr. Bashir Khan
                   </h1>
-                  <p className={`text-xs sm:text-sm font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm hidden md:block truncate`}>
+                  <p className={`text-xs sm:text-sm font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm truncate`}>
                     Gonstead Chiropractic Specialist
                   </p>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 bg-[rgb(227,252,236)] rounded-full shrink-0"></div>
-                    <p className={`text-[8px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider truncate`}>
-                      ADMIN PORTAL
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full shrink-0 animate-pulse"></div>
+                    <p className={`text-[9px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider uppercase truncate`}>
+                      Admin Portal
                     </p>
                   </div>
                 </div>
