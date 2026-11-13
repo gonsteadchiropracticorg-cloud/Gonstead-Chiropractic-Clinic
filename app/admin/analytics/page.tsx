@@ -462,31 +462,17 @@ export default function AdminAnalytics() {
       <header className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 relative rounded-xl bg-white/80 p-1 border border-[#0d5c75]/15 shadow-xs flex-shrink-0">
-              <Image
-                src="/images/gonstead-chiropractic-logo-new.png"
-                alt="Gonstead Chiropractic Logo"
-                fill
-                className="object-contain p-1"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/images/gonstead-logo-new.png";
-                }}
-              />
-            </div>
-            <div className="space-y-0.5 text-left">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight flex items-center gap-2">
-                <BarChart3 className="h-6 w-6 text-[#2a9d8f]" />
-                Analytics Dashboard
-              </h1>
-              <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
-                Comprehensive Clinic Performance Insights
-              </p>
-              <p className="text-[11px] text-gray-500 font-medium">
-                Real-time patient volumes, revenue statistics, retention & growth trends
-              </p>
-            </div>
+          <div className="space-y-0.5 text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight flex items-center gap-2">
+              <BarChart3 className="h-6 w-6 text-[#2a9d8f]" />
+              Analytics Dashboard
+            </h1>
+            <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+              Comprehensive Clinic Performance Insights
+            </p>
+            <p className="text-[11px] text-gray-500 font-medium">
+              Real-time patient volumes, revenue statistics, retention & growth trends
+            </p>
           </div>
           <div className="flex items-center gap-2.5 self-end md:self-auto">
             <Select value={timeRange} onValueChange={setTimeRange}>
