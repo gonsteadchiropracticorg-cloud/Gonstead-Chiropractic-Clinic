@@ -8,15 +8,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft, Users, List, BarChart3, Shield, Key, Eye, EyeOff, Building2, Globe, Phone, Mail, Copy, ExternalLink } from "lucide-react"
+import { Settings, MapPin, Clock, Bell, Palette, Save, ArrowLeft, List, Shield, Key, Eye, EyeOff, Copy, ExternalLink, SlidersHorizontal, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { getCurrentUser } from "@/lib/data-service"
-import Image from "next/image"
 
 export default function AdminSettings() {
+  const router = useRouter()
+  const { toast } = useToast()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
   const [clinicSettings, setClinicSettings] = useState({
@@ -61,6 +58,7 @@ export default function AdminSettings() {
     accentColor: "#2a9d8f",
   })
 
+  // Pagination Settings State
   const [paginationSettings, setPaginationSettings] = useState({
     recordsPerPage: 150,
     enablePagination: true,
@@ -68,14 +66,14 @@ export default function AdminSettings() {
     showRecordCount: true,
     showJumpToPage: true,
     maxVisiblePages: 5,
-    paginationStyle: "professional", // professional, simple, compact
+    paginationStyle: "professional",
     autoRefresh: false,
-    virtualScrolling: false, // for very large datasets
+    autoRefreshInterval: 30
   })
 
-  // Staff Password Management State
+  // Staff Credentials State
   const [staffCredentials, setStaffCredentials] = useState({
-    username: '',
+    username: 'staff',
     password: '',
     confirmPassword: '',
     lastUpdated: '',
@@ -84,136 +82,82 @@ export default function AdminSettings() {
   const [showStaffPassword, setShowStaffPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const router = useRouter()
-  const { toast } = useToast()
-
-  // Settings loading
-  const loadSettingsData = async () => {
-    const settings = {
-      clinic: JSON.parse(localStorage.getItem("clinic_settings") || 'null'),
-      hours: JSON.parse(localStorage.getItem("operating_hours") || 'null'),
-      notifications: JSON.parse(localStorage.getItem("notification_settings") || 'null'),
-      appearance: JSON.parse(localStorage.getItem("appearance_settings") || 'null'),
-      pagination: JSON.parse(localStorage.getItem("pagination_settings") || 'null')
-    }
-    return settings
-  }
-
+  // Combined auth and settings loader to prevent race conditions and flashing
   useEffect(() => {
-    checkAuthAndLoadSettings()
-  }, [])
-
-  const checkAuthAndLoadSettings = async () => {
-    try {
-      console.log("Settings: Checking authentication...")
-
-      // Check localStorage first to prevent loops
-      const isAuthenticated = localStorage.getItem("admin_authenticated")
-      const storedEmail = localStorage.getItem("admin_email")
-
-      if (isAuthenticated === "true" && storedEmail) {
-        console.log("Settings: Found localStorage auth, proceeding...")
-        setAuthChecked(true)
-        setIsAuthenticated(true)
-        loadSettings()
-        return
-      }
-
-      // If no localStorage, check Supabase auth
-      const { user, error } = await getCurrentUser()
-
-      if (error) {
-        console.error("Settings: Auth error:", error)
-        throw error
-      }
-
-      if (!user) {
-        console.log("Settings: No user found, redirecting to auth")
+    const checkAuthAndLoadSettings = () => {
+      // Check admin authentication
+      const isAuth = localStorage.getItem("admin_authenticated") === "true"
+      
+      if (!isAuth) {
+        setIsAuthenticated(false)
         setAuthChecked(true)
         router.replace("/admin/auth")
         return
       }
 
-      console.log("Settings: User authenticated:", user.email)
-
-      const adminEmails = [
-        "bashirahmad123.org@gmail.com",
-        "Bashirahmad123.org@gmail.com",
-        "admin@gonsteadchiropractic.com",
-        "dr.bashir@gonsteadchiropractic.com",
-      ]
-
-      if (!adminEmails.includes(user.email?.toLowerCase() || "")) {
-        console.log("Settings: User not authorized for admin access")
-        setAuthChecked(true)
-        router.replace("/admin/auth")
-        return
-      }
-
-      // Store auth in localStorage to prevent future loops
-      localStorage.setItem("admin_authenticated", "true")
-      localStorage.setItem("admin_email", user.email || "")
-
-      setAuthChecked(true)
       setIsAuthenticated(true)
-      loadSettings()
-    } catch (error) {
-      console.error("Settings: Auth check failed:", error)
-      // Clear localStorage on auth failure
-      localStorage.removeItem("admin_authenticated")
-      localStorage.removeItem("admin_email")
       setAuthChecked(true)
-      router.replace("/admin/auth")
-    }
-  }
 
-  const loadSettings = () => {
-    // Load settings from localStorage
-    const savedClinicSettings = localStorage.getItem("clinic_settings")
-    const savedOperatingHours = localStorage.getItem("operating_hours")
-    const savedNotifications = localStorage.getItem("notification_settings")
-    const savedAppearance = localStorage.getItem("appearance_settings")
-    const savedPaginationSettings = localStorage.getItem("pagination_settings")
+      // Load saved settings
+      const savedClinicSettings = localStorage.getItem("clinic_settings")
+      const savedOperatingHours = localStorage.getItem("operating_hours")
+      const savedNotifications = localStorage.getItem("notification_settings")
+      const savedAppearance = localStorage.getItem("appearance_settings")
+      const savedPagination = localStorage.getItem("patient_tracking_pagination_settings")
+      const savedStaffCredentials = localStorage.getItem("staff_credentials")
 
-    if (savedClinicSettings) {
-      setClinicSettings(JSON.parse(savedClinicSettings))
-    }
-    if (savedOperatingHours) {
-      setOperatingHours(JSON.parse(savedOperatingHours))
-    }
-    if (savedNotifications) {
-      setNotifications(JSON.parse(savedNotifications))
-    }
-    if (savedAppearance) {
-      setAppearance(JSON.parse(savedAppearance))
-    }
-    if (savedPaginationSettings) {
-      setPaginationSettings(JSON.parse(savedPaginationSettings))
-    }
-
-    // Load staff credentials
-    const savedStaffCredentials = localStorage.getItem('staff_credentials')
-    if (savedStaffCredentials) {
-      const credentials = JSON.parse(savedStaffCredentials)
-      setStaffCredentials({
-        username: credentials.username || '',
-        password: '', // Don't show password for security
-        confirmPassword: '',
-        lastUpdated: credentials.lastUpdated || '',
-        updatedBy: credentials.updatedBy || ''
-      })
-    } else {
-      // Set default credentials if none exist
-      const defaultCredentials = {
-        username: 'staff',
-        password: '',
-        confirmPassword: '',
-        lastUpdated: '',
-        updatedBy: ''
+      if (savedClinicSettings) {
+        try {
+          setClinicSettings(JSON.parse(savedClinicSettings))
+        } catch (e) {
+          console.error("Failed to parse clinic settings", e)
+        }
       }
-      setStaffCredentials(defaultCredentials)
+      if (savedOperatingHours) {
+        try {
+          setOperatingHours(JSON.parse(savedOperatingHours))
+        } catch (e) {
+          console.error("Failed to parse operating hours", e)
+        }
+      }
+      if (savedNotifications) {
+        try {
+          setNotifications(JSON.parse(savedNotifications))
+        } catch (e) {
+          console.error("Failed to parse notification settings", e)
+        }
+      }
+      if (savedAppearance) {
+        try {
+          setAppearance(JSON.parse(savedAppearance))
+        } catch (e) {
+          console.error("Failed to parse appearance settings", e)
+        }
+      }
+      if (savedPagination) {
+        try {
+          setPaginationSettings(JSON.parse(savedPagination))
+        } catch (e) {
+          console.error("Failed to parse pagination settings", e)
+        }
+      }
+      if (savedStaffCredentials) {
+        try {
+          const creds = JSON.parse(savedStaffCredentials)
+          setStaffCredentials(prev => ({
+            ...prev,
+            username: creds.username || 'staff',
+            lastUpdated: creds.lastUpdated || '',
+            updatedBy: creds.updatedBy || 'System'
+          }))
+        } catch (e) {
+          console.error("Failed to parse staff credentials", e)
+        }
+      }
     }
-  }
+
+    checkAuthAndLoadSettings()
+  }, [router])
 
   const saveSettings = () => {
     try {
@@ -221,23 +165,22 @@ export default function AdminSettings() {
       localStorage.setItem("operating_hours", JSON.stringify(operatingHours))
       localStorage.setItem("notification_settings", JSON.stringify(notifications))
       localStorage.setItem("appearance_settings", JSON.stringify(appearance))
-      localStorage.setItem("pagination_settings", JSON.stringify(paginationSettings))
+      localStorage.setItem("patient_tracking_pagination_settings", JSON.stringify(paginationSettings))
 
       toast({
         title: "Settings Saved",
-        description: "All settings have been saved successfully",
+        description: "Clinic configuration and preferences updated successfully.",
       })
-    } catch (error) {
-      console.error("Error saving settings:", error)
+    } catch (e) {
       toast({
         title: "Error",
-        description: "Failed to save settings",
-        variant: "destructive",
+        description: "Failed to save settings to browser storage.",
+        variant: "destructive"
       })
     }
   }
 
-  const updateOperatingHours = (day: string, field: string, value: string | boolean) => {
+  const updateOperatingHours = (day: string, field: "open" | "close" | "closed", value: any) => {
     setOperatingHours((prev) => ({
       ...prev,
       [day]: {
@@ -248,162 +191,165 @@ export default function AdminSettings() {
   }
 
   if (!authChecked) {
-    // Show loading while checking authentication
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 relative mx-auto mb-4">
-            <Image
-              src="/images/gonstead-chiropractic-logo-new.png"
-              alt="Gonstead Chiropractic Logo"
-              fill
-              className="object-contain animate-pulse"
-            />
-          </div>
-          <p className="text-[#0d5c75] font-medium">Verifying access...</p>
+      <div className="min-h-screen bg-[rgb(220,230,229)] flex items-center justify-center p-4">
+        <div className="text-center bg-white/70 backdrop-blur-md p-6 rounded-2xl border border-[#0d5c75]/15 shadow-md">
+          <div className="w-8 h-8 border-3 border-[#0d5c75]/20 border-t-[#0d5c75] rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-[#0d5c75] font-semibold text-sm">Verifying admin access...</p>
         </div>
       </div>
     )
   }
 
   if (!isAuthenticated) {
-    // This should not normally be reached due to redirects in checkAuthAndLoadSettings
     return null
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b-2 border-[#0d5c75] p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header - Unified Glass Style Matching Dashboard */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-4 rounded-2xl">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => router.push("/admin/dashboard")}
-              className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+              className="border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white transition-all font-medium h-9 px-3 text-xs sm:text-sm rounded-xl bg-white/70"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              <ArrowLeft className="h-4 w-4 mr-1.5" />
+              Dashboard
             </Button>
-            <div className="w-12 h-12 relative">
-              <Image
-              src="/images/gonstead-chiropractic-logo-new.png"
-                alt="Gonstead Chiropractic Logo"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-[#0d5c75] font-poppins">Admin Settings</h1>
-              <p className="text-sm text-gray-600">Configure clinic settings and preferences</p>
+            <div className="h-6 w-px bg-[#0d5c75]/20 hidden sm:block" />
+            <div className="flex items-center gap-2.5">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center text-white shadow-md">
+                <Settings className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins leading-tight">
+                  Admin Settings
+                </h1>
+                <p className="text-xs sm:text-sm text-[#2a9d8f] font-medium">
+                  Configure clinic profile, operating schedule & security preferences
+                </p>
+              </div>
             </div>
           </div>
-          <Button onClick={saveSettings} className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white">
-            <Save className="h-4 w-4 mr-2" />
+
+          <Button
+            onClick={saveSettings}
+            className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white shadow-md rounded-xl h-10 px-5 text-sm font-semibold flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
             Save All Settings
           </Button>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Clinic Information */}
-          <Card className="border-[#0d5c75]/20">
-            <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 1. Clinic Information */}
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+              <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                <Settings className="h-5 w-5 text-[#2a9d8f]" />
                 Clinic Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-5 sm:p-6 space-y-4">
               <div>
-                <Label htmlFor="clinicName">Clinic Name</Label>
+                <Label htmlFor="clinicName" className="text-xs font-semibold text-slate-700">Clinic Name</Label>
                 <Input
                   id="clinicName"
                   value={clinicSettings.clinicName}
                   onChange={(e) => setClinicSettings((prev) => ({ ...prev, clinicName: e.target.value }))}
+                  className="rounded-xl mt-1 border-slate-200 focus:border-[#0d5c75]"
                 />
               </div>
               <div>
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address" className="text-xs font-semibold text-slate-700">Address</Label>
                 <Textarea
                   id="address"
+                  rows={2}
                   value={clinicSettings.address}
                   onChange={(e) => setClinicSettings((prev) => ({ ...prev, address: e.target.value }))}
+                  className="rounded-xl mt-1 border-slate-200 focus:border-[#0d5c75]"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone" className="text-xs font-semibold text-slate-700">Phone</Label>
                   <Input
                     id="phone"
                     value={clinicSettings.phone}
                     onChange={(e) => setClinicSettings((prev) => ({ ...prev, phone: e.target.value }))}
+                    className="rounded-xl mt-1 border-slate-200 focus:border-[#0d5c75]"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-xs font-semibold text-slate-700">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={clinicSettings.email}
                     onChange={(e) => setClinicSettings((prev) => ({ ...prev, email: e.target.value }))}
+                    className="rounded-xl mt-1 border-slate-200 focus:border-[#0d5c75]"
                   />
                 </div>
               </div>
               <div>
-                <Label htmlFor="website">Website</Label>
+                <Label htmlFor="website" className="text-xs font-semibold text-slate-700">Website URL</Label>
                 <Input
                   id="website"
                   value={clinicSettings.website}
                   onChange={(e) => setClinicSettings((prev) => ({ ...prev, website: e.target.value }))}
+                  className="rounded-xl mt-1 border-slate-200 focus:border-[#0d5c75]"
                 />
               </div>
             </CardContent>
           </Card>
 
-          {/* Location & Maps Settings */}
-          <Card className="border-[#0d5c75]/20">
-            <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white">
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Clinic Location & Google Maps
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => window.open(clinicSettings.mapUrl, "_blank")}
-                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs h-7"
-                >
-                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                  Preview on Maps
-                </Button>
+          {/* 2. Clinic Location & Google Maps */}
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+              <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                <MapPin className="h-5 w-5 text-[#2a9d8f]" />
+                Location & Google Maps
               </CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => window.open(clinicSettings.mapUrl, "_blank")}
+                className="border-[#0d5c75]/20 text-[#0d5c75] hover:bg-[#0d5c75]/10 text-xs rounded-xl h-8 px-2.5"
+              >
+                <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                Preview Maps
+              </Button>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="p-5 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city" className="text-xs font-semibold text-slate-700">City</Label>
                   <Input
                     id="city"
                     value={clinicSettings.city}
                     onChange={(e) => setClinicSettings((prev) => ({ ...prev, city: e.target.value }))}
+                    className="rounded-xl mt-1 border-slate-200"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="postalCode">Postal Code</Label>
+                  <Label htmlFor="postalCode" className="text-xs font-semibold text-slate-700">Postal Code</Label>
                   <Input
                     id="postalCode"
                     value={clinicSettings.postalCode}
                     onChange={(e) => setClinicSettings((prev) => ({ ...prev, postalCode: e.target.value }))}
+                    className="rounded-xl mt-1 border-slate-200"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="lat">Latitude</Label>
+                  <Label htmlFor="lat" className="text-xs font-semibold text-slate-700">Latitude</Label>
                   <Input
                     id="lat"
                     type="number"
@@ -415,10 +361,11 @@ export default function AdminSettings() {
                         coordinates: { ...prev.coordinates, lat: Number.parseFloat(e.target.value) || 0 },
                       }))
                     }
+                    className="rounded-xl mt-1 border-slate-200"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="lng">Longitude</Label>
+                  <Label htmlFor="lng" className="text-xs font-semibold text-slate-700">Longitude</Label>
                   <Input
                     id="lng"
                     type="number"
@@ -430,17 +377,19 @@ export default function AdminSettings() {
                         coordinates: { ...prev.coordinates, lng: Number.parseFloat(e.target.value) || 0 },
                       }))
                     }
+                    className="rounded-xl mt-1 border-slate-200"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="mapUrl">Google Maps Link</Label>
-                <div className="flex gap-2">
+                <Label htmlFor="mapUrl" className="text-xs font-semibold text-slate-700">Google Maps Share Link</Label>
+                <div className="flex gap-2 mt-1">
                   <Input
                     id="mapUrl"
                     value={clinicSettings.mapUrl}
                     onChange={(e) => setClinicSettings((prev) => ({ ...prev, mapUrl: e.target.value }))}
+                    className="rounded-xl border-slate-200 flex-1"
                   />
                   <Button
                     type="button"
@@ -449,88 +398,83 @@ export default function AdminSettings() {
                       navigator.clipboard.writeText(clinicSettings.mapUrl)
                       toast({ title: "Copied Link", description: "Google Maps URL copied to clipboard" })
                     }}
-                    className="border-[#0d5c75]/20 text-[#0d5c75]"
+                    className="border-[#0d5c75]/20 text-[#0d5c75] hover:bg-[#0d5c75]/10 rounded-xl"
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="mapEmbed">Google Maps Embed URL</Label>
-                <Input
-                  id="mapEmbed"
-                  value={clinicSettings.mapEmbed}
-                  onChange={(e) => setClinicSettings((prev) => ({ ...prev, mapEmbed: e.target.value }))}
-                  placeholder="https://www.google.com/maps/embed?..."
-                />
-              </div>
-
-              <div className="bg-teal-50/70 border border-teal-200/50 p-4 rounded-xl">
-                <p className="text-xs font-semibold text-[#0d5c75] uppercase tracking-wider mb-1">Current Active Clinic Address</p>
-                <p className="text-sm font-medium text-gray-800">{clinicSettings.address}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  GPS Coordinates: {clinicSettings.coordinates.lat}, {clinicSettings.coordinates.lng} ({clinicSettings.city}, {clinicSettings.country})
+              <div className="bg-teal-50/70 border border-teal-200/60 p-3.5 rounded-xl">
+                <p className="text-[11px] font-bold text-[#0d5c75] uppercase tracking-wider mb-0.5">Active Clinic Coordinates</p>
+                <p className="text-xs text-slate-700 font-medium">{clinicSettings.address}</p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  GPS: {clinicSettings.coordinates.lat}, {clinicSettings.coordinates.lng} ({clinicSettings.city}, {clinicSettings.country})
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Operating Hours */}
-          <Card className="border-[#0d5c75]/20">
-            <CardHeader className="bg-gradient-to-r from-green-600 to-green-700 text-white">
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
+          {/* 3. Operating Hours */}
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+              <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                <Clock className="h-5 w-5 text-[#2a9d8f]" />
                 Operating Hours
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-5 sm:p-6 space-y-3">
               {Object.entries(operatingHours).map(([day, hours]) => (
-                <div key={day} className="flex items-center gap-4">
-                  <div className="w-20 text-sm font-medium capitalize">{day}</div>
-                  <Switch
-                    checked={!hours.closed}
-                    onCheckedChange={(checked) => updateOperatingHours(day, "closed", !checked)}
-                  />
-                  {!hours.closed && (
-                    <>
-                      <Input
-                        type="time"
-                        value={hours.open}
-                        onChange={(e) => updateOperatingHours(day, "open", e.target.value)}
-                        className="w-32"
-                      />
-                      <span className="text-sm text-gray-500">to</span>
-                      <Input
-                        type="time"
-                        value={hours.close}
-                        onChange={(e) => updateOperatingHours(day, "close", e.target.value)}
-                        className="w-32"
-                      />
-                    </>
-                  )}
-                  {hours.closed && <span className="text-sm text-gray-500 italic">Closed</span>}
+                <div key={day} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div className="w-24 text-sm font-semibold capitalize text-slate-700">{day}</div>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={!hours.closed}
+                      onCheckedChange={(checked) => updateOperatingHours(day, "closed", !checked)}
+                    />
+                    {!hours.closed ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={hours.open}
+                          onChange={(e) => updateOperatingHours(day, "open", e.target.value)}
+                          className="w-28 h-9 text-xs rounded-lg border-slate-200"
+                        />
+                        <span className="text-xs text-slate-400">to</span>
+                        <Input
+                          type="time"
+                          value={hours.close}
+                          onChange={(e) => updateOperatingHours(day, "close", e.target.value)}
+                          className="w-28 h-9 text-xs rounded-lg border-slate-200"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-xs font-semibold text-rose-500 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+                        Closed
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </CardContent>
           </Card>
 
-          {/* Notification Settings */}
-          <Card className="border-[#0d5c75]/20">
-            <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
+          {/* 4. Notification Settings */}
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+              <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                <Bell className="h-5 w-5 text-[#2a9d8f]" />
                 Notification Settings
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-5 sm:p-6 space-y-4">
               {Object.entries(notifications).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-medium">
+                <div key={key} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div className="pr-4">
+                    <Label className="text-sm font-semibold text-slate-800">
                       {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
                     </Label>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       {key === "emailNotifications" && "Receive notifications via email"}
                       {key === "smsNotifications" && "Receive notifications via SMS"}
                       {key === "appointmentReminders" && "Send appointment reminders to patients"}
@@ -547,106 +491,89 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
 
-          {/* Appearance Settings */}
-          <Card className="border-[#0d5c75]/20 lg:col-span-2">
-            <CardHeader className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white">
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="h-5 w-5" />
-                Appearance & Branding
+          {/* 5. Appearance & Branding */}
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden lg:col-span-2">
+            <CardHeader className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+              <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                <Palette className="h-5 w-5 text-[#2a9d8f]" />
+                Appearance & Brand Palette
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-5 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="theme">Theme</Label>
+                    <Label htmlFor="theme" className="text-xs font-semibold text-slate-700">Theme Mode</Label>
                     <Select
                       value={appearance.theme}
                       onValueChange={(value) => setAppearance((prev) => ({ ...prev, theme: value }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="rounded-xl mt-1 border-slate-200">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="auto">Auto</SelectItem>
+                        <SelectItem value="light">Light Mode (Official Clinic Theme)</SelectItem>
+                        <SelectItem value="dark">Dark Mode</SelectItem>
+                        <SelectItem value="auto">System Auto</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+
                   <div>
-                    <Label htmlFor="primaryColor">Primary Color</Label>
-                    <div className="flex items-center gap-2">
+                    <Label htmlFor="primaryColor" className="text-xs font-semibold text-slate-700">Primary Color (Deep Teal)</Label>
+                    <div className="flex items-center gap-2 mt-1">
                       <Input
                         id="primaryColor"
                         type="color"
                         value={appearance.primaryColor}
                         onChange={(e) => setAppearance((prev) => ({ ...prev, primaryColor: e.target.value }))}
-                        className="w-16 h-10"
+                        className="w-14 h-10 p-1 rounded-xl cursor-pointer"
                       />
                       <Input
                         value={appearance.primaryColor}
                         onChange={(e) => setAppearance((prev) => ({ ...prev, primaryColor: e.target.value }))}
-                        className="flex-1"
+                        className="flex-1 rounded-xl font-mono text-xs"
                       />
                     </div>
                   </div>
+
                   <div>
-                    <Label htmlFor="secondaryColor">Secondary Color</Label>
-                    <div className="flex items-center gap-2">
+                    <Label htmlFor="secondaryColor" className="text-xs font-semibold text-slate-700">Secondary Color (Mint Teal)</Label>
+                    <div className="flex items-center gap-2 mt-1">
                       <Input
                         id="secondaryColor"
                         type="color"
                         value={appearance.secondaryColor}
                         onChange={(e) => setAppearance((prev) => ({ ...prev, secondaryColor: e.target.value }))}
-                        className="w-16 h-10"
+                        className="w-14 h-10 p-1 rounded-xl cursor-pointer"
                       />
                       <Input
                         value={appearance.secondaryColor}
                         onChange={(e) => setAppearance((prev) => ({ ...prev, secondaryColor: e.target.value }))}
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="accentColor">Accent Color</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        id="accentColor"
-                        type="color"
-                        value={appearance.accentColor}
-                        onChange={(e) => setAppearance((prev) => ({ ...prev, accentColor: e.target.value }))}
-                        className="w-16 h-10"
-                      />
-                      <Input
-                        value={appearance.accentColor}
-                        onChange={(e) => setAppearance((prev) => ({ ...prev, accentColor: e.target.value }))}
-                        className="flex-1"
+                        className="flex-1 rounded-xl font-mono text-xs"
                       />
                     </div>
                   </div>
                 </div>
+
                 <div className="space-y-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium mb-3">Color Preview</h4>
-                    <div className="space-y-2">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60">
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Live Color Palette Preview</h4>
+                    <div className="space-y-2.5">
                       <div
-                        className="h-8 rounded flex items-center px-3 text-white text-sm"
+                        className="h-10 rounded-xl flex items-center px-4 text-white text-xs font-semibold shadow-sm"
                         style={{ backgroundColor: appearance.primaryColor }}
                       >
-                        Primary Color
+                        Primary Color: {appearance.primaryColor}
                       </div>
                       <div
-                        className="h-8 rounded flex items-center px-3 text-white text-sm"
+                        className="h-10 rounded-xl flex items-center px-4 text-white text-xs font-semibold shadow-sm"
                         style={{ backgroundColor: appearance.secondaryColor }}
                       >
-                        Secondary Color
+                        Secondary Color: {appearance.secondaryColor}
                       </div>
-                      <div
-                        className="h-8 rounded flex items-center px-3 text-white text-sm"
-                        style={{ backgroundColor: appearance.accentColor }}
-                      >
-                        Accent Color
+                      <div className="p-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-600">
+                        Default Gonstead palette: Deep Teal (<span className="font-mono font-bold text-[#0d5c75]">#0d5c75</span>) and Mint Teal (<span className="font-mono font-bold text-[#2a9d8f]">#2a9d8f</span>).
                       </div>
                     </div>
                   </div>
@@ -655,20 +582,20 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
 
-          {/* Patient Records Pagination Settings */}
-          <Card className="border-[#0d5c75]/20 lg:col-span-2">
-            <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
-              <CardTitle className="flex items-center gap-2">
-                <List className="h-5 w-5" />
+          {/* 6. Patient Records Management & Pagination */}
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden lg:col-span-2">
+            <CardHeader className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+              <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                <List className="h-5 w-5 text-[#2a9d8f]" />
                 Patient Records Management & Pagination
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-5 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="recordsPerPage" className="text-sm font-semibold text-[#0d5c75]">Records Per Page</Label>
-                    <div className="flex items-center gap-2">
+                    <Label htmlFor="recordsPerPage" className="text-xs font-semibold text-[#0d5c75]">Records Per Page</Label>
+                    <div className="flex items-center gap-2 mt-1">
                       <Input
                         id="recordsPerPage"
                         type="number"
@@ -676,17 +603,17 @@ export default function AdminSettings() {
                         max="1000"
                         value={paginationSettings.recordsPerPage}
                         onChange={(e) => setPaginationSettings((prev) => ({ ...prev, recordsPerPage: parseInt(e.target.value) || 150 }))}
-                        className="w-24"
+                        className="w-24 rounded-xl border-slate-200"
                       />
-                      <span className="text-sm text-gray-600">patients per page</span>
+                      <span className="text-xs text-slate-600">patients per page</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Set to 150 for your preferred limit, or adjust as needed</p>
+                    <p className="text-[11px] text-slate-400 mt-1">Set to 150 for your preferred limit, or adjust as needed</p>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50">
                     <div>
-                      <Label className="text-sm font-semibold text-[#0d5c75]">Enable Pagination</Label>
-                      <p className="text-xs text-gray-500">Turn off for unlimited scrolling (not recommended for large datasets)</p>
+                      <Label className="text-xs font-semibold text-[#0d5c75]">Enable Pagination</Label>
+                      <p className="text-[11px] text-slate-400">Turn off for unlimited scrolling (not recommended for large datasets)</p>
                     </div>
                     <Switch
                       checked={paginationSettings.enablePagination}
@@ -694,10 +621,10 @@ export default function AdminSettings() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50">
                     <div>
-                      <Label className="text-sm font-semibold text-[#0d5c75]">Show Page Numbers</Label>
-                      <p className="text-xs text-gray-500">Display clickable page numbers in navigation</p>
+                      <Label className="text-xs font-semibold text-[#0d5c75]">Show Page Numbers</Label>
+                      <p className="text-[11px] text-slate-400">Display clickable page numbers in navigation</p>
                     </div>
                     <Switch
                       checked={paginationSettings.showPageNumbers}
@@ -705,37 +632,26 @@ export default function AdminSettings() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50">
                     <div>
-                      <Label className="text-sm font-semibold text-[#0d5c75]">Show Record Count</Label>
-                      <p className="text-xs text-gray-500">Display "Showing X of Y records" information</p>
+                      <Label className="text-xs font-semibold text-[#0d5c75]">Show Record Count</Label>
+                      <p className="text-[11px] text-slate-400">Display &ldquo;Showing X of Y records&rdquo; indicator</p>
                     </div>
                     <Switch
                       checked={paginationSettings.showRecordCount}
                       onCheckedChange={(checked) => setPaginationSettings((prev) => ({ ...prev, showRecordCount: checked }))}
                     />
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-sm font-semibold text-[#0d5c75]">Jump to Page</Label>
-                      <p className="text-xs text-gray-500">Allow direct navigation to specific page numbers</p>
-                    </div>
-                    <Switch
-                      checked={paginationSettings.showJumpToPage}
-                      onCheckedChange={(checked) => setPaginationSettings((prev) => ({ ...prev, showJumpToPage: checked }))}
-                    />
-                  </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="maxVisiblePages" className="text-sm font-semibold text-[#0d5c75]">Max Visible Page Numbers</Label>
+                    <Label htmlFor="maxVisiblePages" className="text-xs font-semibold text-[#0d5c75]">Max Visible Page Numbers</Label>
                     <Select
                       value={paginationSettings.maxVisiblePages.toString()}
                       onValueChange={(value) => setPaginationSettings((prev) => ({ ...prev, maxVisiblePages: parseInt(value) }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="rounded-xl mt-1 border-slate-200">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -745,16 +661,15 @@ export default function AdminSettings() {
                         <SelectItem value="10">10 pages</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-gray-500 mt-1">Number of page buttons to show at once</p>
                   </div>
 
                   <div>
-                    <Label htmlFor="paginationStyle" className="text-sm font-semibold text-[#0d5c75]">Pagination Style</Label>
+                    <Label htmlFor="paginationStyle" className="text-xs font-semibold text-[#0d5c75]">Pagination Style</Label>
                     <Select
                       value={paginationSettings.paginationStyle}
                       onValueChange={(value) => setPaginationSettings((prev) => ({ ...prev, paginationStyle: value }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="rounded-xl mt-1 border-slate-200">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -763,28 +678,15 @@ export default function AdminSettings() {
                         <SelectItem value="compact">Compact</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-gray-500 mt-1">Choose the pagination UI style</p>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-sm font-semibold text-[#0d5c75]">Auto Refresh</Label>
-                      <p className="text-xs text-gray-500">Automatically refresh data every 30 seconds</p>
-                    </div>
-                    <Switch
-                      checked={paginationSettings.autoRefresh}
-                      onCheckedChange={(checked) => setPaginationSettings((prev) => ({ ...prev, autoRefresh: checked }))}
-                    />
-                  </div>
-
-                  <div className="bg-gradient-to-r from-[#0d5c75]/10 to-[#2a9d8f]/10 p-4 rounded-lg">
-                    <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Smart Pagination Features</h4>
-                    <ul className="text-xs text-gray-600 space-y-1">
+                  <div className="bg-teal-50/70 border border-teal-200/60 p-4 rounded-xl">
+                    <h4 className="text-xs font-bold text-[#0d5c75] uppercase tracking-wider mb-2">Smart Pagination Features</h4>
+                    <ul className="text-xs text-slate-600 space-y-1">
                       <li>• Automatic page generation when limit is exceeded</li>
                       <li>• Intelligent memory management for large datasets</li>
                       <li>• Quick navigation with keyboard shortcuts</li>
-                      <li>• Export functionality for filtered results</li>
-                      <li>• Real-time search across all pages</li>
+                      <li>• Real-time search across all patient records</li>
                     </ul>
                   </div>
                 </div>
@@ -792,115 +694,103 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
 
-          {/* Staff Password Management */}
-          <Card className="border-[#0d5c75]/20 lg:col-span-2">
-            <CardHeader className="bg-gradient-to-r from-red-600 to-red-700 text-white">
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Staff Portal Access Management
+          {/* 7. Staff Credentials & Security */}
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden lg:col-span-2">
+            <CardHeader className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+              <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                <Shield className="h-5 w-5 text-[#2a9d8f]" />
+                Staff Portal Access & Security
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-5 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Key className="h-4 w-4 text-red-600" />
-                      <h4 className="text-sm font-semibold text-red-800">Security Notice</h4>
+                  <div className="bg-amber-50/80 p-3.5 rounded-xl border border-amber-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Key className="h-4 w-4 text-amber-700" />
+                      <h4 className="text-xs font-bold text-amber-900">Security Notice</h4>
                     </div>
-                    <p className="text-xs text-red-700">
-                      Changing staff credentials will immediately affect all staff portal access. 
-                      Make sure to inform your staff about the new login details.
+                    <p className="text-xs text-amber-800">
+                      Changing staff credentials will update staff portal login details for all staff users.
                     </p>
                   </div>
 
                   <div>
-                    <Label htmlFor="staffUsername" className="text-sm font-semibold text-[#0d5c75]">Staff Username</Label>
+                    <Label htmlFor="staffUsername" className="text-xs font-semibold text-[#0d5c75]">Staff Username</Label>
                     <Input
                       id="staffUsername"
                       value={staffCredentials.username}
                       onChange={(e) => setStaffCredentials(prev => ({ ...prev, username: e.target.value }))}
                       placeholder="Enter staff username"
-                      className="mt-1"
+                      className="rounded-xl mt-1 border-slate-200"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Username for staff portal login</p>
                   </div>
 
                   <div>
-                    <Label htmlFor="staffPassword" className="text-sm font-semibold text-[#0d5c75]">New Password</Label>
-                    <div className="relative">
+                    <Label htmlFor="staffPassword" className="text-xs font-semibold text-[#0d5c75]">New Password</Label>
+                    <div className="relative mt-1">
                       <Input
                         id="staffPassword"
                         type={showStaffPassword ? "text" : "password"}
                         value={staffCredentials.password}
                         onChange={(e) => setStaffCredentials(prev => ({ ...prev, password: e.target.value }))}
                         placeholder="Enter new password"
-                        className="mt-1 pr-10"
+                        className="rounded-xl border-slate-200 pr-10"
                       />
                       <button
                         type="button"
                         onClick={() => setShowStaffPassword(!showStaffPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       >
                         {showStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Minimum 6 characters recommended</p>
                   </div>
 
                   <div>
-                    <Label htmlFor="confirmStaffPassword" className="text-sm font-semibold text-[#0d5c75]">Confirm Password</Label>
-                    <div className="relative">
+                    <Label htmlFor="confirmStaffPassword" className="text-xs font-semibold text-[#0d5c75]">Confirm Password</Label>
+                    <div className="relative mt-1">
                       <Input
                         id="confirmStaffPassword"
                         type={showConfirmPassword ? "text" : "password"}
                         value={staffCredentials.confirmPassword}
                         onChange={(e) => setStaffCredentials(prev => ({ ...prev, confirmPassword: e.target.value }))}
                         placeholder="Confirm new password"
-                        className="mt-1 pr-10"
+                        className="rounded-xl border-slate-200 pr-10"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       >
                         {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                     {staffCredentials.password && staffCredentials.confirmPassword && 
                      staffCredentials.password !== staffCredentials.confirmPassword && (
-                      <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
+                      <p className="text-xs text-rose-600 mt-1">Passwords do not match</p>
                     )}
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h4 className="text-sm font-semibold text-blue-800 mb-2">Current Staff Access Info</h4>
-                    <div className="space-y-2 text-xs text-blue-700">
-                      <p><span className="font-medium">Username:</span> {staffCredentials.username || 'staff'}</p>
-                      <p><span className="font-medium">Last Updated:</span> {staffCredentials.lastUpdated ? new Date(staffCredentials.lastUpdated).toLocaleString() : 'Never'}</p>
-                      <p><span className="font-medium">Updated By:</span> {staffCredentials.updatedBy || 'System'}</p>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60">
+                    <h4 className="text-xs font-bold text-[#0d5c75] uppercase tracking-wider mb-2">Current Staff Access Info</h4>
+                    <div className="space-y-1.5 text-xs text-slate-600">
+                      <p><span className="font-semibold text-slate-800">Username:</span> {staffCredentials.username || 'staff'}</p>
+                      <p><span className="font-semibold text-slate-800">Last Updated:</span> {staffCredentials.lastUpdated ? new Date(staffCredentials.lastUpdated).toLocaleString() : 'Never'}</p>
+                      <p><span className="font-semibold text-slate-800">Updated By:</span> {staffCredentials.updatedBy || 'System'}</p>
                     </div>
                   </div>
 
                   <Button
                     onClick={async () => {
                       if (!staffCredentials.username.trim()) {
-                        toast({
-                          title: "Error",
-                          description: "Username cannot be empty",
-                          variant: "destructive"
-                        })
+                        toast({ title: "Error", description: "Username cannot be empty", variant: "destructive" })
                         return
                       }
-                      
                       if (staffCredentials.password && staffCredentials.password !== staffCredentials.confirmPassword) {
-                        toast({
-                          title: "Error",
-                          description: "Passwords do not match",
-                          variant: "destructive"
-                        })
+                        toast({ title: "Error", description: "Passwords do not match", variant: "destructive" })
                         return
                       }
 
@@ -914,7 +804,6 @@ export default function AdminSettings() {
                       
                       localStorage.setItem('staff_credentials', JSON.stringify(newCredentials))
                       
-                      // Clear password fields for security
                       setStaffCredentials(prev => ({
                         ...prev,
                         password: '',
@@ -925,24 +814,23 @@ export default function AdminSettings() {
                       
                       toast({
                         title: "✅ Staff Credentials Updated",
-                        description: "Staff portal login credentials have been updated successfully. All active staff sessions will need to re-login.",
+                        description: "Staff portal login credentials have been updated successfully.",
                       })
                     }}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    className="w-full bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white rounded-xl shadow-md h-10 text-xs sm:text-sm font-semibold"
                     disabled={!staffCredentials.username.trim()}
                   >
                     <Shield className="h-4 w-4 mr-2" />
                     Update Staff Credentials
                   </Button>
 
-                  <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200">
-                    <h4 className="text-sm font-semibold text-teal-900 mb-2">Staff Portal Features</h4>
-                    <ul className="text-xs text-teal-700 space-y-1">
+                  <div className="bg-teal-50/70 p-4 rounded-xl border border-teal-200/60">
+                    <h4 className="text-xs font-bold text-[#0d5c75] uppercase tracking-wider mb-2">Staff Portal Features</h4>
+                    <ul className="text-xs text-slate-600 space-y-1">
                       <li>• Read-only access to patient data</li>
                       <li>• Real-time patient information updates</li>
-                      <li>• Secure authentication system</li>
-                      <li>• 30-minute session timeout</li>
-                      <li>• No data modification capabilities</li>
+                      <li>• Secure session authentication</li>
+                      <li>• Dedicated staff workspace</li>
                     </ul>
                   </div>
                 </div>
@@ -950,7 +838,7 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
     </div>
   )
 }

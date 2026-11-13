@@ -1,22 +1,19 @@
 "use client"
 
 import React, { useMemo, useState } from "react"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
   HelpCircle, BookOpen, LayoutDashboard, Users, Calendar as CalendarIcon, PillIcon as Prescription,
-  DollarSign, Star, TrendingUp, Globe, Settings, Database, Search, ChevronRight, Shield, Keyboard,
-  Video, FileText, Zap, AlertCircle, CheckCircle2, XCircle, Info, ExternalLink, Download, PlayCircle,
-  BookMarked, Clock, BarChart3, UserCheck, MessageSquare, Phone, Mail, Lightbulb, Target, Rocket,
-  AlertTriangle, RefreshCw, HardDrive, Wifi, WifiOff, Lock, FileQuestion, Boxes, Copy, Share2
+  DollarSign, Star, TrendingUp, Globe, Settings, Database, Search, ChevronRight, Keyboard,
+  Video, Zap, AlertCircle, CheckCircle2, XCircle, Info, PlayCircle,
+  BookMarked, MessageSquare, Phone, Mail, Lightbulb, Target, Rocket,
+  AlertTriangle, RefreshCw, WifiOff, Lock, FileQuestion
 } from "lucide-react"
 
 export default function AdminHelpPageEnhanced() {
@@ -30,14 +27,14 @@ export default function AdminHelpPageEnhanced() {
     { id: "patients", title: "Patient Records", icon: Users },
     { id: "calendar", title: "Appointments", icon: CalendarIcon },
     { id: "prescriptions", title: "Prescriptions", icon: Prescription },
-    { id: "finance", title: "Money", icon: DollarSign },
-    { id: "reviews", title: "Reviews", icon: Star },
+    { id: "finance", title: "Money Management", icon: DollarSign },
+    { id: "reviews", title: "Patient Reviews", icon: Star },
     { id: "analytics", title: "Clinic KPIs", icon: TrendingUp },
     { id: "web", title: "Website Analytics", icon: Globe },
-    { id: "settings", title: "Settings", icon: Settings },
+    { id: "settings", title: "Admin Settings", icon: Settings },
     { id: "import", title: "Import / Export", icon: Database },
     { id: "troubleshooting", title: "Troubleshooting", icon: AlertTriangle },
-    { id: "faq", title: "FAQ", icon: HelpCircle },
+    { id: "faq", title: "FAQs", icon: HelpCircle },
     { id: "shortcuts", title: "Shortcuts", icon: Keyboard },
     { id: "glossary", title: "Glossary", icon: BookOpen },
   ]), [])
@@ -54,107 +51,117 @@ export default function AdminHelpPageEnhanced() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0d5c75]/5 via-[rgb(66,139,124)]/5 to-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header with enhanced styling */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d5c75] to-[rgb(66,139,124)] p-4 sm:p-6 lg:p-8 text-white shadow-2xl">
-          <div className="absolute inset-0 bg-grid-white/10"></div>
-          <div className="relative z-10">
-            {/* Mobile Header */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-6">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm p-1.5 sm:p-2 flex-shrink-0">
-                  <Image src="/images/gonstead-logo-new.png" alt="Logo" fill className="object-contain p-1" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold mb-1 sm:mb-2 truncate">Admin Help Center</h1>
-                  <p className="text-white/90 text-sm sm:text-base lg:text-lg hidden sm:block">Your complete guide to mastering the admin dashboard</p>
-                  <p className="text-white/90 text-xs sm:hidden">Complete admin dashboard guide</p>
-                </div>
+    <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header - Glass Style Harmonized with Admin Dashboard */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-4 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => router.replace('/admin/dashboard')} 
+              className="border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white transition-all font-medium h-9 px-3 text-xs sm:text-sm rounded-xl bg-white/70"
+            >
+              <LayoutDashboard className="h-4 w-4 mr-1.5" />
+              <span>Dashboard</span>
+            </Button>
+            <div className="h-6 w-px bg-[#0d5c75]/20 hidden sm:block" />
+            <div className="flex items-center gap-2.5">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center text-white shadow-md">
+                <HelpCircle className="h-5 w-5" />
               </div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Button 
-                  variant="secondary" 
-                  onClick={() => router.replace('/admin/dashboard')} 
-                  className="bg-white hover:bg-white/90 text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-10"
-                >
-                  <LayoutDashboard className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Dashboard</span>
-                  <span className="sm:hidden">Dash</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="lg:hidden bg-white/20 hover:bg-white/30 text-white p-2"
-                >
-                  <BookMarked className="h-4 w-4" />
-                </Button>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins leading-tight">
+                  Admin Help Center
+                </h1>
+                <p className="text-xs sm:text-sm text-[#2a9d8f] font-medium">
+                  Your complete guide to mastering the admin clinic dashboard
+                </p>
               </div>
             </div>
-            
-            {/* Search Bar */}
-            <div className="relative mt-4 sm:mt-6 max-w-full">
-              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-              <Input 
-                value={query} 
-                onChange={(e) => setQuery(e.target.value)} 
-                placeholder="Search documentation..." 
-                className="pl-10 sm:pl-12 h-10 sm:h-12 bg-white/95 backdrop-blur-sm border-0 text-gray-900 placeholder:text-gray-500 text-sm sm:text-base w-full" 
-              />
-            </div>
+          </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mt-4 sm:mt-6">
-              {[
-                { label: "Guides", value: "14+", icon: BookOpen },
-                { label: "Videos", value: "6", icon: Video },
-                { label: "FAQs", value: "25+", icon: HelpCircle },
-                { label: "Shortcuts", value: "10+", icon: Keyboard }
-              ].map((stat, i) => (
-                <div key={i} className="bg-white/10 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-white/20">
-                  <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 mb-1 sm:mb-2 text-white/80" />
-                  <div className="text-lg sm:text-2xl font-bold">{stat.value}</div>
-                  <div className="text-xs sm:text-sm text-white/80">{stat.label}</div>
-                </div>
-              ))}
-            </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="lg:hidden border-[#0d5c75]/30 text-[#0d5c75] bg-white/70 rounded-xl h-9"
+            >
+              <BookMarked className="h-4 w-4 mr-1.5" />
+              Navigation
+            </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-8">
-          {/* Enhanced Sidebar Navigation */}
-          <Card className={`lg:col-span-1 h-fit shadow-lg transition-all duration-300 ${isSidebarOpen ? 'fixed inset-0 z-50 lg:relative lg:inset-auto rounded-none lg:rounded-xl' : 'hidden lg:block'}`}>
-            <CardHeader className="bg-gradient-to-br from-[#0d5c75]/10 to-[rgb(66,139,124)]/10 flex-row justify-between items-center">
-              <CardTitle className="text-base flex items-center gap-2">
-                <BookMarked className="h-5 w-5 text-[#0d5c75]" />
-                <span className="hidden lg:inline">Quick Navigation</span>
-                <span className="lg:hidden">Menu</span>
+        {/* Quick Search & Metric Cards Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {[
+            { label: "Guides Available", value: "14+", icon: BookOpen },
+            { label: "Video Tutorials", value: "6", icon: Video },
+            { label: "Answered FAQs", value: "25+", icon: HelpCircle },
+            { label: "Fast Shortcuts", value: "10+", icon: Keyboard }
+          ].map((stat, i) => (
+            <div key={i} className="bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-[#0d5c75]/15 shadow-sm">
+              <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                <span>{stat.label}</span>
+                <stat.icon className="h-4 w-4 text-[#0d5c75]" />
+              </div>
+              <div className="text-2xl font-bold text-[#0d5c75] mt-1 font-poppins">{stat.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Search Bar Card */}
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+          <CardContent className="p-3 sm:p-4">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input 
+                value={query} 
+                onChange={(e) => setQuery(e.target.value)} 
+                placeholder="Search documentation, guides, shortcuts and troubleshooting..." 
+                className="pl-10 h-10 bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 text-xs sm:text-sm rounded-xl focus:border-[#0d5c75] focus:bg-white" 
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Main Content Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Quick Navigation Sidebar */}
+          <Card className={`lg:col-span-1 h-fit border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl transition-all duration-300 ${isSidebarOpen ? 'fixed inset-4 z-50 overflow-auto' : 'hidden lg:block'}`}>
+            <CardHeader className="py-3 px-4 border-b border-slate-100 flex-row justify-between items-center bg-slate-50/50">
+              <CardTitle className="text-sm font-bold text-[#0d5c75] flex items-center gap-2">
+                <BookMarked className="h-4 w-4 text-[#2a9d8f]" />
+                <span>Quick Navigation</span>
               </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsSidebarOpen(false)}
-                className="lg:hidden hover:bg-[#0d5c75]/20 p-2"
-              >
-                <XCircle className="h-4 w-4" />
-              </Button>
+              {isSidebarOpen && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="lg:hidden p-1.5 h-7 w-7 text-slate-400"
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              )}
             </CardHeader>
-            <CardContent className="p-3 lg:p-3">
-              <ScrollArea className="h-[60vh] lg:h-[520px] pr-2">
+            <CardContent className="p-2">
+              <ScrollArea className="h-[60vh] lg:h-[500px] pr-2">
                 <div className="space-y-1">
                   {filtered.map(s => (
                     <Button 
                       key={s.id} 
                       variant="ghost" 
-                      className="justify-start w-full hover:bg-[#0d5c75]/10 hover:text-[#0d5c75] transition-all h-12 lg:h-auto px-3 py-2 text-sm lg:text-base" 
+                      className="justify-start w-full hover:bg-teal-50 hover:text-[#0d5c75] transition-all h-9 px-3 text-xs font-medium rounded-xl text-slate-700" 
                       onClick={() => {
                         go(s.id)
                         setIsSidebarOpen(false)
                       }}
                     >
-                      <s.icon className="h-4 w-4 lg:mr-2 mr-3" />
-                      <span className="text-left">{s.title}</span>
+                      <s.icon className="h-3.5 w-3.5 mr-2 text-[#0d5c75]" />
+                      <span className="truncate">{s.title}</span>
                     </Button>
                   ))}
                 </div>
@@ -165,7 +172,7 @@ export default function AdminHelpPageEnhanced() {
           {/* Overlay for mobile sidebar */}
           {isSidebarOpen && (
             <div 
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
@@ -173,60 +180,60 @@ export default function AdminHelpPageEnhanced() {
           {/* Main Content Area */}
           <div className="lg:col-span-3 space-y-6">
             {/* Tabs for Different Content Types */}
-            <Card className="shadow-lg">
+            <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <CardHeader className="pb-3 bg-gradient-to-r from-[#0d5c75]/5 to-[rgb(66,139,124)]/5">
-                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-white h-auto">
-                    <TabsTrigger value="getting-started" className="flex-col gap-1 h-12 sm:h-auto py-2 text-xs sm:text-sm">
-                      <Rocket className="h-4 w-4" />
-                      <span className="hidden sm:inline">Get Started</span>
-                      <span className="sm:hidden">Start</span>
+                <CardHeader className="p-3 border-b border-slate-100 bg-slate-50/50">
+                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-slate-100/80 p-1 rounded-xl h-auto">
+                    <TabsTrigger value="getting-started" className="flex items-center gap-1.5 py-2 text-xs font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#0d5c75] data-[state=active]:shadow-sm">
+                      <Rocket className="h-3.5 w-3.5 text-[#0d5c75]" />
+                      <span>Get Started</span>
                     </TabsTrigger>
-                    <TabsTrigger value="guides" className="flex-col gap-1 h-12 sm:h-auto py-2 text-xs sm:text-sm">
-                      <BookOpen className="h-4 w-4" />
-                      <span className="hidden sm:inline">Guides</span>
-                      <span className="sm:hidden">Guide</span>
+                    <TabsTrigger value="guides" className="flex items-center gap-1.5 py-2 text-xs font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#0d5c75] data-[state=active]:shadow-sm">
+                      <BookOpen className="h-3.5 w-3.5 text-[#0d5c75]" />
+                      <span>Guides</span>
                     </TabsTrigger>
-                    <TabsTrigger value="videos" className="flex-col gap-1 h-12 sm:h-auto py-2 text-xs sm:text-sm">
-                      <Video className="h-4 w-4" />
-                      <span className="hidden sm:inline">Videos</span>
-                      <span className="sm:hidden">Video</span>
+                    <TabsTrigger value="videos" className="flex items-center gap-1.5 py-2 text-xs font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#0d5c75] data-[state=active]:shadow-sm">
+                      <Video className="h-3.5 w-3.5 text-[#0d5c75]" />
+                      <span>Videos</span>
                     </TabsTrigger>
-                    <TabsTrigger value="support" className="flex-col gap-1 h-12 sm:h-auto py-2 text-xs sm:text-sm">
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="hidden sm:inline">Support</span>
-                      <span className="sm:hidden">Help</span>
+                    <TabsTrigger value="support" className="flex items-center gap-1.5 py-2 text-xs font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#0d5c75] data-[state=active]:shadow-sm">
+                      <MessageSquare className="h-3.5 w-3.5 text-[#0d5c75]" />
+                      <span>Support</span>
                     </TabsTrigger>
                   </TabsList>
                 </CardHeader>
                 
-                <CardContent className="pt-6">
+                <CardContent className="p-5 sm:p-6">
                   {/* Getting Started Tab */}
                   <TabsContent value="getting-started" className="space-y-6 mt-0">
                     <div>
-                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#0d5c75] mb-3 sm:mb-4">Welcome to Your Admin Dashboard</h3>
-                      <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">Follow this quick checklist to get started with your clinic management system:</p>
+                      <h3 className="text-lg sm:text-xl font-bold text-[#0d5c75] mb-2 font-poppins">
+                        Welcome to Your Clinic Admin Workspace
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-600 mb-5">
+                        Follow this quick onboarding checklist to master your clinic management system:
+                      </p>
                       
-                      <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="grid sm:grid-cols-2 gap-3">
                         {[
                           { title: "1. Complete Profile Setup", desc: "Update clinic info, hours, and contact details", icon: Settings, status: "complete" },
-                          { title: "2. Add First Patient", desc: "Create your first patient record", icon: Users, status: "pending" },
-                          { title: "3. Book Appointment", desc: "Schedule your first appointment", icon: CalendarIcon, status: "pending" },
-                          { title: "4. Generate Prescription", desc: "Create and print a prescription", icon: Prescription, status: "pending" },
-                          { title: "5. Record Payment", desc: "Log your first payment transaction", icon: DollarSign, status: "pending" },
-                          { title: "6. Review Analytics", desc: "Check your clinic KPIs", icon: BarChart3, status: "pending" },
+                          { title: "2. Add First Patient", desc: "Create your first patient record and medical history", icon: Users, status: "pending" },
+                          { title: "3. Book Appointment", desc: "Schedule consultations and adjustments on the calendar", icon: CalendarIcon, status: "pending" },
+                          { title: "4. Generate Prescription", desc: "Create and print professional digital prescriptions", icon: Prescription, status: "pending" },
+                          { title: "5. Record Payment", desc: "Log consultation and adjustment fees in Money Management", icon: DollarSign, status: "pending" },
+                          { title: "6. Review Analytics", desc: "Monitor clinic volume, retention, and website visitors", icon: TrendingUp, status: "pending" },
                         ].map((step, i) => (
-                          <div key={i} className="relative p-3 sm:p-4 border rounded-xl hover:shadow-md transition-all cursor-pointer bg-white group">
+                          <div key={i} className="p-3.5 border border-slate-200/80 rounded-xl hover:shadow-sm transition-all bg-white group">
                             <div className="flex items-start gap-3">
-                              <div className={`p-2 rounded-lg ${step.status === 'complete' ? 'bg-green-100' : 'bg-[#0d5c75]/10'} flex-shrink-0`}>
-                                <step.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${step.status === 'complete' ? 'text-green-600' : 'text-[#0d5c75]'}`} />
+                              <div className={`p-2 rounded-xl ${step.status === 'complete' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-teal-50 text-[#0d5c75] border border-teal-200'} shrink-0`}>
+                                <step.icon className="h-4 w-4" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-semibold text-sm sm:text-base group-hover:text-[#0d5c75] transition-colors truncate">{step.title}</p>
-                                  {step.status === 'complete' && <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 flex-shrink-0" />}
+                                <div className="flex items-center gap-1.5">
+                                  <p className="font-semibold text-xs sm:text-sm text-slate-800 group-hover:text-[#0d5c75] transition-colors truncate">{step.title}</p>
+                                  {step.status === 'complete' && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />}
                                 </div>
-                                <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{step.desc}</p>
+                                <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{step.desc}</p>
                               </div>
                             </div>
                           </div>
@@ -235,34 +242,30 @@ export default function AdminHelpPageEnhanced() {
                     </div>
 
                     {/* Quick Actions */}
-                    <Card className="bg-gradient-to-br from-[#0d5c75]/5 to-[rgb(66,139,124)]/5 border-[#0d5c75]/20">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                          <Zap className="h-5 w-5 text-[#0d5c75]" />
-                          Quick Actions
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-                          {[
-                            { label: "Add Patient", icon: Users, action: () => router.push('/admin/patient-tracking') },
-                            { label: "Book Appointment", icon: CalendarIcon, action: () => router.push('/admin/calendar') },
-                            { label: "New Prescription", icon: Prescription, action: () => router.push('/admin/prescription') },
-                            { label: "View Analytics", icon: BarChart3, action: () => router.push('/admin/dashboard') },
-                          ].map((action, i) => (
-                            <Button 
-                              key={i} 
-                              variant="outline" 
-                              className="h-auto flex-col gap-2 py-3 sm:py-4 px-2 sm:px-3 hover:bg-white hover:shadow-md transition-all"
-                              onClick={action.action}
-                            >
-                              <action.icon className="h-5 w-5 sm:h-6 sm:w-6 text-[#0d5c75]" />
-                              <span className="text-xs sm:text-sm font-medium text-center">{action.label}</span>
-                            </Button>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <div className="border border-[#0d5c75]/15 bg-slate-50/60 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Zap className="h-4 w-4 text-[#0d5c75]" />
+                        <h4 className="text-xs font-bold text-[#0d5c75] uppercase tracking-wider">Quick Jump Actions</h4>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                        {[
+                          { label: "Add Patient", icon: Users, action: () => router.push('/admin/patient-tracking') },
+                          { label: "Book Appointment", icon: CalendarIcon, action: () => router.push('/admin/calendar') },
+                          { label: "New Prescription", icon: Prescription, action: () => router.push('/admin/prescription') },
+                          { label: "View Analytics", icon: TrendingUp, action: () => router.push('/admin/dashboard') },
+                        ].map((action, i) => (
+                          <Button 
+                            key={i} 
+                            variant="outline" 
+                            className="h-auto flex-col gap-1.5 py-3 px-2 bg-white hover:bg-teal-50 hover:text-[#0d5c75] border-slate-200 rounded-xl transition-all"
+                            onClick={action.action}
+                          >
+                            <action.icon className="h-5 w-5 text-[#0d5c75]" />
+                            <span className="text-xs font-semibold text-center">{action.label}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                   </TabsContent>
 
                   {/* Guides Tab */}
@@ -294,10 +297,10 @@ export default function AdminHelpPageEnhanced() {
                 videoId="patient-management"
               >
                 <StepByStep steps={[
-                  { title: "Navigate to Patient Tracking", desc: "Click on 'Patient Tracking' in the sidebar" },
-                  { title: "Add New Patient", desc: "Click 'Add Patient' button and fill in Name, Phone, Email" },
-                  { title: "Add Medical History", desc: "Enter patient's medical history and current complaints" },
-                  { title: "Save & Schedule", desc: "Save the patient record and book their first appointment" },
+                  { title: "Navigate to Patient Tracking", desc: "Click on 'Patient Tracking' in the sidebar navigation" },
+                  { title: "Add New Patient", desc: "Click the 'Add Patient' button and enter Name, Phone, and Email" },
+                  { title: "Add Medical History", desc: "Enter current spinal complaints, diagnosis, and adjustment notes" },
+                  { title: "Save & Schedule", desc: "Save the patient record and schedule their first visit on the calendar" },
                 ]} />
                 
                 <TipBox type="info">
@@ -305,89 +308,22 @@ export default function AdminHelpPageEnhanced() {
                 </TipBox>
 
                 <CommonIssues issues={[
-                  { problem: "Duplicate patients created", solution: "Always search by phone number first before adding new patients" },
-                  { problem: "Status not updating", solution: "Manually update patient status after each visit - set to 'Completed'" },
-                  { problem: "Can't find patient", solution: "Try searching by phone instead of name - it's more accurate" },
-                ]} />
-
-                <ProTips tips={[
-                  "Search by phone for fastest matching",
-                  "Update status immediately after each visit",
-                  "Add follow-up date before patient leaves",
-                  "Use tags to categorize patients (e.g., 'chronic pain', 'new patient')"
-                ]} />
-              </EnhancedFeature>
-
-              {/* Appointments */}
-              <EnhancedFeature 
-                id="calendar" 
-                Icon={CalendarIcon} 
-                title="Appointments" 
-                purpose="Book visits without conflicts and within clinic hours."
-                videoId="appointment-booking"
-              >
-                <StepByStep steps={[
-                  { title: "Open Calendar", desc: "Navigate to Calendar view from sidebar" },
-                  { title: "Select Time Slot", desc: "Click on an available time slot (avoid lunch & Sundays)" },
-                  { title: "Choose Patient", desc: "Select existing patient or add new one" },
-                  { title: "Confirm Booking", desc: "Verify time, duration, and patient contact" },
-                ]} />
-
-                <TipBox type="warning">
-                  Always leave a 10-15 minute buffer between sessions to avoid running late. Mark emergency appointments with high priority.
-                </TipBox>
-
-                <CommonIssues issues={[
-                  { problem: "Double booking", solution: "Refresh calendar before booking new appointments" },
-                  { problem: "Booking outside hours", solution: "System blocks lunch (1-2 PM) and Sundays automatically" },
-                  { problem: "Patient no-show", solution: "Send reminder SMS/email 24 hours before appointment" },
-                ]} />
-
-                <ProTips tips={[
-                  "Use week view to plan your workload efficiently",
-                  "Color-code appointments by urgency level",
-                  "Export calendar to sync with Google Calendar",
-                  "Set up automated reminders for patients"
-                ]} />
-              </EnhancedFeature>
-
-              {/* Prescriptions */}
-              <EnhancedFeature 
-                id="prescriptions" 
-                Icon={Prescription} 
-                title="Prescriptions" 
-                purpose="Create, print, and save professional prescriptions with QR verification."
-                videoId="prescription-generation"
-              >
-                <StepByStep steps={[
-                  { title: "Select Patient", desc: "Choose the patient from your records" },
-                  { title: "Choose Template", desc: "Pick from pre-made templates or start blank" },
-                  { title: "Add Medications", desc: "List medications with dosage and duration" },
-                  { title: "Print/Download", desc: "Generate PDF and print or save digitally" },
-                ]} />
-
-                <TipBox type="success">
-                  All prescriptions include a QR code for verification. Patients can scan it to verify authenticity.
-                </TipBox>
-
-                <ProTips tips={[
-                  "Create templates for common conditions",
-                  "Always include follow-up instructions",
-                  "Save a digital copy before printing",
-                  "Use the prescription history to track patient progress"
+                  { problem: "Duplicate patients created", solution: "Always search by phone number first before registering a new profile" },
+                  { problem: "Status not updating", solution: "Manually update patient status after each adjustment visit - mark as 'Completed'" },
+                  { problem: "Can't find patient", solution: "Search by phone number instead of first name for the most accurate results" },
                 ]} />
               </EnhancedFeature>
 
               {/* Troubleshooting Section */}
-              <Card id="troubleshooting" className="shadow-lg border-2 border-orange-200">
-                <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100">
-                  <CardTitle className="flex items-center gap-2 text-orange-900">
-                    <AlertTriangle className="h-5 w-5" />
+              <Card id="troubleshooting" className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+                <CardHeader className="py-4 px-6 border-b border-slate-100 bg-slate-50/50">
+                  <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
                     Troubleshooting Guide
                   </CardTitle>
-                  <CardDescription>Quick solutions to common problems</CardDescription>
+                  <CardDescription className="text-xs text-slate-500">Quick solutions to common operational challenges</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-6">
+                <CardContent className="p-5 sm:p-6">
                   <Accordion type="single" collapsible className="w-full">
                     {[
                       {
@@ -415,37 +351,25 @@ export default function AdminHelpPageEnhanced() {
                         a: "Enable pop-ups for this site in your browser settings. Check if you have a PDF viewer installed. Try downloading instead of printing directly. Clear browser cache and try again.",
                         icon: AlertCircle
                       },
-                      {
-                        q: "Supabase sync failing",
-                        a: "Verify your .env.local file has NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY. Check Supabase dashboard for table schema. Ensure RLS policies allow inserts. Data is saved locally so nothing is lost.",
-                        icon: Database
-                      },
                     ].map((item, i) => (
                       <AccordionItem key={i} value={`trouble-${i}`}>
-                        <AccordionTrigger className="text-left hover:text-[#0d5c75]">
-                          <div className="flex items-center gap-3">
-                            <item.icon className="h-4 w-4 text-orange-600" />
-                            <span className="font-medium">{item.q}</span>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="text-sm text-gray-700 pl-7">
-                          {item.a}
-                        </AccordionContent>
+                        <AccordionTrigger className="text-left text-xs sm:text-sm font-semibold text-slate-800 hover:text-[#0d5c75]">{item.q}</AccordionTrigger>
+                        <AccordionContent className="text-xs text-slate-600 leading-relaxed">{item.a}</AccordionContent>
                       </AccordionItem>
                     ))}
                   </Accordion>
                 </CardContent>
               </Card>
 
-              {/* Enhanced FAQ */}
-              <Card id="faq" className="shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-[#0d5c75]/10 to-[rgb(66,139,124)]/10">
-                  <CardTitle className="flex items-center gap-2">
-                    <HelpCircle className="h-5 w-5 text-[#0d5c75]" />
+              {/* FAQ Section */}
+              <Card id="faq" className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+                <CardHeader className="py-4 px-6 border-b border-slate-100 bg-slate-50/50">
+                  <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                    <HelpCircle className="h-5 w-5 text-[#2a9d8f]" />
                     Frequently Asked Questions
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-6">
+                <CardContent className="p-5 sm:p-6">
                   <Accordion type="multiple" className="w-full">
                     {[
                       { q: "What are the clinic operating hours?", a: "Monday-Saturday: 9:00 AM - 6:00 PM. Lunch break: 1:00 PM - 2:00 PM. Closed on Sundays except emergencies." },
@@ -453,30 +377,28 @@ export default function AdminHelpPageEnhanced() {
                       { q: "Can I access the dashboard on mobile?", a: "Yes! The dashboard is fully responsive. For best experience, install it as a PWA (click the install button when prompted)." },
                       { q: "How do I backup my data?", a: "Data is automatically synced to Supabase cloud. For manual backup, go to Import/Export → Export All Data. Store the CSV files safely." },
                       { q: "What payment methods can I track?", a: "Cash, JazzCash, and Easypaisa. You can add notes for other methods like bank transfers." },
-                      { q: "How do I handle refunds?", a: "Go to Money Management → Refunds. Enter amount, select original payment, and add reason for refund." },
-                      { q: "Can multiple staff use the system?", a: "Yes, create staff accounts in Settings → Staff Access. Assign appropriate roles and permissions." },
-                      { q: "How long is data stored?", a: "Forever, unless you manually delete it. Supabase provides unlimited storage for your subscription tier." },
+                      { q: "Can multiple staff use the system?", a: "Yes, create staff accounts in Staff Access. Assign appropriate roles and permissions." },
                     ].map((item, i) => (
                       <AccordionItem key={i} value={`faq-${i}`}>
-                        <AccordionTrigger className="text-left hover:text-[#0d5c75]">{item.q}</AccordionTrigger>
-                        <AccordionContent className="text-sm text-gray-700">{item.a}</AccordionContent>
+                        <AccordionTrigger className="text-left text-xs sm:text-sm font-semibold text-slate-800 hover:text-[#0d5c75]">{item.q}</AccordionTrigger>
+                        <AccordionContent className="text-xs text-slate-600 leading-relaxed">{item.a}</AccordionContent>
                       </AccordionItem>
                     ))}
                   </Accordion>
                 </CardContent>
               </Card>
 
-              {/* Enhanced Keyboard Shortcuts */}
-              <Card id="shortcuts" className="shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-[#0d5c75]/10 to-[rgb(66,139,124)]/10">
-                  <CardTitle className="flex items-center gap-2">
-                    <Keyboard className="h-5 w-5 text-[#0d5c75]" />
+              {/* Keyboard Shortcuts */}
+              <Card id="shortcuts" className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+                <CardHeader className="py-4 px-6 border-b border-slate-100 bg-slate-50/50">
+                  <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
+                    <Keyboard className="h-5 w-5 text-[#2a9d8f]" />
                     Keyboard Shortcuts
                   </CardTitle>
-                  <CardDescription>Work faster with these keyboard shortcuts</CardDescription>
+                  <CardDescription className="text-xs text-slate-500">Navigate faster across the dashboard</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+                <CardContent className="p-5 sm:p-6">
+                  <div className="grid sm:grid-cols-2 gap-3">
                     {[
                       { keys: ["Ctrl", "K"], desc: "Global search" },
                       { keys: ["G", "D"], desc: "Go to Dashboard" },
@@ -487,80 +409,23 @@ export default function AdminHelpPageEnhanced() {
                       { keys: ["Esc"], desc: "Close modal/dialog" },
                       { keys: ["Ctrl", "P"], desc: "Print/Export" },
                     ].map((shortcut, i) => (
-                      <div key={i} className="flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-white hover:shadow-md transition-all">
-                        <div className="flex items-center gap-1 sm:gap-2">
+                      <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all">
+                        <div className="flex items-center gap-1.5">
                           {shortcut.keys.map((key, j) => (
                             <React.Fragment key={j}>
-                              <kbd className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md border bg-gradient-to-b from-gray-50 to-gray-100 shadow-sm font-mono text-xs sm:text-sm font-semibold text-gray-700">
+                              <kbd className="px-2 py-1 rounded-md border border-slate-300 bg-slate-100 shadow-sm font-mono text-xs font-bold text-slate-700">
                                 {key}
                               </kbd>
-                              {j < shortcut.keys.length - 1 && <span className="text-gray-400 text-xs sm:text-sm">+</span>}
+                              {j < shortcut.keys.length - 1 && <span className="text-slate-400 text-xs">+</span>}
                             </React.Fragment>
                           ))}
                         </div>
-                        <span className="text-xs sm:text-sm text-gray-600 ml-2">{shortcut.desc}</span>
+                        <span className="text-xs text-slate-600">{shortcut.desc}</span>
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Glossary */}
-              <Card id="glossary" className="shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-[#0d5c75]/10 to-[rgb(66,139,124)]/10">
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-[#0d5c75]" />
-                    Glossary
-                  </CardTitle>
-                  <CardDescription>Common terms and definitions</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
-                    {[
-                      { term: "Patient Record", def: "Complete profile with contact, medical history, and visit tracking" },
-                      { term: "Appointment", def: "Scheduled visit with specific date, time, and duration" },
-                      { term: "Prescription", def: "Digital or printed treatment instructions with medications" },
-                      { term: "KPI", def: "Key Performance Indicator - metrics to measure clinic success" },
-                      { term: "Review", def: "Patient feedback/testimonial for approval and display" },
-                      { term: "Import/Export", def: "Bulk data transfer using CSV files" },
-                      { term: "Sync", def: "Process of uploading local data to cloud storage" },
-                      { term: "RLS", def: "Row Level Security - database access control policy" },
-                      { term: "Supabase", def: "Cloud database service for storing clinic data" },
-                      { term: "PWA", def: "Progressive Web App - installable web application" },
-                      { term: "QR Code", def: "Scannable code on prescriptions for verification" },
-                      { term: "Buffer Time", def: "Gap between appointments to prevent delays" },
-                    ].map((item, i) => (
-                      <div key={i} className="p-3 sm:p-4 rounded-lg border bg-white hover:shadow-md transition-all">
-                        <h4 className="font-semibold text-sm sm:text-base text-[#0d5c75] mb-1">{item.term}</h4>
-                        <p className="text-xs sm:text-sm text-gray-600 line-clamp-3">{item.def}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Footer */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 sm:pt-8 border-t">
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <Button 
-                  onClick={() => router.replace('/admin/dashboard')} 
-                  className="bg-[#0d5c75] hover:bg-[#0d5c75]/90 w-full sm:w-auto justify-center"
-                >
-                  <LayoutDashboard className="h-4 w-4 mr-2" /> Return to Dashboard
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="w-full sm:w-auto justify-center"
-                >
-                  <ChevronRight className="h-4 w-4 mr-2 rotate-[-90deg]" /> Back to Top
-                </Button>
-              </div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
-                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Last updated: Nov 2025</span>
-              </div>
             </div>
           </div>
         </div>
@@ -572,25 +437,25 @@ export default function AdminHelpPageEnhanced() {
 // Enhanced Feature Component
 function EnhancedFeature({ id, Icon, title, purpose, videoId, children }: any) {
   return (
-    <Card id={id} className="shadow-lg">
-      <CardHeader className="space-y-2 bg-gradient-to-r from-[#0d5c75]/10 to-[rgb(66,139,124)]/10">
+    <Card id={id} className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+      <CardHeader className="py-4 px-6 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="flex items-center gap-2 mb-2">
-              <Icon className="h-6 w-6 text-[#0d5c75]" /> 
+            <CardTitle className="flex items-center gap-2 mb-1 text-base font-bold text-[#0d5c75]">
+              <Icon className="h-5 w-5 text-[#2a9d8f]" /> 
               {title}
             </CardTitle>
-            <CardDescription className="text-base"><strong>Purpose:</strong> {purpose}</CardDescription>
+            <CardDescription className="text-xs text-slate-500"><strong>Purpose:</strong> {purpose}</CardDescription>
           </div>
           {videoId && (
-            <Button variant="outline" size="sm" className="ml-4">
-              <PlayCircle className="h-4 w-4 mr-2" />
-              Watch Tutorial
+            <Button variant="outline" size="sm" className="ml-4 border-[#0d5c75]/20 text-[#0d5c75] text-xs h-8 rounded-xl">
+              <PlayCircle className="h-3.5 w-3.5 mr-1.5 text-[#2a9d8f]" />
+              Tutorial
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-6 space-y-6">
+      <CardContent className="p-5 sm:p-6 space-y-5">
         {children}
       </CardContent>
     </Card>
@@ -601,15 +466,15 @@ function EnhancedFeature({ id, Icon, title, purpose, videoId, children }: any) {
 function StepByStep({ steps }: { steps: Array<{ title: string; desc: string }> }) {
   return (
     <div className="space-y-3">
-      <h4 className="font-semibold text-gray-900 mb-3">Step-by-Step Guide</h4>
+      <h4 className="font-bold text-xs uppercase tracking-wider text-[#0d5c75] mb-2">Step-by-Step Guide</h4>
       {steps.map((step, i) => (
-        <div key={i} className="flex gap-4 items-start">
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0d5c75] text-white flex items-center justify-center font-bold text-sm">
+        <div key={i} className="flex gap-3 items-start">
+          <div className="shrink-0 w-6 h-6 rounded-full bg-[#0d5c75] text-white flex items-center justify-center font-bold text-xs">
             {i + 1}
           </div>
           <div className="flex-1 pt-0.5">
-            <h5 className="font-semibold text-gray-900">{step.title}</h5>
-            <p className="text-sm text-gray-600 mt-1">{step.desc}</p>
+            <h5 className="font-semibold text-xs sm:text-sm text-slate-800">{step.title}</h5>
+            <p className="text-xs text-slate-500 mt-0.5">{step.desc}</p>
           </div>
         </div>
       ))}
@@ -620,15 +485,15 @@ function StepByStep({ steps }: { steps: Array<{ title: string; desc: string }> }
 // Tip Box Component
 function TipBox({ type, children }: { type: 'info' | 'warning' | 'success'; children: React.ReactNode }) {
   const config = {
-    info: { icon: Info, bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', iconColor: 'text-blue-600' },
-    warning: { icon: AlertTriangle, bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-900', iconColor: 'text-orange-600' },
-    success: { icon: CheckCircle2, bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900', iconColor: 'text-green-600' },
+    info: { icon: Info, bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-teal-900', iconColor: 'text-teal-600' },
+    warning: { icon: AlertTriangle, bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-900', iconColor: 'text-amber-600' },
+    success: { icon: CheckCircle2, bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-900', iconColor: 'text-emerald-600' },
   }[type]
 
   return (
-    <div className={`flex gap-3 p-4 rounded-lg border ${config.bg} ${config.border}`}>
-      <config.icon className={`h-5 w-5 flex-shrink-0 ${config.iconColor}`} />
-      <p className={`text-sm ${config.text}`}>{children}</p>
+    <div className={`flex gap-2.5 p-3.5 rounded-xl border ${config.bg} ${config.border}`}>
+      <config.icon className={`h-4 w-4 shrink-0 mt-0.5 ${config.iconColor}`} />
+      <p className={`text-xs ${config.text}`}>{children}</p>
     </div>
   )
 }
@@ -636,39 +501,19 @@ function TipBox({ type, children }: { type: 'info' | 'warning' | 'success'; chil
 // Common Issues Component
 function CommonIssues({ issues }: { issues: Array<{ problem: string; solution: string }> }) {
   return (
-    <div className="space-y-3">
-      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-        <XCircle className="h-5 w-5 text-red-600" />
+    <div className="space-y-2.5">
+      <h4 className="font-bold text-xs uppercase tracking-wider text-[#0d5c75] flex items-center gap-1.5">
+        <XCircle className="h-4 w-4 text-rose-500" />
         Common Issues & Solutions
       </h4>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {issues.map((issue, i) => (
-          <div key={i} className="p-4 rounded-lg border bg-red-50 border-red-200">
-            <p className="font-medium text-red-900 mb-1">❌ {issue.problem}</p>
-            <p className="text-sm text-red-800">✅ <strong>Solution:</strong> {issue.solution}</p>
+          <div key={i} className="p-3 rounded-xl border bg-slate-50 border-slate-200">
+            <p className="font-semibold text-xs text-slate-800 mb-0.5">&bull; {issue.problem}</p>
+            <p className="text-xs text-slate-600"><strong>Solution:</strong> {issue.solution}</p>
           </div>
         ))}
       </div>
-    </div>
-  )
-}
-
-// Pro Tips Component
-function ProTips({ tips }: { tips: string[] }) {
-  return (
-    <div className="space-y-2">
-      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-        <Lightbulb className="h-5 w-5 text-[#2a9d8f]" />
-        Pro Tips
-      </h4>
-      <ul className="space-y-2">
-        {tips.map((tip, i) => (
-          <li key={i} className="flex gap-2 text-sm text-gray-700">
-            <Target className="h-4 w-4 text-[#2a9d8f] flex-shrink-0 mt-0.5" />
-            <span>{tip}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   )
 }
@@ -683,18 +528,18 @@ function GuidesContent({ go }: { go: (id: string) => void }) {
   ]
 
   return (
-    <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+    <div className="grid sm:grid-cols-2 gap-3">
       {guides.map((guide) => (
         <div 
           key={guide.id}
-          className="p-4 sm:p-6 rounded-xl border bg-white hover:shadow-lg transition-all cursor-pointer group"
+          className="p-4 rounded-xl border border-slate-200 bg-white hover:shadow-md transition-all cursor-pointer group"
           onClick={() => go(guide.id)}
         >
-          <guide.icon className="h-6 w-6 sm:h-8 sm:w-8 text-[#0d5c75] mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
-          <h3 className="font-bold text-base sm:text-lg mb-2 group-hover:text-[#0d5c75] transition-colors">{guide.title}</h3>
-          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2">{guide.desc}</p>
-          <Button variant="ghost" size="sm" className="group-hover:bg-[#0d5c75]/10 h-8 sm:h-auto py-1 sm:py-2">
-            <span className="text-xs sm:text-sm">Read Guide</span> <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
+          <guide.icon className="h-6 w-6 text-[#0d5c75] mb-2 group-hover:scale-110 transition-transform" />
+          <h3 className="font-bold text-sm mb-1 group-hover:text-[#0d5c75] transition-colors">{guide.title}</h3>
+          <p className="text-xs text-slate-500 mb-3 line-clamp-2">{guide.desc}</p>
+          <Button variant="ghost" size="sm" className="h-7 text-xs text-[#0d5c75] p-0 group-hover:underline">
+            Read Guide <ChevronRight className="h-3 w-3 ml-1" />
           </Button>
         </div>
       ))}
@@ -705,27 +550,27 @@ function GuidesContent({ go }: { go: (id: string) => void }) {
 // Videos Content Component
 function VideosContent() {
   const videos = [
-    { title: "Getting Started with Admin Dashboard", duration: "5:30", thumbnail: "dashboard-intro" },
-    { title: "Managing Patient Records", duration: "8:45", thumbnail: "patient-management" },
-    { title: "Booking and Managing Appointments", duration: "6:20", thumbnail: "appointments" },
-    { title: "Creating Digital Prescriptions", duration: "7:15", thumbnail: "prescriptions" },
-    { title: "Financial Tracking and Reports", duration: "9:00", thumbnail: "finance" },
-    { title: "Understanding Analytics and KPIs", duration: "10:30", thumbnail: "analytics" },
+    { title: "Getting Started with Admin Dashboard", duration: "5:30" },
+    { title: "Managing Patient Records", duration: "8:45" },
+    { title: "Booking and Managing Appointments", duration: "6:20" },
+    { title: "Creating Digital Prescriptions", duration: "7:15" },
+    { title: "Financial Tracking and Reports", duration: "9:00" },
+    { title: "Understanding Analytics and KPIs", duration: "10:30" },
   ]
 
   return (
-    <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+    <div className="grid sm:grid-cols-2 gap-3">
       {videos.map((video, i) => (
-        <div key={i} className="rounded-xl border bg-white overflow-hidden hover:shadow-lg transition-all group cursor-pointer">
-          <div className="relative h-32 sm:h-40 bg-gradient-to-br from-[#0d5c75] to-[rgb(66,139,124)] flex items-center justify-center">
-            <PlayCircle className="h-12 w-12 sm:h-16 sm:w-16 text-white group-hover:scale-110 transition-transform" />
-            <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
+        <div key={i} className="rounded-xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition-all group cursor-pointer">
+          <div className="relative h-28 bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center">
+            <PlayCircle className="h-10 w-10 text-white group-hover:scale-110 transition-transform" />
+            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
               {video.duration}
             </div>
           </div>
-          <div className="p-3 sm:p-4">
-            <h3 className="font-semibold text-sm sm:text-base group-hover:text-[#0d5c75] transition-colors line-clamp-2">{video.title}</h3>
-            <p className="text-xs text-gray-500 mt-1">Click to watch tutorial</p>
+          <div className="p-3">
+            <h3 className="font-semibold text-xs group-hover:text-[#0d5c75] transition-colors line-clamp-1">{video.title}</h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">Click to watch tutorial</p>
           </div>
         </div>
       ))}
@@ -736,8 +581,8 @@ function VideosContent() {
 // Support Content Component
 function SupportContent() {
   return (
-    <div className="space-y-6">
-      <div className="grid sm:grid-cols-3 gap-3 sm:gap-4">
+    <div className="space-y-5">
+      <div className="grid sm:grid-cols-3 gap-3">
         {[
           { icon: Mail, title: "Email Support", value: "support@gonstead...", action: "mailto:support@gonsteadchiropractic.com" },
           { icon: Phone, title: "Phone Support", value: "+92 304 699...", action: "tel:+923046996267" },
@@ -746,35 +591,32 @@ function SupportContent() {
           <a 
             key={i} 
             href={contact.action}
-            className="p-4 sm:p-6 rounded-xl border bg-white hover:shadow-lg transition-all text-center group"
+            className="p-4 rounded-xl border border-slate-200 bg-white hover:shadow-md transition-all text-center group"
           >
-            <contact.icon className="h-6 w-6 sm:h-8 sm:w-8 text-[#0d5c75] mx-auto mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
-            <h3 className="font-semibold text-sm sm:text-base mb-1">{contact.title}</h3>
-            <p className="text-xs sm:text-sm text-gray-600">{contact.value}</p>
+            <contact.icon className="h-6 w-6 text-[#0d5c75] mx-auto mb-2 group-hover:scale-110 transition-transform" />
+            <h3 className="font-semibold text-xs text-slate-800 mb-0.5">{contact.title}</h3>
+            <p className="text-[11px] text-slate-500">{contact.value}</p>
           </a>
         ))}
       </div>
 
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base sm:text-lg">Submit a Support Ticket</CardTitle>
-          <CardDescription className="text-sm">Our team will respond within 24 hours</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 sm:space-y-4">
-          <Input placeholder="Your Name" className="h-10 sm:h-auto" />
-          <Input placeholder="Email Address" type="email" className="h-10 sm:h-auto" />
-          <Input placeholder="Subject" className="h-10 sm:h-auto" />
+      <div className="border border-[#0d5c75]/15 bg-slate-50/50 p-4 rounded-xl">
+        <h3 className="text-sm font-bold text-[#0d5c75] mb-1">Submit a Support Ticket</h3>
+        <p className="text-xs text-slate-500 mb-3">Our clinic technical team will respond within 24 hours</p>
+        <div className="space-y-3">
+          <Input placeholder="Your Name" className="h-9 text-xs rounded-xl bg-white border-slate-200" />
+          <Input placeholder="Email Address" type="email" className="h-9 text-xs rounded-xl bg-white border-slate-200" />
+          <Input placeholder="Subject" className="h-9 text-xs rounded-xl bg-white border-slate-200" />
           <textarea 
-            className="w-full min-h-[100px] sm:min-h-[120px] p-3 rounded-md border border-input bg-background resize-none text-sm" 
+            className="w-full min-h-[90px] p-3 rounded-xl border border-slate-200 bg-white resize-none text-xs text-slate-800 focus:outline-none focus:border-[#0d5c75]" 
             placeholder="Describe your issue..."
           />
-          <Button className="w-full bg-[#0d5c75] hover:bg-[#0d5c75]/90 h-10 sm:h-auto">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            <span className="text-sm">Submit Ticket</span>
+          <Button className="w-full bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white h-9 rounded-xl text-xs font-semibold shadow-md">
+            <MessageSquare className="h-3.5 w-3.5 mr-2" />
+            <span>Submit Ticket</span>
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }
-
