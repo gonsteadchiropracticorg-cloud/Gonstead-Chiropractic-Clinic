@@ -88,7 +88,7 @@ export default function AdminAnalytics() {
   }
 
   const { data: seamlessData, syncState } = useSeamlessData(
-    { patients: [], analytics: null },
+    { patients: [], analytics: { totalPatients: 0, totalRevenue: 0, averageSessionsPerPatient: 0, completionRate: 0, monthlyGrowth: 0, emergencyRate: 0 } },
     loadAnalyticsData,
     {
       syncInterval: 30000,
@@ -449,7 +449,7 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white">
+    <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
       {/* Seamless Update Indicator */}
       <SeamlessDotIndicator
         isUpdating={syncState.isUpdating}
@@ -458,38 +458,39 @@ export default function AdminAnalytics() {
         position="top-right"
         className="mt-6"
       />
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b-2 border-[#0d5c75] p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => router.push("/admin/dashboard")}
-              className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-            <div className="w-12 h-12 relative">
+      {/* Header matching Admin Dashboard */}
+      <header className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 relative rounded-xl bg-white/80 p-1 border border-[#0d5c75]/15 shadow-xs flex-shrink-0">
               <Image
-              src="/images/gonstead-chiropractic-logo-new.png"
+                src="/images/gonstead-chiropractic-logo-new.png"
                 alt="Gonstead Chiropractic Logo"
                 fill
-                className="object-contain"
+                className="object-contain p-1"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/images/gonstead-logo-new.png";
                 }}
               />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-[#0d5c75] font-poppins">Analytics Dashboard</h1>
-              <p className="text-sm text-gray-600">Comprehensive clinic performance insights</p>
+            <div className="space-y-0.5 text-left">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight flex items-center gap-2">
+                <BarChart3 className="h-6 w-6 text-[#2a9d8f]" />
+                Analytics Dashboard
+              </h1>
+              <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+                Comprehensive Clinic Performance Insights
+              </p>
+              <p className="text-[11px] text-gray-500 font-medium">
+                Real-time patient volumes, revenue statistics, retention & growth trends
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 self-end md:self-auto">
             <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-36 h-9 bg-white/80 border-[#0d5c75]/20 text-[#0d5c75] rounded-xl text-xs font-semibold shadow-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -499,117 +500,148 @@ export default function AdminAnalytics() {
                 <SelectItem value="365">Last year</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={exportData} className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white">
-              <Download className="h-4 w-4 mr-2" />
+            <Button
+              size="sm"
+              onClick={exportData}
+              className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
               Export Data
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="space-y-6">
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
-          <Card className="border-[#0d5c75]/20 bg-gradient-to-br from-blue-50 to-blue-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-[#0d5c75]">Total Patients</CardTitle>
-              <Users className="h-4 w-4 text-[#0d5c75]" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+              <CardTitle className="text-xs font-semibold text-gray-600">Total Patients</CardTitle>
+              <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Users className="h-3.5 w-3.5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-[#0d5c75]">{analytics.totalPatients}</div>
-              <p className="text-xs text-blue-600 mt-1">+{analytics.monthlyGrowth}% from last month</p>
+            <CardContent className="p-4 sm:p-5 pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-[#0d5c75]">{analytics.totalPatients}</div>
+              <p className="text-[11px] font-medium text-emerald-600 mt-1 flex items-center gap-0.5">
+                <TrendingUp className="h-3 w-3" />+{analytics.monthlyGrowth}% from last month
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border-green-500/20 bg-gradient-to-br from-green-50 to-green-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-600">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-600" />
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+              <CardTitle className="text-xs font-semibold text-gray-600">Total Revenue</CardTitle>
+              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <DollarSign className="h-3.5 w-3.5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">PKR {analytics.totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-green-500 mt-1">+12.5% from last month</p>
+            <CardContent className="p-4 sm:p-5 pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-emerald-700">PKR {analytics.totalRevenue.toLocaleString()}</div>
+              <p className="text-[11px] font-medium text-emerald-600 mt-1 flex items-center gap-0.5">
+                <TrendingUp className="h-3 w-3" />+12.5% from last month
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border-purple-500/20 bg-gradient-to-br from-purple-50 to-purple-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-purple-600">Avg Sessions</CardTitle>
-              <Activity className="h-4 w-4 text-purple-600" />
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+              <CardTitle className="text-xs font-semibold text-gray-600">Avg Sessions</CardTitle>
+              <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <Activity className="h-3.5 w-3.5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{analytics.averageSessionsPerPatient.toFixed(1)}</div>
-              <p className="text-xs text-purple-500 mt-1">Per patient</p>
+            <CardContent className="p-4 sm:p-5 pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-purple-700">{analytics.averageSessionsPerPatient.toFixed(1)}</div>
+              <p className="text-[11px] font-medium text-purple-500 mt-1">Per registered patient</p>
             </CardContent>
           </Card>
 
-          <Card className="border-orange-500/20 bg-gradient-to-br from-orange-50 to-orange-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-orange-600">Completion Rate</CardTitle>
-              <Target className="h-4 w-4 text-orange-600" />
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+              <CardTitle className="text-xs font-semibold text-gray-600">Completion Rate</CardTitle>
+              <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <Target className="h-3.5 w-3.5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{analytics.completionRate.toFixed(1)}%</div>
-              <p className="text-xs text-orange-500 mt-1">Treatment completion</p>
+            <CardContent className="p-4 sm:p-5 pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-amber-600">{analytics.completionRate.toFixed(1)}%</div>
+              <p className="text-[11px] font-medium text-amber-600 mt-1">Care plan completion</p>
             </CardContent>
           </Card>
 
-          <Card className="border-red-500/20 bg-gradient-to-br from-red-50 to-red-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-red-600">Emergency Rate</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-600" />
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+              <CardTitle className="text-xs font-semibold text-gray-600">Emergency Rate</CardTitle>
+              <div className="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                <AlertTriangle className="h-3.5 w-3.5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{analytics.emergencyRate.toFixed(1)}%</div>
-              <p className="text-xs text-red-500 mt-1">Emergency cases</p>
+            <CardContent className="p-4 sm:p-5 pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-rose-600">{analytics.emergencyRate.toFixed(1)}%</div>
+              <p className="text-[11px] font-medium text-rose-500 mt-1">Urgent/emergency intake</p>
             </CardContent>
           </Card>
 
-          <Card className="border-[#2a9d8f]/20 bg-gradient-to-br from-emerald-50 to-teal-100">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-[#2a9d8f]">Growth Rate</CardTitle>
-              <TrendingUp className="h-4 w-4 text-[#2a9d8f]" />
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+              <CardTitle className="text-xs font-semibold text-gray-600">Growth Rate</CardTitle>
+              <div className="w-7 h-7 rounded-xl bg-teal-50 text-[#2a9d8f] flex items-center justify-center">
+                <TrendingUp className="h-3.5 w-3.5" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-[#2a9d8f]">+{analytics.monthlyGrowth}%</div>
-              <p className="text-xs text-emerald-700 mt-1">Monthly growth</p>
+            <CardContent className="p-4 sm:p-5 pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-[#0d5c75]">+{analytics.monthlyGrowth}%</div>
+              <p className="text-[11px] font-medium text-[#2a9d8f] mt-1">Monthly clinic growth</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Monthly Trends */}
-          <Card className="border-[#0d5c75]/20">
-            <CardHeader>
-              <CardTitle className="text-[#0d5c75] font-poppins">Monthly Patient Trends</CardTitle>
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="bg-slate-50/60 border-b border-gray-100 py-3.5 px-4 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-bold text-[#0d5c75] font-poppins flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-[#2a9d8f]" />
+                Monthly Patient Trends
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="patients" stroke="#0d5c75" strokeWidth={2} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(13,92,117,0.15)", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
+                  />
+                  <Line type="monotone" dataKey="patients" stroke="#0d5c75" strokeWidth={3} dot={{ r: 4, fill: "#2a9d8f" }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* Revenue Chart */}
-          <Card className="border-[#0d5c75]/20">
-            <CardHeader>
-              <CardTitle className="text-[#0d5c75] font-poppins">Monthly Revenue (PKR)</CardTitle>
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="bg-slate-50/60 border-b border-gray-100 py-3.5 px-4 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-bold text-[#0d5c75] font-poppins flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-[#2a9d8f]" />
+                Monthly Revenue (PKR)
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`PKR ${value.toLocaleString()}`, "Revenue"]} />
-                  <Bar dataKey="revenue" fill="#2a9d8f" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip 
+                    formatter={(value) => [`PKR ${Number(value).toLocaleString()}`, "Revenue"]} 
+                    contentStyle={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(13,92,117,0.15)", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
+                  />
+                  <Bar dataKey="revenue" fill="#2a9d8f" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -617,14 +649,17 @@ export default function AdminAnalytics() {
         </div>
 
         {/* Pie Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Session Types */}
-          <Card className="border-[#0d5c75]/20">
-            <CardHeader>
-              <CardTitle className="text-[#0d5c75] font-poppins">Session Types Distribution</CardTitle>
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="bg-slate-50/60 border-b border-gray-100 py-3.5 px-4 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-bold text-[#0d5c75] font-poppins flex items-center gap-2">
+                <Activity className="h-4 w-4 text-[#2a9d8f]" />
+                Session Types Distribution
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+            <CardContent className="p-4 sm:p-6">
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
                     data={sessionTypeData}
@@ -632,7 +667,7 @@ export default function AdminAnalytics() {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
-                    outerRadius={80}
+                    outerRadius={90}
                     fill="#8884d8"
                     dataKey="value"
                   >
@@ -640,19 +675,22 @@ export default function AdminAnalytics() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(13,92,117,0.15)" }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* Urgency Levels */}
-          <Card className="border-[#0d5c75]/20">
-            <CardHeader>
-              <CardTitle className="text-[#0d5c75] font-poppins">Patient Urgency Levels</CardTitle>
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="bg-slate-50/60 border-b border-gray-100 py-3.5 px-4 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-bold text-[#0d5c75] font-poppins flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-[#2a9d8f]" />
+                Patient Urgency Levels
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+            <CardContent className="p-4 sm:p-6">
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
                     data={urgencyData}
@@ -660,7 +698,7 @@ export default function AdminAnalytics() {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
-                    outerRadius={80}
+                    outerRadius={90}
                     fill="#8884d8"
                     dataKey="value"
                   >
@@ -668,7 +706,7 @@ export default function AdminAnalytics() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid rgba(13,92,117,0.15)" }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -676,10 +714,10 @@ export default function AdminAnalytics() {
         </div>
 
         {/* Visitor Analytics Section */}
-        <div className="mb-8">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-[#0d5c75] font-poppins mb-2">Website Visitor Analytics</h2>
-            <p className="text-gray-600">Track website performance and visitor engagement metrics</p>
+        <div className="space-y-4">
+          <div className="relative bg-white/40 backdrop-blur-xl border border-[#0d5c75]/15 p-3.5 sm:p-4 rounded-2xl">
+            <h2 className="text-lg sm:text-xl font-bold text-[#0d5c75] font-poppins mb-0.5">Website Visitor Analytics</h2>
+            <p className="text-xs sm:text-sm text-gray-600">Track website traffic, visitor sessions, and patient engagement in real-time</p>
           </div>
           <VisitorAnalytics />
         </div>
