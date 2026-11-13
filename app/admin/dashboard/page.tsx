@@ -471,19 +471,48 @@ export default function AdminDashboard() {
 
   const loadPatients = async () => {
     try {
-      setIsLoading(true)
       console.log("Dashboard: Loading patients...")
 
-      // Load from Firebase via getPatients
+      // Optimistic cache first: immediately populate if cached so navigation/refresh is instant!
+      let hasCached = false
+      try {
+        const rawCached = localStorage.getItem("gonstead_patients")
+        if (rawCached) {
+          const cached = JSON.parse(rawCached)
+          if (Array.isArray(cached) && cached.length > 0) {
+            setPatients(cached)
+            const today = new Date().toDateString()
+            setStats({
+              totalPatients: cached.length,
+              todayAppointments: cached.filter((p) => new Date(p.appointment_date).toDateString() === today).length,
+              pendingAppointments: cached.filter((p) => p.status === "pending").length,
+              completedSessions: cached.reduce((sum, p) => sum + (p.sessions_completed || 0), 0),
+              emergencyPatients: cached.filter((p) => p.urgency === "emergency").length,
+            })
+            setIsLoading(false)
+            hasCached = true
+          }
+        }
+      } catch (err) {
+        console.warn("Failed reading cached patients:", err)
+      }
+
+      if (!hasCached) {
+        setIsLoading(true)
+      }
+
+      // Load from Firebase via getPatients in the background or as initial fetch
       const { data, error } = await getPatients()
 
       if (error) {
         console.error("Dashboard: Error loading patients:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load patient data",
-          variant: "destructive",
-        })
+        if (!hasCached) {
+          toast({
+            title: "Notice",
+            description: "Using offline patient cache",
+          })
+        }
+        setIsLoading(false)
         return
       }
 
@@ -492,7 +521,6 @@ export default function AdminDashboard() {
 
       // Load from localStorage as fallback / local additions
       const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
-      console.log("Dashboard: Loaded localStorage patients:", localStoragePatients.length)
 
       // Merge patients with deduplication, prioritizing fresh Firebase records
       const mergedPatients = [...firebasePatients]
@@ -525,16 +553,9 @@ export default function AdminDashboard() {
         emergencyPatients: mergedPatients.filter((p) => p.urgency === "emergency").length,
       }
       setStats(newStats)
-
-      // Quick Win: Update last updated timestamp
       setLastUpdated(new Date())
     } catch (error) {
       console.error("Dashboard: Error loading patients:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load patient data",
-        variant: "destructive",
-      })
     } finally {
       setIsLoading(false)
     }
@@ -2663,9 +2684,9 @@ export default function AdminDashboard() {
   // Show loading screen while checking auth
   if (!authChecked || isLoading) {
     return (
-      <div className="min-h-screen bg-[rgb(174,193,192)] flex items-center justify-center overflow-hidden relative">
+      <div className="fixed inset-0 z-[999999] bg-[rgb(174,193,192)] flex items-center justify-center overflow-hidden">
         {/* Animated Background Elements */}
-        <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0 opacity-30 pointer-events-none">
           <div className="absolute top-[10%] left-[10%] w-32 h-32 bg-gradient-to-r from-[#0d5c75]/20 to-[#2a9d8f]/20 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute top-[60%] right-[15%] w-24 h-24 bg-gradient-to-r from-[rgb(227,252,236)]/20 to-[#0d5c75]/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
           <div className="absolute bottom-[20%] left-[20%] w-20 h-20 bg-gradient-to-r from-[#2a9d8f]/20 to-[rgb(227,252,236)]/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
@@ -2673,7 +2694,7 @@ export default function AdminDashboard() {
 
         {/* Main Loading Card */}
         <div className="relative z-10 max-w-md w-full mx-4">
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-8 text-center">
+          <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-8 text-center">
             {/* Logo Section */}
             <div className="mb-6">
               <div className="w-24 h-24 mx-auto mb-4 relative">
@@ -2725,8 +2746,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Bottom Info */}
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 text-center">
-          <div className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md">
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 text-center pointer-events-none">
+          <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-md border border-white/40">
             <p className="text-xs text-gray-600 font-medium">Powered by Gonstead Management System</p>
           </div>
         </div>

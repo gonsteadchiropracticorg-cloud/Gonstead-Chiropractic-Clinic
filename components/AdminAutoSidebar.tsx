@@ -38,7 +38,6 @@ const mainNavItems: NavItem[] = [
   { id: "prescriptions", title: "Prescriptions", href: "/admin/prescription", icon: Prescription },
   { id: "money-management", title: "Money Management", href: "/admin/money-management", icon: DollarSign },
   { id: "analytics", title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { id: "website-analytics", title: "Website Analytics", href: "/admin/website-analytics", icon: TrendingUp },
   { id: "staff-access", title: "Staff Access", href: "/admin/staff-access", icon: UserCheck },
   { id: "audit-logs", title: "Audit Logs", href: "/admin/audit-logs", icon: Activity },
   { id: "settings", title: "Clinic Settings", href: "/admin/settings", icon: Settings },
@@ -53,9 +52,23 @@ export function AdminAutoSidebar() {
 
   const [isHovered, setIsHovered] = useState(false)
   const [isPinnedOpen, setIsPinnedOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
-  // Don't render on the admin login page
-  if (pathname === "/admin/auth" || pathname === "/staff-login") {
+  useEffect(() => {
+    // Check client-side authentication state
+    const checkAuth = () => {
+      const auth = localStorage.getItem("admin_authenticated") === "true"
+      setIsAuthenticated(auth)
+    }
+    checkAuth()
+
+    const handleStorage = () => checkAuth()
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
+
+  // Don't render on auth pages or when not authenticated
+  if (pathname === "/admin/auth" || pathname === "/staff-login" || isAuthenticated === false) {
     return null
   }
 
@@ -90,7 +103,7 @@ export function AdminAutoSidebar() {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={`fixed top-0 left-0 h-screen z-[9995] transition-all duration-300 ease-in-out flex flex-col justify-between shadow-2xl select-none ${
-          isExpanded ? "w-64 sm:w-72" : "w-16"
+          isExpanded ? "w-64 sm:w-72" : "w-14 sm:w-16"
         } ${
           isDarkMode
             ? "bg-gradient-to-b from-[#081b24] via-[#0d2a38] to-[#041017] text-white border-r border-[#153e52]"

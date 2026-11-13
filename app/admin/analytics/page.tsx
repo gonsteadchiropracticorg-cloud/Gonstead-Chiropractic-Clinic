@@ -63,6 +63,7 @@ import { SeamlessDotIndicator } from "@/components/ui/seamless-update-indicator"
 export default function AdminAnalytics() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [activeTab, setActiveTab] = useState<"clinic" | "website">("clinic")
   const [patients, setPatients] = useState<any[]>([])
   const [timeRange, setTimeRange] = useState("30")
   const [analytics, setAnalytics] = useState({
@@ -498,7 +499,37 @@ export default function AdminAnalytics() {
         </div>
       </header>
 
-      <main className="space-y-6">
+      {/* Navigation Tabs for Clinic vs Website Visitor Analytics */}
+      <div className="flex items-center gap-2 bg-white/50 backdrop-blur-md p-1.5 rounded-2xl border border-[#0d5c75]/15 max-w-fit shadow-xs">
+        <button
+          type="button"
+          onClick={() => setActiveTab("clinic")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 ${
+            activeTab === "clinic"
+              ? "bg-[#0d5c75] text-white shadow-sm"
+              : "text-[#0d5c75] hover:bg-white/60"
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          <span>Clinic Performance</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("website")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 ${
+            activeTab === "website"
+              ? "bg-[#0d5c75] text-white shadow-sm"
+              : "text-[#0d5c75] hover:bg-white/60"
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          <span>Website Visitor Analytics</span>
+        </button>
+      </div>
+
+      {activeTab === "clinic" && (
+        <main className="space-y-6">
         {/* Key Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
@@ -698,16 +729,22 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
         </div>
+      </main>
+      )}
 
-        {/* Visitor Analytics Section */}
-        <div className="space-y-4">
-          <div className="relative bg-white/40 backdrop-blur-xl border border-[#0d5c75]/15 p-3.5 sm:p-4 rounded-2xl">
-            <h2 className="text-lg sm:text-xl font-bold text-[#0d5c75] font-poppins mb-0.5">Website Visitor Analytics</h2>
-            <p className="text-xs sm:text-sm text-gray-600">Track website traffic, visitor sessions, and patient engagement in real-time</p>
+      {/* Website Visitor Analytics Dedicated Section */}
+      {activeTab === "website" && (
+        <main className="space-y-4">
+          <div className="relative bg-white/40 backdrop-blur-xl border border-[#0d5c75]/15 p-4 rounded-2xl shadow-sm">
+            <h2 className="text-lg sm:text-xl font-bold text-[#0d5c75] font-poppins mb-1 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-[#2a9d8f]" />
+              Website Visitor & Patient Engagement Analytics
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600">Real-time live traffic monitoring, page view trends, device breakdown, and conversion tracking across your clinic website.</p>
           </div>
           <VisitorAnalytics />
-        </div>
-      </main>
+        </main>
+      )}
     </div>
   )
 }

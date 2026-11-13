@@ -12,9 +12,9 @@ export default function AdminLayout({
   const isAuthPage = pathname === "/admin/auth" || pathname === "/staff-login"
 
   return (
-    <div className="relative min-h-screen bg-slate-50 dark:bg-gray-950">
+    <div className="relative min-h-screen bg-slate-50 dark:bg-gray-950 overflow-x-hidden">
       {!isAuthPage && <AdminAutoSidebar />}
-      <div className={`transition-all duration-300 ${isAuthPage ? "pl-0" : "pl-16"}`}>
+      <div className={`transition-all duration-300 ${isAuthPage ? "pl-0" : "pl-14 sm:pl-16"} max-w-full overflow-x-hidden`}>
         {children}
       </div>
     </div>
