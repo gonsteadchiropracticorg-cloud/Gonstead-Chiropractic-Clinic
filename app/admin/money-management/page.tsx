@@ -708,246 +708,267 @@ function MoneyManagementContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-[#0d5c75] flex items-center gap-2">
-              <DollarSign className="h-8 w-8" />
+    <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
+      {/* Header matching Admin Dashboard */}
+      <header className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-0.5 text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight flex items-center gap-2">
+              <DollarSign className="h-6 w-6 text-[#2a9d8f]" />
               Money Management System
             </h1>
-            <p className="text-gray-600 mt-1">Comprehensive payment tracking and financial management</p>
+            <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+              Comprehensive Financial & Payment Tracking
+            </p>
+            <p className="text-[11px] text-gray-500 font-medium">
+              Monitor clinic revenue, consultations, treatments & pending balances
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
+          <div className="flex items-center gap-2 self-end md:self-auto">
+            <Badge variant="outline" className="border-[#0d5c75]/30 bg-white/80 text-[#0d5c75] font-semibold text-xs px-3 py-1 rounded-xl shadow-xs">
               Admin Access
             </Badge>
             <Button
               variant="outline"
-              onClick={() => {
-                // Local logout for this page; global admin logout can be handled via main admin UI
-                setIsAuthenticated(false)
-              }}
-              className="text-red-600 border-red-300 hover:bg-red-50"
+              size="sm"
+              onClick={() => setIsAuthenticated(false)}
+              className="text-red-600 border-red-300/60 bg-white/80 hover:bg-red-50 rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
             >
-              <Lock className="h-4 w-4 mr-2" />
+              <Lock className="h-3.5 w-3.5 mr-1.5" />
               Logout
             </Button>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-600">Total Revenue</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+      <main className="space-y-6">
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Revenue</p>
+                  <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-0.5">PKR {totalRevenue.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">All completed payments</p>
+                </div>
+                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-emerald-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Monthly Revenue</p>
+                  <p className="text-xl sm:text-2xl font-black text-[#0d5c75] mt-0.5">PKR {monthlyRevenue.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">This month's earnings</p>
+                </div>
+                <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-[#0d5c75]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pending Payments</p>
+                  <p className="text-xl sm:text-2xl font-black text-amber-700 mt-0.5">PKR {pendingPayments.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Awaiting collection</p>
+                </div>
+                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                  <TrendingDown className="h-5 w-5 text-amber-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Records</p>
+                  <p className="text-xl sm:text-2xl font-black text-[#2a9d8f] mt-0.5">{records.length}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">All transactions logged</p>
+                </div>
+                <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+                  <Receipt className="h-5 w-5 text-[#2a9d8f]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick View Filters */}
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-5 py-3 rounded-t-2xl">
+            <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
+              <Wallet className="h-4 w-4" />
+              Quick Financial Categories
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-700">PKR {totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-green-600 mt-1">All completed payments</p>
+          <CardContent className="p-4 sm:p-5">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {([
+                { key: "all", label: "All Records" },
+                { key: "consultation", label: "Consultation" },
+                { key: "treatment", label: "Treatment" },
+                { key: "medication", label: "Medication" },
+                { key: "other", label: "Other" },
+              ] as const).map((item) => {
+                const active = filterCategory === item.key
+                const stats = categorySummary[item.key as keyof typeof categorySummary]
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => setFilterCategory(active ? "all" : item.key)}
+                    className={`text-left p-3.5 rounded-xl border transition-all ${
+                      active
+                        ? "bg-teal-50 border-[#0d5c75] ring-2 ring-[#0d5c75]/30 shadow-xs"
+                        : "bg-slate-50/70 border-gray-200/80 hover:bg-slate-100/70"
+                    }`}
+                  >
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{item.label}</div>
+                    <div className="text-sm font-bold text-[#0d5c75] mt-0.5">{stats.count} records</div>
+                    <div className="text-xs font-black text-[#2a9d8f] mt-1">PKR {stats.amount.toLocaleString()}</div>
+                  </button>
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-600">Monthly Revenue</CardTitle>
-            <Calendar className="h-4 w-4 text-blue-600" />
+        {/* Controls Search & Filter */}
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-5 py-3 rounded-t-2xl">
+            <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              Search & Filters
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">PKR {monthlyRevenue.toLocaleString()}</div>
-            <p className="text-xs text-blue-600 mt-1">This month's earnings</p>
-          </CardContent>
-        </Card>
+          <CardContent className="p-4 sm:p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0d5c75]/50" />
+                <Input
+                  placeholder="Search records..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 h-10 bg-slate-50/70 border border-[#0d5c75]/20 text-[#0d5c75] placeholder:text-gray-400 focus:bg-white rounded-xl text-xs sm:text-sm"
+                />
+                {searchTerm && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    <X className="h-3.5 w-3.5 text-gray-400" />
+                  </Button>
+                )}
+              </div>
 
-        <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-600">Pending Payments</CardTitle>
-            <TrendingDown className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-700">PKR {pendingPayments.toLocaleString()}</div>
-            <p className="text-xs text-orange-600 mt-1">Awaiting collection</p>
-          </CardContent>
-        </Card>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="h-10 bg-slate-50/70 border border-[#0d5c75]/20 text-gray-700 rounded-xl text-xs sm:text-sm">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="consultation">Consultation</SelectItem>
+                  <SelectItem value="treatment">Treatment</SelectItem>
+                  <SelectItem value="medication">Medication</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
 
-        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-600">Total Records</CardTitle>
-            <Receipt className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-700">{records.length}</div>
-            <p className="text-xs text-purple-600 mt-1">All payment records</p>
-          </CardContent>
-        </Card>
-      </div>
+              <Select value={filterMethod} onValueChange={setFilterMethod}>
+                <SelectTrigger className="h-10 bg-slate-50/70 border border-[#0d5c75]/20 text-gray-700 rounded-xl text-xs sm:text-sm">
+                  <SelectValue placeholder="Payment Method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Methods</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="jazzcash">JazzCash</SelectItem>
+                  <SelectItem value="easypaisa">EasyPaisa</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                </SelectContent>
+              </Select>
 
-      {/* Quick View Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-[#0d5c75]">Quick View</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {([
-              { key: "all", label: "All", color: "from-gray-50 to-gray-100", border: "border-gray-200" },
-              { key: "consultation", label: "Consultation", color: "from-blue-50 to-blue-100", border: "border-blue-200" },
-              { key: "treatment", label: "Treatment", color: "from-green-50 to-green-100", border: "border-green-200" },
-              { key: "medication", label: "Medication", color: "from-purple-50 to-purple-100", border: "border-purple-200" },
-              { key: "other", label: "Other", color: "from-orange-50 to-orange-100", border: "border-orange-200" },
-            ] as const).map((item) => {
-              const active = filterCategory === item.key
-              const stats = categorySummary[item.key as keyof typeof categorySummary]
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => setFilterCategory(active ? "all" : item.key)}
-                  className={`text-left p-4 rounded-xl border ${item.border} bg-gradient-to-br ${item.color} hover:shadow-md transition-all ${active ? "ring-2 ring-[#0d5c75]" : ""}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-gray-600">{item.label}</div>
-                      <div className="text-lg font-semibold text-[#0d5c75]">{stats.count} records</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-gray-500">Amount</div>
-                      <div className="text-base font-bold text-[#0d5c75]">PKR {stats.amount.toLocaleString()}</div>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="h-10 bg-slate-50/70 border border-[#0d5c75]/20 text-gray-700 rounded-xl text-xs sm:text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
+                </SelectContent>
+              </Select>
 
-      {/* Controls */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-[#0d5c75] flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Search & Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search records..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-              {searchTerm && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                  onClick={() => setSearchTerm("")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="h-10 bg-slate-50/70 border border-[#0d5c75]/20 text-gray-700 rounded-xl text-xs sm:text-sm">
+                  <SelectValue placeholder="Date Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Dates</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="custom">Custom Range</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="consultation">Consultation</SelectItem>
-                <SelectItem value="treatment">Treatment</SelectItem>
-                <SelectItem value="medication">Medication</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filterMethod} onValueChange={setFilterMethod}>
-              <SelectTrigger>
-                <SelectValue placeholder="Payment Method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Methods</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="jazzcash">JazzCash</SelectItem>
-                <SelectItem value="easypaisa">EasyPaisa</SelectItem>
-                <SelectItem value="card">Card</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="refunded">Refunded</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Date Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Dates</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-                <SelectItem value="custom">Custom Range</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {dateFilter === "custom" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 col-span-full">
-              <div>
-                <Label htmlFor="startDate" className="text-sm mb-1 block">Start Date</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={customDateStart}
-                  onChange={(e) => setCustomDateStart(e.target.value)}
-                  className="w-full"
-                />
+            {dateFilter === "custom" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                <div>
+                  <Label htmlFor="startDate" className="text-xs mb-1 block font-semibold text-gray-600">Start Date</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={customDateStart}
+                    onChange={(e) => setCustomDateStart(e.target.value)}
+                    className="h-10 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endDate" className="text-xs mb-1 block font-semibold text-gray-600">End Date</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={customDateEnd}
+                    onChange={(e) => setCustomDateEnd(e.target.value)}
+                    className="h-10 rounded-xl"
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="endDate" className="text-sm mb-1 block">End Date</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={customDateEnd}
-                  onChange={(e) => setCustomDateEnd(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
-          )}
+            )}
 
-          <div className="flex gap-2 mt-4">
-            {/* Add Record Dialog */}
-            <Dialog open={isAddRecordDialogOpen} onOpenChange={setIsAddRecordDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#2a9d8f] hover:bg-[#238a7a]">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Payment Record
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle className="text-[#0d5c75] flex items-center gap-2">
-                    <Receipt className="h-5 w-5" />
-                    Add New Payment Record
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
+              {/* Add Record Dialog */}
+              <Dialog open={isAddRecordDialogOpen} onOpenChange={setIsAddRecordDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs">
+                    <Plus className="h-4 w-4 mr-1.5" />
+                    Add Payment Record
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl rounded-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-[#0d5c75] flex items-center gap-2">
+                      <Receipt className="h-5 w-5" />
+                      Add New Payment Record
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="patientName">Patient Name *</Label>
                     <Input
@@ -1072,8 +1093,8 @@ function MoneyManagementContent() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="outline" onClick={exportRecords} className="border-[#0d5c75] text-[#0d5c75]">
-              <Download className="h-4 w-4 mr-2" />
+            <Button variant="outline" onClick={exportRecords} className="border-[#0d5c75]/30 text-[#0d5c75] bg-white hover:bg-[#0d5c75]/5 rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs">
+              <Download className="h-4 w-4 mr-1.5" />
               Export CSV
             </Button>
           </div>
@@ -1081,14 +1102,19 @@ function MoneyManagementContent() {
       </Card>
 
       {/* Records Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-[#0d5c75] flex items-center gap-2">
-            <Receipt className="h-5 w-5" />
-            Payment Records ({filteredRecords.length})
+      <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+        <CardHeader className="bg-slate-50/60 border-b border-gray-100 py-4 px-4 sm:px-6">
+          <CardTitle className="text-sm sm:text-base font-bold text-[#0d5c75] flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-[#2a9d8f]" />
+              Payment Records
+            </span>
+            <Badge variant="outline" className="border-[#0d5c75]/20 bg-white text-[#0d5c75] text-xs font-semibold px-2.5 py-0.5 rounded-lg">
+              {filteredRecords.length} records
+            </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-2 md:p-4">
           {isLoadingRecords ? (
             <div className="text-center py-12">
               <div className="text-lg font-medium text-[#0d5c75]">Loading payment records from Supabase...</div>
@@ -1108,10 +1134,10 @@ function MoneyManagementContent() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="text-[#0d5c75] font-semibold">ID</TableHead>
+                  <TableRow className="bg-slate-50/80 hover:bg-slate-50 border-b border-gray-100">
+                    <TableHead className="text-[#0d5c75] font-semibold text-xs sm:text-sm">ID</TableHead>
                     <TableHead 
-                      className="text-[#0d5c75] font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="text-[#0d5c75] font-semibold text-xs sm:text-sm cursor-pointer hover:bg-gray-100/70 transition-colors"
                       onClick={() => handleSort("date")}
                     >
                       <div className="flex items-center gap-1">
@@ -1124,7 +1150,7 @@ function MoneyManagementContent() {
                       </div>
                     </TableHead>
                     <TableHead 
-                      className="text-[#0d5c75] font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="text-[#0d5c75] font-semibold text-xs sm:text-sm cursor-pointer hover:bg-gray-100/70 transition-colors"
                       onClick={() => handleSort("patientName")}
                     >
                       <div className="flex items-center gap-1">
@@ -1137,7 +1163,7 @@ function MoneyManagementContent() {
                       </div>
                     </TableHead>
                     <TableHead 
-                      className="text-[#0d5c75] font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="text-[#0d5c75] font-semibold text-xs sm:text-sm cursor-pointer hover:bg-gray-100/70 transition-colors"
                       onClick={() => handleSort("amount")}
                     >
                       <div className="flex items-center gap-1">
@@ -1149,10 +1175,10 @@ function MoneyManagementContent() {
                         )}
                       </div>
                     </TableHead>
-                    <TableHead className="text-[#0d5c75] font-semibold">Payment</TableHead>
-                    <TableHead className="text-[#0d5c75] font-semibold">Category</TableHead>
+                    <TableHead className="text-[#0d5c75] font-semibold text-xs sm:text-sm">Payment</TableHead>
+                    <TableHead className="text-[#0d5c75] font-semibold text-xs sm:text-sm">Category</TableHead>
                     <TableHead 
-                      className="text-[#0d5c75] font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="text-[#0d5c75] font-semibold text-xs sm:text-sm cursor-pointer hover:bg-gray-100/70 transition-colors"
                       onClick={() => handleSort("status")}
                     >
                       <div className="flex items-center gap-1">
@@ -1164,40 +1190,40 @@ function MoneyManagementContent() {
                         )}
                       </div>
                     </TableHead>
-                    <TableHead className="text-[#0d5c75] font-semibold">Actions</TableHead>
+                    <TableHead className="text-[#0d5c75] font-semibold text-xs sm:text-sm">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedRecords.map((record) => (
-                    <TableRow key={record.id} className="hover:bg-gray-50">
-                      <TableCell className="font-mono text-sm">{record.id}</TableCell>
-                      <TableCell>{record.date}</TableCell>
+                    <TableRow key={record.id} className="hover:bg-slate-50/70 transition-colors border-b border-gray-100/80">
+                      <TableCell className="font-mono text-xs text-gray-500">{record.id.slice(0, 8)}...</TableCell>
+                      <TableCell className="text-xs sm:text-sm text-gray-700 font-medium">{record.date}</TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-semibold">{record.patientName}</div>
+                          <div className="font-semibold text-xs sm:text-sm text-gray-900">{record.patientName}</div>
                           {record.phone && (
-                            <div className="text-sm text-gray-600">{record.phone}</div>
+                            <div className="text-[11px] text-gray-500">{record.phone}</div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-bold text-green-600">
+                        <div className="font-bold text-xs sm:text-sm text-emerald-600">
                           PKR {record.amount.toLocaleString()}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-[11px] text-gray-500">
                           {record.sessionType === "in_clinic" ? "In-Clinic" : "Video"}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          {record.paymentMethod === "cash" && <Banknote className="h-4 w-4" />}
-                          {record.paymentMethod === "card" && <CreditCard className="h-4 w-4" />}
-                          {(record.paymentMethod === "jazzcash" || record.paymentMethod === "easypaisa") && <Wallet className="h-4 w-4" />}
+                        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-700">
+                          {record.paymentMethod === "cash" && <Banknote className="h-3.5 w-3.5 text-emerald-600" />}
+                          {record.paymentMethod === "card" && <CreditCard className="h-3.5 w-3.5 text-blue-600" />}
+                          {(record.paymentMethod === "jazzcash" || record.paymentMethod === "easypaisa") && <Wallet className="h-3.5 w-3.5 text-amber-600" />}
                           <span className="capitalize">{record.paymentMethod}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="capitalize">
+                        <Badge variant="outline" className="capitalize text-[11px] border-[#0d5c75]/20 text-[#0d5c75] bg-teal-50/50">
                           {record.category}
                         </Badge>
                       </TableCell>
@@ -1210,7 +1236,13 @@ function MoneyManagementContent() {
                                 ? "secondary"
                                 : "destructive"
                           }
-                          className="capitalize"
+                          className={`capitalize text-[11px] ${
+                            record.status === "completed"
+                              ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
+                              : record.status === "pending"
+                                ? "bg-amber-100 text-amber-800 hover:bg-amber-100"
+                                : "bg-red-100 text-red-800 hover:bg-red-100"
+                          }`}
                         >
                           {record.status}
                         </Badge>
@@ -1221,17 +1253,17 @@ function MoneyManagementContent() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleEditRecord(record)}
-                            className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
+                            className="h-8 w-8 p-0 rounded-lg border-[#2a9d8f]/40 text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white transition-colors"
                           >
-                            <Edit3 className="h-3 w-3" />
+                            <Edit3 className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => openDeleteConfirmation(record)}
-                            className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                            className="h-8 w-8 p-0 rounded-lg border-red-300 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </TableCell>
@@ -1242,9 +1274,9 @@ function MoneyManagementContent() {
 
               {/* Pagination Controls */}
               {filteredRecords.length > 0 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-gray-100 bg-slate-50/40">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">Items per page:</span>
+                    <span className="text-xs text-gray-600">Items per page:</span>
                     <Select 
                       value={itemsPerPage.toString()} 
                       onValueChange={(value) => {
@@ -1252,7 +1284,7 @@ function MoneyManagementContent() {
                         setCurrentPage(1)
                       }}
                     >
-                      <SelectTrigger className="w-20">
+                      <SelectTrigger className="w-18 h-8 rounded-lg text-xs border-[#0d5c75]/20 bg-white">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1263,18 +1295,18 @@ function MoneyManagementContent() {
                         <SelectItem value="100">100</SelectItem>
                       </SelectContent>
                     </Select>
-                    <span className="text-sm text-gray-600">
-                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length} records
+                    <span className="text-xs text-gray-500">
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="border-[#0d5c75] text-[#0d5c75]"
+                      className="border-[#0d5c75]/30 text-[#0d5c75] bg-white rounded-lg h-8 px-2.5 text-xs font-medium"
                     >
                       First
                     </Button>
@@ -1283,19 +1315,19 @@ function MoneyManagementContent() {
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="border-[#0d5c75] text-[#0d5c75]"
+                      className="border-[#0d5c75]/30 text-[#0d5c75] bg-white rounded-lg h-8 px-2 text-xs"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <span className="text-sm font-medium px-3">
-                      Page {currentPage} of {totalPages}
+                    <span className="text-xs font-semibold px-2 text-[#0d5c75]">
+                      {currentPage} / {totalPages}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="border-[#0d5c75] text-[#0d5c75]"
+                      className="border-[#0d5c75]/30 text-[#0d5c75] bg-white rounded-lg h-8 px-2 text-xs"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -1304,7 +1336,7 @@ function MoneyManagementContent() {
                       size="sm"
                       onClick={() => setCurrentPage(totalPages)}
                       disabled={currentPage === totalPages}
-                      className="border-[#0d5c75] text-[#0d5c75]"
+                      className="border-[#0d5c75]/30 text-[#0d5c75] bg-white rounded-lg h-8 px-2.5 text-xs font-medium"
                     >
                       Last
                     </Button>
@@ -1315,6 +1347,7 @@ function MoneyManagementContent() {
           )}
         </CardContent>
       </Card>
+      </main>
 
       {/* Edit Record Dialog */}
       <Dialog open={isEditRecordDialogOpen} onOpenChange={setIsEditRecordDialogOpen}>
