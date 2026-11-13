@@ -161,19 +161,15 @@ export default function PatientAuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a2332] via-[#0d3b4f] to-[#12586e] text-white flex flex-col justify-between relative overflow-hidden">
-      {/* Background Subtle Aesthetics */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#2a9d8f]/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#238a7a]/20 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen bg-[rgb(220,230,229)] flex flex-col">
       {/* Navigation Top Header */}
-      <header className="p-4 sm:p-6 border-b border-white/10 backdrop-blur-md bg-black/20 flex items-center justify-between z-10">
+      <header className="p-4 sm:p-6 border-b border-[#0d5c75]/30 bg-[#0d5c75] flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#2a9d8f] to-[#38b2a0] flex items-center justify-center shadow-lg">
             <Stethoscope className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg leading-tight">Gonstead Chiropractic</h1>
+            <h1 className="font-bold text-lg leading-tight text-white">Gonstead Chiropractic</h1>
             <p className="text-xs text-white/70">Patient Portal Authentication</p>
           </div>
         </div>
@@ -186,15 +182,15 @@ export default function PatientAuthPage() {
               }
             }}
             variant="outline"
-            className="border-emerald-400/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 text-xs backdrop-blur-sm"
+            className="border-white/30 text-white hover:bg-white/10 text-xs"
           >
-            <Smartphone className="h-4 w-4 mr-1.5 text-emerald-400" />
+            <Smartphone className="h-4 w-4 mr-1.5" />
             Install Patient App
           </Button>
           <Button
             onClick={() => router.push("/")}
             variant="outline"
-            className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm"
+            className="border-white/20 text-white hover:bg-white/10"
           >
             <Home className="h-4 w-4 mr-2" />
             Back to Site
@@ -203,16 +199,16 @@ export default function PatientAuthPage() {
       </header>
 
       {/* Main Form Container */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 z-10">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md">
-          <Card className="border-white/15 bg-white/10 backdrop-blur-xl shadow-2xl text-white">
+          <Card className="bg-white border border-[#0d5c75]/15 shadow-xl rounded-2xl">
             <CardHeader className="text-center pb-2">
               <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2a9d8f] to-[#245064] flex items-center justify-center shadow-inner mb-3">
                 <ShieldCheck className="h-6 w-6 text-white" />
               </div>
-              <CardTitle className="text-2xl font-bold text-white">Patient Account Portal</CardTitle>
-              <CardDescription className="text-white/70 text-sm">
-                Sign in or create an account to view your spine health records, appointments & prescriptions.
+              <CardTitle className="text-2xl font-bold text-[#0d5c75] font-poppins">Patient Account Portal</CardTitle>
+              <CardDescription className="text-slate-500 text-sm">
+                Sign in or create an account to view your spine health records, appointments &amp; prescriptions.
               </CardDescription>
             </CardHeader>
 
@@ -222,16 +218,16 @@ export default function PatientAuthPage() {
                 onValueChange={(val) => setActiveTab(val as "login" | "register")}
                 className="w-full"
               >
-                <TabsList className="grid grid-cols-2 bg-black/30 p-1 rounded-xl mb-6">
+                <TabsList className="grid grid-cols-2 bg-slate-100 p-1 rounded-xl mb-6">
                   <TabsTrigger
                     value="login"
-                    className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white font-medium text-white/80 rounded-lg transition-all"
+                    className="data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white font-semibold text-slate-600 rounded-lg transition-all"
                   >
                     Sign In
                   </TabsTrigger>
                   <TabsTrigger
                     value="register"
-                    className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white font-medium text-white/80 rounded-lg transition-all"
+                    className="data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white font-semibold text-slate-600 rounded-lg transition-all"
                   >
                     Create Account
                   </TabsTrigger>
@@ -241,36 +237,36 @@ export default function PatientAuthPage() {
                 <TabsContent value="login">
                   <form onSubmit={handleLoginSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-email" className="text-white/90 font-medium">
+                      <Label htmlFor="login-email" className="text-slate-700 font-semibold">
                         Email Address
                       </Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
                           id="login-email"
                           type="email"
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
                           placeholder="patient@example.com"
-                          className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-[#2a9d8f]"
+                          className="pl-10 bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-[#0d5c75] focus:bg-white"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="login-pass" className="text-white/90 font-medium">
+                      <Label htmlFor="login-pass" className="text-slate-700 font-semibold">
                         Password
                       </Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
                           id="login-pass"
                           type="password"
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
                           placeholder="••••••••"
-                          className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-[#2a9d8f]"
+                          className="pl-10 bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-[#0d5c75] focus:bg-white"
                           required
                         />
                       </div>
@@ -300,54 +296,54 @@ export default function PatientAuthPage() {
                 <TabsContent value="register">
                   <form onSubmit={handleRegisterSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="reg-name" className="text-white/90 font-medium">
+                      <Label htmlFor="reg-name" className="text-slate-700 font-semibold">
                         Full Name *
                       </Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
                           id="reg-name"
                           type="text"
                           value={regName}
                           onChange={(e) => setRegName(e.target.value)}
                           placeholder="Ahmad Hassan"
-                          className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-[#2a9d8f]"
+                          className="pl-10 bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-[#0d5c75] focus:bg-white"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="reg-phone" className="text-white/90 font-medium">
+                      <Label htmlFor="reg-phone" className="text-slate-700 font-semibold">
                         Phone Number *
                       </Label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
                           id="reg-phone"
                           type="tel"
                           value={regPhone}
                           onChange={(e) => setRegPhone(e.target.value)}
                           placeholder="03001234567 or +923001234567"
-                          className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-[#2a9d8f]"
+                          className="pl-10 bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-[#0d5c75] focus:bg-white"
                           required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="reg-email" className="text-white/90 font-medium">
+                      <Label htmlFor="reg-email" className="text-slate-700 font-semibold">
                         Email Address *
                       </Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
                           id="reg-email"
                           type="email"
                           value={regEmail}
                           onChange={(e) => setRegEmail(e.target.value)}
                           placeholder="patient@example.com"
-                          className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-[#2a9d8f]"
+                          className="pl-10 bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-[#0d5c75] focus:bg-white"
                           required
                         />
                       </div>
@@ -355,7 +351,7 @@ export default function PatientAuthPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <Label htmlFor="reg-pass" className="text-white/90 font-medium text-xs">
+                        <Label htmlFor="reg-pass" className="text-slate-700 font-semibold text-xs">
                           Password *
                         </Label>
                         <Input
@@ -364,12 +360,12 @@ export default function PatientAuthPage() {
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
                           placeholder="Min 6 chars"
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/40 text-xs focus:border-[#2a9d8f]"
+                          className="bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 text-xs focus:border-[#0d5c75] focus:bg-white"
                           required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="reg-cpass" className="text-white/90 font-medium text-xs">
+                        <Label htmlFor="reg-cpass" className="text-slate-700 font-semibold text-xs">
                           Confirm Password *
                         </Label>
                         <Input
@@ -378,7 +374,7 @@ export default function PatientAuthPage() {
                           value={regConfirmPassword}
                           onChange={(e) => setRegConfirmPassword(e.target.value)}
                           placeholder="Confirm password"
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/40 text-xs focus:border-[#2a9d8f]"
+                          className="bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 text-xs focus:border-[#0d5c75] focus:bg-white"
                           required
                         />
                       </div>
@@ -410,8 +406,8 @@ export default function PatientAuthPage() {
       </main>
 
       {/* Footer Info */}
-      <footer className="p-4 text-center text-xs text-white/50 border-t border-white/5 backdrop-blur-sm z-10">
-        Gonstead Chiropractic Clinic Patient Portal • Encrypted Firebase & Firestore Storage
+      <footer className="p-4 text-center text-xs text-slate-400 border-t border-slate-200 bg-white/50 z-10">
+        Gonstead Chiropractic Clinic Patient Portal • Encrypted Firebase &amp; Firestore Storage
       </footer>
     </div>
   )

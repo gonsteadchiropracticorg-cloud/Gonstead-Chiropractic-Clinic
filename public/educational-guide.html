@@ -5256,27 +5256,29 @@ left: 80px;
         });
     </script>
 
-    <!-- Autonomous Copilot Bridge for Standalone View -->
+    <!-- Autonomous Copilot Bridge -->
     <div id="standalone-copilot-host"></div>
     <script>
         (function() {
-            // Check if page is loaded standalone (not in iframe)
-            if (window.self === window.top) {
-                // Standalone mode: provide floating Automation Copilot button that directly opens Copilot dialog in Education Platform
-                const host = document.getElementById('standalone-copilot-host');
-                if (host) {
-                    host.innerHTML = `
-                        <div id="eduCopilotBtn" style="position: fixed; bottom: 82px; right: 20px; z-index: 10001; cursor: pointer;">
-                            <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #0d5c75, #2a9d8f); box-shadow: 0 4px 20px rgba(13,92,117,0.45); display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255,255,255,0.4); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Open AI Automation Copilot Interface">
-                                <i class="fas fa-robot" style="color: white; font-size: 18px;"></i>
-                            </div>
+            // Only render button in standalone view if not already inside an iframe that has the copilot
+            if (window.self !== window.top) {
+                // Inside iframe: parent Next.js page already has the automation copilot floating button
+                return;
+            }
+
+            const host = document.getElementById('standalone-copilot-host');
+            if (host) {
+                host.innerHTML = `
+                    <div id="eduCopilotBtn" style="position: fixed; bottom: 82px; right: 20px; z-index: 10001; cursor: pointer;">
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #0d5c75, #2a9d8f); box-shadow: 0 4px 20px rgba(13,92,117,0.45); display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255,255,255,0.4); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Open AI Automation Copilot Interface">
+                            <i class="fas fa-robot" style="color: white; font-size: 18px;"></i>
                         </div>
-                    `;
-                    document.getElementById('eduCopilotBtn')?.addEventListener('click', function() {
-                        sessionStorage.setItem('gonstead_open_copilot', 'true');
-                        window.location.href = '/education';
-                    });
-                }
+                    </div>
+                `;
+                document.getElementById('eduCopilotBtn')?.addEventListener('click', function() {
+                    sessionStorage.setItem('gonstead_open_copilot', 'true');
+                    window.location.href = '/education';
+                });
             }
         })();
     </script>

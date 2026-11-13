@@ -41,6 +41,24 @@ const nextConfig = {
   headers: async () => {
     return [
       {
+        // Allow educational-guide.html to be embedded in iframe from same origin
+        source: '/educational-guide.html',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self'",
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+      {
         source: '/(.*)',
         headers: [
           {

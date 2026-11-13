@@ -102,9 +102,18 @@ export function SystemAutomationCopilot() {
     }
   }, [isOpen])
 
-  // Check for queued automation or direct open flag after page transitions
+  // Check for queued automation or direct open flag after page transitions, and listen for iframe postMessage
   useEffect(() => {
     if (typeof window === "undefined") return
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "GONSTEAD_OPEN_COPILOT") {
+        setIsOpen(true)
+        setStatusMessage("Automation copilot active. How may I assist you?")
+      }
+    }
+    window.addEventListener("message", handleMessage)
+
     try {
       if (sessionStorage.getItem("gonstead_open_copilot") === "true") {
         sessionStorage.removeItem("gonstead_open_copilot")
@@ -124,6 +133,10 @@ export function SystemAutomationCopilot() {
       }
     } catch (e) {
       console.error("Queue resume error", e)
+    }
+
+    return () => {
+      window.removeEventListener("message", handleMessage)
     }
   }, [])
 
