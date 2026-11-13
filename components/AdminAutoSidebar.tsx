@@ -111,22 +111,22 @@ export function AdminAutoSidebar() {
           isExpanded ? "w-64 sm:w-72" : "w-14 sm:w-16"
         } ${
           isDarkMode
-            ? "bg-gradient-to-b from-[#081b24] via-[#0d2a38] to-[#041017] text-white border-r border-[#153e52]"
-            : "bg-gradient-to-b from-[#0a2e3b] via-[#103d4e] to-[#0d5c75] text-white border-r border-[#154b5f]"
+            ? "bg-gradient-to-b from-[#061820] via-[#0b2430] to-[#041017] text-white border-r border-[#153e52]"
+            : "bg-gradient-to-b from-[#0d5c75] via-[#104859] to-[#0a3a47] text-white border-r border-[#0d5c75]/30"
         }`}
         style={{
-          boxShadow: isExpanded ? "12px 0 36px rgba(0,0,0,0.4)" : "4px 0 16px rgba(0,0,0,0.2)",
+          boxShadow: isExpanded ? "12px 0 36px rgba(13,92,117,0.4)" : "4px 0 18px rgba(13,92,117,0.22)",
         }}
         aria-label="Admin Navigation"
       >
         {/* Top Header / Clinic Branding - Clicking toggles pin open/close */}
         <div 
           onClick={() => setIsPinnedOpen(!isPinnedOpen)}
-          className="p-3 border-b border-white/10 flex items-center gap-3 overflow-hidden shrink-0 cursor-pointer hover:bg-white/5 transition-colors"
+          className="p-3 border-b border-white/15 flex items-center gap-3 overflow-hidden shrink-0 cursor-pointer hover:bg-white/10 transition-colors"
           title="Click to toggle sidebar pin"
         >
           <div
-            className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md p-1.5 flex items-center justify-center shrink-0 border border-white/20 shadow-md group-hover:scale-105 transition-transform"
+            className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md p-1.5 flex items-center justify-center shrink-0 border border-white/25 shadow-md group-hover:scale-105 transition-transform"
           >
             <Image
               src="/images/gonstead-chiropractic-logo-new.png"
@@ -144,10 +144,10 @@ export function AdminAutoSidebar() {
               isExpanded ? "opacity-100 max-w-[200px]" : "opacity-0 max-w-0"
             }`}
           >
-            <h2 className="font-bold text-sm text-white tracking-wide leading-tight">
+            <h2 className="font-bold text-sm text-white tracking-wide leading-tight font-poppins">
               Dr. Bashir Khan
             </h2>
-            <p className="text-[11px] text-teal-200 font-medium">Gonstead Admin Portal</p>
+            <p className="text-[11px] text-[#2a9d8f] font-semibold">Gonstead Admin Portal</p>
           </div>
 
           {/* Close/Toggle icon when expanded */}
@@ -159,7 +159,7 @@ export function AdminAutoSidebar() {
                 setIsPinnedOpen(false)
                 setIsHovered(false)
               }}
-              className="text-white/60 hover:text-white p-1 rounded-lg hover:bg-white/10 shrink-0"
+              className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10 shrink-0 transition-colors"
               title="Collapse menu"
             >
               <X className="w-4 h-4" />
@@ -183,19 +183,19 @@ export function AdminAutoSidebar() {
                 title={item.title}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 relative group ${
                   isActive
-                    ? "bg-[#2a9d8f] text-white shadow-lg shadow-teal-900/30 font-semibold"
-                    : "text-slate-200 hover:bg-white/10 hover:text-white"
+                    ? "bg-gradient-to-r from-[#2a9d8f] to-[#238a7a] text-white shadow-md shadow-teal-950/30 font-semibold"
+                    : "text-slate-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 {/* Active Indicator Bar */}
                 {isActive && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-white rounded-r-full" />
+                  <span className="absolute left-0 top-2 bottom-2 w-1 bg-white rounded-r-full shadow-xs" />
                 )}
 
                 <div className="shrink-0 flex items-center justify-center w-5 h-5">
                   <Icon
                     className={`h-5 w-5 transition-transform group-hover:scale-110 ${
-                      isActive ? "text-white" : "text-teal-200"
+                      isActive ? "text-white" : "text-teal-100 group-hover:text-white"
                     }`}
                   />
                 </div>
@@ -211,7 +211,7 @@ export function AdminAutoSidebar() {
 
                 {/* Trailing arrow on hover when expanded */}
                 {isExpanded && isActive && (
-                  <ChevronRight className="h-4 w-4 ml-auto text-white/80 shrink-0" />
+                  <ChevronRight className="h-4 w-4 ml-auto text-white/90 shrink-0" />
                 )}
               </button>
             )
@@ -220,11 +220,11 @@ export function AdminAutoSidebar() {
           {/* Logout as inline navigation item inside scrollable list */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 transition-all duration-200 group"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-rose-200 hover:bg-rose-500/25 hover:text-white transition-all duration-200 group mt-2"
             title="Exit / Logout"
           >
             <div className="shrink-0 flex items-center justify-center w-5 h-5">
-              <LogOut className="h-5 w-5 transition-transform group-hover:scale-110 text-rose-300" />
+              <LogOut className="h-5 w-5 transition-transform group-hover:scale-110 text-rose-300 group-hover:text-white" />
             </div>
             <span
               className={`text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-300 overflow-hidden ${
