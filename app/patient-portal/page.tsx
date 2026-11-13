@@ -386,13 +386,13 @@ export default function PatientPortalPage() {
 
   return (
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${
-      isDarkMode ? "bg-[#091e2b] text-slate-100" : "bg-[rgb(220,230,229)] text-[#0d5c75]"
+      isDarkMode ? "bg-gray-900 text-slate-100" : "bg-[rgb(220,230,229)] text-[#0d5c75]"
     }`}>
       {/* TOP NAVBAR */}
       <header className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors duration-300 ${
         isDarkMode
-          ? "bg-[#0e2c3d]/90 border-[#1b4356]"
-          : "bg-white/90 border-[#0d5c75]/20 shadow-[0_2px_12px_rgba(13,92,117,0.08)]"
+          ? "bg-gray-800/95 border-gray-700 text-white"
+          : "bg-white/90 border-[#0d5c75]/15 text-[#0d5c75] shadow-[0_2px_12px_rgba(13,92,117,0.08)]"
       }`}>
         <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -477,7 +477,7 @@ export default function PatientPortalPage() {
 
       {/* QUICK STATS CARDS */}
       <div className="container mx-auto px-4 pt-6 pb-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-[#0e2c3d] border-[#1b4356]">
+        <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
           <CardContent className="p-4 flex items-center gap-3.5">
             <div className="p-3 rounded-xl bg-[#2a9d8f]/20 text-[#2a9d8f]">
               <Calendar className="h-5 w-5" />
@@ -491,7 +491,7 @@ export default function PatientPortalPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#0e2c3d] border-[#1b4356]">
+        <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
           <CardContent className="p-4 flex items-center gap-3.5">
             <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">
               <CheckCircle2 className="h-5 w-5" />
@@ -503,7 +503,7 @@ export default function PatientPortalPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#0e2c3d] border-[#1b4356]">
+        <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
           <CardContent className="p-4 flex items-center gap-3.5">
             <div className="p-3 rounded-xl bg-purple-500/20 text-purple-400">
               <Pill className="h-5 w-5" />
@@ -515,7 +515,7 @@ export default function PatientPortalPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#0e2c3d] border-[#1b4356]">
+        <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
           <CardContent className="p-4 flex items-center gap-3.5">
             <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400">
               <Stethoscope className="h-5 w-5" />
@@ -531,7 +531,7 @@ export default function PatientPortalPage() {
       {/* MAIN CONTENT AREA */}
       <main className="container mx-auto px-4 py-6 flex-1">
         <Tabs defaultValue="appointments" className="space-y-6">
-          <TabsList className="bg-[#0e2c3d] border border-[#1b4356] p-1 rounded-xl grid grid-cols-2 sm:grid-cols-6 w-full max-w-5xl">
+          <TabsList className={`border p-1 rounded-xl grid grid-cols-2 sm:grid-cols-6 w-full max-w-5xl ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#0d5c75]/20 shadow-sm"}`}>
             <TabsTrigger value="appointments" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
               <Calendar className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
               Visits
@@ -560,7 +560,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 1: APPOINTMENTS */}
           <TabsContent value="appointments">
-            <Card className="bg-[#0e2c3d] border-[#1b4356]">
+            <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
                 <div>
                   <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
@@ -571,7 +571,7 @@ export default function PatientPortalPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="flex bg-[#091e2b] p-1 rounded-lg border border-[#1b4356] text-xs">
+                  <div className={`flex p-1 rounded-lg border text-xs ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-100 border-slate-200"}`}>\
                     {["all", "scheduled", "completed", "cancelled"].map((st) => (
                       <button
                         key={st}
@@ -619,7 +619,7 @@ export default function PatientPortalPage() {
                           : "bg-amber-500/20 text-amber-300 border-amber-500/30"
 
                       return (
-                        <div key={apt.id} className="p-4 rounded-xl bg-[#091e2b] border border-[#1b4356] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div key={apt.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <Badge className={`text-xs capitalize ${badgeVariant}`}>{st}</Badge>
@@ -673,7 +673,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 2: DIGITAL PRESCRIPTIONS */}
           <TabsContent value="prescriptions">
-            <Card className="bg-[#0e2c3d] border-[#1b4356]">
+            <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
@@ -689,7 +689,7 @@ export default function PatientPortalPage() {
                     value={prescriptionSearch}
                     onChange={(e) => setPrescriptionSearch(e.target.value)}
                     placeholder="Search prescription..."
-                    className="pl-9 bg-[#091e2b] border-[#1b4356] text-xs text-white"
+                    className={`pl-9 text-xs border ${isDarkMode ? "bg-gray-900 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`}
                   />
                 </div>
               </CardHeader>
@@ -709,7 +709,7 @@ export default function PatientPortalPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {filteredPrescriptions.map((rx) => (
-                      <div key={rx.id} className="p-4 rounded-xl bg-[#091e2b] border border-[#1b4356] space-y-3">
+                      <div key={rx.id} className={`p-4 rounded-xl border space-y-3 shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                         <div className="flex items-center justify-between border-b border-[#1b4356] pb-2">
                           <div className="flex items-center gap-2">
                             <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px]">Rx #{rx.id}</Badge>
@@ -746,7 +746,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 3: REHAB & CARE TRACKER */}
           <TabsContent value="rehab">
-            <Card className="bg-[#0e2c3d] border-[#1b4356]">
+            <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
               <CardHeader className="flex flex-row items-center justify-between pb-4">
                 <div>
                   <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
@@ -766,7 +766,7 @@ export default function PatientPortalPage() {
                     key={t.id}
                     onClick={() => toggleRehabTask(t.id)}
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
-                      t.done ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200" : "bg-[#091e2b] border-[#1b4356] text-slate-300 hover:border-[#22556d]"
+                      t.done ? (isDarkMode ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200" : "bg-emerald-50 border-emerald-200 text-emerald-800") : (isDarkMode ? "bg-gray-900 border-gray-700 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-700 hover:border-[#2a9d8f]/40")
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -785,7 +785,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 4: PRE-VISIT SYMPTOM INTAKE */}
           <TabsContent value="symptoms">
-            <Card className="bg-[#0e2c3d] border-[#1b4356]">
+            <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
               <CardHeader>
                 <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
                   <Thermometer className="h-5 w-5 text-[#2a9d8f]" />
@@ -813,7 +813,7 @@ export default function PatientPortalPage() {
                                 : num > 4
                                 ? "bg-amber-500 text-white"
                                 : "bg-emerald-500 text-white"
-                              : "bg-[#091e2b] border border-[#1b4356] text-slate-400 hover:text-white"
+                              : (isDarkMode ? "bg-gray-900 border border-gray-700 text-slate-400 hover:text-white" : "bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900")
                           }`}
                         >
                           {num}
@@ -831,7 +831,7 @@ export default function PatientPortalPage() {
                           type="button"
                           onClick={() => setAffectedRegion(reg)}
                           className={`p-2.5 text-left text-xs rounded-lg border transition-all ${
-                            affectedRegion === reg ? "bg-[#2a9d8f]/20 border-[#2a9d8f] text-white font-semibold" : "bg-[#091e2b] border-[#1b4356] text-slate-400 hover:text-white"
+                            affectedRegion === reg ? "bg-[#2a9d8f]/20 border-[#2a9d8f] text-white font-semibold" : (isDarkMode ? "bg-gray-900 border-gray-700 text-slate-400 hover:text-white" : "bg-slate-50 border-slate-200 text-slate-700 hover:border-[#2a9d8f]/40")
                           }`}
                         >
                           {reg}
@@ -846,7 +846,7 @@ export default function PatientPortalPage() {
                       value={symptomDescription}
                       onChange={(e) => setSymptomDescription(e.target.value)}
                       placeholder="e.g., stiffness in morning, pain radiates down leg..."
-                      className="bg-[#091e2b] border-[#1b4356] text-xs text-white"
+                      className={`text-xs border ${isDarkMode ? "bg-gray-900 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`}
                     />
                   </div>
 
@@ -861,7 +861,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 5: CLINICAL NOTES & SPINE RECORDS */}
           <TabsContent value="records">
-            <Card className="bg-[#0e2c3d] border-[#1b4356]">
+            <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
               <CardHeader>
                 <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
                   <FileText className="h-5 w-5 text-[#2a9d8f]" />
@@ -871,7 +871,7 @@ export default function PatientPortalPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {appointments.length > 0 && appointments[0].notes ? (
-                  <div className="p-4 rounded-xl bg-[#091e2b] border border-[#1b4356] space-y-2">
+                  <div className={`p-4 rounded-xl border space-y-2 shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                     <div className="flex items-center justify-between">
                       <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Active Clinical Record</Badge>
                       <span className="text-xs text-slate-400">Dr. Bashir Khan</span>
@@ -879,7 +879,7 @@ export default function PatientPortalPage() {
                     <p className="text-xs text-slate-300 leading-relaxed">{appointments[0].notes}</p>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-xl bg-[#091e2b] border border-[#1b4356] space-y-2">
+                  <div className={`p-4 rounded-xl border space-y-2 shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                     <div className="flex items-center justify-between">
                       <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Active Gonstead Care</Badge>
                       <span className="text-xs text-slate-400">Dr. Bashir Khan</span>
@@ -896,7 +896,7 @@ export default function PatientPortalPage() {
 
           {/* TAB 6: MY PROFILE MANAGEMENT */}
           <TabsContent value="profile">
-            <Card className="bg-[#0e2c3d] border-[#1b4356]">
+            <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
@@ -910,27 +910,27 @@ export default function PatientPortalPage() {
                 </Button>
               </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
+                <div className={`p-3 rounded-xl border shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                   <span className="text-slate-500">Full Name</span>
                   <p className="text-sm font-bold text-white mt-0.5">{patientName}</p>
                 </div>
-                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
+                <div className={`p-3 rounded-xl border shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                   <span className="text-slate-500">Registered Email</span>
                   <p className="text-sm font-bold text-white mt-0.5">{patientEmail || "Not Provided"}</p>
                 </div>
-                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
+                <div className={`p-3 rounded-xl border shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                   <span className="text-slate-500">Phone Number</span>
                   <p className="text-sm font-bold text-white mt-0.5">{patientPhone || "Not Provided"}</p>
                 </div>
-                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
+                <div className={`p-3 rounded-xl border shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                   <span className="text-slate-500">Date of Birth / Gender</span>
                   <p className="text-sm font-bold text-white mt-0.5">{editDob || "N/A"} ({editGender})</p>
                 </div>
-                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
+                <div className={`p-3 rounded-xl border shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                   <span className="text-slate-500">Emergency Contact</span>
                   <p className="text-sm font-bold text-white mt-0.5">{editEmergency || "Not Provided"}</p>
                 </div>
-                <div className="p-3 bg-[#091e2b] rounded-xl border border-[#1b4356]">
+                <div className={`p-3 rounded-xl border shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
                   <span className="text-slate-500">Clinic Address / City</span>
                   <p className="text-sm font-bold text-white mt-0.5">{editAddress || "Nowshera, KPK"}</p>
                 </div>
@@ -942,7 +942,7 @@ export default function PatientPortalPage() {
 
       {/* EDIT PROFILE DIALOG */}
       <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
-        <DialogContent className="bg-[#0e2c3d] border-[#1b4356] text-slate-100 max-w-md">
+        <DialogContent className={`max-w-md ${isDarkMode ? "bg-gray-900 border-gray-700 text-slate-100" : "bg-white border-slate-200 text-slate-900"}`}>\
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
               <User className="h-5 w-5 text-[#2a9d8f]" /> Update Patient Profile
@@ -951,24 +951,24 @@ export default function PatientPortalPage() {
           <div className="space-y-3 text-xs pt-2">
             <div>
               <Label className="text-slate-300">Full Name *</Label>
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className={`text-xs mt-1 border ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`} />
             </div>
             <div>
               <Label className="text-slate-300">Phone Number *</Label>
-              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
+              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className={`text-xs mt-1 border ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`} />
             </div>
             <div>
               <Label className="text-slate-300">Email Address *</Label>
-              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className={`text-xs mt-1 border ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`} />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-slate-300">Date of Birth</Label>
-                <Input type="date" value={editDob} onChange={(e) => setEditDob(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
+                <Input type="date" value={editDob} onChange={(e) => setEditDob(e.target.value)} className={`text-xs mt-1 border ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`} />
               </div>
               <div>
                 <Label className="text-slate-300">Gender</Label>
-                <select value={editGender} onChange={(e) => setEditGender(e.target.value)} className="w-full h-9 bg-[#091e2b] border border-[#1b4356] rounded-md text-white text-xs px-2 mt-1">
+                <select value={editGender} onChange={(e) => setEditGender(e.target.value)} className={`w-full h-9 border rounded-md text-xs px-2 mt-1 ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`}>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
@@ -977,11 +977,11 @@ export default function PatientPortalPage() {
             </div>
             <div>
               <Label className="text-slate-300">Emergency Contact Phone</Label>
-              <Input value={editEmergency} onChange={(e) => setEditEmergency(e.target.value)} placeholder="+923001234567" className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
+              <Input value={editEmergency} onChange={(e) => setEditEmergency(e.target.value)} placeholder="+923001234567" className={`text-xs mt-1 border ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`} />
             </div>
             <div>
               <Label className="text-slate-300">Address / City</Label>
-              <Input value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Tehsil Road, Nowshera" className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
+              <Input value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Tehsil Road, Nowshera" className={`text-xs mt-1 border ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`} />
             </div>
 
             <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-semibold py-2">
@@ -1050,7 +1050,7 @@ export default function PatientPortalPage() {
 
       {/* RESCHEDULE DIALOG */}
       <Dialog open={!!rescheduleApt} onOpenChange={(open) => !open && setRescheduleApt(null)}>
-        <DialogContent className="bg-[#0e2c3d] border-[#1b4356] text-slate-100 max-w-md">
+        <DialogContent className={`max-w-md ${isDarkMode ? "bg-gray-900 border-gray-700 text-slate-100" : "bg-white border-slate-200 text-slate-900"}`}>\
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
               <Calendar className="h-5 w-5 text-[#2a9d8f]" /> Reschedule Adjustment Visit
@@ -1059,11 +1059,11 @@ export default function PatientPortalPage() {
           <div className="space-y-3 text-xs pt-2">
             <div>
               <Label className="text-slate-300">Select New Date *</Label>
-              <Input type="date" value={rescheduleDate} onChange={(e) => setRescheduleDate(e.target.value)} className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
+              <Input type="date" value={rescheduleDate} onChange={(e) => setRescheduleDate(e.target.value)} className={`text-xs mt-1 border ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`} />
             </div>
             <div>
               <Label className="text-slate-300">Select Preferred Time *</Label>
-              <Input type="text" value={rescheduleTime} onChange={(e) => setRescheduleTime(e.target.value)} placeholder="10:00 AM" className="bg-[#091e2b] border-[#1b4356] text-white text-xs mt-1" />
+              <Input type="text" value={rescheduleTime} onChange={(e) => setRescheduleTime(e.target.value)} placeholder="10:00 AM" className={`text-xs mt-1 border ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`} />
             </div>
             <Button onClick={handleSaveReschedule} disabled={isUpdatingApt} className="w-full bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-semibold">
               {isUpdatingApt ? "Updating Date..." : "Confirm Reschedule"}
@@ -1079,7 +1079,9 @@ export default function PatientPortalPage() {
           setViewConfirmationApt(null)
         }
       }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[#091e2b] border-2 border-[#22556d] text-slate-100 p-3 sm:p-6 pb-24 shadow-2xl rounded-2xl">
+        <DialogContent className={`max-w-4xl max-h-[90vh] overflow-y-auto border-2 p-3 sm:p-6 pb-24 shadow-2xl rounded-2xl ${
+          isDarkMode ? "bg-gray-900 border-gray-700 text-slate-100" : "bg-white border-slate-200 text-slate-900"
+        }`}>
           <DialogHeader className="sr-only">
             <DialogTitle>Appointment Confirmation Slip & PDF Download</DialogTitle>
           </DialogHeader>
@@ -1109,7 +1111,9 @@ export default function PatientPortalPage() {
 
       {/* QUICK BOOKING DIALOG */}
       <Dialog open={isBookModalOpen} onOpenChange={setIsBookModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#0e2c3d] border-[#1b4356] text-slate-100 p-4 sm:p-6">
+        <DialogContent className={`max-w-3xl max-h-[90vh] overflow-y-auto border p-4 sm:p-6 shadow-2xl rounded-2xl ${
+          isDarkMode ? "bg-gray-900 border-gray-700 text-slate-100" : "bg-white border-slate-200 text-slate-900"
+        }`}>
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
               <Stethoscope className="h-5 w-5 text-[#2a9d8f]" /> Schedule Gonstead Appointment
