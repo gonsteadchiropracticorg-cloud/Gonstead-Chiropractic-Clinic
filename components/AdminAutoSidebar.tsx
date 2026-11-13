@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
+import { signOutAdmin } from "@/lib/data-service"
 
 interface NavItem {
   id: string
@@ -60,12 +61,18 @@ export function AdminAutoSidebar() {
 
   const isExpanded = isHovered || isPinnedOpen
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
+      localStorage.removeItem("admin_authenticated")
+      localStorage.removeItem("admin_email")
       localStorage.removeItem("admin_auth")
       localStorage.removeItem("admin_token")
-    } catch (e) {}
-    router.push("/admin/auth")
+      sessionStorage.clear()
+      await signOutAdmin()
+    } catch (e) {
+      console.error("Logout error", e)
+    }
+    window.location.href = "/admin/auth"
   }
 
   return (

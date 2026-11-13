@@ -197,56 +197,42 @@ export default function WebsiteAnalyticsPage() {
 
   if (loading && !analyticsData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-[#FEFCF8] p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center gap-4">
-            <RefreshCw className="h-8 w-8 animate-spin text-[#0d5c75]" />
-            <p className="text-gray-600">Loading analytics data...</p>
-          </div>
+      <div className="min-h-screen bg-[rgb(220,230,229)] p-4 sm:p-6 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 bg-white/80 backdrop-blur-xl border border-[#0d5c75]/15 p-8 rounded-3xl shadow-lg text-center">
+          <div className="w-12 h-12 border-4 border-[#0d5c75] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-bold text-[#0d5c75] font-poppins">Loading Website Analytics...</p>
+          <p className="text-xs text-gray-500">Fetching real-time traffic & visitor metrics</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-[#FEFCF8] p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 relative flex-shrink-0">
-            <Image
-              src="/images/gonstead-chiropractic-logo-new.png"
-                alt="Gonstead Chiropractic Logo"
-                fill
-                className="object-contain"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/images/gonstead-logo-new.png";
-                }}
-              />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-[#0d5c75] font-poppins flex items-center gap-3">
-                <TrendingUp className="h-8 w-8" />
-                Website Visitor Analytics
-                <Badge variant="secondary" className="bg-green-100 text-green-700 px-2 py-1">
-                  <Activity className="h-3 w-3 mr-1" />
-                  Live
-                </Badge>
-              </h1>
-              <p className="text-gray-600 mt-2 font-open-sans">
-                Real-time website performance and visitor tracking dashboard
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                Last updated: {lastUpdated.toLocaleString()}
-              </p>
-            </div>
+    <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
+      {/* Header matching Admin Dashboard */}
+      <header className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-0.5 text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-[#2a9d8f]" />
+              Website Visitor Analytics
+              <Badge variant="outline" className="border-emerald-400/40 bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse" />
+                Live
+              </Badge>
+            </h1>
+            <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+              Real-time website performance and visitor tracking dashboard
+            </p>
+            <p className="text-[11px] text-gray-500 font-medium">
+              Last updated: {lastUpdated.toLocaleString()}
+            </p>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 self-end md:self-auto">
             <Select value={timeframe} onValueChange={setTimeframe}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-36 h-9 bg-white/80 border-[#0d5c75]/20 text-[#0d5c75] rounded-xl text-xs font-semibold shadow-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -259,115 +245,121 @@ export default function WebsiteAnalyticsPage() {
             </Select>
             
             <Button
+              size="sm"
               onClick={fetchAnalytics}
               disabled={loading}
-              className="bg-[#0d5c75] hover:bg-[#0d5c75]/90"
+              className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
             
-            <Button variant="outline" onClick={() => exportData('csv')}>
-              <Download className="h-4 w-4 mr-2" />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => exportData('csv')}
+              className="border-[#0d5c75]/30 text-[#0d5c75] bg-white hover:bg-[#0d5c75]/5 rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
               Export CSV
             </Button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-white shadow-lg border-0 hover:shadow-xl transition-shadow">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-600">Active Visitors</CardTitle>
-              <Activity className="h-5 w-5 text-green-500" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+            <CardTitle className="text-xs font-semibold text-gray-600">Active Visitors</CardTitle>
+            <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Activity className="h-3.5 w-3.5" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-5 pt-0">
             <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold text-[#0d5c75]">
+              <span className="text-xl sm:text-2xl font-bold text-emerald-700">
                 {analyticsData?.activeVisitors || 0}
               </span>
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
+              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 text-[10px] px-1.5 py-0">
                 Live
               </Badge>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Currently browsing</p>
+            <p className="text-[11px] font-medium text-gray-500 mt-1">Currently browsing</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-lg border-0 hover:shadow-xl transition-shadow">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Page Views</CardTitle>
-              <Eye className="h-5 w-5 text-blue-500" />
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+            <CardTitle className="text-xs font-semibold text-gray-600">Total Page Views</CardTitle>
+            <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Eye className="h-3.5 w-3.5" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold text-[#0d5c75]">
+          <CardContent className="p-4 sm:p-5 pt-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl sm:text-2xl font-bold text-[#0d5c75]">
                 {analyticsData?.totalPageViews?.toLocaleString() || 0}
               </span>
-              <TrendingUp className="h-4 w-4 text-green-500" />
+              <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
             </div>
-            <p className="text-xs text-gray-500 mt-1">In selected timeframe</p>
+            <p className="text-[11px] font-medium text-gray-500 mt-1">In selected timeframe</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-lg border-0 hover:shadow-xl transition-shadow">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-600">Unique Visitors</CardTitle>
-              <Users className="h-5 w-5 text-purple-500" />
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+            <CardTitle className="text-xs font-semibold text-gray-600">Unique Visitors</CardTitle>
+            <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <Users className="h-3.5 w-3.5" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold text-[#0d5c75]">
+          <CardContent className="p-4 sm:p-5 pt-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl sm:text-2xl font-bold text-purple-700">
                 {analyticsData?.uniqueVisitors || 0}
               </span>
-              <TrendingUp className="h-4 w-4 text-green-500" />
+              <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
             </div>
-            <p className="text-xs text-gray-500 mt-1">Individual users</p>
+            <p className="text-[11px] font-medium text-gray-500 mt-1">Individual users</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-lg border-0 hover:shadow-xl transition-shadow">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-600">Avg. Session</CardTitle>
-              <Clock className="h-5 w-5 text-orange-500" />
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-4 sm:p-5">
+            <CardTitle className="text-xs font-semibold text-gray-600">Avg. Session</CardTitle>
+            <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Clock className="h-3.5 w-3.5" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold text-[#0d5c75]">
+          <CardContent className="p-4 sm:p-5 pt-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl sm:text-2xl font-bold text-amber-700">
                 {Math.floor((analyticsData?.avgSessionDuration || 0) / 60)}:{((analyticsData?.avgSessionDuration || 0) % 60).toString().padStart(2, '0')}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Minutes:seconds</p>
+            <p className="text-[11px] font-medium text-gray-500 mt-1">Minutes:seconds</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-white shadow-lg border-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <Target className="h-4 w-4" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+          <CardHeader className="pb-2 p-4 sm:p-5">
+            <CardTitle className="text-xs font-semibold text-gray-600 flex items-center gap-2">
+              <Target className="h-3.5 w-3.5 text-[#2a9d8f]" />
               Bounce Rate
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-5 pt-0">
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-[#0d5c75]">
+              <span className="text-xl sm:text-2xl font-bold text-[#0d5c75]">
                 {analyticsData?.bounceRate?.toFixed(1) || 0}%
               </span>
-              <div className={`flex items-center gap-1 ${(analyticsData?.bounceRate || 0) < 50 ? 'text-green-500' : 'text-red-500'}`}>
+              <div className={`flex items-center gap-1 ${(analyticsData?.bounceRate || 0) < 50 ? 'text-emerald-600' : 'text-rose-600'}`}>
                 {(analyticsData?.bounceRate || 0) < 50 ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
-                <span className="text-sm font-medium">
+                <span className="text-xs font-semibold">
                   {(analyticsData?.bounceRate || 0) < 50 ? 'Good' : 'High'}
                 </span>
               </div>
@@ -375,72 +367,72 @@ export default function WebsiteAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-lg border-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <Users className="h-4 w-4" />
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+          <CardHeader className="pb-2 p-4 sm:p-5">
+            <CardTitle className="text-xs font-semibold text-gray-600 flex items-center gap-2">
+              <Users className="h-3.5 w-3.5 text-[#2a9d8f]" />
               New vs Returning
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
+          <CardContent className="p-4 sm:p-5 pt-0">
+            <div className="space-y-1.5 text-xs">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">New Visitors</span>
-                <span className="font-semibold">{analyticsData?.newVisitors || 0}</span>
+                <span className="text-gray-600">New Visitors</span>
+                <span className="font-bold text-[#0d5c75]">{analyticsData?.newVisitors || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Returning</span>
-                <span className="font-semibold">{analyticsData?.returningVisitors || 0}</span>
+                <span className="text-gray-600">Returning</span>
+                <span className="font-bold text-[#2a9d8f]">{analyticsData?.returningVisitors || 0}</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-lg border-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl hover:shadow-lg transition-all duration-200">
+          <CardHeader className="pb-2 p-4 sm:p-5">
+            <CardTitle className="text-xs font-semibold text-gray-600 flex items-center gap-2">
+              <Calendar className="h-3.5 w-3.5 text-[#2a9d8f]" />
               Total Sessions
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold text-[#0d5c75]">
+          <CardContent className="p-4 sm:p-5 pt-0">
+            <span className="text-xl sm:text-2xl font-bold text-[#0d5c75]">
               {analyticsData?.totalSessions || 0}
             </span>
-            <p className="text-xs text-gray-500 mt-1">User sessions</p>
+            <p className="text-[11px] font-medium text-gray-500 mt-1">User sessions</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Charts and Detailed Analytics */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:grid-cols-7">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
+        <TabsList className="flex flex-wrap gap-1 p-1.5 rounded-2xl bg-white border border-[#0d5c75]/20 shadow-md w-full max-w-4xl">
+          <TabsTrigger value="overview" className="flex items-center gap-1.5 data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
+            <BarChart3 className="h-3.5 w-3.5" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="countries" className="flex items-center gap-2">
-            <Flag className="h-4 w-4" />
+          <TabsTrigger value="countries" className="flex items-center gap-1.5 data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
+            <Flag className="h-3.5 w-3.5" />
             Countries
           </TabsTrigger>
-          <TabsTrigger value="performance" className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
+          <TabsTrigger value="performance" className="flex items-center gap-1.5 data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
+            <Zap className="h-3.5 w-3.5" />
             Performance
           </TabsTrigger>
-          <TabsTrigger value="traffic" className="flex items-center gap-2">
-            <Globe className="h-4 w-4" />
+          <TabsTrigger value="traffic" className="flex items-center gap-1.5 data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
+            <Globe className="h-3.5 w-3.5" />
             Traffic
           </TabsTrigger>
-          <TabsTrigger value="devices" className="flex items-center gap-2">
-            <Smartphone className="h-4 w-4" />
+          <TabsTrigger value="devices" className="flex items-center gap-1.5 data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
+            <Smartphone className="h-3.5 w-3.5" />
             Devices
           </TabsTrigger>
-          <TabsTrigger value="pages" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
+          <TabsTrigger value="pages" className="flex items-center gap-1.5 data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
+            <FileText className="h-3.5 w-3.5" />
             Pages
           </TabsTrigger>
-          <TabsTrigger value="realtime" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
+          <TabsTrigger value="realtime" className="flex items-center gap-1.5 data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
+            <Activity className="h-3.5 w-3.5" />
             Real-time
           </TabsTrigger>
         </TabsList>
@@ -449,32 +441,32 @@ export default function WebsiteAnalyticsPage() {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Page Views Trend */}
-            <Card className="bg-white shadow-lg border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <LineChart className="h-5 w-5" />
+            <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+              <CardHeader className="bg-slate-50/60 border-b border-gray-100 py-3.5 px-4 sm:px-6">
+                <CardTitle className="text-sm sm:text-base font-bold text-[#0d5c75] font-poppins flex items-center gap-2">
+                  <LineChart className="h-4 w-4 text-[#2a9d8f]" />
                   Page Views Trend
                 </CardTitle>
-                <CardDescription>Hourly breakdown of page views and unique visitors</CardDescription>
+                <CardDescription className="text-xs text-gray-500">Hourly breakdown of page views and unique visitors</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="h-80">
+              <CardContent className="p-4 sm:p-6">
+                <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsLineChart data={analyticsData?.hourlyData || []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis 
                         dataKey="hour" 
-                        stroke="#666"
-                        fontSize={12}
+                        stroke="#64748b"
+                        fontSize={11}
                         tickFormatter={(hour) => `${hour}:00`}
                       />
-                      <YAxis stroke="#666" fontSize={12} />
+                      <YAxis stroke="#64748b" fontSize={11} />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'white', 
-                          border: '1px solid #e0e0e0',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          backgroundColor: '#ffffff', 
+                          border: '1px solid rgba(13,92,117,0.15)',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
                         }}
                         labelFormatter={(hour) => `${hour}:00`}
                       />
@@ -485,7 +477,7 @@ export default function WebsiteAnalyticsPage() {
                         stroke="#0d5c75" 
                         strokeWidth={3}
                         name="Page Views"
-                        dot={{ fill: '#0d5c75', strokeWidth: 2, r: 4 }}
+                        dot={{ fill: '#0d5c75', strokeWidth: 2, r: 3 }}
                       />
                       <Line 
                         type="monotone" 
@@ -493,7 +485,7 @@ export default function WebsiteAnalyticsPage() {
                         stroke="#2a9d8f" 
                         strokeWidth={3}
                         name="Unique Visitors"
-                        dot={{ fill: '#2a9d8f', strokeWidth: 2, r: 4 }}
+                        dot={{ fill: '#2a9d8f', strokeWidth: 2, r: 3 }}
                       />
                     </RechartsLineChart>
                   </ResponsiveContainer>
@@ -502,15 +494,15 @@ export default function WebsiteAnalyticsPage() {
             </Card>
 
             {/* Traffic Sources */}
-            <Card className="bg-white shadow-lg border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
+            <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
+              <CardHeader className="bg-slate-50/60 border-b border-gray-100 py-3.5 px-4 sm:px-6">
+                <CardTitle className="text-sm sm:text-base font-bold text-[#0d5c75] font-poppins flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-[#2a9d8f]" />
                   Traffic Sources
                 </CardTitle>
-                <CardDescription>Where your visitors are coming from</CardDescription>
+                <CardDescription className="text-xs text-gray-500">Where your visitors are coming from</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
@@ -1066,27 +1058,49 @@ export default function WebsiteAnalyticsPage() {
       </Tabs>
 
       {/* Export and Actions */}
-      <Card className="bg-white shadow-lg border-0 mt-8">
-        <CardHeader>
-          <CardTitle>Data Export & Management</CardTitle>
-          <CardDescription>Export your analytics data for further analysis</CardDescription>
+      <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden mt-6">
+        <CardHeader className="bg-slate-50/60 border-b border-gray-100 py-3.5 px-4 sm:px-6">
+          <CardTitle className="text-sm sm:text-base font-bold text-[#0d5c75] font-poppins flex items-center gap-2">
+            <Download className="h-4 w-4 text-[#2a9d8f]" />
+            Data Export & Management
+          </CardTitle>
+          <CardDescription className="text-xs text-gray-500">Export your website visitor records for external reports & analysis</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => exportData('csv')} className="bg-[#0d5c75] hover:bg-[#0d5c75]/90">
-              <Download className="h-4 w-4 mr-2" />
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-wrap gap-2.5">
+            <Button
+              size="sm"
+              onClick={() => exportData('csv')}
+              className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
               Export CSV Report
             </Button>
-            <Button onClick={() => exportData('excel')} variant="outline">
-              <Download className="h-4 w-4 mr-2" />
+            <Button
+              size="sm"
+              onClick={() => exportData('excel')}
+              variant="outline"
+              className="border-[#0d5c75]/30 text-[#0d5c75] bg-white hover:bg-[#0d5c75]/5 rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
               Export Excel Report
             </Button>
-            <Button onClick={() => exportData('pdf')} variant="outline">
-              <Download className="h-4 w-4 mr-2" />
+            <Button
+              size="sm"
+              onClick={() => exportData('pdf')}
+              variant="outline"
+              className="border-[#0d5c75]/30 text-[#0d5c75] bg-white hover:bg-[#0d5c75]/5 rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
               Export PDF Report
             </Button>
-            <Button onClick={fetchAnalytics} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button
+              size="sm"
+              onClick={fetchAnalytics}
+              variant="outline"
+              className="border-[#0d5c75]/30 text-[#0d5c75] bg-white hover:bg-[#0d5c75]/5 rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
+            >
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               Refresh Data
             </Button>
           </div>

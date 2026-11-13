@@ -1,33 +1,22 @@
-import type { Metadata, Viewport } from "next"
+"use client"
+
+import { usePathname } from "next/navigation"
 import { AdminAutoSidebar } from "@/components/AdminAutoSidebar"
-
-export const metadata: Metadata = {
-  title: "Admin Dashboard - Gonstead Chiropractic",
-  description: "Admin dashboard for patient management and clinic operations",
-  manifest: "/admin-manifest.json",
-  appleWebApp: {
-    capable: true,
-    title: "GC Admin",
-    statusBarStyle: "default",
-  },
-}
-
-export const viewport: Viewport = {
-  themeColor: "#0d5c75",
-}
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
+  const isAuthPage = pathname === "/admin/auth" || pathname === "/staff-login"
+
   return (
     <div className="relative min-h-screen bg-slate-50 dark:bg-gray-950">
-      <AdminAutoSidebar />
-      <div className="pl-16 transition-all duration-300">
+      {!isAuthPage && <AdminAutoSidebar />}
+      <div className={`transition-all duration-300 ${isAuthPage ? "pl-0" : "pl-16"}`}>
         {children}
       </div>
     </div>
   )
 }
-
