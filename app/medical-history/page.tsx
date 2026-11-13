@@ -872,7 +872,7 @@ export default function MedicalHistoryPage() {
             </CardContent>
           </Card>
         )}
-      </div>
+      </main>
 
       {/* Detail Modal */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
