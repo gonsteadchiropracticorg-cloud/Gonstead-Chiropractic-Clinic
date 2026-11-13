@@ -54,43 +54,32 @@ export default function AdminHelpPageEnhanced() {
     <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header - Glass Style Harmonized with Admin Dashboard */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-4 rounded-2xl">
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => router.replace('/admin/dashboard')} 
-              className="border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white transition-all font-medium h-9 px-3 text-xs sm:text-sm rounded-xl bg-white/70"
-            >
-              <LayoutDashboard className="h-4 w-4 mr-1.5" />
-              <span>Dashboard</span>
-            </Button>
-            <div className="h-6 w-px bg-[#0d5c75]/20 hidden sm:block" />
-            <div className="flex items-center gap-2.5">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center text-white shadow-md">
-                <HelpCircle className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins leading-tight">
-                  Admin Help Center
-                </h1>
-                <p className="text-xs sm:text-sm text-[#2a9d8f] font-medium">
-                  Your complete guide to mastering the admin clinic dashboard
-                </p>
-              </div>
+        <div className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-0.5 text-left">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight">
+                Admin Help Center
+              </h1>
+              <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+                Your complete guide to mastering the admin clinic dashboard
+              </p>
+              <p className="text-[11px] text-gray-500 font-medium">
+                Step-by-step guides, shortcuts, video tutorials & troubleshooting
+              </p>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden border-[#0d5c75]/30 text-[#0d5c75] bg-white/70 rounded-xl h-9"
-            >
-              <BookMarked className="h-4 w-4 mr-1.5" />
-              Navigation
-            </Button>
+            <div className="flex items-center gap-2 w-full md:w-auto self-end md:self-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="lg:hidden border-[#0d5c75]/30 text-[#0d5c75] bg-white/70 rounded-xl h-9"
+              >
+                <BookMarked className="h-4 w-4 mr-1.5" />
+                Navigation
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -318,7 +307,7 @@ export default function AdminHelpPageEnhanced() {
               <Card id="troubleshooting" className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl overflow-hidden">
                 <CardHeader className="py-4 px-6 border-b border-slate-100 bg-slate-50/50">
                   <CardTitle className="flex items-center gap-2 text-base font-bold text-[#0d5c75]">
-                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    <AlertTriangle className="h-5 w-5 text-[#2a9d8f]" />
                     Troubleshooting Guide
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-500">Quick solutions to common operational challenges</CardDescription>
@@ -448,9 +437,13 @@ function EnhancedFeature({ id, Icon, title, purpose, videoId, children }: any) {
             <CardDescription className="text-xs text-slate-500"><strong>Purpose:</strong> {purpose}</CardDescription>
           </div>
           {videoId && (
-            <Button variant="outline" size="sm" className="ml-4 border-[#0d5c75]/20 text-[#0d5c75] text-xs h-8 rounded-xl">
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-4 border-[#0d5c75]/25 bg-white hover:bg-teal-50 text-[#0d5c75] text-xs h-8 px-3 rounded-xl shadow-xs transition-colors"
+            >
               <PlayCircle className="h-3.5 w-3.5 mr-1.5 text-[#2a9d8f]" />
-              Tutorial
+              <span className="font-semibold">Tutorial</span>
             </Button>
           )}
         </div>
@@ -486,7 +479,7 @@ function StepByStep({ steps }: { steps: Array<{ title: string; desc: string }> }
 function TipBox({ type, children }: { type: 'info' | 'warning' | 'success'; children: React.ReactNode }) {
   const config = {
     info: { icon: Info, bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-teal-900', iconColor: 'text-teal-600' },
-    warning: { icon: AlertTriangle, bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-900', iconColor: 'text-amber-600' },
+    warning: { icon: AlertTriangle, bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-slate-800', iconColor: 'text-[#2a9d8f]' },
     success: { icon: CheckCircle2, bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-900', iconColor: 'text-emerald-600' },
   }[type]
 

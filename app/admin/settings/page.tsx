@@ -209,40 +209,29 @@ export default function AdminSettings() {
     <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header - Unified Glass Style Matching Dashboard */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-4 rounded-2xl">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/admin/dashboard")}
-              className="border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white transition-all font-medium h-9 px-3 text-xs sm:text-sm rounded-xl bg-white/70"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Dashboard
-            </Button>
-            <div className="h-6 w-px bg-[#0d5c75]/20 hidden sm:block" />
-            <div className="flex items-center gap-2.5">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center text-white shadow-md">
-                <Settings className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins leading-tight">
-                  Admin Settings
-                </h1>
-                <p className="text-xs sm:text-sm text-[#2a9d8f] font-medium">
-                  Configure clinic profile, operating schedule & security preferences
-                </p>
-              </div>
+        <div className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-0.5 text-left">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight">
+                Admin Settings
+              </h1>
+              <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+                Configure clinic profile, operating schedule & security preferences
+              </p>
+              <p className="text-[11px] text-gray-500 font-medium">
+                Clinic profile, GPS maps, business hours, notifications & system options
+              </p>
             </div>
-          </div>
 
-          <Button
-            onClick={saveSettings}
-            className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white shadow-md rounded-xl h-10 px-5 text-sm font-semibold flex items-center gap-2"
-          >
-            <Save className="h-4 w-4" />
-            Save All Settings
-          </Button>
+            <Button
+              onClick={saveSettings}
+              className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white shadow-md rounded-xl h-10 px-5 text-sm font-semibold flex items-center gap-2 self-end md:self-auto"
+            >
+              <Save className="h-4 w-4" />
+              Save All Settings
+            </Button>
+          </div>
         </div>
 
         {/* Main Grid */}
@@ -705,12 +694,12 @@ export default function AdminSettings() {
             <CardContent className="p-5 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <div className="bg-amber-50/80 p-3.5 rounded-xl border border-amber-200">
+                  <div className="bg-teal-50/80 p-3.5 rounded-xl border border-teal-200">
                     <div className="flex items-center gap-2 mb-1">
-                      <Key className="h-4 w-4 text-amber-700" />
-                      <h4 className="text-xs font-bold text-amber-900">Security Notice</h4>
+                      <Key className="h-4 w-4 text-[#0d5c75]" />
+                      <h4 className="text-xs font-bold text-[#0d5c75]">Security Notice</h4>
                     </div>
-                    <p className="text-xs text-amber-800">
+                    <p className="text-xs text-slate-700">
                       Changing staff credentials will update staff portal login details for all staff users.
                     </p>
                   </div>

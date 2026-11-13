@@ -1025,7 +1025,7 @@ html.light {
   }
 }
 
-/* Prevent Chrome/Edge/Firefox browser autofill bright yellow background */
+/* Prevent Chrome/Edge/Firefox browser autofill bright yellow background across entire site */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus, 
@@ -1034,10 +1034,30 @@ textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus,
 select:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px #0e2c3d inset !important;
-  box-shadow: 0 0 0 1000px #0e2c3d inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  color: #ffffff !important;
-  caret-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  color: #0f172a !important;
+  caret-color: #0d5c75 !important;
   transition: background-color 5000s ease-in-out 0s !important;
 }
+
+/* Ensure clean inputs and switches across all admin pages with zero yellow tint */
+input, textarea, select {
+  accent-color: #0d5c75;
+}
+
+[data-state="checked"].bg-primary,
+button[role="switch"][data-state="checked"] {
+  background-color: #0d5c75 !important;
+}
+
+button[role="switch"][data-state="unchecked"] {
+  background-color: #cbd5e1 !important;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(27%) sepia(51%) saturate(1478%) hue-rotate(152deg) brightness(96%) contrast(92%);
+  cursor: pointer;
+}
+
