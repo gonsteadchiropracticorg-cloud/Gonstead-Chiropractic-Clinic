@@ -1929,7 +1929,35 @@ left: 80px;
         h2.section-title:hover .anchor-link, .card-title:hover .anchor-link { opacity: 1; }
         .toc-filter { width: 100%; height: 32px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0 10px; font-size: 12px; margin-top: 8px; }
         .sidebar:not(.expanded):not(:hover) .toc-filter { display: none; }
+
+        /* When embedded in an iframe inside the main app, hide floating elements that clash with parent app header & copilot */
+        body.in-iframe #theme-toggle,
+        body.in-iframe .professional-icons-container,
+        body.in-iframe #sidebarToggle,
+        body.in-iframe #scrollToTopBtn,
+        body.in-iframe #backToTop,
+        body.in-iframe #readingProgress {
+            display: none !important;
+        }
+
+        /* Adjust main content & sidebar in iframe to seamlessly fill page */
+        body.in-iframe .sidebar {
+            top: 16px;
+            height: calc(100vh - 32px);
+        }
+        body.in-iframe .main-content {
+            padding-top: 24px;
+        }
     </style>
+    <script>
+        // Immediately detect if inside iframe and add class to body
+        if (window.self !== window.top) {
+            document.documentElement.classList.add('in-iframe');
+            document.addEventListener('DOMContentLoaded', function() {
+                document.body.classList.add('in-iframe');
+            });
+        }
+    </script>
 </head>
 <body>
     <div id="readingProgress"><div class="rp-fill" id="rpFill"></div></div>
