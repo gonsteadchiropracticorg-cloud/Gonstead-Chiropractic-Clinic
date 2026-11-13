@@ -486,29 +486,17 @@ Exported from Gonstead Chiropractic Patient Tracking System
         <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Left Section - Title perfectly aligned left with clinic styling */}
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => router.push('/admin/dashboard')}
-              className="border-[#0d5c75]/30 text-[#0d5c75] bg-white/80 hover:bg-[#0d5c75] hover:text-white rounded-xl h-9 px-3 font-medium transition-all shadow-xs"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Dashboard
-            </Button>
-            
-            <div className="space-y-0.5 text-left border-l border-[#0d5c75]/20 pl-3">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight">
-                Patient Tracking System
-              </h1>
-              <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
-                Track & Monitor Clinical Records
-              </p>
-              <p className="text-[11px] text-gray-500 font-medium">
-                Search by Prescription ID, Name, Phone, or Email
-              </p>
-            </div>
+          {/* Left Section - Title perfectly aligned left without Back to Dashboard button */}
+          <div className="space-y-0.5 text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight">
+              Patient Tracking System
+            </h1>
+            <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+              Track & Monitor Clinical Records
+            </p>
+            <p className="text-[11px] text-gray-500 font-medium">
+              Search by Prescription ID, Name, Phone, or Email
+            </p>
           </div>
 
           {/* Right Section - Glass Stat Pill */}

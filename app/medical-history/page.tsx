@@ -585,113 +585,99 @@ export default function MedicalHistoryPage() {
   const followUpRecords = records.filter((r) => r.status === "Follow-up").length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8F5F0] to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/">
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Home
-                </Button>
-              </Link>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 relative">
-            <Image
-              src="/images/gonstead-chiropractic-logo-new.png"
-                    alt="Gonstead Chiropractic Logo"
-                    fill
-                    className="object-contain"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/images/gonstead-logo-new.png";
-                    }}
-                  />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-[#0d5c75] dark:text-white font-poppins">Medical History</h1>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">Patient Records Management</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                onClick={handleRefresh}
-                variant="outline"
-                className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
-                disabled={isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                {isLoading ? 'Loading...' : 'Refresh Data'}
-              </Button>
-              <Button 
-                onClick={handleNewRecord}
-                className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Record
-              </Button>
-            </div>
+    <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
+      {/* Header matching Admin Dashboard */}
+      <header className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-0.5 text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight">
+              Medical History
+            </h1>
+            <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+              Patient Clinical Records Management
+            </p>
+            <p className="text-[11px] text-gray-500 font-medium">
+              View diagnoses, treatment plans, and session histories
+            </p>
+          </div>
+          <div className="flex items-center gap-2 self-end md:self-auto">
+            <Button 
+              onClick={handleRefresh}
+              variant="outline"
+              size="sm"
+              className="border-[#0d5c75]/30 text-[#0d5c75] bg-white/80 hover:bg-[#0d5c75] hover:text-white rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Loading...' : 'Refresh'}
+            </Button>
+            <Button 
+              onClick={handleNewRecord}
+              size="sm"
+              className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white rounded-xl h-9 text-xs sm:text-sm font-medium shadow-xs"
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              New Record
+            </Button>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <main className="space-y-6">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-[#0d5c75]/20">
-            <CardContent className="p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+            <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Records</p>
-                  <p className="text-2xl font-bold text-[#0d5c75] dark:text-white">{totalRecords}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Records</p>
+                  <p className="text-2xl font-black text-[#0d5c75] mt-0.5">{totalRecords}</p>
                 </div>
-                <div className="w-12 h-12 bg-[#0d5c75]/10 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-[#0d5c75] dark:text-blue-400" />
+                <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-[#0d5c75]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-green-200 dark:border-green-800">
-            <CardContent className="p-6">
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+            <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Completed</p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">{completedRecords}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Completed</p>
+                  <p className="text-2xl font-black text-emerald-600 mt-0.5">{completedRecords}</p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-blue-200 dark:border-blue-800">
-            <CardContent className="p-6">
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+            <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Ongoing</p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{ongoingRecords}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ongoing</p>
+                  <p className="text-2xl font-black text-[#2a9d8f] mt-0.5">{ongoingRecords}</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+                  <Activity className="h-5 w-5 text-[#2a9d8f]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-[rgb(200,230,200)] dark:border-[rgb(100,150,100)]">
-            <CardContent className="p-6">
+          <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+            <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Follow-up</p>
-                  <p className="text-2xl font-bold" style={{ color: 'rgb(70,100,70)' }}>{followUpRecords}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Follow-up</p>
+                  <p className="text-2xl font-black text-amber-700 mt-0.5">{followUpRecords}</p>
                 </div>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(227,252,236,0.3)' }}>
-                  <ClipboardList className="h-6 w-6" style={{ color: 'rgb(70,100,70)' }} />
+                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                  <ClipboardList className="h-5 w-5 text-amber-600" />
                 </div>
               </div>
             </CardContent>
@@ -699,27 +685,27 @@ export default function MedicalHistoryPage() {
         </div>
 
         {/* Search and Filters */}
-        <Card className="mb-8 border-[#0d5c75]/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0d5c75] dark:text-white">
-              <Search className="h-5 w-5" />
-              Search & Filter Records
+        <Card className="border border-[#0d5c75]/15 bg-white shadow-md rounded-2xl">
+          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-5 py-3.5 rounded-t-2xl">
+            <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              Search & Filter Medical Records
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <CardContent className="p-4 sm:p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0d5c75]/50" />
                 <Input
-                  placeholder="Search by name, diagnosis, or ID..."
+                  placeholder="Search by name, diagnosis, ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-[#0d5c75]/30 focus:border-[#0d5c75]"
+                  className="pl-9 h-10 bg-slate-50/70 border border-[#0d5c75]/20 text-[#0d5c75] placeholder:text-gray-400 focus:bg-white rounded-xl text-xs sm:text-sm"
                 />
               </div>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="border-[#0d5c75]/30 focus:border-[#0d5c75]">
+                <SelectTrigger className="h-10 bg-slate-50/70 border border-[#0d5c75]/20 text-gray-700 rounded-xl text-xs sm:text-sm">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -731,7 +717,7 @@ export default function MedicalHistoryPage() {
               </Select>
 
               <Select value={treatmentFilter} onValueChange={setTreatmentFilter}>
-                <SelectTrigger className="border-[#0d5c75]/30 focus:border-[#0d5c75]">
+                <SelectTrigger className="h-10 bg-slate-50/70 border border-[#0d5c75]/20 text-gray-700 rounded-xl text-xs sm:text-sm">
                   <SelectValue placeholder="Filter by treatment" />
                 </SelectTrigger>
                 <SelectContent>
@@ -749,9 +735,9 @@ export default function MedicalHistoryPage() {
                   setStatusFilter("all")
                   setTreatmentFilter("all")
                 }}
-                className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+                className="h-10 border-[#0d5c75]/30 text-[#0d5c75] hover:bg-teal-50 rounded-xl text-xs sm:text-sm font-medium"
               >
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="h-4 w-4 mr-1.5" />
                 Clear Filters
               </Button>
             </div>
