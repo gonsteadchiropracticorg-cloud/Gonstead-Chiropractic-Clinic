@@ -21,9 +21,10 @@ import {
 } from "lucide-react"
 
 interface AutomationStep {
-  type: "navigate" | "scroll" | "click" | "back" | "delay"
+  type: "navigate" | "scroll" | "click" | "back" | "delay" | "type"
   target?: string
   selector?: string
+  value?: string
   ms?: number
 }
 
@@ -132,10 +133,32 @@ export function SystemAutomationCopilot() {
       if (direct) return direct
     } catch (e) {}
 
-    // Search by text / role / aria-label
     const clean = targetStr.toLowerCase().replace(/['"#.\[\]]/g, "").trim()
+
+    // 1. Check input fields by id, name, placeholder, type, or label
+    const inputs = Array.from(document.querySelectorAll("input, textarea, select")) as (HTMLInputElement | HTMLTextAreaElement)[]
+    for (const input of inputs) {
+      const id = (input.id || "").toLowerCase()
+      const name = (input.name || "").toLowerCase()
+      const placeholder = (input.placeholder || "").toLowerCase()
+      const type = (input.type || "").toLowerCase()
+
+      if (
+        id.includes(clean) ||
+        name.includes(clean) ||
+        placeholder.includes(clean) ||
+        (clean.includes("email") && (type === "email" || id.includes("email") || placeholder.includes("email"))) ||
+        (clean.includes("password") && (type === "password" || id.includes("pass") || placeholder.includes("pass"))) ||
+        (clean.includes("phone") && (type === "tel" || id.includes("phone") || placeholder.includes("phone"))) ||
+        (clean.includes("name") && (id.includes("name") || placeholder.includes("name")))
+      ) {
+        return input
+      }
+    }
+
+    // 2. Search by text / role / aria-label for clickable or actionable elements
     const interactables = Array.from(
-      document.querySelectorAll("button, a, summary, [role='button'], h2, h3, h4, input")
+      document.querySelectorAll("button, a, summary, [role='button'], h2, h3, h4, input, [type='submit']")
     ) as HTMLElement[]
 
     for (const el of interactables) {
@@ -192,6 +215,31 @@ export function SystemAutomationCopilot() {
           }
         }
         await new Promise((r) => setTimeout(r, 1200))
+      } else if (step.type === "type") {
+        const target = step.selector || step.target || "input"
+        const val = step.value || ""
+        const el = findTargetElement(target) as HTMLInputElement | null
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" })
+          el.focus()
+          await new Promise((r) => setTimeout(r, 200))
+
+          // Trigger React-compatible input change
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype,
+            "value"
+          )?.set
+          if (nativeInputValueSetter) {
+            nativeInputValueSetter.call(el, val)
+          } else {
+            el.value = val
+          }
+          el.dispatchEvent(new Event("input", { bubbles: true }))
+          el.dispatchEvent(new Event("change", { bubbles: true }))
+          await new Promise((r) => setTimeout(r, 600))
+        } else {
+          await new Promise((r) => setTimeout(r, 600))
+        }
       } else if (step.type === "click") {
         const target = step.selector || step.target || ""
         const el = findTargetElement(target)
@@ -239,14 +287,23 @@ export function SystemAutomationCopilot() {
 Convert the user request into an array of precise browser execution steps.
 
 Available actions:
-- {"type": "navigate", "target": "/path"} (routes: "/", "/faq", "/educational-guide.html", "/patient/auth", "/patient-portal", "/admin/dashboard", "/admin/patient-tracking", "/#services", "/#about", "/#doctor", "/#contact", "/#education")
+- {"type": "navigate", "target": "/path"} (routes: "/", "/faq", "/educational-guide.html", "/patient/auth", "/patient-portal", "/admin/auth", "/admin/dashboard", "/admin/patient-tracking", "/#services", "/#about", "/#doctor", "/#contact", "/#education")
 - {"type": "scroll", "target": "down" | "up" | "bottom" | "top" | "#selector"}
-- {"type": "click", "target": "visible text or selector"}
+- {"type": "type", "target": "email" | "password" | "name" | "phone" | "#selector", "value": "text to enter"}
+- {"type": "click", "target": "visible text or selector e.g. Sign In, Login, Submit"}
 - {"type": "back"}
 - {"type": "delay", "ms": 1000}
 
+Guidelines:
+1. When asked to login or enter credentials:
+   - If user is not already on an auth page, navigate first (e.g. {"type": "navigate", "target": "/patient/auth"} or {"type": "navigate", "target": "/admin/auth"}).
+   - Enter email: {"type": "type", "target": "email", "value": "<email>"}
+   - Enter password: {"type": "type", "target": "password", "value": "<password>"}
+   - Submit form: {"type": "click", "target": "Sign In"} or {"type": "click", "target": "submit"}
+2. If the user tells you credentials or says "enter credentials <email> <password>", fill those into the respective fields.
+
 Respond ONLY with valid JSON with format:
-{"explanation": "plain text explanation", "steps": [{"type": "...", "target": "..."}]}`
+{"explanation": "plain text explanation", "steps": [{"type": "...", "target": "...", "value": "..."}]}`
 
     try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
