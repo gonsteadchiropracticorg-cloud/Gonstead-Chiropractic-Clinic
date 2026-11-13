@@ -152,49 +152,72 @@ export function SystemAutomationCopilot() {
     }
   }
 
-  // Element Finder
+  // Element Finder (searches main document AND any embedded iframe such as the education platform)
   const findTargetElement = (targetStr: string): HTMLElement | null => {
     if (!targetStr) return null
+
+    const searchInDoc = (doc: Document): HTMLElement | null => {
+      try {
+        const direct = doc.querySelector(targetStr) as HTMLElement
+        if (direct) return direct
+      } catch (e) {}
+
+      const clean = targetStr.toLowerCase().replace(/['"#.\[\]]/g, "").trim()
+
+      // 1. Check input fields by id, name, placeholder, type, or label
+      const inputs = Array.from(doc.querySelectorAll("input, textarea, select")) as (HTMLInputElement | HTMLTextAreaElement)[]
+      for (const input of inputs) {
+        const id = (input.id || "").toLowerCase()
+        const name = (input.name || "").toLowerCase()
+        const placeholder = (input.placeholder || "").toLowerCase()
+        const type = (input.type || "").toLowerCase()
+
+        if (
+          id.includes(clean) ||
+          name.includes(clean) ||
+          placeholder.includes(clean) ||
+          (clean.includes("email") && (type === "email" || id.includes("email") || placeholder.includes("email"))) ||
+          (clean.includes("password") && (type === "password" || id.includes("pass") || placeholder.includes("pass"))) ||
+          (clean.includes("phone") && (type === "tel" || id.includes("phone") || placeholder.includes("phone"))) ||
+          (clean.includes("name") && (id.includes("name") || placeholder.includes("name")))
+        ) {
+          return input
+        }
+      }
+
+      // 2. Search by text / role / aria-label for clickable or actionable elements
+      const interactables = Array.from(
+        doc.querySelectorAll("button, a, summary, [role='button'], h2, h3, h4, input, [type='submit'], .nav-tab, .course-btn, .toc-link")
+      ) as HTMLElement[]
+
+      for (const el of interactables) {
+        const text = (el.innerText || el.textContent || "").toLowerCase()
+        const aria = (el.getAttribute("aria-label") || "").toLowerCase()
+        if (text.includes(clean) || aria.includes(clean)) {
+          return el
+        }
+      }
+      return null
+    }
+
+    // First search top-level document
+    const foundInMain = searchInDoc(document)
+    if (foundInMain) return foundInMain
+
+    // Next check inside any iframe (e.g. /educational-guide.html inside /education)
     try {
-      const direct = document.querySelector(targetStr) as HTMLElement
-      if (direct) return direct
-    } catch (e) {}
-
-    const clean = targetStr.toLowerCase().replace(/['"#.\[\]]/g, "").trim()
-
-    // 1. Check input fields by id, name, placeholder, type, or label
-    const inputs = Array.from(document.querySelectorAll("input, textarea, select")) as (HTMLInputElement | HTMLTextAreaElement)[]
-    for (const input of inputs) {
-      const id = (input.id || "").toLowerCase()
-      const name = (input.name || "").toLowerCase()
-      const placeholder = (input.placeholder || "").toLowerCase()
-      const type = (input.type || "").toLowerCase()
-
-      if (
-        id.includes(clean) ||
-        name.includes(clean) ||
-        placeholder.includes(clean) ||
-        (clean.includes("email") && (type === "email" || id.includes("email") || placeholder.includes("email"))) ||
-        (clean.includes("password") && (type === "password" || id.includes("pass") || placeholder.includes("pass"))) ||
-        (clean.includes("phone") && (type === "tel" || id.includes("phone") || placeholder.includes("phone"))) ||
-        (clean.includes("name") && (id.includes("name") || placeholder.includes("name")))
-      ) {
-        return input
+      const iframes = Array.from(document.querySelectorAll("iframe"))
+      for (const iframe of iframes) {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+        if (iframeDoc) {
+          const found = searchInDoc(iframeDoc)
+          if (found) return found
+        }
       }
+    } catch (e) {
+      // Cross-origin fallback protection
     }
 
-    // 2. Search by text / role / aria-label for clickable or actionable elements
-    const interactables = Array.from(
-      document.querySelectorAll("button, a, summary, [role='button'], h2, h3, h4, input, [type='submit']")
-    ) as HTMLElement[]
-
-    for (const el of interactables) {
-      const text = (el.innerText || el.textContent || "").toLowerCase()
-      const aria = (el.getAttribute("aria-label") || "").toLowerCase()
-      if (text.includes(clean) || aria.includes(clean)) {
-        return el
-      }
-    }
     return null
   }
 
@@ -230,16 +253,19 @@ export function SystemAutomationCopilot() {
         }
       } else if (step.type === "scroll") {
         const t = (step.target || "down").toLowerCase()
+        const iframe = document.querySelector("iframe")
+        const targetWin = iframe?.contentWindow || window
+
         if (t === "bottom" || t === "down") {
-          window.scrollBy({ top: window.innerHeight * 0.85, behavior: "smooth" })
+          targetWin.scrollBy({ top: (targetWin.innerHeight || window.innerHeight) * 0.85, behavior: "smooth" })
         } else if (t === "top" || t === "up") {
-          window.scrollBy({ top: -window.innerHeight * 0.85, behavior: "smooth" })
+          targetWin.scrollBy({ top: -(targetWin.innerHeight || window.innerHeight) * 0.85, behavior: "smooth" })
         } else {
           const el = findTargetElement(step.target || "")
           if (el) {
             el.scrollIntoView({ behavior: "smooth", block: "center" })
           } else {
-            window.scrollBy({ top: 400, behavior: "smooth" })
+            targetWin.scrollBy({ top: 400, behavior: "smooth" })
           }
         }
         await new Promise((r) => setTimeout(r, 1200))
@@ -280,7 +306,7 @@ export function SystemAutomationCopilot() {
             window.location.href = "/faq"
             return
           } else if (target.toLowerCase().includes("education")) {
-            window.location.href = "/educational-guide.html"
+            window.location.href = "/education"
             return
           }
           await new Promise((r) => setTimeout(r, 800))
@@ -313,7 +339,7 @@ export function SystemAutomationCopilot() {
 Convert the user request into an array of precise browser execution steps.
 
 Available actions:
-- {"type": "navigate", "target": "/path"} (routes: "/", "/faq", "/educational-guide.html", "/patient/auth", "/patient-portal", "/admin/auth", "/admin/dashboard", "/admin/patient-tracking", "/admin/money-management", "/admin/analytics", "/admin/website-analytics", "/#services", "/#about", "/#doctor", "/#contact", "/#education")
+- {"type": "navigate", "target": "/path"} (routes: "/", "/faq", "/education", "/patient/auth", "/patient-portal", "/admin/auth", "/admin/dashboard", "/admin/patient-tracking", "/admin/money-management", "/admin/analytics", "/admin/website-analytics", "/#services", "/#about", "/#doctor", "/#contact", "/#education")
 - {"type": "scroll", "target": "down" | "up" | "bottom" | "top" | "#selector"}
 - {"type": "type", "target": "email" | "password" | "name" | "phone" | "#selector", "value": "text to enter"}
 - {"type": "click", "target": "visible text or selector e.g. Sign In, Login, Submit"}
