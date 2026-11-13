@@ -389,22 +389,22 @@ export default function PatientPortalPage() {
       isDarkMode ? "bg-gray-900 text-slate-100" : "bg-[rgb(220,230,229)] text-[#0d5c75]"
     }`}>
       {/* TOP NAVBAR */}
-      <header className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors duration-300 ${
+      <header className={`sticky top-0 z-40 backdrop-blur-xl border-b transition-colors duration-300 ${
         isDarkMode
-          ? "bg-gray-800/95 border-gray-700 text-white"
-          : "bg-white/90 border-[#0d5c75]/15 text-[#0d5c75] shadow-[0_2px_12px_rgba(13,92,117,0.08)]"
+          ? "bg-gray-900/95 border-gray-800 text-white"
+          : "bg-white/80 border-[#0d5c75]/15 text-[#0d5c75] shadow-[0_4px_16px_rgba(13,92,117,0.06)]"
       }`}>
-        <div className="container mx-auto px-4 py-3.5 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center font-bold text-white shadow-md">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-[#0d5c75] to-[#2a9d8f] flex items-center justify-center font-bold text-white shadow-md">
               {patientName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>{patientName}</h1>
-                <Badge className="bg-[#2a9d8f]/20 text-[#2a9d8f] border-[#2a9d8f]/30 text-[10px]">Patient Portal</Badge>
+                <h1 className={`text-base sm:text-lg font-bold font-poppins tracking-tight ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>{patientName}</h1>
+                <Badge className="bg-[#2a9d8f]/15 text-[#0d5c75] dark:text-[#2a9d8f] border-[#2a9d8f]/30 text-[10px] font-semibold">Patient Portal</Badge>
               </div>
-              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{patientEmail || "Gonstead Chiropractic Patient"}</p>
+              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-gray-500"}`}>{patientEmail || "Gonstead Chiropractic Patient"}</p>
             </div>
           </div>
 
@@ -412,22 +412,22 @@ export default function PatientPortalPage() {
             <Button
               onClick={handleInstallPwa}
               size="sm"
-              className="border border-emerald-500/30 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 text-xs hidden sm:flex"
+              className="border border-emerald-500/30 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 text-xs hidden sm:flex rounded-xl"
             >
-              <Smartphone className="h-4 w-4 mr-1 text-emerald-400" />
+              <Smartphone className="h-4 w-4 mr-1 text-emerald-500" />
               <span>App</span>
             </Button>
 
             <Button
               onClick={() => setIsBookModalOpen(true)}
               size="sm"
-              className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs font-semibold shadow-md"
+              className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white text-xs font-semibold shadow-md rounded-xl"
             >
               <PlusCircle className="h-4 w-4 mr-1.5" />
               Book Adjustment
             </Button>
 
-            <Button onClick={() => router.push("/")} size="sm" className={isDarkMode ? "bg-[#143d52] hover:bg-[#1a4f6a] border border-[#22556d] text-slate-200 hidden md:flex text-xs" : "bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 hidden md:flex text-xs"}>
+            <Button onClick={() => router.push("/")} size="sm" className={isDarkMode ? "bg-gray-800 hover:bg-gray-700 border border-gray-700 text-slate-200 hidden md:flex text-xs rounded-xl" : "bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 hidden md:flex text-xs rounded-xl"}>
               <Home className="h-4 w-4 mr-1" />
               Site
             </Button>
@@ -447,7 +447,7 @@ export default function PatientPortalPage() {
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
 
-            <Button onClick={handleLogout} variant="ghost" size="sm" className="text-rose-400 hover:bg-rose-500/10 text-xs">
+            <Button onClick={handleLogout} variant="ghost" size="sm" className="text-rose-500 hover:bg-rose-50 text-xs rounded-xl">
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline ml-1">Exit</span>
             </Button>
@@ -459,15 +459,15 @@ export default function PatientPortalPage() {
       {reminders.length > 0 && (
         <div className="container mx-auto px-4 pt-4">
           {reminders.map((rem, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-200 flex items-center justify-between gap-4 mb-2">
+            <div key={idx} className="p-4 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-teal-800 dark:text-teal-200 flex items-center justify-between gap-4 mb-2 shadow-xs">
               <div className="flex items-center gap-3">
-                <BellRing className="h-6 w-6 text-teal-400 animate-bounce flex-shrink-0" />
+                <BellRing className="h-6 w-6 text-teal-600 dark:text-teal-400 animate-bounce flex-shrink-0" />
                 <div>
-                  <h4 className="font-bold text-xs text-teal-100">Reminder: Adjustment Visit ({rem.isTomorrow ? "Tomorrow" : "Today"})</h4>
-                  <p className="text-xs text-teal-200/80">{rem.message}</p>
+                  <h4 className="font-bold text-xs text-[#0d5c75] dark:text-teal-100">Reminder: Adjustment Visit ({rem.isTomorrow ? "Tomorrow" : "Today"})</h4>
+                  <p className="text-xs text-gray-600 dark:text-teal-200/80">{rem.message}</p>
                 </div>
               </div>
-              <Button onClick={() => setIsBookModalOpen(true)} size="sm" className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white font-bold text-xs">
+              <Button onClick={() => setIsBookModalOpen(true)} size="sm" className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white font-bold text-xs rounded-xl">
                 View
               </Button>
             </div>
@@ -477,47 +477,56 @@ export default function PatientPortalPage() {
 
       {/* QUICK STATS CARDS */}
       <div className="container mx-auto px-4 pt-6 pb-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
+        <Card className={`border shadow-md rounded-2xl transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
           <CardContent className="p-4 flex items-center gap-3.5">
-            <div className="p-3 rounded-xl bg-[#2a9d8f]/20 text-[#2a9d8f]">
+            <div className="p-3 rounded-2xl bg-[#0d5c75]/10 text-[#0d5c75] dark:text-[#2a9d8f]">
               <Calendar className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-400">Next Adjustment</p>
-              <p className="text-sm font-semibold text-slate-100 mt-0.5">
+              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-gray-500"} font-medium`}>Next Adjustment</p>
+              <p className={`text-sm font-bold mt-0.5 ${isDarkMode ? "text-slate-100" : "text-[#0d5c75]"}`}>
                 {upcomingAppointment ? `${upcomingAppointment.appointment_date} (${upcomingAppointment.appointment_time || "10:00 AM"})` : "No Visit Scheduled"}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
+        <Card className={`border shadow-md rounded-2xl transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
           <CardContent className="p-4 flex items-center gap-3.5">
-            <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">
+            <div className="p-3 rounded-2xl bg-blue-50 text-blue-600">
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-400">Completed Sessions</p>
-              <p className="text-xl font-bold text-slate-100 mt-0.5">{completedCount} Adjustments</p>
+              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-gray-500"} font-medium`}>Completed Sessions</p>
+              <p className={`text-xl font-bold mt-0.5 ${isDarkMode ? "text-slate-100" : "text-[#0d5c75]"}`}>{completedCount} Adjustments</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
+        <Card className={`border shadow-md rounded-2xl transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
           <CardContent className="p-4 flex items-center gap-3.5">
-            <div className="p-3 rounded-xl bg-purple-500/20 text-purple-400">
+            <div className="p-3 rounded-2xl bg-purple-50 text-purple-600">
               <Pill className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-slate-400">Digital Prescriptions</p>
-              <p className="text-xl font-bold text-purple-300 mt-0.5">{prescriptions.length} Records</p>
+              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-gray-500"} font-medium`}>Digital Prescriptions</p>
+              <p className={`text-xl font-bold mt-0.5 ${isDarkMode ? "text-purple-300" : "text-purple-700"}`}>{prescriptions.length} Records</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
+        <Card className={`border shadow-md rounded-2xl transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
           <CardContent className="p-4 flex items-center gap-3.5">
-            <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400">
+            <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
+              <Stethoscope className="h-5 w-5" />
+            </div>
+            <div>
+              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-gray-500"} font-medium`}>Lead Specialist</p>
+              <p className={`text-sm font-bold mt-0.5 ${isDarkMode ? "text-slate-100" : "text-[#0d5c75]"}`}>Dr. Bashir Khan</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
               <Stethoscope className="h-5 w-5" />
             </div>
             <div>
@@ -529,30 +538,30 @@ export default function PatientPortalPage() {
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <main className="container mx-auto px-4 py-6 flex-1">
+      <main className="container mx-auto px-4 py-6 flex-1 space-y-6">
         <Tabs defaultValue="appointments" className="space-y-6">
-          <TabsList className={`border p-1 rounded-xl grid grid-cols-2 sm:grid-cols-6 w-full max-w-5xl ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#0d5c75]/20 shadow-sm"}`}>
-            <TabsTrigger value="appointments" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+          <TabsList className={`border p-1.5 rounded-2xl grid grid-cols-2 sm:grid-cols-6 w-full max-w-5xl ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#0d5c75]/20 shadow-md"}`}>
+            <TabsTrigger value="appointments" className="data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
               <Calendar className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
               Visits
             </TabsTrigger>
-            <TabsTrigger value="prescriptions" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+            <TabsTrigger value="prescriptions" className="data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
               <Pill className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
               Prescriptions
             </TabsTrigger>
-            <TabsTrigger value="rehab" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+            <TabsTrigger value="rehab" className="data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
               <Activity className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
               Rehab & Care
             </TabsTrigger>
-            <TabsTrigger value="symptoms" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+            <TabsTrigger value="symptoms" className="data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
               <Thermometer className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
               Pre-Visit Note
             </TabsTrigger>
-            <TabsTrigger value="records" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+            <TabsTrigger value="records" className="data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
               <FileText className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
               Clinical Notes
             </TabsTrigger>
-            <TabsTrigger value="profile" className="data-[state=active]:bg-[#2a9d8f] data-[state=active]:text-white text-xs">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-[#0d5c75] data-[state=active]:text-white text-xs rounded-xl font-medium">
               <User className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
               My Profile
             </TabsTrigger>
@@ -560,24 +569,24 @@ export default function PatientPortalPage() {
 
           {/* TAB 1: APPOINTMENTS */}
           <TabsContent value="appointments">
-            <Card className={`border shadow-sm transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
-              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
+            <Card className={`border shadow-md rounded-2xl overflow-hidden transition-all ${isDarkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-[#0d5c75]/15 text-[#0d5c75]"}`}>
+              <CardHeader className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b ${isDarkMode ? "bg-gray-850 border-gray-700" : "bg-slate-50/60 border-gray-100"}`}>
                 <div>
-                  <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                  <CardTitle className={`text-base sm:text-lg font-bold flex items-center gap-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
                     <Calendar className="h-5 w-5 text-[#2a9d8f]" />
                     Appointment History & Self-Service
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-400">Reschedule, cancel, or print official clinic appointment slips.</CardDescription>
+                  <CardDescription className={`text-xs ${isDarkMode ? "text-slate-400" : "text-gray-500"}`}>Reschedule, cancel, or print official clinic appointment slips.</CardDescription>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className={`flex p-1 rounded-lg border text-xs ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-100 border-slate-200"}`}>\
+                  <div className={`flex p-1 rounded-xl border text-xs ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-100/80 border-slate-200"}`}>
                     {["all", "scheduled", "completed", "cancelled"].map((st) => (
                       <button
                         key={st}
                         onClick={() => setFilterStatus(st)}
-                        className={`px-2.5 py-1 rounded capitalize transition-all ${
-                          filterStatus === st ? "bg-[#2a9d8f] text-white font-semibold" : "text-slate-400 hover:text-white"
+                        className={`px-2.5 py-1 rounded-lg capitalize text-xs transition-all ${
+                          filterStatus === st ? "bg-[#0d5c75] text-white font-semibold shadow-xs" : (isDarkMode ? "text-slate-400 hover:text-white" : "text-gray-600 hover:text-[#0d5c75]")
                         }`}
                       >
                         {st}
@@ -585,23 +594,23 @@ export default function PatientPortalPage() {
                     ))}
                   </div>
 
-                  <Button onClick={() => loadData()} size="sm" className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white border-0 text-xs">
+                  <Button onClick={() => loadData()} size="sm" className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white border-0 text-xs rounded-xl">
                     <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                   </Button>
                 </div>
               </CardHeader>
 
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {isLoading ? (
                   <div className="py-12 text-center text-slate-400 space-y-2">
                     <RefreshCw className="h-8 w-8 animate-spin mx-auto text-[#2a9d8f]" />
                     <p className="text-xs">Fetching your Firestore appointments...</p>
                   </div>
                 ) : filteredAppointments.length === 0 ? (
-                  <div className="py-12 text-center border border-dashed border-[#1b4356] rounded-xl p-6">
-                    <Calendar className="h-8 w-8 text-slate-600 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-slate-300">No matching appointments found</p>
-                    <Button onClick={() => setIsBookModalOpen(true)} className="mt-3 bg-[#2a9d8f] hover:bg-[#238a7a] text-white text-xs">
+                  <div className="py-12 text-center border border-dashed border-[#0d5c75]/20 rounded-2xl p-6 bg-slate-50/30">
+                    <Calendar className="h-8 w-8 text-[#0d5c75]/40 mx-auto mb-2" />
+                    <p className={`text-sm font-semibold ${isDarkMode ? "text-slate-300" : "text-[#0d5c75]"}`}>No matching appointments found</p>
+                    <Button onClick={() => setIsBookModalOpen(true)} className="mt-3 bg-[#0d5c75] hover:bg-[#0a4a5c] text-white text-xs rounded-xl shadow-xs">
                       <PlusCircle className="h-4 w-4 mr-1.5" /> Book Adjustment
                     </Button>
                   </div>
@@ -611,33 +620,33 @@ export default function PatientPortalPage() {
                       const st = apt.status?.toLowerCase() || "scheduled"
                       const badgeVariant =
                         st === "completed"
-                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                          ? "bg-emerald-100 text-emerald-800 border-emerald-200"
                           : st === "confirmed" || st === "scheduled"
-                          ? "bg-teal-500/20 text-teal-300 border-teal-500/30"
+                          ? "bg-teal-100 text-[#0d5c75] border-teal-200"
                           : st === "cancelled"
-                          ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                          : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                          ? "bg-rose-100 text-rose-800 border-rose-200"
+                          : "bg-amber-100 text-amber-800 border-amber-200"
 
                       return (
-                        <div key={apt.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all shadow-sm ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-slate-50 border-slate-200"}`}>\
+                        <div key={apt.id} className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all shadow-xs ${isDarkMode ? "bg-gray-900 border-gray-700" : "bg-white border-[#0d5c75]/15 hover:border-[#0d5c75]/30"}`}>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <Badge className={`text-xs capitalize ${badgeVariant}`}>{st}</Badge>
-                              <span className="text-[11px] font-mono text-slate-500">Ref: #{apt.id.slice(-6).toUpperCase()}</span>
+                              <Badge className={`text-xs capitalize font-semibold rounded-lg ${badgeVariant}`}>{st}</Badge>
+                              <span className="text-[11px] font-mono text-gray-400">Ref: #{apt.id.slice(-6).toUpperCase()}</span>
                             </div>
-                            <p className="text-sm font-bold text-white capitalize">
+                            <p className={`text-sm font-bold capitalize ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
                               {apt.session_type === "video" ? "Video Consultation" : "In-Clinic Gonstead Adjustment"}
                             </p>
-                            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mt-1">
+                            <div className={`flex flex-wrap items-center gap-4 text-xs ${isDarkMode ? "text-slate-400" : "text-gray-500"} mt-1`}>
                               <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-[#2a9d8f]" /> {apt.appointment_date}</span>
                               <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-[#2a9d8f]" /> {apt.appointment_time || "10:00 AM"}</span>
                               <span className="flex items-center gap-1"><Stethoscope className="h-3.5 w-3.5 text-[#2a9d8f]" /> Dr. Bashir Khan</span>
                             </div>
-                            {apt.chief_complaint && <p className="text-xs text-slate-300 italic mt-1">"{apt.chief_complaint}"</p>}
+                            {apt.chief_complaint && <p className={`text-xs italic mt-1 ${isDarkMode ? "text-slate-300" : "text-gray-600"}`}>"{apt.chief_complaint}"</p>}
                           </div>
 
                           <div className="flex items-center gap-2 self-end sm:self-center">
-                            <Button size="sm" className="bg-[#143d52] hover:bg-[#1a4f6a] text-teal-200 border border-[#22556d] text-xs" onClick={() => setPrintSlipApt(apt)}>
+                            <Button size="sm" variant="outline" className="border-[#0d5c75]/30 text-[#0d5c75] bg-white hover:bg-slate-50 text-xs rounded-xl" onClick={() => setPrintSlipApt(apt)}>
                               <Printer className="h-3.5 w-3.5 sm:mr-1" />
                               <span className="hidden sm:inline">Slip</span>
                             </Button>
@@ -645,7 +654,7 @@ export default function PatientPortalPage() {
                               <>
                                 <Button
                                   size="sm"
-                                  className="bg-[#2a9d8f] hover:bg-[#238a7a] text-white border-0 text-xs"
+                                  className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white border-0 text-xs rounded-xl"
                                   onClick={() => {
                                     setRescheduleApt(apt)
                                     setRescheduleDate(apt.appointment_date)
@@ -655,7 +664,7 @@ export default function PatientPortalPage() {
                                   <Edit3 className="h-3.5 w-3.5 sm:mr-1" />
                                   <span className="hidden sm:inline">Reschedule</span>
                                 </Button>
-                                <Button size="sm" className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs" onClick={() => handleCancelAppointment(apt.id)}>
+                                <Button size="sm" className="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs rounded-xl" onClick={() => handleCancelAppointment(apt.id)}>
                                   <XCircle className="h-3.5 w-3.5 sm:mr-1" />
                                   <span className="hidden sm:inline">Cancel</span>
                                 </Button>

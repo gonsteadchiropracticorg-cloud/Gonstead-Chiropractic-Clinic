@@ -142,67 +142,71 @@ export default function AdminAuth() {
 
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[rgb(190,205,203)] to-white flex items-center justify-center">
+      <div className="min-h-screen bg-[rgb(220,230,229)] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#0d5c75] border-t-transparent mx-auto mb-4"></div>
-          <p className="text-[#0d5c75] font-semibold text-lg">Checking Authentication...</p>
-          <p className="text-gray-500 text-sm mt-2">Please wait while we verify your session</p>
+          <div className="animate-spin rounded-full h-14 w-14 border-4 border-[#0d5c75] border-t-transparent mx-auto mb-4"></div>
+          <p className="text-[#0d5c75] font-semibold text-base font-poppins">Checking Authentication...</p>
+          <p className="text-gray-500 text-xs mt-1">Verifying administrative security credentials</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[rgb(190,205,203)] to-white flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl border-[#0d5c75]/20">
-        <CardHeader className="text-center space-y-4 bg-gradient-to-r from-[#0d5c75] to-[rgb(66,139,124)] text-white rounded-t-lg">
-          <div className="w-24 h-24 mx-auto relative">
+    <div className="min-h-screen bg-[rgb(220,230,229)] flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-xl border border-[#0d5c75]/20 bg-white rounded-3xl overflow-hidden">
+        <CardHeader className="text-center space-y-3 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white p-6 relative overflow-hidden">
+          <div className="w-20 h-20 mx-auto relative rounded-2xl bg-white/95 p-2 shadow-md">
             <Image
-              src="/images/gonstead-logo-new.png"
+              src="/images/gonstead-chiropractic-logo-new.png"
               alt="Gonstead Chiropractic Logo"
               fill
-              className="object-contain"
+              className="object-contain p-1.5"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/images/gonstead-logo-new.png";
+              }}
             />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold font-poppins">Admin Access</CardTitle>
-            <CardDescription className="text-white/90">Gonstead Chiropractic Management System</CardDescription>
+            <CardTitle className="text-xl sm:text-2xl font-bold font-poppins tracking-tight">Admin Portal</CardTitle>
+            <CardDescription className="text-teal-100 text-xs mt-1">Gonstead Chiropractic Clinical Management System</CardDescription>
           </div>
 
           {/* Connection Status */}
-          <div className="flex items-center justify-center gap-2 text-sm">
+          <div className="flex items-center justify-center gap-1.5 text-xs">
             {connectionStatus === "online" ? (
-              <>
-                <Wifi className="h-4 w-4 text-green-300" />
-                <span className="text-green-300">Online</span>
-              </>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-[11px] font-medium">
+                <Wifi className="h-3 w-3 text-emerald-300" />
+                Secure Live Connection
+              </span>
             ) : connectionStatus === "offline" ? (
-              <>
-                <WifiOff className="h-4 w-4 text-green-300" />
-                <span className="text-green-300">Offline Mode</span>
-              </>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-400/30 text-[11px] font-medium">
+                <WifiOff className="h-3 w-3 text-rose-300" />
+                Offline Mode
+              </span>
             ) : (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                <span className="text-white/70">Checking...</span>
-              </>
+              <span className="inline-flex items-center gap-1.5 text-teal-200 text-[11px]">
+                <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+                Checking connection...
+              </span>
             )}
           </div>
         </CardHeader>
 
-        <CardContent className="p-6">
+        <CardContent className="p-6 sm:p-8 space-y-4">
           {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+            <Alert variant="destructive" className="rounded-xl border-rose-200 bg-rose-50 text-rose-800 text-xs">
+              <AlertCircle className="h-4 w-4 text-rose-600" />
+              <AlertDescription className="font-medium">{error}</AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-[#0d5c75] font-semibold flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Email Address
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-[#0d5c75] font-semibold text-xs flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-[#2a9d8f]" />
+                Admin Email Address
               </Label>
               <Input
                 id="email"
@@ -210,16 +214,16 @@ export default function AdminAuth() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)]"
-                placeholder="Enter admin email"
+                className="h-10 text-xs rounded-xl border-[#0d5c75]/20 focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75] bg-slate-50/50"
+                placeholder="admin@gonsteadchiropractic.org"
                 disabled={isLoading}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-[#0d5c75] font-semibold flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Password
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-[#0d5c75] font-semibold text-xs flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-[#2a9d8f]" />
+                Admin Password
               </Label>
               <div className="relative">
                 <Input
@@ -228,22 +232,22 @@ export default function AdminAuth() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="border-[rgb(66,139,124)]/30 focus:border-[rgb(66,139,124)] focus:ring-[rgb(66,139,124)] pr-10"
-                  placeholder="Enter admin password"
+                  className="h-10 text-xs rounded-xl border-[#0d5c75]/20 focus:border-[#0d5c75] focus:ring-1 focus:ring-[#0d5c75] bg-slate-50/50 pr-10"
+                  placeholder="Enter administrator password"
                   disabled={isLoading}
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-gray-600 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
+                    <EyeOff className="h-4 w-4" />
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
+                    <Eye className="h-4 w-4" />
                   )}
                 </Button>
               </div>
@@ -251,16 +255,16 @@ export default function AdminAuth() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#0d5c75] to-[rgb(66,139,124)] hover:from-[#0a4a5c] hover:to-[rgb(66,139,124)] text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 shadow-lg"
+              className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c] text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-md text-xs sm:text-sm mt-2"
               disabled={isLoading}
             >
               {isLoading ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  Signing In...
+                  Authenticating Session...
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   <Shield className="h-4 w-4" />
                   Sign In to Dashboard
                 </div>
@@ -268,9 +272,9 @@ export default function AdminAuth() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-xs text-gray-500">
-            <p>Secure access to patient management system</p>
-            <p>© 2024 Gonstead Chiropractic Clinic</p>
+          <div className="pt-2 text-center text-[11px] text-gray-500 border-t border-gray-100 space-y-0.5">
+            <p className="font-medium text-gray-600">Restricted Medical Staff & Practitioner Access</p>
+            <p>© Gonstead Chiropractic Clinic • Dr. Bashir Khan</p>
           </div>
         </CardContent>
       </Card>
