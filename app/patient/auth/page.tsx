@@ -181,18 +181,16 @@ export default function PatientAuthPage() {
                 alert("To install the Patient App:\nTap your browser menu (⋮ or Share) and select 'Add to Home Screen'.")
               }
             }}
-            variant="outline"
-            className="border-white/30 text-white hover:bg-white/10 text-xs"
+            className="bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl h-9 sm:h-10 text-xs sm:text-sm font-medium shadow-sm transition-all"
           >
-            <Smartphone className="h-4 w-4 mr-1.5" />
+            <Smartphone className="h-4 w-4 mr-1.5 text-teal-300" />
             Install Patient App
           </Button>
           <Button
             onClick={() => router.push("/")}
-            variant="outline"
-            className="border-white/20 text-white hover:bg-white/10"
+            className="bg-gradient-to-r from-[#2a9d8f] to-[#238a7a] hover:from-[#238a7a] hover:to-[#1d7366] text-white rounded-xl h-9 sm:h-10 text-xs sm:text-sm font-semibold shadow-md transition-all border border-white/20"
           >
-            <Home className="h-4 w-4 mr-2" />
+            <Home className="h-4 w-4 mr-1.5" />
             Back to Site
           </Button>
         </div>
