@@ -39,7 +39,6 @@ const mainNavItems: NavItem[] = [
   { id: "analytics", title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { id: "website-analytics", title: "Website Analytics", href: "/admin/website-analytics", icon: TrendingUp },
   { id: "staff-access", title: "Staff Access", href: "/admin/staff-access", icon: UserCheck },
-  { id: "location-settings", title: "Location Settings", href: "/admin/location-settings", icon: MapPin },
   { id: "audit-logs", title: "Audit Logs", href: "/admin/audit-logs", icon: Activity },
   { id: "settings", title: "Clinic Settings", href: "/admin/settings", icon: Settings },
   { id: "help", title: "Help & Guides", href: "/admin/help", icon: HelpCircle },

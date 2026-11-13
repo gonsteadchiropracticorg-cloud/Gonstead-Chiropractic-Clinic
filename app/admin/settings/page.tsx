@@ -20,13 +20,20 @@ export default function AdminSettings() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
   const [clinicSettings, setClinicSettings] = useState({
-    clinicName: "Gonstead Chiropractic Clinic",
-    address: "Near Peshawar Model School, Tehsil Road, Nowshera",
-    phone: "+92 304 699 6267",
-    email: "info@gonsteadchiropractic.com",
+    clinicName: "Gonstead Chiropractic Clinic - Dr. Bashir",
+    address: "Near Peshawar Model School, Tehsil Road, Nowshera, Pakistan",
+    phone: "+92 304 6996267",
+    whatsapp: "+92 304 6996267",
+    email: "Bashirahmad123.org@gmail.com",
+    emergencyPhone: "+92 304 6996267",
+    city: "Nowshera",
+    state: "Khyber Pakhtunkhwa",
+    country: "Pakistan",
+    postalCode: "24110",
     website: "https://gonsteadchiropractic.vercel.app",
-    coordinates: { lat: 34.0153, lng: 71.9804 },
+    coordinates: { lat: 34.01533, lng: 71.97788 },
     mapUrl: "https://maps.app.goo.gl/8pJ9o2hCPtGY3XtD9",
+    mapEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3307.4614046736474!2d71.97788!3d34.01533!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38d917b90f9b6ce9%3A0x93c2e9e4a56d3a0d!2sGonstead%20Chiropractic%20Clinic%20-%20Dr.%20Bashir!5e0!3m2!1sen!2s!4v1717687854793!5m2!1sen!2s",
   })
 
   const [operatingHours, setOperatingHours] = useState({
@@ -355,15 +362,45 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
 
-          {/* Location Settings */}
+          {/* Location & Maps Settings */}
           <Card className="border-[#0d5c75]/20">
-            <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#e67e22] text-white">
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Location & Maps
+            <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white">
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Clinic Location & Google Maps
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => window.open(clinicSettings.mapUrl, "_blank")}
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs h-7"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                  Preview on Maps
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    value={clinicSettings.city}
+                    onChange={(e) => setClinicSettings((prev) => ({ ...prev, city: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="postalCode">Postal Code</Label>
+                  <Input
+                    id="postalCode"
+                    value={clinicSettings.postalCode}
+                    onChange={(e) => setClinicSettings((prev) => ({ ...prev, postalCode: e.target.value }))}
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="lat">Latitude</Label>
@@ -375,7 +412,7 @@ export default function AdminSettings() {
                     onChange={(e) =>
                       setClinicSettings((prev) => ({
                         ...prev,
-                        coordinates: { ...prev.coordinates, lat: Number.parseFloat(e.target.value) },
+                        coordinates: { ...prev.coordinates, lat: Number.parseFloat(e.target.value) || 0 },
                       }))
                     }
                   />
@@ -390,25 +427,50 @@ export default function AdminSettings() {
                     onChange={(e) =>
                       setClinicSettings((prev) => ({
                         ...prev,
-                        coordinates: { ...prev.coordinates, lng: Number.parseFloat(e.target.value) },
+                        coordinates: { ...prev.coordinates, lng: Number.parseFloat(e.target.value) || 0 },
                       }))
                     }
                   />
                 </div>
               </div>
+
               <div>
-                <Label htmlFor="mapUrl">Google Maps URL</Label>
+                <Label htmlFor="mapUrl">Google Maps Link</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="mapUrl"
+                    value={clinicSettings.mapUrl}
+                    onChange={(e) => setClinicSettings((prev) => ({ ...prev, mapUrl: e.target.value }))}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(clinicSettings.mapUrl)
+                      toast({ title: "Copied Link", description: "Google Maps URL copied to clipboard" })
+                    }}
+                    className="border-[#0d5c75]/20 text-[#0d5c75]"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="mapEmbed">Google Maps Embed URL</Label>
                 <Input
-                  id="mapUrl"
-                  value={clinicSettings.mapUrl}
-                  onChange={(e) => setClinicSettings((prev) => ({ ...prev, mapUrl: e.target.value }))}
+                  id="mapEmbed"
+                  value={clinicSettings.mapEmbed}
+                  onChange={(e) => setClinicSettings((prev) => ({ ...prev, mapEmbed: e.target.value }))}
+                  placeholder="https://www.google.com/maps/embed?..."
                 />
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">Current Location:</p>
-                <p className="text-sm font-medium">{clinicSettings.address}</p>
-                <p className="text-xs text-gray-500">
-                  Coordinates: {clinicSettings.coordinates.lat}, {clinicSettings.coordinates.lng}
+
+              <div className="bg-teal-50/70 border border-teal-200/50 p-4 rounded-xl">
+                <p className="text-xs font-semibold text-[#0d5c75] uppercase tracking-wider mb-1">Current Active Clinic Address</p>
+                <p className="text-sm font-medium text-gray-800">{clinicSettings.address}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  GPS Coordinates: {clinicSettings.coordinates.lat}, {clinicSettings.coordinates.lng} ({clinicSettings.city}, {clinicSettings.country})
                 </p>
               </div>
             </CardContent>

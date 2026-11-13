@@ -118,8 +118,7 @@ const sidebarItems: MenuItem[] = [
     description: "Clinic & location configuration",
     category: "admin",
     children: [
-      { id: "settings-general", title: "Clinic Settings", href: "/admin/settings", icon: Settings },
-      { id: "location-settings", title: "Location & Maps", href: "/admin/location-settings", icon: MapPin },
+      { id: "settings-general", title: "Clinic & Location Settings", href: "/admin/settings", icon: Settings },
       { id: "audit-logs", title: "Audit Logs", href: "/admin/audit-logs", icon: Activity },
       { id: "staff-access", title: "Staff Access", href: "/admin/staff-access", icon: UserCheck },
     ]
