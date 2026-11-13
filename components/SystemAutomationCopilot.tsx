@@ -18,12 +18,13 @@ import {
   Cpu,
   ChevronRight,
   ArrowRight,
-  Compass,
-  Play,
-  RotateCcw,
   Activity,
   Layers,
   Terminal,
+  CornerDownLeft,
+  CircleDot,
+  Loader2,
+  Radio,
 } from "lucide-react"
 
 interface AutomationStep {
@@ -46,7 +47,7 @@ export function SystemAutomationCopilot() {
   const [inputText, setInputText] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [isListening, setIsListening] = useState(false)
-  const [statusMessage, setStatusMessage] = useState<string>("Ready for instructions")
+  const [statusMessage, setStatusMessage] = useState<string>("Ready for voice or text instructions")
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1)
   const [activeSteps, setActiveSteps] = useState<AutomationStep[]>([])
   const [voiceEnabled, setVoiceEnabled] = useState(true)
@@ -305,14 +306,14 @@ export function SystemAutomationCopilot() {
   const executeInstruction = async (text: string) => {
     if (!text.trim() || isProcessing) return
     setIsProcessing(true)
-    setStatusMessage("Synthesizing workflow graph with Neural AI...")
+    setStatusMessage("Synthesizing neural execution plan...")
 
     const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY || ""
     const prompt = `You are the Master Browser & System Automation Copilot for Dr. Bashir Khan's Gonstead Chiropractic Clinic website.
 Convert the user request into an array of precise browser execution steps.
 
 Available actions:
-- {"type": "navigate", "target": "/path"} (routes: "/", "/faq", "/educational-guide.html", "/patient/auth", "/patient-portal", "/admin/auth", "/admin/dashboard", "/admin/patient-tracking", "/admin/money-management", "/admin/analytics", "/#services", "/#about", "/#doctor", "/#contact", "/#education")
+- {"type": "navigate", "target": "/path"} (routes: "/", "/faq", "/educational-guide.html", "/patient/auth", "/patient-portal", "/admin/auth", "/admin/dashboard", "/admin/patient-tracking", "/admin/money-management", "/admin/analytics", "/admin/website-analytics", "/#services", "/#about", "/#doctor", "/#contact", "/#education")
 - {"type": "scroll", "target": "down" | "up" | "bottom" | "top" | "#selector"}
 - {"type": "type", "target": "email" | "password" | "name" | "phone" | "#selector", "value": "text to enter"}
 - {"type": "click", "target": "visible text or selector e.g. Sign In, Login, Submit"}
@@ -355,7 +356,7 @@ Respond ONLY with valid JSON with format:
         speak(parsed.explanation)
         runPipeline(parsed.steps, 0, parsed.explanation)
       } else {
-        throw new Error("Failed to parse instruction")
+        throw new Error("Failed to plan automation")
       }
     } catch (e) {
       console.error(e)
@@ -367,7 +368,7 @@ Respond ONLY with valid JSON with format:
 
   return (
     <div ref={containerRef}>
-      {/* Perplexity-inspired Futuristic Floating Copilot Orb */}
+      {/* Small, Perfect Circular Futuristic Automation Orb */}
       <div
         className={`fixed z-[99990] flex items-center transition-all duration-300 ${
           isPatientPortal
@@ -377,145 +378,130 @@ Respond ONLY with valid JSON with format:
       >
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.94 }}
-          className={`group relative h-13 w-13 sm:h-14 sm:w-14 rounded-2xl shadow-[0_10px_35px_rgba(13,92,117,0.35)] flex items-center justify-center transition-all duration-300 overflow-hidden ${
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.92 }}
+          className={`group relative h-10 w-10 sm:h-11 sm:w-11 rounded-full shadow-[0_4px_20px_rgba(13,92,117,0.35)] flex items-center justify-center transition-all duration-300 ${
             isOpen
-              ? "bg-[#083344] ring-2 ring-teal-400/80 shadow-[0_0_30px_rgba(42,157,143,0.5)]"
-              : "bg-gradient-to-br from-[#0d5c75] via-[#0e7490] to-[#2a9d8f]"
+              ? "bg-[#083344] ring-2 ring-teal-400 shadow-[0_0_24px_rgba(42,157,143,0.55)]"
+              : "bg-gradient-to-tr from-[#0d5c75] via-[#116e8c] to-[#2a9d8f]"
           }`}
-          title="Open AI Autonomous Copilot (Voice & Pipeline)"
+          title="Open AI Autonomous Copilot (Voice & Workflow)"
           aria-label="Open AI Autonomous Copilot"
         >
-          {/* Animated Neon Aura Border */}
-          <div className="absolute inset-0 bg-gradient-to-r from-teal-400/30 via-emerald-400/30 to-cyan-400/30 opacity-75 group-hover:opacity-100 transition-opacity animate-pulse" />
-          
-          {/* Rotating Holographic Glow Ring */}
+          {/* Subtle Ambient Pulse Ring */}
+          <span className="absolute inset-0 rounded-full bg-teal-400/20 animate-ping pointer-events-none" />
+
+          {/* Micro Orbit Light Ring */}
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-[-4px] rounded-2xl bg-[conic-gradient(from_0deg,#2a9d8f,#06b6d4,#10b981,#2a9d8f)] opacity-35 blur-[2px]"
+            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-[-2px] rounded-full bg-[conic-gradient(from_0deg,#2a9d8f,transparent,#06b6d4,transparent,#2a9d8f)] opacity-60"
           />
 
-          {/* Central Glass Core */}
-          <div className="relative z-10 w-[calc(100%-4px)] h-[calc(100%-4px)] rounded-[14px] bg-[#072430]/90 backdrop-blur-md flex items-center justify-center border border-white/20">
-            <Sparkles className="w-6 h-6 text-teal-300 group-hover:text-cyan-200 transition-colors animate-pulse" />
+          {/* Circular Core Glass Surface */}
+          <div className="relative z-10 w-[calc(100%-3px)] h-[calc(100%-3px)] rounded-full bg-[#0a2f3f]/95 backdrop-blur-md flex items-center justify-center border border-white/25">
+            <Sparkles className="w-4 h-4 text-teal-200 group-hover:text-white transition-colors" />
 
-            {/* Neural activity live indicator */}
-            {isExecutingRef.current && (
-              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+            {/* Status dot */}
+            {isExecutingRef.current ? (
+              <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500 border border-white"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 border border-white"></span>
               </span>
-            )}
-            
-            {isListening && (
-              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+            ) : isListening ? (
+              <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-500 border border-white"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border border-white"></span>
               </span>
-            )}
-
-            {!isExecutingRef.current && !isListening && (
-              <span className="absolute bottom-1 right-1 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 border border-white"></span>
+            ) : (
+              <span className="absolute bottom-0 right-0 flex h-2 w-2">
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 border border-white"></span>
               </span>
             )}
           </div>
         </motion.button>
       </div>
 
-      {/* Modern Next-Gen Glassmorphism Automation Console */}
+      {/* Pro Perplexity-Style Floating Workflow Console */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.92, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className={`fixed w-[420px] max-w-[calc(100vw-1.5rem)] rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.35)] z-[99995] overflow-hidden flex flex-col backdrop-blur-2xl bg-white/95 dark:bg-slate-900/95 border border-white/60 dark:border-white/10 ${
+            exit={{ opacity: 0, scale: 0.92, y: 16 }}
+            transition={{ type: "spring", damping: 26, stiffness: 360 }}
+            className={`fixed w-[400px] max-w-[calc(100vw-1.5rem)] rounded-3xl shadow-[0_24px_70px_rgba(0,0,0,0.35)] z-[99995] overflow-hidden flex flex-col backdrop-blur-2xl bg-white/95 dark:bg-slate-900/95 border border-[#0d5c75]/15 dark:border-white/10 ${
               isPatientPortal
-                ? "bottom-36 left-4 sm:left-6"
-                : "bottom-36 right-3 sm:right-6"
+                ? "bottom-34 left-4 sm:left-6"
+                : "bottom-32 right-3 sm:right-6"
             }`}
           >
-            {/* Holographic Header Bar */}
-            <div className="relative p-4 bg-gradient-to-r from-[#0d5c75] via-[#0f766e] to-[#2a9d8f] text-white overflow-hidden">
-              {/* Subtle Animated Shimmer */}
-              <motion.div
-                animate={{ x: ["-100%", "200%"] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none"
-              />
-
+            {/* Header with clinic teal accent */}
+            <div className="relative p-3.5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
               <div className="relative z-10 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-lg flex items-center justify-center border border-white/30 shadow-inner">
-                    <Bot className="w-5 h-5 text-teal-100" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20">
+                    <Bot className="w-4 h-4 text-teal-100" />
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <h3 className="font-bold text-sm font-poppins tracking-wide">Autonomous Copilot</h3>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-300/20 text-teal-200 border border-teal-300/30">
-                        PRO
+                      <h3 className="font-bold text-xs sm:text-sm font-poppins">Autonomous Copilot</h3>
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-teal-300/20 text-teal-100 border border-teal-300/30">
+                        AI
                       </span>
                     </div>
-                    <p className="text-[11px] text-teal-100/90 font-medium flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-amber-300" />
-                      Neural Browser Automation Engine
-                    </p>
+                    <p className="text-[10px] text-teal-100/80">Neural Workflow Automation</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setVoiceEnabled(!voiceEnabled)}
-                    className="p-2 rounded-xl hover:bg-white/15 text-white/90 hover:text-white transition-colors"
+                    className="p-1.5 rounded-full hover:bg-white/15 text-white/80 hover:text-white transition-colors"
                     title={voiceEnabled ? "Mute Voice Speech" : "Enable Voice Speech"}
                   >
                     {voiceEnabled ? (
-                      <Volume2 className="w-4 h-4 text-teal-200" />
+                      <Volume2 className="w-3.5 h-3.5 text-teal-200" />
                     ) : (
-                      <VolumeX className="w-4 h-4 text-rose-300" />
+                      <VolumeX className="w-3.5 h-3.5 text-rose-300" />
                     )}
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-xl hover:bg-white/15 text-white/90 hover:text-white transition-colors"
+                    className="p-1.5 rounded-full hover:bg-white/15 text-white/80 hover:text-white transition-colors"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Neural Live Status Banner */}
-            <div className="px-4 py-3 bg-slate-900 text-teal-300 border-b border-teal-900/40 text-xs flex items-center justify-between gap-3">
+            {/* Live Pipeline Status Strip */}
+            <div className="px-3.5 py-2 bg-slate-900 text-teal-300 border-b border-teal-900/40 text-xs flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 overflow-hidden">
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="relative flex h-2 w-2 shrink-0">
                   <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isProcessing || isExecutingRef.current ? "bg-amber-400" : "bg-emerald-400"} opacity-75`}></span>
-                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isProcessing || isExecutingRef.current ? "bg-amber-500" : "bg-emerald-500"}`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${isProcessing || isExecutingRef.current ? "bg-amber-500" : "bg-emerald-500"}`}></span>
                 </span>
-                <span className="truncate font-mono text-[11px] tracking-tight text-slate-200">
+                <span className="truncate font-mono text-[10.5px] text-slate-200">
                   {statusMessage}
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-[10px] font-mono text-teal-400/80 uppercase">
-                <Cpu className="w-3 h-3 text-teal-400" />
-                <span>AI-Agent</span>
+              <div className="flex items-center gap-1 text-[9px] font-mono text-teal-400/70 uppercase shrink-0">
+                <Cpu className="w-2.5 h-2.5 text-teal-400" />
+                <span>ACTIVE</span>
               </div>
             </div>
 
-            {/* Visual Step Pipeline Tree (Active Execution View) */}
+            {/* Interactive Pipeline Graph (when steps are running) */}
             {activeSteps.length > 0 && (
-              <div className="p-3 bg-slate-950/95 border-b border-slate-800 space-y-1.5 max-h-48 overflow-y-auto">
-                <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-wider text-slate-400 px-1 mb-1">
+              <div className="p-3 bg-slate-950/95 border-b border-slate-800 space-y-1.5 max-h-44 overflow-y-auto">
+                <div className="flex items-center justify-between text-[9px] uppercase font-bold tracking-wider text-slate-400 px-1 mb-1">
                   <span className="flex items-center gap-1">
                     <Terminal className="w-3 h-3 text-teal-400" />
-                    Execution Graph
+                    Workflow Pipeline
                   </span>
-                  <span>{currentStepIndex + 1} of {activeSteps.length}</span>
+                  <span>{currentStepIndex + 1} / {activeSteps.length}</span>
                 </div>
                 {activeSteps.map((s, idx) => {
                   const isCurrent = idx === currentStepIndex
@@ -523,35 +509,35 @@ Respond ONLY with valid JSON with format:
                   return (
                     <motion.div
                       key={idx}
-                      initial={{ opacity: 0, x: -10 }}
+                      initial={{ opacity: 0, x: -6 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl border transition-all text-xs ${
+                      className={`flex items-center justify-between px-2.5 py-1 rounded-xl border transition-all text-xs ${
                         isCurrent
-                          ? "bg-gradient-to-r from-teal-900/60 to-emerald-900/60 border-teal-500/60 text-teal-200 shadow-[0_0_15px_rgba(42,157,143,0.2)]"
+                          ? "bg-teal-900/50 border-teal-500/50 text-teal-200 shadow-xs"
                           : isCompleted
-                          ? "bg-slate-900/50 border-slate-800 text-slate-500"
-                          : "bg-slate-900/80 border-slate-800/80 text-slate-400"
+                          ? "bg-slate-900/40 border-slate-800 text-slate-500"
+                          : "bg-slate-900/70 border-slate-800/70 text-slate-400"
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">
-                        <span className={`w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-mono font-bold ${
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-mono font-bold ${
                           isCurrent
-                            ? "bg-teal-500 text-slate-900 animate-pulse"
+                            ? "bg-teal-500 text-slate-900"
                             : isCompleted
                             ? "bg-emerald-500/20 text-emerald-400"
                             : "bg-slate-800 text-slate-500"
                         }`}>
                           {isCompleted ? "✓" : idx + 1}
                         </span>
-                        <span className="font-semibold uppercase tracking-wider text-[10px] text-teal-400">
+                        <span className="font-semibold uppercase text-[9px] text-teal-400">
                           {s.type}
                         </span>
-                        <span className="truncate font-mono text-[11px] text-slate-300">
+                        <span className="truncate font-mono text-[10px] text-slate-300">
                           {s.target || s.selector || s.value || ""}
                         </span>
                       </div>
                       {isCurrent && (
-                        <span className="flex items-center text-[10px] font-bold text-teal-300 animate-pulse">
+                        <span className="text-[9px] font-bold text-teal-300 animate-pulse">
                           Running...
                         </span>
                       )}
@@ -561,72 +547,65 @@ Respond ONLY with valid JSON with format:
               </div>
             )}
 
-            {/* Interactive Prompt Capsules (Perplexity Style Quick Triggers) */}
-            <div className="p-3 bg-slate-50/80 dark:bg-slate-900/80 border-b border-gray-100 dark:border-slate-800">
-              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                <span>Instant Autonomous Workflows:</span>
+            {/* Quick Action Capsules */}
+            <div className="p-3 bg-slate-50/70 dark:bg-slate-900/70 border-b border-gray-100 dark:border-slate-800">
+              <div className="text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                <span>Instant Workflows:</span>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() => executeInstruction("scroll down and show clinic services")}
-                  className="group flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-800/90 hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-teal-500/40 shadow-xs"
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/40 hover:bg-teal-50/40 shadow-xs"
                 >
-                  <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 group-hover:text-teal-700 dark:group-hover:text-teal-300">
+                  <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
                     Explore Services
                   </span>
-                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-teal-600 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="w-2.5 h-2.5 text-gray-400 group-hover:text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <button
                   onClick={() => executeInstruction("go to FAQ page and open the last question")}
-                  className="group flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-800/90 hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-teal-500/40 shadow-xs"
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/40 hover:bg-teal-50/40 shadow-xs"
                 >
-                  <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 group-hover:text-teal-700 dark:group-hover:text-teal-300">
+                  <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
                     FAQ Inspection
                   </span>
-                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-teal-600 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="w-2.5 h-2.5 text-gray-400 group-hover:text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <button
                   onClick={() => executeInstruction("open patient portal")}
-                  className="group flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-800/90 hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-teal-500/40 shadow-xs"
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/40 hover:bg-teal-50/40 shadow-xs"
                 >
-                  <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 group-hover:text-teal-700 dark:group-hover:text-teal-300">
+                  <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
                     Patient Portal
                   </span>
-                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-teal-600 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="w-2.5 h-2.5 text-gray-400 group-hover:text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <button
                   onClick={() => executeInstruction("open admin dashboard")}
-                  className="group flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-800/90 hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-teal-500/40 shadow-xs"
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/40 hover:bg-teal-50/40 shadow-xs"
                 >
-                  <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 group-hover:text-teal-700 dark:group-hover:text-teal-300">
+                  <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
                     Admin Dashboard
                   </span>
-                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-teal-600 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="w-2.5 h-2.5 text-gray-400 group-hover:text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
                 </button>
               </div>
             </div>
 
-            {/* Neural Voice & Command Bar */}
+            {/* Input & Voice Controls Bar */}
             <div className="p-3 bg-white dark:bg-slate-900 flex items-center gap-2">
               <motion.button
-                whileTap={{ scale: 0.92 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={toggleListening}
-                className={`relative p-3 rounded-2xl transition-all shadow-md flex items-center justify-center ${
+                className={`p-2.5 rounded-full transition-all shadow-xs flex items-center justify-center shrink-0 ${
                   isListening
-                    ? "bg-rose-500 text-white ring-4 ring-rose-300/40 shadow-rose-500/30"
-                    : "bg-gradient-to-br from-teal-50 to-teal-100/60 dark:from-teal-950/60 dark:to-teal-900/60 text-[#0d5c75] dark:text-teal-300 hover:from-teal-100 hover:to-teal-200/60 border border-teal-200/60 dark:border-teal-800"
+                    ? "bg-rose-500 text-white animate-pulse ring-4 ring-rose-200"
+                    : "bg-teal-50 text-[#0d5c75] hover:bg-teal-100 border border-[#0d5c75]/15"
                 }`}
                 title={isListening ? "Listening... click to stop" : "Speak voice automation command"}
               >
-                {isListening ? (
-                  <>
-                    <MicOff className="w-5 h-5 animate-pulse" />
-                    <span className="absolute inset-0 rounded-2xl bg-rose-500 animate-ping opacity-25" />
-                  </>
-                ) : (
-                  <Mic className="w-5 h-5" />
-                )}
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </motion.button>
 
               <div className="relative flex-1">
@@ -639,19 +618,19 @@ Respond ONLY with valid JSON with format:
                       executeInstruction(inputText)
                     }
                   }}
-                  placeholder="Ask anything or command workflow..."
-                  className="w-full bg-slate-100/80 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 text-xs px-3.5 py-3 rounded-2xl border border-transparent focus:border-teal-500/40 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-teal-500/15 outline-none transition-all"
+                  placeholder="Give automation command or ask..."
+                  className="w-full bg-slate-100/80 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-gray-400 text-xs px-3.5 py-2.5 rounded-full border border-transparent focus:border-[#0d5c75]/30 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-[#0d5c75]/15 outline-none transition-all"
                 />
               </div>
 
               <motion.button
-                whileTap={{ scale: 0.92 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={() => executeInstruction(inputText)}
                 disabled={isProcessing || !inputText.trim()}
-                className="p-3 rounded-2xl bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white hover:opacity-95 disabled:opacity-40 transition-all shadow-md shadow-teal-900/20 disabled:shadow-none flex items-center justify-center"
+                className="p-2.5 rounded-full bg-[#0d5c75] hover:bg-[#0a4a5c] text-white disabled:opacity-40 transition-all shadow-xs shrink-0 flex items-center justify-center"
                 title="Execute automation"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-3.5 h-3.5" />
               </motion.button>
             </div>
           </motion.div>
