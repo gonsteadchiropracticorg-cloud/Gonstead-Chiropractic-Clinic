@@ -266,37 +266,36 @@ export default function PatientTrackingPage() {
 
   const getStatusColor = (status?: string) => {
     switch ((status || 'pending').toLowerCase()) {
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'confirmed': return 'bg-blue-100 text-blue-800'
-      case 'pending': return 'bg-teal-100 text-[#0d5c75]'
-      case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'completed': return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+      case 'confirmed': return 'bg-teal-50 text-[#0d5c75] border border-teal-200'
+      case 'pending': return 'bg-amber-50 text-amber-800 border border-amber-200'
+      case 'cancelled': return 'bg-red-50 text-red-700 border border-red-200'
+      default: return 'bg-gray-100 text-gray-700 border border-gray-200'
     }
   }
 
   const getUrgencyColor = (urgency?: string) => {
     switch ((urgency || 'normal').toLowerCase()) {
-      case 'emergency': return 'bg-red-100 text-red-800'
-      case 'urgent': return 'bg-orange-100 text-orange-800'
-      case 'normal': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'emergency': return 'bg-red-50 text-red-700 border border-red-200 font-semibold'
+      case 'urgent': return 'bg-amber-50 text-amber-800 border border-amber-200 font-semibold'
+      case 'normal': return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+      default: return 'bg-gray-100 text-gray-700 border border-gray-200'
     }
   }
 
   const getPrescriptionStatus = (prescription: PrescriptionRecord): { label: string; color: string; icon: any } => {
-    // Check if prescription has been explicitly saved (has savedAt timestamp)
     const hasBeenSaved = prescription.status === 'saved' && prescription.savedAt
     const isSynced = prescription.isSynced === true
-    const isActive = prescription.status === 'active' // Generated but not manually saved
+    const isActive = prescription.status === 'active'
     
     if (hasBeenSaved && isSynced) {
-      return { label: 'Saved & Synced', color: 'bg-green-100 text-green-800 border-green-300', icon: CheckCheck }
+      return { label: 'Saved & Synced', color: 'bg-emerald-50 text-emerald-700 border border-emerald-300', icon: CheckCheck }
     } else if (hasBeenSaved) {
-      return { label: 'Saved Locally', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: Save }
+      return { label: 'Saved Locally', color: 'bg-teal-50 text-[#0d5c75] border border-teal-300', icon: Save }
     } else if (isActive) {
-      return { label: 'Generated', color: 'bg-teal-100 text-[#0d5c75] border-teal-300', icon: AlertTriangle }
+      return { label: 'Generated', color: 'bg-teal-50/70 text-[#0d5c75] border border-teal-200', icon: AlertTriangle }
     } else {
-      return { label: 'Not Saved', color: 'bg-gray-100 text-gray-800 border-gray-300', icon: AlertTriangle }
+      return { label: 'Not Saved', color: 'bg-gray-100 text-gray-700 border border-gray-300', icon: AlertTriangle }
     }
   }
 
@@ -481,67 +480,51 @@ Exported from Gonstead Chiropractic Patient Tracking System
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[rgb(220,230,229)] to-[rgb(174,193,192)]">
-      {/* Professional Header */}
-      <header className="relative bg-white/20 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.10)] border-0 p-4 overflow-hidden mx-4 mt-4 rounded-xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/10 to-[#2a9d8f]/5 animate-pulse"></div>
-        <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+    <div className="min-h-screen bg-[rgb(220,230,229)] p-2 sm:p-4 md:p-6 space-y-6">
+      {/* Professional Admin Header matching Main Dashboard */}
+      <header className="relative bg-white/40 backdrop-blur-xl shadow-[0_4px_16px_rgba(13,92,117,0.08)] border border-[#0d5c75]/15 p-3 sm:p-4 rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d5c75]/5 via-white/20 to-[#2a9d8f]/5 pointer-events-none"></div>
         
-        <div className="relative z-10 container mx-auto">
-          <div className="flex items-center justify-between">
-            {/* Left Section - Logo and Title */}
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
-                onClick={() => router.push('/admin/dashboard')}
-                className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              
-              <div className="w-16 h-16 relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-white/90 to-white/80 backdrop-blur-xl rounded-2xl border-2 border-white/30 shadow-2xl flex items-center justify-center">
-                  <Image
-                    src="/images/gonstead-chiropractic-logo-new.png"
-                    alt="Gonstead Logo"
-                    width={44}
-                    height={44}
-                    className="object-contain"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <h1 className="text-2xl font-bold text-[#0d5c75] font-poppins tracking-wide">
-                  Patient Tracking System
-                </h1>
-                <p className="text-base font-semibold text-[#2a9d8f]">
-                  Track & Monitor Patient Records
-                </p>
-                <p className="text-xs text-gray-600 font-medium">
-                  Search by Prescription ID or Patient Information
-                </p>
-              </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Left Section - Title perfectly aligned left with clinic styling */}
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => router.push('/admin/dashboard')}
+              className="border-[#0d5c75]/30 text-[#0d5c75] bg-white/80 hover:bg-[#0d5c75] hover:text-white rounded-xl h-9 px-3 font-medium transition-all shadow-xs"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1.5" />
+              Dashboard
+            </Button>
+            
+            <div className="space-y-0.5 text-left border-l border-[#0d5c75]/20 pl-3">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0d5c75] font-poppins tracking-tight">
+                Patient Tracking System
+              </h1>
+              <p className="text-xs sm:text-sm font-semibold text-[#2a9d8f] leading-none">
+                Track & Monitor Clinical Records
+              </p>
+              <p className="text-[11px] text-gray-500 font-medium">
+                Search by Prescription ID, Name, Phone, or Email
+              </p>
             </div>
+          </div>
 
-            {/* Right Section - Quick Stats */}
-            <div className="flex items-center gap-4">
-                  <div className="text-right space-y-2">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 border border-white/30">
-                  <p className="text-sm font-semibold text-white">
-                    📋 Total Prescriptions: {prescriptionRecords.length}
-                  </p>
-                  <p className="text-xs text-white/80">
-                    🔍 Searchable Records Available
-                  </p>
-                </div>
-                <p className="text-xs text-white/70">
+          {/* Right Section - Glass Stat Pill */}
+          <div className="flex items-center gap-3 self-end md:self-auto">
+            <div className="bg-white/80 backdrop-blur-md rounded-xl px-3.5 py-2 border border-[#0d5c75]/15 shadow-xs flex items-center gap-3">
+              <div>
+                <p className="text-xs font-bold text-[#0d5c75] flex items-center gap-1.5">
+                  <Pill className="h-3.5 w-3.5 text-[#2a9d8f]" />
+                  Prescriptions: <span className="text-sm font-black text-[#2a9d8f]">{prescriptionRecords.length}</span>
+                </p>
+                <p className="text-[10px] text-gray-500 font-medium">
                   {new Date().toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
                   })}
                 </p>
               </div>
@@ -550,29 +533,29 @@ Exported from Gonstead Chiropractic Patient Tracking System
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Search Section */}
-        <Card className="mb-8 shadow-xl border-[#0d5c75]/20">
-          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
-            <CardTitle className="flex items-center gap-2 font-poppins">
+      <main className="space-y-6">
+        {/* Search Section Card */}
+        <Card className="shadow-lg border border-[#0d5c75]/15 bg-white rounded-2xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-5 py-3.5">
+            <CardTitle className="text-base sm:text-lg font-semibold flex items-center gap-2 font-poppins">
               <Search className="h-5 w-5" />
-              Patient Search & Tracking
+              Patient Search & Record Tracking
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="flex gap-4 items-end">
-              <div className="flex-1">
-                <Label htmlFor="search" className="text-sm font-semibold text-[#0d5c75] mb-2 block">
-                  🔍 Search by Prescription ID, Patient Name, Phone, or Email
+          <CardContent className="p-5 sm:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+              <div className="flex-1 space-y-1.5">
+                <Label htmlFor="search" className="text-xs font-semibold text-[#0d5c75] uppercase tracking-wider">
+                  Search by Prescription ID, Name, Phone, or Email
                 </Label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0d5c75]/50" />
                   <Input
                     id="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Enter prescription ID (e.g., RX001) or patient information..."
-                    className="text-base pl-10 border-[#0d5c75]/30 focus:border-[#0d5c75] focus:ring-[#0d5c75]/20"
+                    placeholder="Enter prescription ID (e.g., RX001) or patient details..."
+                    className="pl-10 h-11 bg-slate-50/70 border border-[#0d5c75]/20 text-[#0d5c75] placeholder:text-gray-400 focus:bg-white focus:border-[#0d5c75] rounded-xl text-sm"
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
@@ -580,7 +563,7 @@ Exported from Gonstead Chiropractic Patient Tracking System
               <Button
                 onClick={handleSearch}
                 disabled={isSearching}
-                className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white px-8"
+                className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white h-11 px-6 rounded-xl font-medium shadow-sm transition-all"
               >
                 {isSearching ? (
                   <Timer className="h-4 w-4 mr-2 animate-spin" />
@@ -591,28 +574,29 @@ Exported from Gonstead Chiropractic Patient Tracking System
               </Button>
             </div>
 
-            {/* Search Tips and Quick Stats */}
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800 font-medium mb-1">💡 Search Tips:</p>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Use prescription ID for exact prescription-based tracking</li>
-                  <li>• Search by patient name, phone number, or email address</li>
-                  <li>• Partial matches are supported for flexible searching</li>
+            {/* Clean Information & Quick Stats Pills */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+              <div className="p-3.5 bg-teal-50/70 rounded-xl border border-[#0d5c75]/15">
+                <p className="text-xs font-bold text-[#0d5c75] flex items-center gap-1.5 mb-1">
+                  <Activity className="h-3.5 w-3.5 text-[#2a9d8f]" />
+                  Search Guidelines:
+                </p>
+                <ul className="text-xs text-gray-600 space-y-0.5 leading-relaxed">
+                  <li>• Use prescription ID (e.g. RX001) for direct prescription retrieval</li>
+                  <li>• Search by patient full name, phone number, or email address</li>
+                  <li>• Partial keywords are supported for fast instant matching</li>
                 </ul>
               </div>
               
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm text-green-800 font-medium mb-2">📊 Quick Stats:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-green-700">{prescriptionRecords.length}</p>
-                    <p className="text-xs text-green-600">Total Prescriptions</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-blue-700">{searchResults.length}</p>
-                    <p className="text-xs text-blue-600">Search Results</p>
-                  </div>
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-gray-200/80 flex items-center justify-around">
+                <div className="text-center">
+                  <p className="text-2xl font-black text-[#0d5c75] leading-none">{prescriptionRecords.length}</p>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mt-1">Total Prescriptions</p>
+                </div>
+                <div className="h-8 w-px bg-gray-200"></div>
+                <div className="text-center">
+                  <p className="text-2xl font-black text-[#2a9d8f] leading-none">{searchResults.length}</p>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mt-1">Search Results</p>
                 </div>
               </div>
             </div>
@@ -621,37 +605,37 @@ Exported from Gonstead Chiropractic Patient Tracking System
 
         {/* Search Results */}
         {searchResults.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Results List */}
             <div className="lg:col-span-1">
-              <Card className="shadow-xl border-[#0d5c75]/20">
-                <CardHeader className="bg-[#2a9d8f] text-white">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <User className="h-5 w-5" />
+              <Card className="shadow-lg border border-[#0d5c75]/15 bg-white rounded-2xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white px-5 py-3.5">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <User className="h-4 w-4" />
                     Search Results ({searchResults.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="max-h-96 overflow-y-auto">
+                  <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
                     {searchResults.map((patient) => (
                       <div
                         key={patient.id}
                         onClick={() => setSelectedPatient(patient)}
-                        className={`p-4 border-b cursor-pointer transition-colors hover:bg-gray-50 ${
-                          selectedPatient?.id === patient.id ? 'bg-blue-50 border-l-4 border-l-[#0d5c75]' : ''
+                        className={`p-3.5 cursor-pointer transition-colors hover:bg-slate-50 ${
+                          selectedPatient?.id === patient.id ? 'bg-teal-50/70 border-l-4 border-l-[#0d5c75]' : ''
                         }`}
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="font-semibold text-[#0d5c75]">{patient.name}</h3>
-                            <p className="text-sm text-gray-600">{patient.phone}</p>
-                            <p className="text-xs text-gray-500">{patient.email || "No email"}</p>
+                            <h3 className="font-semibold text-sm text-[#0d5c75]">{patient.name}</h3>
+                            <p className="text-xs text-gray-600 mt-0.5">{patient.phone}</p>
+                            <p className="text-[11px] text-gray-400">{patient.email || "No email"}</p>
                           </div>
                           <div className="flex flex-col items-end space-y-1">
-                            <Badge className={`text-xs ${getStatusColor(patient.status)}`}>
+                            <Badge className={`text-[10px] ${getStatusColor(patient.status)}`}>
                               {patient.status}
                             </Badge>
-                            <Badge className={`text-xs ${getUrgencyColor(patient.urgency)}`}>
+                            <Badge className={`text-[10px] ${getUrgencyColor(patient.urgency)}`}>
                               {patient.urgency}
                             </Badge>
                           </div>
@@ -668,98 +652,98 @@ Exported from Gonstead Chiropractic Patient Tracking System
               {selectedPatient && (
                 <div className="space-y-6">
                   {/* Patient Information Card */}
-                  <Card className="shadow-xl border-[#0d5c75]/20">
-                    <CardHeader className="bg-[#0d5c75] text-white">
-                      <CardTitle className="text-xl flex items-center gap-2">
-                        <User className="h-6 w-6" />
-                        Patient Information - {selectedPatient.name}
+                  <Card className="shadow-lg border border-[#0d5c75]/15 bg-white rounded-2xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white px-5 py-3.5">
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Patient Details - {selectedPatient.name}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <CardContent className="p-5 sm:p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Personal Information */}
-                        <div className="space-y-4">
+                        <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-gray-100">
                           <div>
-                            <Label className="text-sm font-semibold text-gray-700">Full Name</Label>
-                            <p className="text-lg font-medium text-[#0d5c75]">{selectedPatient.name}</p>
+                            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Full Name</Label>
+                            <p className="text-base font-bold text-[#0d5c75]">{selectedPatient.name}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-gray-500" />
+                            <Phone className="h-4 w-4 text-[#2a9d8f]" />
                             <div>
-                              <Label className="text-sm font-semibold text-gray-700">Phone</Label>
-                              <p className="text-base">{selectedPatient.phone}</p>
+                              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</Label>
+                              <p className="text-sm font-medium text-gray-800">{selectedPatient.phone}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-gray-500" />
+                            <Mail className="h-4 w-4 text-[#2a9d8f]" />
                             <div>
-                              <Label className="text-sm font-semibold text-gray-700">Email</Label>
-                              <p className="text-base">{selectedPatient.email || "Not provided"}</p>
+                              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</Label>
+                              <p className="text-sm font-medium text-gray-800">{selectedPatient.email || "Not provided"}</p>
                             </div>
                           </div>
                           {selectedPatient.profession && (
                             <div>
-                              <Label className="text-sm font-semibold text-gray-700">Profession</Label>
-                              <p className="text-base">{selectedPatient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Profession</Label>
+                              <p className="text-sm font-medium text-gray-800">{selectedPatient.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                             </div>
                           )}
                         </div>
 
                         {/* Appointment Information */}
-                        <div className="space-y-4">
+                        <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-gray-100">
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-500" />
+                            <Calendar className="h-4 w-4 text-[#2a9d8f]" />
                             <div>
-                              <Label className="text-sm font-semibold text-gray-700">Appointment Date</Label>
-                              <p className="text-base">{new Date(selectedPatient.appointment_date).toLocaleDateString()}</p>
+                              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Appointment Date</Label>
+                              <p className="text-sm font-medium text-gray-800">{new Date(selectedPatient.appointment_date).toLocaleDateString()}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-gray-500" />
+                            <Clock className="h-4 w-4 text-[#2a9d8f]" />
                             <div>
-                              <Label className="text-sm font-semibold text-gray-700">Appointment Time</Label>
-                              <p className="text-base">{new Date(selectedPatient.appointment_date).toLocaleTimeString()}</p>
+                              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Appointment Time</Label>
+                              <p className="text-sm font-medium text-gray-800">{new Date(selectedPatient.appointment_date).toLocaleTimeString()}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-gray-500" />
+                            <MapPin className="h-4 w-4 text-[#2a9d8f]" />
                             <div>
-                              <Label className="text-sm font-semibold text-gray-700">Session Type</Label>
-                              <p className="text-base">{selectedPatient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation'}</p>
+                              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Session Type</Label>
+                              <p className="text-sm font-medium text-gray-800">{selectedPatient.session_type === 'in_clinic' ? 'In-Clinic Treatment' : 'Video Consultation'}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-gray-500" />
+                            <DollarSign className="h-4 w-4 text-[#2a9d8f]" />
                             <div>
-                              <Label className="text-sm font-semibold text-gray-700">Payment Method</Label>
-                              <p className="text-base">{selectedPatient.payment_method.toUpperCase()}</p>
+                              <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment Method</Label>
+                              <p className="text-sm font-medium text-gray-800">{selectedPatient.payment_method.toUpperCase()}</p>
                             </div>
                           </div>
                         </div>
                       </div>
 
                       {/* Status and Progress */}
-                      <div className="mt-6 pt-6 border-t">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <Label className="text-sm font-semibold text-gray-700 block">Status</Label>
-                            <Badge className={`mt-1 ${getStatusColor(selectedPatient.status)}`}>
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="text-center p-3 bg-slate-50 rounded-xl border border-gray-100">
+                            <Label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Status</Label>
+                            <Badge className={`mt-1.5 ${getStatusColor(selectedPatient.status)}`}>
                               {selectedPatient.status.charAt(0).toUpperCase() + selectedPatient.status.slice(1)}
                             </Badge>
                           </div>
-                          <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <Label className="text-sm font-semibold text-gray-700 block">Urgency</Label>
-                            <Badge className={`mt-1 ${getUrgencyColor(selectedPatient.urgency)}`}>
+                          <div className="text-center p-3 bg-slate-50 rounded-xl border border-gray-100">
+                            <Label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Urgency</Label>
+                            <Badge className={`mt-1.5 ${getUrgencyColor(selectedPatient.urgency)}`}>
                               {selectedPatient.urgency.charAt(0).toUpperCase() + selectedPatient.urgency.slice(1)}
                             </Badge>
                           </div>
-                          <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <Label className="text-sm font-semibold text-gray-700 block">Sessions</Label>
-                            <p className="text-xl font-bold text-[#0d5c75] mt-1">{selectedPatient.sessions_completed || 0}</p>
+                          <div className="text-center p-3 bg-slate-50 rounded-xl border border-gray-100">
+                            <Label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Sessions</Label>
+                            <p className="text-lg font-black text-[#0d5c75] mt-0.5">{selectedPatient.sessions_completed || 0}</p>
                           </div>
-                          <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <Label className="text-sm font-semibold text-gray-700 block">Last Visit</Label>
-                            <p className="text-sm font-medium mt-1">
+                          <div className="text-center p-3 bg-slate-50 rounded-xl border border-gray-100">
+                            <Label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Last Visit</Label>
+                            <p className="text-xs font-semibold text-gray-700 mt-1">
                               {selectedPatient.last_visit 
                                 ? new Date(selectedPatient.last_visit).toLocaleDateString()
                                 : "First visit"
@@ -773,15 +757,15 @@ Exported from Gonstead Chiropractic Patient Tracking System
 
                   {/* Clinical Notes */}
                   {selectedPatient.notes && (
-                    <Card className="shadow-xl border-[#0d5c75]/20">
-                      <CardHeader className="bg-green-600 text-white">
-                        <CardTitle className="flex items-center gap-2">
-                          <Stethoscope className="h-5 w-5" />
+                    <Card className="shadow-lg border border-[#0d5c75]/15 bg-white rounded-2xl overflow-hidden">
+                      <CardHeader className="bg-gradient-to-r from-emerald-600 to-[#2a9d8f] text-white px-5 py-3">
+                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                          <Stethoscope className="h-4 w-4" />
                           Clinical Notes
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="p-6">
-                        <p className="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg">
+                      <CardContent className="p-4 sm:p-5">
+                        <p className="text-sm text-gray-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-gray-100">
                           {selectedPatient.notes}
                         </p>
                       </CardContent>
@@ -789,36 +773,36 @@ Exported from Gonstead Chiropractic Patient Tracking System
                   )}
 
                   {/* Prescription History */}
-                  <Card className="shadow-xl border-[#0d5c75]/20">
-                    <CardHeader className="bg-[#2a9d8f] text-white">
-                      <CardTitle className="flex items-center gap-2">
+                  <Card className="shadow-lg border border-[#0d5c75]/15 bg-white rounded-2xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-[#2a9d8f] to-[#0d5c75] text-white px-5 py-3.5">
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
                         <Pill className="h-5 w-5" />
                         Prescription History ({getPatientPrescriptions(selectedPatient).length})
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-6">
+                    <CardContent className="p-5 sm:p-6">
                       {getPatientPrescriptions(selectedPatient).length > 0 ? (
-                        <div className="space-y-4">
-                          {getPatientPrescriptions(selectedPatient).map((prescription, index) => {
+                        <div className="space-y-3">
+                          {getPatientPrescriptions(selectedPatient).map((prescription) => {
                             const status = getPrescriptionStatus(prescription)
                             const StatusIcon = status.icon
                             
                             return (
-                              <div key={prescription.id} className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-                                <div className="flex justify-between items-start mb-3">
+                              <div key={prescription.id} className="border border-teal-100 rounded-xl p-4 bg-teal-50/40">
+                                <div className="flex justify-between items-start mb-2.5">
                                   <div>
-                                    <h4 className="font-semibold text-[#0d5c75] flex items-center gap-2">
-                                      <Pill className="h-4 w-4" />
+                                    <h4 className="font-bold text-sm text-[#0d5c75] flex items-center gap-2">
+                                      <Pill className="h-4 w-4 text-[#2a9d8f]" />
                                       Prescription ID: {prescription.id}
                                     </h4>
-                                    <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                                       <Calendar className="h-3 w-3" />
                                       Date: {new Date(prescription.prescriptionDate).toLocaleDateString()}
                                     </p>
                                   </div>
-                                  <div className="flex flex-col gap-1">
-                                    <Badge className="bg-green-100 text-green-800 text-xs">Active</Badge>
-                                    <Badge className={`text-xs flex items-center gap-1 ${status.color}`}>
+                                  <div className="flex items-center gap-1.5">
+                                    <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">Active</Badge>
+                                    <Badge className={`text-[10px] flex items-center gap-1 ${status.color}`}>
                                       <StatusIcon className="h-3 w-3" />
                                       {status.label}
                                     </Badge>
@@ -826,57 +810,53 @@ Exported from Gonstead Chiropractic Patient Tracking System
                                 </div>
                                 {prescription.medications && (
                                   <div className="mb-2">
-                                    <Label className="text-sm font-semibold text-gray-700">Medications:</Label>
-                                    <p className="text-sm text-gray-600 mt-1">{prescription.medications}</p>
+                                    <Label className="text-xs font-semibold text-gray-600">Medications:</Label>
+                                    <p className="text-xs text-gray-700 mt-0.5">{prescription.medications}</p>
                                   </div>
                                 )}
                                 {prescription.notes && (
-                                  <div className="mb-3">
-                                    <Label className="text-sm font-semibold text-gray-700">Notes:</Label>
-                                    <p className="text-sm text-gray-600 mt-1">{prescription.notes}</p>
+                                  <div className="mb-2">
+                                    <Label className="text-xs font-semibold text-gray-600">Notes:</Label>
+                                    <p className="text-xs text-gray-700 mt-0.5">{prescription.notes}</p>
                                   </div>
                                 )}
                                 
                                 {/* Action Buttons */}
-                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-blue-200">
-                                  {/* Save Button - show for Generated or Not Saved prescriptions */}
+                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-teal-100">
                                   {(status.label === 'Generated' || status.label === 'Not Saved') && (
                                     <Button
                                       size="sm"
                                       onClick={() => handleSavePrescription(prescription)}
-                                      className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white text-xs h-8"
+                                      className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white text-xs h-7 px-3 rounded-lg"
                                     >
                                       <Save className="h-3 w-3 mr-1" />
                                       Save to Storage
                                     </Button>
                                   )}
                                   
-                                  {/* Export as TXT */}
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleExportPrescriptionTXT(prescription, selectedPatient)}
-                                    className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white text-xs h-8"
+                                    className="border-[#2a9d8f]/30 text-[#0d5c75] hover:bg-teal-50 text-xs h-7 px-3 rounded-lg bg-white"
                                   >
-                                    <FileDown className="h-3 w-3 mr-1" />
+                                    <FileDown className="h-3 w-3 mr-1 text-[#2a9d8f]" />
                                     Export TXT
                                   </Button>
                                   
-                                  {/* Export as JSON */}
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleExportPrescriptionJSON(prescription, selectedPatient)}
-                                    className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs h-8"
+                                    className="border-[#0d5c75]/20 text-[#0d5c75] hover:bg-teal-50 text-xs h-7 px-3 rounded-lg bg-white"
                                   >
-                                    <FileJson className="h-3 w-3 mr-1" />
+                                    <FileJson className="h-3 w-3 mr-1 text-[#0d5c75]" />
                                     Export JSON
                                   </Button>
                                 </div>
                                 
-                                {/* Saved timestamp */}
                                 {prescription.savedAt && (
-                                  <p className="text-xs text-gray-500 mt-2">
+                                  <p className="text-[10px] text-gray-400 mt-2">
                                     💾 Saved: {new Date(prescription.savedAt).toLocaleString()}
                                   </p>
                                 )}
@@ -885,11 +865,11 @@ Exported from Gonstead Chiropractic Patient Tracking System
                           })}
                         </div>
                       ) : (
-                        <div className="text-center py-8">
-                          <Pill className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                          <p className="text-gray-500">No prescription records found for this patient</p>
-                          <p className="text-sm text-gray-400 mt-1">
-                            Prescriptions will appear here after they are generated
+                        <div className="text-center py-6">
+                          <Pill className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-xs text-gray-500 font-medium">No prescription records found for this patient</p>
+                          <p className="text-[11px] text-gray-400 mt-0.5">
+                            Prescriptions will appear here once created
                           </p>
                         </div>
                       )}
@@ -897,10 +877,10 @@ Exported from Gonstead Chiropractic Patient Tracking System
                   </Card>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-4 justify-center">
+                  <div className="flex gap-3 justify-center pt-2">
                     <Button
                       onClick={() => router.push('/admin/dashboard')}
-                      className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white"
+                      className="bg-[#0d5c75] hover:bg-[#0a4a5c] text-white rounded-xl h-10 px-5 text-sm font-medium shadow-sm"
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       View in Dashboard
@@ -908,9 +888,9 @@ Exported from Gonstead Chiropractic Patient Tracking System
                     <Button
                       onClick={() => router.push('/medical-history')}
                       variant="outline"
-                      className="border-[#2a9d8f] text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white"
+                      className="border-[#0d5c75]/30 text-[#0d5c75] bg-white hover:bg-teal-50 rounded-xl h-10 px-5 text-sm font-medium"
                     >
-                      <FileText className="h-4 w-4 mr-2" />
+                      <FileText className="h-4 w-4 mr-2 text-[#2a9d8f]" />
                       Medical Records
                     </Button>
                   </div>
@@ -922,30 +902,32 @@ Exported from Gonstead Chiropractic Patient Tracking System
 
         {/* Empty State */}
         {!isLoading && searchResults.length === 0 && searchQuery === "" && (
-          <Card className="shadow-xl border-[#0d5c75]/20">
-            <CardContent className="p-12 text-center">
-              <div className="mx-auto w-24 h-24 bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] rounded-full flex items-center justify-center mb-6">
-                <Search className="h-12 w-12 text-white" />
+          <Card className="shadow-lg border border-[#0d5c75]/15 bg-white rounded-2xl overflow-hidden">
+            <CardContent className="p-8 sm:p-12 text-center">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] rounded-2xl flex items-center justify-center mb-4 shadow-md">
+                <Search className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-[#0d5c75] mb-3">
+              <h3 className="text-lg font-bold text-[#0d5c75] mb-2 font-poppins">
                 Patient Tracking System Ready
               </h3>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                Use the search functionality above to track patients by prescription ID or personal information. 
-                Get detailed insights into patient appointments, prescriptions, and treatment history.
+              <p className="text-xs sm:text-sm text-gray-500 mb-6 max-w-md mx-auto leading-relaxed">
+                Search patients by prescription ID, name, phone, or email to track treatment histories, upcoming appointments, and generated prescriptions.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <Activity className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-blue-800">Real-time Tracking</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-xl mx-auto">
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-gray-100">
+                  <Activity className="h-6 w-6 text-[#0d5c75] mx-auto mb-1.5" />
+                  <p className="text-xs font-bold text-[#0d5c75]">Real-time Tracking</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Live appointment updates</p>
                 </div>
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-green-800">Complete Records</p>
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-gray-100">
+                  <CheckCircle className="h-6 w-6 text-[#2a9d8f] mx-auto mb-1.5" />
+                  <p className="text-xs font-bold text-[#2a9d8f]">Complete Records</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Synced clinical history</p>
                 </div>
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <FileText className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-purple-800">Prescription History</p>
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-gray-100">
+                  <FileText className="h-6 w-6 text-[#0d5c75] mx-auto mb-1.5" />
+                  <p className="text-xs font-bold text-[#0d5c75]">Prescription Sync</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Export TXT & JSON format</p>
                 </div>
               </div>
             </CardContent>
