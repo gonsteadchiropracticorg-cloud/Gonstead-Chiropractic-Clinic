@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app"
 import { getFirestore, Firestore } from "firebase/firestore"
 import { getAuth, Auth } from "firebase/auth"
 import { getStorage, FirebaseStorage } from "firebase/storage"
+import { getAnalytics, isSupported, Analytics } from "firebase/analytics"
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,6 +19,7 @@ let app: FirebaseApp | null = null
 let db: Firestore | null = null
 let auth: Auth | null = null
 let storage: FirebaseStorage | null = null
+let analytics: Analytics | null = null
 
 try {
   if (firebaseConfig.apiKey && firebaseConfig.projectId) {
@@ -25,6 +27,13 @@ try {
     db = getFirestore(app)
     auth = getAuth(app)
     storage = getStorage(app)
+    if (typeof window !== "undefined") {
+      isSupported().then((supported) => {
+        if (supported && app) {
+          analytics = getAnalytics(app)
+        }
+      }).catch(() => {})
+    }
     console.log("[Firebase] ✅ Firebase initialized successfully for project:", firebaseConfig.projectId)
   } else {
     console.warn("[Firebase] ⚠️ Firebase config missing apiKey or projectId. Firestore will be disabled.")
@@ -33,5 +42,5 @@ try {
   console.error("[Firebase] ❌ Firebase initialization error:", error)
 }
 
-export { app, db, auth, storage }
+export { app, db, auth, storage, analytics }
 export default app
