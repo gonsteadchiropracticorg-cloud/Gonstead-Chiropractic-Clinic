@@ -290,12 +290,12 @@ Respond ONLY with valid JSON with format:
         className={`fixed z-[99990] flex items-center transition-all duration-300 ${
           isPatientPortal
             ? "bottom-20 left-6"
-            : "bottom-22 right-5 md:bottom-24 md:right-7"
+            : "bottom-18 right-4 md:bottom-20 md:right-6"
         }`}
       >
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`relative h-12 w-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 active:scale-95 border-2 border-teal-300/40 ${
+          className={`relative h-11 w-11 sm:h-12 sm:w-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 active:scale-95 border-2 border-teal-300/40 ${
             isOpen
               ? "bg-[#0d5c75] text-white ring-4 ring-[#2a9d8f]/40"
               : "bg-gradient-to-tr from-[#0d5c75] via-[#15728a] to-[#2a9d8f] text-white hover:brightness-110"

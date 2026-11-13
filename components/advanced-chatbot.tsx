@@ -480,22 +480,16 @@ STRICT FORMATTING RULE:
   // Floating Chat Bubble Button
   if (!isOpen) {
     return (
-      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[99999] flex flex-col items-end gap-2">
-        {/* Quick Voice Command Pill */}
-        <div className="hidden sm:flex items-center gap-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-teal-500/20 text-xs text-gray-700 dark:text-gray-200">
-          <Sparkles className="h-3.5 w-3.5 text-[#428b7c]" />
-          <span>Ask Dr. Bashir AI Assistant</span>
-        </div>
-
+      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[99999] flex items-center justify-center">
         <button
           onClick={() => setIsOpen(true)}
-          className="relative h-14 w-14 rounded-full bg-[#428b7c] hover:bg-[#387a6d] text-white flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all group"
+          className="relative h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-[#428b7c] hover:bg-[#387a6d] text-white flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all group"
           aria-label="Open Chat"
         >
-          <MessageCircle className="h-7 w-7 transition-transform group-hover:scale-110" />
-          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+          <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 transition-transform group-hover:scale-110" />
+          <span className="absolute -top-1 -right-1 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-300 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-green-500"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
           </span>
         </button>
       </div>
