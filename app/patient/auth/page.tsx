@@ -152,15 +152,11 @@ export default function PatientAuthPage() {
       })
     } else {
       toast({
-        title: "Account Created Successfully!",
-        description: "Please log in using your registered email and password.",
+        title: "Account Created!",
+        description: `Welcome to Gonstead Chiropractic, ${res.account?.name || regName}!`,
       })
-      // Switch to login tab and prefill the email for the user
-      setLoginEmail(regEmail)
-      setLoginPassword("")
-      setRegPassword("")
-      setRegConfirmPassword("")
-      setActiveTab("login")
+      // Direct enter into Patient Portal
+      router.replace("/patient-portal")
     }
   }
 

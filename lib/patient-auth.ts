@@ -101,9 +101,13 @@ export async function registerPatient(params: {
     }
     await setDoc(accountDocRef, accountPayload)
 
-    // 4. Do not auto-login to session during registration: patient must log in with their credentials
-    if (auth) {
-      await signOut(auth).catch(() => {})
+    // 4. Automatically persist session in localStorage so user is signed in immediately
+    if (typeof window !== "undefined") {
+      localStorage.setItem("patient_authenticated", "true")
+      localStorage.setItem("patient_uid", user.uid)
+      localStorage.setItem("patient_email", cleanEmail)
+      localStorage.setItem("patient_name", cleanName)
+      localStorage.setItem("patient_id", patientDocRef.id)
     }
 
     return { user, account: accountPayload, error: null }
