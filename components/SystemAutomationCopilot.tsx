@@ -25,6 +25,7 @@ import {
   CircleDot,
   Loader2,
   Radio,
+  GripHorizontal,
 } from "lucide-react"
 
 interface AutomationStep {
@@ -53,9 +54,200 @@ export function SystemAutomationCopilot() {
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [executionLogs, setExecutionLogs] = useState<string[]>([])
 
+  // Persistent, freely draggable position across cursor (desktop) & finger touch (mobile)
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const [popupPos, setPopupPos] = useState<{ top: number; left: number; origin: string } | null>(null)
+  const isDraggingRef = useRef<boolean>(false)
+  const dragStartRef = useRef<{
+    startX: number
+    startY: number
+    initialX: number
+    initialY: number
+    hasMoved: boolean
+  } | null>(null)
+  const buttonRef = useRef<HTMLDivElement>(null)
+
   const recognitionRef = useRef<any>(null)
   const isExecutingRef = useRef<boolean>(false)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Calculate opening position dynamically anchored to button's current position
+  const calculatePopupPosition = (buttonX: number, buttonY: number) => {
+    if (typeof window === "undefined") {
+      return { top: 100, left: 100, origin: "bottom right" }
+    }
+
+    const modalWidth = Math.min(400, window.innerWidth - 20)
+    const modalHeight = Math.min(540, window.innerHeight - 30)
+    const btnSize = 52
+    const margin = 12
+
+    const btnCenterX = buttonX + btnSize / 2
+
+    // Determine Horizontal Placement
+    let left: number
+    let originX: "right" | "left" = "right"
+
+    if (btnCenterX >= window.innerWidth / 2) {
+      // Button is on right half: align popup to the left / right-anchored to button
+      left = buttonX + btnSize - modalWidth
+      originX = "right"
+    } else {
+      // Button is on left half: align popup to start at button
+      left = buttonX
+      originX = "left"
+    }
+
+    // Clamp horizontal position so it never overflows screen edges
+    left = Math.max(margin, Math.min(window.innerWidth - modalWidth - margin, left))
+
+    // Determine Vertical Placement
+    const spaceAbove = buttonY - margin
+    const spaceBelow = window.innerHeight - (buttonY + btnSize) - margin
+
+    let top: number
+    let originY: "bottom" | "top" = "bottom"
+
+    if (spaceAbove >= modalHeight) {
+      // Fits comfortably above the button
+      top = buttonY - modalHeight - 12
+      originY = "bottom"
+    } else if (spaceBelow >= modalHeight) {
+      // Fits comfortably below the button
+      top = buttonY + btnSize + 12
+      originY = "top"
+    } else {
+      // Screen space constrained: place where there is more room and clamp
+      if (spaceAbove >= spaceBelow) {
+        top = Math.max(margin, buttonY - modalHeight - 12)
+        originY = "bottom"
+      } else {
+        top = Math.min(window.innerHeight - modalHeight - margin, buttonY + btnSize + 12)
+        originY = "top"
+      }
+    }
+
+    return {
+      top,
+      left,
+      origin: `${originY} ${originX}`,
+    }
+  }
+
+  // Load saved position from localStorage or set clean defaults
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    try {
+      const saved = localStorage.getItem("gonstead_copilot_pos")
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+          const clampedX = Math.max(12, Math.min(window.innerWidth - 64, parsed.x))
+          const clampedY = Math.max(12, Math.min(window.innerHeight - 64, parsed.y))
+          setPos({ x: clampedX, y: clampedY })
+          return
+        }
+      }
+    } catch (e) {}
+
+    // Default placement: bottom-right (or bottom-left on patient portal)
+    const initialX = isPatientPortal ? 24 : Math.max(12, window.innerWidth - 72)
+    const initialY = Math.max(12, window.innerHeight - 84)
+    setPos({ x: initialX, y: initialY })
+  }, [isPatientPortal])
+
+  // Window resize handler: clamp position and re-anchor popup
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const handleResize = () => {
+      setPos((prev) => {
+        if (!prev) return prev
+        const clampedX = Math.max(12, Math.min(window.innerWidth - 64, prev.x))
+        const clampedY = Math.max(12, Math.min(window.innerHeight - 64, prev.y))
+        return { x: clampedX, y: clampedY }
+      })
+      if (isOpen && pos) {
+        setPopupPos(calculatePopupPosition(pos.x, pos.y))
+      }
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [isOpen, pos])
+
+  // Pointer Drag Handlers (smooth desktop mouse + mobile finger touch)
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
+    const currentX = pos?.x ?? (window.innerWidth - 72)
+    const currentY = pos?.y ?? (window.innerHeight - 84)
+
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: currentX,
+      initialY: currentY,
+      hasMoved: false,
+    }
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch (err) {}
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStartRef.current) return
+    const dx = e.clientX - dragStartRef.current.startX
+    const dy = e.clientY - dragStartRef.current.startY
+
+    if (!dragStartRef.current.hasMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      dragStartRef.current.hasMoved = true
+      isDraggingRef.current = true
+    }
+
+    if (dragStartRef.current.hasMoved) {
+      const newX = Math.max(12, Math.min(window.innerWidth - 64, dragStartRef.current.initialX + dx))
+      const newY = Math.max(12, Math.min(window.innerHeight - 64, dragStartRef.current.initialY + dy))
+      setPos({ x: newX, y: newY })
+
+      // If modal is open while moving the bot, update popup position in real-time
+      if (isOpen) {
+        setPopupPos(calculatePopupPosition(newX, newY))
+      }
+    }
+  }
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStartRef.current) return
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch (err) {}
+
+    if (dragStartRef.current.hasMoved && pos) {
+      try {
+        localStorage.setItem("gonstead_copilot_pos", JSON.stringify(pos))
+      } catch (err) {}
+    }
+
+    setTimeout(() => {
+      isDraggingRef.current = false
+      dragStartRef.current = null
+    }, 120)
+  }
+
+  const handleToggleOpen = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isDraggingRef.current) return
+    const nextOpen = !isOpen
+    if (nextOpen) {
+      const currentX = pos?.x ?? (window.innerWidth - 72)
+      const currentY = pos?.y ?? (window.innerHeight - 84)
+      setPopupPos(calculatePopupPosition(currentX, currentY))
+    }
+    setIsOpen(nextOpen)
+  }
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -108,6 +300,9 @@ export function SystemAutomationCopilot() {
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === "GONSTEAD_OPEN_COPILOT") {
+        const currentX = pos?.x ?? (window.innerWidth - 72)
+        const currentY = pos?.y ?? (window.innerHeight - 84)
+        setPopupPos(calculatePopupPosition(currentX, currentY))
         setIsOpen(true)
         setStatusMessage("Automation copilot active. How may I assist you?")
       }
@@ -117,6 +312,9 @@ export function SystemAutomationCopilot() {
     try {
       if (sessionStorage.getItem("gonstead_open_copilot") === "true") {
         sessionStorage.removeItem("gonstead_open_copilot")
+        const currentX = pos?.x ?? (window.innerWidth - 72)
+        const currentY = pos?.y ?? (window.innerHeight - 84)
+        setPopupPos(calculatePopupPosition(currentX, currentY))
         setIsOpen(true)
         setStatusMessage("Automation copilot active. How may I assist you?")
       }
@@ -126,6 +324,9 @@ export function SystemAutomationCopilot() {
         const queued = JSON.parse(queuedStr)
         if (queued && queued.steps && queued.steps.length > 0) {
           sessionStorage.removeItem("gonstead_automation_pipeline")
+          const currentX = pos?.x ?? (window.innerWidth - 72)
+          const currentY = pos?.y ?? (window.innerHeight - 84)
+          setPopupPos(calculatePopupPosition(currentX, currentY))
           setIsOpen(true)
           setStatusMessage(queued.explanation || "Resuming automation pipeline...")
           runPipeline(queued.steps, queued.currentIndex || 0, queued.explanation)
@@ -138,7 +339,7 @@ export function SystemAutomationCopilot() {
     return () => {
       window.removeEventListener("message", handleMessage)
     }
-  }, [])
+  }, [pos])
 
   // Text-to-Speech
   const speak = (text: string) => {
@@ -413,89 +614,97 @@ Respond ONLY with valid JSON with format:
 
   return (
     <div ref={containerRef}>
-      {/* Small, Perfect Circular Futuristic Automation Orb - Freely Draggable Across Mobile Touch & Desktop Cursor */}
-      <motion.div
-        drag
-        dragMomentum={false}
-        whileDrag={{ scale: 1.15, cursor: "grabbing" }}
-        className={`fixed z-[99990] flex items-center touch-none cursor-grab ${
-          isPatientPortal
-            ? "bottom-20 left-6"
-            : "bottom-18 right-4 md:bottom-20 md:right-6"
-        }`}
-        title="Drag anywhere on screen with mouse or finger"
+      {/* Light Transparent Futuristic Automation Orb - Freely Draggable Across Cursor (Desktop) & Finger Touch (Mobile) */}
+      <div
+        ref={buttonRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        style={{
+          position: "fixed",
+          left: pos?.x ?? (isPatientPortal ? 24 : -9999),
+          top: pos?.y ?? -9999,
+          zIndex: 99990,
+        }}
+        className="touch-none select-none cursor-grab active:cursor-grabbing transition-shadow"
+        title="Move anywhere with cursor or finger. Tap to open Automation Bot."
       >
         <motion.button
-          onClick={() => setIsOpen(!isOpen)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.92 }}
-          className={`group relative h-10 w-10 sm:h-11 sm:w-11 rounded-full shadow-[0_4px_20px_rgba(13,92,117,0.35)] flex items-center justify-center transition-all duration-300 ${
+          onClick={handleToggleOpen}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.94 }}
+          className={`group relative h-12 w-12 sm:h-13 sm:w-13 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-xl ${
             isOpen
-              ? "bg-[#083344] ring-2 ring-teal-400 shadow-[0_0_24px_rgba(42,157,143,0.55)]"
-              : "bg-gradient-to-tr from-[#0d5c75] via-[#116e8c] to-[#2a9d8f]"
-          }`}
-          title="Open AI Autonomous Copilot (Voice & Workflow) - Drag with finger or cursor"
+              ? "bg-white/90 dark:bg-slate-900/85 ring-2 ring-[#2a9d8f] shadow-[0_0_28px_rgba(42,157,143,0.4),0_8px_24px_rgba(13,92,117,0.18)]"
+              : "bg-white/80 dark:bg-slate-900/75 hover:bg-white/95 dark:hover:bg-slate-900/90 shadow-[0_8px_28px_rgba(13,92,117,0.18),0_2px_8px_rgba(42,157,143,0.12),inset_0_1px_2px_rgba(255,255,255,0.95)] hover:shadow-[0_12px_36px_rgba(13,92,117,0.25)]"
+          } border border-teal-500/30 dark:border-teal-400/30`}
           aria-label="Open AI Autonomous Copilot"
         >
-          {/* Subtle Ambient Pulse Ring */}
-          <span className="absolute inset-0 rounded-full bg-teal-400/20 animate-ping pointer-events-none" />
+          {/* Subtle Ambient Teal Pulse Ring */}
+          <span className="absolute inset-0 rounded-full bg-teal-400/15 animate-ping pointer-events-none" />
 
           {/* Micro Orbit Light Ring */}
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-[-2px] rounded-full bg-[conic-gradient(from_0deg,#2a9d8f,transparent,#06b6d4,transparent,#2a9d8f)] opacity-60"
+            transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-[-2px] rounded-full bg-[conic-gradient(from_0deg,#2a9d8f33,#06b6d444,#5eead466,#2a9d8f33)] opacity-70 pointer-events-none"
           />
 
-          {/* Circular Core Glass Surface */}
-          <div className="relative z-10 w-[calc(100%-3px)] h-[calc(100%-3px)] rounded-full bg-[#0a2f3f]/95 backdrop-blur-md flex items-center justify-center border border-white/25">
-            <Sparkles className="w-4 h-4 text-teal-200 group-hover:text-white transition-colors" />
+          {/* Circular Core Glass Surface - Clean Light Transparent */}
+          <div className="relative z-10 w-[calc(100%-4px)] h-[calc(100%-4px)] rounded-full bg-gradient-to-br from-white/95 via-teal-50/70 to-teal-100/50 dark:from-slate-800/90 dark:via-teal-950/70 dark:to-slate-900/90 backdrop-blur-md flex items-center justify-center border border-white/80 dark:border-teal-500/30 shadow-inner">
+            <Sparkles className="w-5 h-5 text-[#0d5c75] dark:text-teal-300 transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_1px_3px_rgba(13,92,117,0.25)]" />
 
-            {/* Status dot */}
+            {/* Active Status Beacon */}
             {isExecutingRef.current ? (
               <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 border border-white"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 border-2 border-white shadow-xs"></span>
               </span>
             ) : isListening ? (
               <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border border-white"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white shadow-xs"></span>
               </span>
             ) : (
               <span className="absolute bottom-0 right-0 flex h-2 w-2">
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 border border-white"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 border border-white shadow-xs"></span>
               </span>
             )}
           </div>
         </motion.button>
-      </motion.div>
+      </div>
 
-      {/* Pro Perplexity-Style Floating Workflow Console */}
+      {/* Pro Dynamic Floating Workflow Console - Opens at Bot's Current Location */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 16 }}
+            initial={{ opacity: 0, scale: 0.88, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 16 }}
-            transition={{ type: "spring", damping: 26, stiffness: 360 }}
-            className={`fixed w-[400px] max-w-[calc(100vw-1.5rem)] rounded-3xl shadow-[0_24px_70px_rgba(0,0,0,0.35)] z-[99995] overflow-hidden flex flex-col backdrop-blur-2xl bg-white/95 dark:bg-slate-900/95 border border-[#0d5c75]/15 dark:border-white/10 ${
-              isPatientPortal
-                ? "bottom-34 left-4 sm:left-6"
-                : "bottom-32 right-3 sm:right-6"
-            }`}
+            exit={{ opacity: 0, scale: 0.88, y: 8 }}
+            transition={{ type: "spring", damping: 28, stiffness: 420, mass: 0.8 }}
+            style={{
+              position: "fixed",
+              top: `${popupPos?.top ?? 80}px`,
+              left: `${popupPos?.left ?? 20}px`,
+              transformOrigin: popupPos?.origin ?? "bottom right",
+            }}
+            className="w-[400px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100vh-2rem)] rounded-3xl shadow-[0_24px_70px_rgba(13,92,117,0.22),0_4px_24px_rgba(0,0,0,0.1),0_0_0_1px_rgba(255,255,255,0.7)] z-[99995] overflow-hidden flex flex-col backdrop-blur-2xl bg-white/92 dark:bg-slate-900/92 border border-teal-600/25 dark:border-teal-400/20"
           >
             {/* Header with clinic teal accent */}
-            <div className="relative p-3.5 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white">
+            <div className="relative p-3.5 bg-gradient-to-r from-[#0d5c75] via-[#0f766e] to-[#2a9d8f] text-white">
+              {/* Subtle top indicator bar */}
+              <div className="w-10 h-1 rounded-full bg-white/30 mx-auto mb-2 opacity-80" />
+
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20">
+                  <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/25 shadow-xs">
                     <Bot className="w-4 h-4 text-teal-100" />
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
                       <h3 className="font-bold text-xs sm:text-sm font-poppins">Autonomous Copilot</h3>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-teal-300/20 text-teal-100 border border-teal-300/30">
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-teal-300/25 text-teal-100 border border-teal-300/30">
                         AI
                       </span>
                     </div>
@@ -506,7 +715,7 @@ Respond ONLY with valid JSON with format:
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setVoiceEnabled(!voiceEnabled)}
-                    className="p-1.5 rounded-full hover:bg-white/15 text-white/80 hover:text-white transition-colors"
+                    className="p-1.5 rounded-full hover:bg-white/20 text-white/80 hover:text-white transition-colors"
                     title={voiceEnabled ? "Mute Voice Speech" : "Enable Voice Speech"}
                   >
                     {voiceEnabled ? (
@@ -517,7 +726,8 @@ Respond ONLY with valid JSON with format:
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-1.5 rounded-full hover:bg-white/15 text-white/80 hover:text-white transition-colors"
+                    className="p-1.5 rounded-full hover:bg-white/20 text-white/80 hover:text-white transition-colors"
+                    title="Close"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -526,7 +736,7 @@ Respond ONLY with valid JSON with format:
             </div>
 
             {/* Live Pipeline Status Strip */}
-            <div className="px-3.5 py-2 bg-slate-900 text-teal-300 border-b border-teal-900/40 text-xs flex items-center justify-between gap-2">
+            <div className="px-3.5 py-2 bg-slate-900/95 text-teal-300 border-b border-teal-900/40 text-xs flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 overflow-hidden">
                 <span className="relative flex h-2 w-2 shrink-0">
                   <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isProcessing || isExecutingRef.current ? "bg-amber-400" : "bg-emerald-400"} opacity-75`}></span>
@@ -597,15 +807,15 @@ Respond ONLY with valid JSON with format:
             )}
 
             {/* Quick Action Capsules */}
-            <div className="p-3 bg-slate-50/70 dark:bg-slate-900/70 border-b border-gray-100 dark:border-slate-800">
+            <div className="p-3 bg-slate-50/80 dark:bg-slate-900/80 border-b border-gray-100 dark:border-slate-800">
               <div className="text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                <Sparkles className="w-3 h-3 text-[#0d5c75] dark:text-teal-400" />
                 <span>Instant Workflows:</span>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() => executeInstruction("scroll down and show clinic services")}
-                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/40 hover:bg-teal-50/40 shadow-xs"
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/50 hover:bg-teal-50/50 shadow-xs"
                 >
                   <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
                     Explore Services
@@ -614,7 +824,7 @@ Respond ONLY with valid JSON with format:
                 </button>
                 <button
                   onClick={() => executeInstruction("go to FAQ page and open the last question")}
-                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/40 hover:bg-teal-50/40 shadow-xs"
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/50 hover:bg-teal-50/50 shadow-xs"
                 >
                   <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
                     FAQ Inspection
@@ -623,7 +833,7 @@ Respond ONLY with valid JSON with format:
                 </button>
                 <button
                   onClick={() => executeInstruction("open patient portal")}
-                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/40 hover:bg-teal-50/40 shadow-xs"
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/50 hover:bg-teal-50/50 shadow-xs"
                 >
                   <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
                     Patient Portal
@@ -632,7 +842,7 @@ Respond ONLY with valid JSON with format:
                 </button>
                 <button
                   onClick={() => executeInstruction("open admin dashboard")}
-                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/40 hover:bg-teal-50/40 shadow-xs"
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/50 hover:bg-teal-50/50 shadow-xs"
                 >
                   <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
                     Admin Dashboard
@@ -643,14 +853,14 @@ Respond ONLY with valid JSON with format:
             </div>
 
             {/* Input & Voice Controls Bar */}
-            <div className="p-3 bg-white dark:bg-slate-900 flex items-center gap-2">
+            <div className="p-3 bg-white/95 dark:bg-slate-900/95 flex items-center gap-2">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={toggleListening}
                 className={`p-2.5 rounded-full transition-all shadow-xs flex items-center justify-center shrink-0 ${
                   isListening
                     ? "bg-rose-500 text-white animate-pulse ring-4 ring-rose-200"
-                    : "bg-teal-50 text-[#0d5c75] hover:bg-teal-100 border border-[#0d5c75]/15"
+                    : "bg-teal-50 text-[#0d5c75] hover:bg-teal-100 border border-[#0d5c75]/20"
                 }`}
                 title={isListening ? "Listening... click to stop" : "Speak voice automation command"}
               >
@@ -668,7 +878,7 @@ Respond ONLY with valid JSON with format:
                     }
                   }}
                   placeholder="Give automation command or ask..."
-                  className="w-full bg-slate-100/80 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-gray-400 text-xs px-3.5 py-2.5 rounded-full border border-transparent focus:border-[#0d5c75]/30 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-[#0d5c75]/15 outline-none transition-all"
+                  className="w-full bg-slate-100/90 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-gray-400 text-xs px-3.5 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 focus:border-[#0d5c75]/40 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-[#0d5c75]/15 outline-none transition-all"
                 />
               </div>
 
@@ -676,7 +886,7 @@ Respond ONLY with valid JSON with format:
                 whileTap={{ scale: 0.9 }}
                 onClick={() => executeInstruction(inputText)}
                 disabled={isProcessing || !inputText.trim()}
-                className="p-2.5 rounded-full bg-[#0d5c75] hover:bg-[#0a4a5c] text-white disabled:opacity-40 transition-all shadow-xs shrink-0 flex items-center justify-center"
+                className="p-2.5 rounded-full bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#238276] text-white disabled:opacity-40 transition-all shadow-xs shrink-0 flex items-center justify-center"
                 title="Execute automation"
               >
                 <Send className="w-3.5 h-3.5" />
