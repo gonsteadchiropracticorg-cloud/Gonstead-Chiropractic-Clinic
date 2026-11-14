@@ -1930,32 +1930,46 @@ left: 80px;
         .toc-filter { width: 100%; height: 32px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0 10px; font-size: 12px; margin-top: 8px; }
         .sidebar:not(.expanded):not(:hover) .toc-filter { display: none; }
 
-        /* When embedded in an iframe inside the main app, hide floating elements that clash with parent app header & copilot */
+        /* When embedded in an iframe inside the main app, hide redundant headers and floating elements */
+        .in-iframe header.header,
+        body.in-iframe header.header,
+        .in-iframe #theme-toggle,
         body.in-iframe #theme-toggle,
+        .in-iframe .professional-icons-container,
         body.in-iframe .professional-icons-container,
+        .in-iframe #sidebarToggle,
         body.in-iframe #sidebarToggle,
+        .in-iframe #scrollToTopBtn,
         body.in-iframe #scrollToTopBtn,
+        .in-iframe #backToTop,
         body.in-iframe #backToTop,
+        .in-iframe #readingProgress,
         body.in-iframe #readingProgress {
             display: none !important;
         }
 
-        /* Adjust main content & sidebar in iframe to seamlessly fill page */
+        /* Adjust main content & sidebar in iframe to seamlessly fill page without empty white space */
+        .in-iframe .sidebar,
         body.in-iframe .sidebar {
-            top: 16px;
-            height: calc(100vh - 32px);
+            top: 10px !important;
+            height: calc(100vh - 20px) !important;
         }
+        .in-iframe .main-content,
         body.in-iframe .main-content {
-            padding-top: 24px;
+            padding-top: 16px !important;
         }
     </style>
     <script>
-        // Immediately detect if inside iframe and add class to body
+        // Immediately detect if inside iframe and add class to html and body
         if (window.self !== window.top) {
             document.documentElement.classList.add('in-iframe');
-            document.addEventListener('DOMContentLoaded', function() {
+            if (document.body) {
                 document.body.classList.add('in-iframe');
-            });
+            } else {
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.body.classList.add('in-iframe');
+                });
+            }
         }
     </script>
 </head>
