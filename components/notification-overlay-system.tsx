@@ -295,7 +295,7 @@ export function NotificationOverlaySystem({
       <motion.div
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        className="fixed bottom-4 right-4 z-40"
+        className="fixed bottom-4 right-4 z-[90]"
       >
         <Button
           onClick={() => setIsHidden(false)}
@@ -332,7 +332,7 @@ export function NotificationOverlaySystem({
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className={`fixed bottom-4 right-4 z-30 ${isMinimized ? 'w-auto' : 'w-96'}`}
+        className={`fixed bottom-4 right-4 z-[90] ${isMinimized ? 'w-auto' : 'w-96'}`}
       >
         <Card className="border-blue-200 bg-white/95 backdrop-blur-sm shadow-xl">
           {isMinimized ? (

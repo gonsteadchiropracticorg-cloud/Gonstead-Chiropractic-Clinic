@@ -65,7 +65,7 @@ export default function ScrollToTopButton({ showAfter = 200, className = "" }: S
   if (!isVisible || isChatOpen) return null
 
   return (
-    <div className={`fixed bottom-20 right-6 z-[9998] ${className}`}>
+    <div className={`fixed bottom-20 right-6 z-20 ${className}`}>
       <Button
         onClick={scrollToTop}
         className={`
@@ -117,7 +117,7 @@ export function NavigationScrollButton({ showAfter = 200, className = "" }: Scro
   if (!isVisible) return null
 
   return (
-    <div className={`fixed bottom-6 right-6 z-40 ${className}`}>
+    <div className={`fixed bottom-6 right-6 z-20 ${className}`}>
       <Button
         onClick={scrollToTop}
         onMouseEnter={() => setIsHovered(true)}

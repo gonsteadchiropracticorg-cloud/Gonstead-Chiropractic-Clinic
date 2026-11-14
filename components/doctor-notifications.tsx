@@ -254,10 +254,10 @@ export function DoctorNotifications({
   }
 
   const positionClasses = {
-    "top-right": "fixed top-4 right-4 z-50",
-    "top-left": "fixed top-4 left-4 z-50",
-    "bottom-right": "fixed bottom-4 right-4 z-50",
-    "bottom-left": "fixed bottom-4 left-4 z-50"
+    "top-right": "fixed top-4 right-4 z-[95]",
+    "top-left": "fixed top-4 left-4 z-[95]",
+    "bottom-right": "fixed bottom-4 right-4 z-[95]",
+    "bottom-left": "fixed bottom-4 left-4 z-[95]"
   }
 
   return (

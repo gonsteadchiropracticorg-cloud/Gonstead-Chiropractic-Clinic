@@ -41,25 +41,29 @@ const nextConfig = {
   headers: async () => {
     return [
       {
-        // Allow educational-guide.html to be embedded in iframe from same origin
-        source: '/educational-guide.html',
+        source: '/api/(.*)',
         headers: [
           {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0',
           },
           {
-            key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self'",
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
           },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
           },
         ],
       },
       {
-        source: '/(.*)',
+        // General security headers for all routes except educational iframe assets
+        source: '/((?!educational-guide\\.html|assessment\\.html).*)',
         headers: [
           {
             key: 'X-Frame-Options',
@@ -80,27 +84,38 @@ const nextConfig = {
         ],
       },
       {
-        source: '/api/(.*)',
+        // Allow educational-guide.html to be embedded in iframe from same origin
+        source: '/educational-guide.html',
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'no-store, max-age=0',
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
           },
           {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self'",
           },
           {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS',
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+      {
+        // Allow assessment.html to be embedded in iframe or displayed from same origin
+        source: '/assessment.html',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
           },
           {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization, X-Requested-With',
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self'",
           },
           {
-            key: 'Access-Control-Max-Age',
-            value: '86400',
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
         ],
       },

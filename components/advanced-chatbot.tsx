@@ -107,16 +107,41 @@ export function AdvancedChatbot() {
       }
     }
 
+    const handleWindowBlur = () => {
+      // If user clicks inside an iframe (like educational guide), document focus moves to iframe
+      setTimeout(() => {
+        if (document.activeElement && document.activeElement.tagName === "IFRAME") {
+          if (typeof window !== "undefined" && "speechSynthesis" in window) {
+            window.speechSynthesis.cancel()
+          }
+          setIsOpen(false)
+        }
+      }, 50)
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (typeof window !== "undefined" && "speechSynthesis" in window) {
+          window.speechSynthesis.cancel()
+        }
+        setIsOpen(false)
+      }
+    }
+
     // Add listener on next tick to avoid immediate close from the opening click
     const timer = setTimeout(() => {
       document.addEventListener("mousedown", handleClickOutside)
       document.addEventListener("touchstart", handleClickOutside)
+      window.addEventListener("blur", handleWindowBlur)
+      window.addEventListener("keydown", handleKeyDown)
     }, 50)
 
     return () => {
       clearTimeout(timer)
       document.removeEventListener("mousedown", handleClickOutside)
       document.removeEventListener("touchstart", handleClickOutside)
+      window.removeEventListener("blur", handleWindowBlur)
+      window.removeEventListener("keydown", handleKeyDown)
       if (typeof window !== "undefined") {
         document.body.style.overflow = ""
       }
@@ -521,19 +546,32 @@ STRICT FORMATTING RULE:
   }
 
   return (
-    // Fixed container matching mobile visualViewport height
-    <div
-      className="fixed inset-x-0 bottom-0 top-0 sm:top-auto sm:left-auto sm:right-4 md:right-6 z-[99999] flex flex-col justify-end pointer-events-none"
-      style={
-        viewportHeight && typeof window !== "undefined" && window.innerWidth < 640
-          ? { height: `${viewportHeight}px` }
-          : undefined
-      }
-    >
+    <>
+      {/* Click-outside backdrop covering entire screen (intercepts clicks over iframes & page) */}
       <div
-        ref={chatWindowRef}
-        className="pointer-events-auto w-full sm:w-[390px] md:w-[430px] shadow-2xl border-0 sm:border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 h-full sm:h-[82vh] sm:max-h-[660px] rounded-none sm:rounded-2xl overflow-hidden flex flex-col"
+        className="fixed inset-0 z-[99998] pointer-events-auto bg-black/15 sm:bg-black/10 dark:bg-black/40 backdrop-blur-[0.5px] transition-opacity"
+        onClick={() => {
+          if (typeof window !== "undefined" && "speechSynthesis" in window) {
+            window.speechSynthesis.cancel()
+          }
+          setIsOpen(false)
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Fixed container matching mobile visualViewport height */}
+      <div
+        className="fixed inset-x-0 bottom-0 top-0 sm:top-auto sm:left-auto sm:right-4 md:right-6 z-[99999] flex flex-col justify-end pointer-events-none"
+        style={
+          viewportHeight && typeof window !== "undefined" && window.innerWidth < 640
+            ? { height: `${viewportHeight}px` }
+            : undefined
+        }
       >
+        <div
+          ref={chatWindowRef}
+          className="pointer-events-auto w-full sm:w-[390px] md:w-[430px] shadow-2xl border-0 sm:border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 h-full sm:h-[82vh] sm:max-h-[660px] rounded-none sm:rounded-2xl overflow-hidden flex flex-col"
+        >
         
         {/* FIXED HEADER (Never hides behind phone address bar) */}
         <div className="flex-shrink-0 bg-white dark:bg-gray-900 px-3.5 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
@@ -755,5 +793,6 @@ STRICT FORMATTING RULE:
 
       </div>
     </div>
+    </>
   )
 }

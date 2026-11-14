@@ -66,10 +66,11 @@ export function SystemAutomationCopilot() {
     hasMoved: boolean
   } | null>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const lastToggleTimeRef = useRef<number>(0)
 
   const recognitionRef = useRef<any>(null)
   const isExecutingRef = useRef<boolean>(false)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   // Calculate opening position dynamically anchored to button's current position
   const calculatePopupPosition = (buttonX: number, buttonY: number) => {
@@ -177,11 +178,28 @@ export function SystemAutomationCopilot() {
     return () => window.removeEventListener("resize", handleResize)
   }, [isOpen, pos])
 
+  // Instant, robust open/toggle function
+  const toggleOpen = () => {
+    const now = Date.now()
+    if (now - lastToggleTimeRef.current < 250) return
+    lastToggleTimeRef.current = now
+
+    setIsOpen((prev) => {
+      const nextOpen = !prev
+      if (nextOpen) {
+        const currentX = pos?.x ?? (isPatientPortal ? 24 : Math.max(12, typeof window !== "undefined" ? window.innerWidth - 72 : 24))
+        const currentY = pos?.y ?? (typeof window !== "undefined" ? Math.max(12, window.innerHeight - 84) : 80)
+        setPopupPos(calculatePopupPosition(currentX, currentY))
+      }
+      return nextOpen
+    })
+  }
+
   // Pointer Drag Handlers (smooth desktop mouse + mobile finger touch)
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return
-    const currentX = pos?.x ?? (window.innerWidth - 72)
-    const currentY = pos?.y ?? (window.innerHeight - 84)
+    const currentX = pos?.x ?? (isPatientPortal ? 24 : Math.max(12, window.innerWidth - 72))
+    const currentY = pos?.y ?? Math.max(12, window.innerHeight - 84)
 
     dragStartRef.current = {
       startX: e.clientX,
@@ -201,7 +219,8 @@ export function SystemAutomationCopilot() {
     const dx = e.clientX - dragStartRef.current.startX
     const dy = e.clientY - dragStartRef.current.startY
 
-    if (!dragStartRef.current.hasMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+    // Only consider it a drag if moved more than 8 pixels
+    if (!dragStartRef.current.hasMoved && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
       dragStartRef.current.hasMoved = true
       isDraggingRef.current = true
     }
@@ -225,28 +244,25 @@ export function SystemAutomationCopilot() {
       e.currentTarget.releasePointerCapture(e.pointerId)
     } catch (err) {}
 
-    if (dragStartRef.current.hasMoved && pos) {
+    const hasDragged = dragStartRef.current.hasMoved
+
+    if (hasDragged && pos) {
       try {
         localStorage.setItem("gonstead_copilot_pos", JSON.stringify(pos))
       } catch (err) {}
+    } else {
+      // It was a tap / click: open the copilot interface immediately!
+      toggleOpen()
     }
 
-    setTimeout(() => {
-      isDraggingRef.current = false
-      dragStartRef.current = null
-    }, 120)
+    isDraggingRef.current = false
+    dragStartRef.current = null
   }
 
   const handleToggleOpen = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (isDraggingRef.current) return
-    const nextOpen = !isOpen
-    if (nextOpen) {
-      const currentX = pos?.x ?? (window.innerWidth - 72)
-      const currentY = pos?.y ?? (window.innerHeight - 84)
-      setPopupPos(calculatePopupPosition(currentX, currentY))
-    }
-    setIsOpen(nextOpen)
+    // Trigger toggle in case pointer events didn't fire
+    toggleOpen()
   }
 
   // Initialize Speech Recognition
@@ -276,21 +292,49 @@ export function SystemAutomationCopilot() {
     }
   }, [])
 
-  // Auto-close when clicking outside
+  // Auto-close when clicking outside, switching to iframe, or pressing Escape
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    if (!isOpen) return
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node
       if (
-        isOpen &&
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        modalRef.current &&
+        !modalRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
       ) {
         setIsOpen(false)
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
+    const handleWindowBlur = () => {
+      setTimeout(() => {
+        if (document.activeElement && document.activeElement.tagName === "IFRAME") {
+          setIsOpen(false)
+        }
+      }, 50)
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false)
+      }
+    }
+
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside)
+      document.addEventListener("touchstart", handleClickOutside)
+      window.addEventListener("blur", handleWindowBlur)
+      window.addEventListener("keydown", handleKeyDown)
+    }, 50)
+
     return () => {
+      clearTimeout(timer)
       document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("touchstart", handleClickOutside)
+      window.removeEventListener("blur", handleWindowBlur)
+      window.removeEventListener("keydown", handleKeyDown)
     }
   }, [isOpen])
 
@@ -613,7 +657,7 @@ Respond ONLY with valid JSON with format:
   }
 
   return (
-    <div ref={containerRef}>
+    <div>
       {/* Light Transparent Futuristic Automation Orb - Freely Draggable Across Cursor (Desktop) & Finger Touch (Mobile) */}
       <div
         ref={buttonRef}
@@ -621,16 +665,18 @@ Respond ONLY with valid JSON with format:
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onClick={handleToggleOpen}
         style={{
           position: "fixed",
-          left: pos?.x ?? (isPatientPortal ? 24 : -9999),
-          top: pos?.y ?? -9999,
-          zIndex: 99990,
+          left: pos?.x ?? (isPatientPortal ? 24 : Math.max(12, typeof window !== "undefined" ? window.innerWidth - 72 : 24)),
+          top: pos?.y ?? (typeof window !== "undefined" ? Math.max(12, window.innerHeight - 84) : 80),
+          zIndex: 99996,
         }}
-        className="touch-none select-none cursor-grab active:cursor-grabbing transition-shadow"
-        title="Move anywhere with cursor or finger. Tap to open Automation Bot."
+        className="touch-none select-none cursor-pointer transition-shadow"
+        title="Move anywhere with cursor or finger. Tap or click to open Automation Bot."
       >
         <motion.button
+          type="button"
           onClick={handleToggleOpen}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.94 }}
@@ -678,19 +724,30 @@ Respond ONLY with valid JSON with format:
       {/* Pro Dynamic Floating Workflow Console - Opens at Bot's Current Location */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.88, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.88, y: 8 }}
-            transition={{ type: "spring", damping: 28, stiffness: 420, mass: 0.8 }}
-            style={{
-              position: "fixed",
-              top: `${popupPos?.top ?? 80}px`,
-              left: `${popupPos?.left ?? 20}px`,
-              transformOrigin: popupPos?.origin ?? "bottom right",
-            }}
-            className="w-[400px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100vh-2rem)] rounded-3xl shadow-[0_24px_70px_rgba(13,92,117,0.22),0_4px_24px_rgba(0,0,0,0.1),0_0_0_1px_rgba(255,255,255,0.7)] z-[99995] overflow-hidden flex flex-col backdrop-blur-2xl bg-white/92 dark:bg-slate-900/92 border border-teal-600/25 dark:border-teal-400/20"
-          >
+          <>
+            {/* Click-outside backdrop covering entire screen (intercepts clicks over iframes & page) */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 z-[99994] pointer-events-auto bg-black/15 sm:bg-black/5 dark:bg-black/40 backdrop-blur-[0.5px]"
+              aria-hidden="true"
+            />
+            <motion.div
+              ref={modalRef}
+              initial={{ opacity: 0, scale: 0.88, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.88, y: 8 }}
+              transition={{ type: "spring", damping: 28, stiffness: 420, mass: 0.8 }}
+              style={{
+                position: "fixed",
+                top: `${popupPos?.top ?? 80}px`,
+                left: `${popupPos?.left ?? 20}px`,
+                transformOrigin: popupPos?.origin ?? "bottom right",
+              }}
+              className="w-[400px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100vh-2rem)] rounded-3xl shadow-[0_24px_70px_rgba(13,92,117,0.22),0_4px_24px_rgba(0,0,0,0.1),0_0_0_1px_rgba(255,255,255,0.7)] z-[99995] overflow-hidden flex flex-col backdrop-blur-2xl bg-white/92 dark:bg-slate-900/92 border border-teal-600/25 dark:border-teal-400/20"
+            >
             {/* Header with clinic teal accent */}
             <div className="relative p-3.5 bg-gradient-to-r from-[#0d5c75] via-[#0f766e] to-[#2a9d8f] text-white">
               {/* Subtle top indicator bar */}
@@ -893,6 +950,7 @@ Respond ONLY with valid JSON with format:
               </motion.button>
             </div>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
