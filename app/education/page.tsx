@@ -17,9 +17,9 @@ export default function EducationPage() {
   const [iframeKey, setIframeKey] = useState(1)
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-gray-950 text-slate-800 dark:text-slate-100">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#f8f5f0] text-slate-800 dark:text-slate-100">
       {/* Education Platform Header Bar */}
-      <header className="sticky top-0 z-30 bg-[#0d5c75] text-white shadow-md border-b border-[#0d5c75]/30">
+      <header className="shrink-0 z-30 bg-[#0d5c75] text-white shadow-md border-b border-[#0d5c75]/30">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
           {/* Left: Branding & Back Navigation */}
           <div className="flex items-center gap-3">
@@ -91,9 +91,9 @@ export default function EducationPage() {
       </header>
 
       {/* Main Educational Frame Container */}
-      <main className="flex-1 relative w-full h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-white overflow-hidden">
+      <main className="flex-1 relative w-full h-full min-h-0 bg-[#f8f5f0] overflow-hidden">
         {!iframeLoaded && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 dark:bg-gray-900 z-10 transition-opacity">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#f8f5f0] dark:bg-gray-900 z-10 transition-opacity">
             <div className="w-10 h-10 border-4 border-[#0d5c75]/20 border-t-[#0d5c75] rounded-full animate-spin mb-3"></div>
             <p className="text-sm font-semibold text-[#0d5c75] dark:text-teal-300">
               Loading Patient Educational Platform...
@@ -108,7 +108,7 @@ export default function EducationPage() {
           key={iframeKey}
           src="/educational-guide.html"
           title="Gonstead Patient Educational Guide"
-          className="w-full h-full border-0"
+          className="absolute inset-0 w-full h-full border-0 block"
           onLoad={() => setIframeLoaded(true)}
         />
       </main>

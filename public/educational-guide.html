@@ -1931,6 +1931,18 @@ left: 80px;
         .sidebar:not(.expanded):not(:hover) .toc-filter { display: none; }
 
         /* When embedded in an iframe inside the main app, hide redundant headers and floating elements */
+        html.in-iframe,
+        body.in-iframe {
+            height: 100% !important;
+            min-height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            background: linear-gradient(135deg, #f8f5f0 0%, #ffffff 100%) !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .in-iframe header.header,
         body.in-iframe header.header,
         .in-iframe #theme-toggle,
@@ -1957,6 +1969,28 @@ left: 80px;
         .in-iframe .main-content,
         body.in-iframe .main-content {
             padding-top: 16px !important;
+            min-height: 100% !important;
+        }
+
+        /* Ensure content sections and titles render visibly with clear high-contrast colors in iframe */
+        .in-iframe .content-section,
+        body.in-iframe .content-section {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .in-iframe .section-title,
+        body.in-iframe .section-title {
+            color: #0d5c75 !important;
+            -webkit-text-fill-color: #0d5c75 !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .in-iframe .doctor-introduction,
+        body.in-iframe .doctor-introduction {
+            opacity: 1 !important;
+            visibility: visible !important;
         }
     </style>
     <script>
