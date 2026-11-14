@@ -3383,35 +3383,416 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <div className="w-full">
-                  <Table className="w-full table-fixed text-xs">
+                  {/* Mobile-Optimized Card List View (No Squished Columns or Overlapping Text) */}
+                  <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-700/60 p-2.5 sm:p-3 space-y-3">
+                    {userSortedPatients.map((patient) => (
+                      <div
+                        key={`mob-${patient.id}`}
+                        className={`p-3.5 rounded-2xl border transition-all ${
+                          isDarkMode
+                            ? "bg-gray-800/90 border-gray-700 hover:bg-gray-800"
+                            : "bg-white border-slate-200/90 shadow-xs hover:border-[#0d5c75]/30 hover:shadow-md"
+                        }`}
+                      >
+                        {/* Row 1: Name, Code & Status Badges */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div
+                              onClick={() => markPatientAsViewed(patient.id)}
+                              className={`font-bold text-sm ${isDarkMode ? "text-white" : "text-[#0d5c75]"} flex items-center gap-1.5 cursor-pointer`}
+                            >
+                              <span className="truncate">{patient.name}</span>
+                              {!viewedPatients.has(patient.id) && (
+                                <span
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    markPatientAsViewed(patient.id)
+                                  }}
+                                  className="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0"
+                                  title="Unread appointment"
+                                />
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  const code = getOrAssignPatientCode(patient)
+                                  navigator.clipboard.writeText(code)
+                                  toast({ title: "Copied!", description: `Code ${code} copied to clipboard` })
+                                }}
+                                className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md border ${
+                                  isDarkMode ? "bg-gray-700 text-gray-200 border-gray-600" : "bg-slate-100 text-slate-700 border-slate-200"
+                                } hover:text-[#0d5c75] transition-colors shrink-0`}
+                                title="Click to copy Patient Code"
+                              >
+                                {getOrAssignPatientCode(patient)}
+                              </button>
+
+                              {(patient.profession || patient.demographics?.occupation) && (
+                                <span className="text-[10px] text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full font-medium truncate max-w-[130px]">
+                                  {(patient.profession || patient.demographics?.occupation || "").replace(/_/g, " ")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Status and urgency badges */}
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <Badge
+                              variant={
+                                patient.status === "completed"
+                                  ? "default"
+                                  : patient.status === "confirmed"
+                                  ? "secondary"
+                                  : patient.status === "cancelled"
+                                  ? "destructive"
+                                  : "outline"
+                              }
+                              className="text-[10px] font-bold px-2 py-0.5 uppercase tracking-wide"
+                            >
+                              {patient.status}
+                            </Badge>
+
+                            <div className="flex items-center gap-1">
+                              <Badge
+                                variant={patient.session_type === "in_clinic" ? "default" : "secondary"}
+                                className="text-[9px] px-1.5 py-0 h-4 leading-none"
+                              >
+                                {patient.session_type === "in_clinic" ? "Clinic" : "Video"}
+                              </Badge>
+                              {patient.urgency && patient.urgency !== "normal" && (
+                                <Badge
+                                  variant={patient.urgency === "emergency" ? "destructive" : "secondary"}
+                                  className="text-[9px] px-1.5 py-0 h-4 leading-none"
+                                >
+                                  {patient.urgency}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Row 2: Contact & Appointment Info */}
+                        <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-gray-700/60 grid grid-cols-2 gap-2 text-xs">
+                          {/* Contact */}
+                          <div className="space-y-1 min-w-0">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Contact</span>
+                            <a
+                              href={`tel:${patient.phone}`}
+                              className={`flex items-center gap-1.5 ${isDarkMode ? "text-teal-300" : "text-[#0d5c75]"} font-medium truncate`}
+                            >
+                              <Phone className="h-3 w-3 shrink-0 text-[#2a9d8f]" />
+                              <span className="truncate">{patient.phone}</span>
+                            </a>
+                            {patient.email ? (
+                              <a
+                                href={`mailto:${patient.email}`}
+                                className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 text-[11px] truncate"
+                              >
+                                <Mail className="h-2.5 w-2.5 shrink-0" />
+                                <span className="truncate">{patient.email}</span>
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 italic block">No email</span>
+                            )}
+                          </div>
+
+                          {/* Appointment Time */}
+                          <div className="space-y-1 min-w-0">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Appointment</span>
+                            <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200 font-medium truncate">
+                              <Calendar className="h-3 w-3 shrink-0 text-[#2a9d8f]" />
+                              <span className="truncate">{new Date(patient.appointment_date).toLocaleDateString([], { month: "short", day: "numeric", year: "2-digit" })}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-slate-500 text-[11px] truncate pl-4">
+                              <Clock className="h-2.5 w-2.5 shrink-0" />
+                              <span>{new Date(patient.appointment_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Row 3: Sessions Progress Controls */}
+                        <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-gray-700/60 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Sessions:</span>
+                            <span className={`text-sm font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"}`}>
+                              {patient.sessions_completed || 0}
+                            </span>
+                            <span className="text-xs text-slate-400">/</span>
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                              {patient.status === "cancelled" ? 0 : (patient.total_sessions || 8)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={async () => {
+                                if (patient.status === "cancelled") {
+                                  toast({ title: "Cannot modify sessions", description: "Patient is cancelled." });
+                                  return;
+                                }
+                                const total = patient.total_sessions || 8;
+                                const newCount = Math.max(0, (patient.sessions_completed || 0) - 1);
+                                const newStatus = newCount >= total ? "completed" : (newCount <= 0 ? "pending" : "confirmed");
+                                await updatePatient(patient.id, { sessions_completed: newCount, status: newStatus });
+                                await loadPatients();
+                              }}
+                              className="w-7 h-7 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 flex items-center justify-center transition-colors active:scale-90"
+                              title="Decrease Session"
+                            >
+                              <Minus className="h-3 w-3" />
+                            </button>
+
+                            <button
+                              onClick={async () => {
+                                if (patient.status === "cancelled") {
+                                  toast({ title: "Cannot modify sessions", description: "Patient is cancelled." });
+                                  return;
+                                }
+                                const total = patient.total_sessions || 8;
+                                const prev = patient.sessions_completed || 0;
+                                const capped = Math.min(total, prev + 1);
+                                const lastVisit = new Date().toISOString();
+                                const newStatus = capped >= total ? "completed" : (capped <= 0 ? "pending" : "confirmed");
+                                await updatePatient(patient.id, { sessions_completed: capped, last_visit: lastVisit, status: newStatus });
+                                await loadPatients();
+                              }}
+                              className="w-7 h-7 rounded-lg border border-emerald-400 text-emerald-600 hover:bg-emerald-50 flex items-center justify-center transition-colors active:scale-90"
+                              title="Add Session"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </button>
+
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <button
+                                  className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 text-slate-700 dark:text-slate-300"
+                                  title="Set Total Sessions"
+                                >
+                                  Edit Total
+                                </button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-sm">
+                                <DialogHeader>
+                                  <DialogTitle className="text-[#0d5c75]">Set Total Sessions</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <Label>Total Sessions for {patient.name}</Label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="100"
+                                    defaultValue={patient.total_sessions || 8}
+                                    id={`mob-set-total-${patient.id}`}
+                                  />
+                                  <Button
+                                    onClick={async () => {
+                                      const el = document.getElementById(`mob-set-total-${patient.id}`) as HTMLInputElement;
+                                      const newTotal = parseInt(el?.value || "8");
+                                      const finalCompleted = Math.min(patient.sessions_completed || 0, newTotal);
+                                      const newStatus = finalCompleted >= newTotal ? "completed" : (finalCompleted <= 0 ? "pending" : "confirmed");
+                                      await updatePatient(patient.id, { total_sessions: newTotal, sessions_completed: finalCompleted, status: newStatus });
+                                      await loadPatients();
+                                      toast({ title: "Updated", description: `Prescribed ${newTotal} sessions` });
+                                    }}
+                                    className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c]"
+                                  >
+                                    Save
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </div>
+
+                        {/* Row 4: Action Buttons Toolbar */}
+                        <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-gray-700/60 flex items-center justify-between gap-1.5 flex-wrap">
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                setSelectedPatientDetail(currentPatientData);
+                                setViewedPatients(prev => new Set([...prev, patient.id]));
+                                setTimeout(() => {
+                                  detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }, 0);
+                              }}
+                              className="h-7 px-2.5 text-xs border-[#0d5c75]/40 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white rounded-lg"
+                            >
+                              <Eye className="h-3 w-3 mr-1" /> View
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                localStorage.setItem('prescriptionPatient', JSON.stringify(currentPatientData));
+                                router.push('/admin/prescription');
+                              }}
+                              className="h-7 px-2 text-xs border-[#2a9d8f]/50 text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white rounded-lg"
+                            >
+                              <FileText className="h-3 w-3 mr-1" /> Rx
+                            </Button>
+
+                            {patient.status !== "cancelled" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setPatientToCancel(patient);
+                                  setIsCancelConfirmDialogOpen(true);
+                                }}
+                                className="h-7 px-2 text-xs border-rose-300 text-rose-500 hover:bg-rose-50 rounded-lg"
+                              >
+                                <X className="h-3 w-3 mr-1" /> Cancel
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdatePatientStatus(patient.id, "pending")}
+                                className="h-7 px-2 text-xs border-emerald-300 text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" /> Restore
+                              </Button>
+                            )}
+                          </div>
+
+                          {/* More actions trigger */}
+                          <div className="relative">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleActionsExpanded(patient.id)}
+                              className="h-7 px-2 text-xs border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg"
+                            >
+                              <MoreVertical className="h-3.5 w-3.5" />
+                            </Button>
+
+                            {expandedActions.has(patient.id) && (
+                              <div className={`absolute bottom-full right-0 mb-1 z-50 w-64 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-2 space-y-1.5`}>
+                                <div className="grid grid-cols-2 gap-1.5 text-left">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                      setSelectedPatientHistory(currentPatientData);
+                                      setIsPatientHistoryDialogOpen(true);
+                                      setExpandedActions(new Set());
+                                    }}
+                                    className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs justify-start h-7"
+                                  >
+                                    <Clock className="h-3 w-3 mr-1" /> History
+                                  </Button>
+
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      startVideoCall(patient);
+                                      setExpandedActions(new Set());
+                                    }}
+                                    className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white text-xs justify-start h-7"
+                                  >
+                                    <Video className="h-3 w-3 mr-1" /> Video
+                                  </Button>
+
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                      setPatientForNextAppointment(currentPatientData);
+                                      setIsBookNextAppointmentOpen(true);
+                                      setExpandedActions(new Set());
+                                    }}
+                                    className="border-[#10b981] text-[#10b981] hover:bg-[#10b981] hover:text-white text-xs justify-start h-7"
+                                  >
+                                    <Calendar className="h-3 w-3 mr-1" /> Next
+                                  </Button>
+
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      generateDetailedReport(patient);
+                                      setExpandedActions(new Set());
+                                    }}
+                                    className="border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white text-xs justify-start h-7"
+                                  >
+                                    <Download className="h-3 w-3 mr-1" /> PDF
+                                  </Button>
+
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const currentPatientData = patients.find(p => p.id === patient.id) || patient;
+                                      handleEditPatient(currentPatientData);
+                                      setExpandedActions(new Set());
+                                    }}
+                                    className="border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white text-xs justify-start h-7"
+                                  >
+                                    <Edit3 className="h-3 w-3 mr-1" /> Edit
+                                  </Button>
+
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => {
+                                      setExpandedActions(new Set());
+                                      handleDeletePatient(patient.id);
+                                    }}
+                                    className="bg-red-600 hover:bg-red-700 text-xs justify-start h-7"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" /> Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Full Table View with Horizontal Scroll Protection */}
+                  <div className="hidden md:block w-full overflow-x-auto scrollbar-thin">
+                    <Table className="w-full min-w-[880px] text-xs">
                     <TableHeader>
                       <TableRow className={`${isDarkMode ? "bg-gray-700/80" : "bg-[#F8F5F0]"} border-b`}>
-                        <TableHead className={`w-[22%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
+                        <TableHead className={`w-[22%] py-2.5 px-3 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
                           <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:opacity-80">
                             Patient Info <SortIndicator k="name" />
                           </button>
                         </TableHead>
-                        <TableHead className={`w-[19%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
+                        <TableHead className={`w-[19%] py-2.5 px-3 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
                           <button onClick={() => toggleSort('phone')} className="flex items-center gap-1 hover:opacity-80">
                             Contact <SortIndicator k="phone" />
                           </button>
                         </TableHead>
-                        <TableHead className={`w-[16%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
+                        <TableHead className={`w-[16%] py-2.5 px-3 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
                           <button onClick={() => toggleSort('appointment_date')} className="flex items-center gap-1 hover:opacity-80">
                             Appointment <SortIndicator k="appointment_date" />
                           </button>
                         </TableHead>
-                        <TableHead className={`w-[14%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
+                        <TableHead className={`w-[14%] py-2.5 px-3 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs`}>
                           <button onClick={() => toggleSort('status')} className="flex items-center gap-1 hover:opacity-80">
                             Status <SortIndicator k="status" />
                           </button>
                         </TableHead>
-                        <TableHead className={`w-[14%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs text-center`}>
+                        <TableHead className={`w-[14%] py-2.5 px-3 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs text-center`}>
                           <button onClick={() => toggleSort('sessions')} className="flex items-center justify-center gap-1 hover:opacity-80 mx-auto">
                             Sessions <SortIndicator k="sessions" />
                           </button>
                         </TableHead>
-                        <TableHead className={`w-[15%] py-2.5 px-2 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs text-right pr-3`}>
+                        <TableHead className={`w-[15%] py-2.5 px-3 ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-semibold text-xs text-right pr-4`}>
                           Actions
                         </TableHead>
                       </TableRow>
@@ -3634,7 +4015,7 @@ export default function AdminDashboard() {
                                       />
                                       <Button
                                         onClick={async () => {
-                                          const el = document.getElementById(`set-total-${patient.id}`);
+                                          const el = document.getElementById(`set-total-${patient.id}`) as HTMLInputElement | null;
                                           const newTotal = parseInt(el?.value || "8");
                                           const finalCompleted = Math.min(patient.sessions_completed || 0, newTotal);
                                           const newStatus = finalCompleted >= newTotal ? "completed" : (finalCompleted <= 0 ? "pending" : "confirmed");
@@ -3787,8 +4168,9 @@ export default function AdminDashboard() {
                     </TableBody>
                   </Table>
                 </div>
-              )}
-            </CardContent>
+              </div>
+            )}
+          </CardContent>
           </Card>
 
           {selectedPatientDetail && (

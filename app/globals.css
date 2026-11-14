@@ -1047,6 +1047,26 @@ input, textarea, select {
   accent-color: #0d5c75;
 }
 
+input[type="time"],
+input[type="date"] {
+  background-color: #ffffff !important;
+  color: #0d5c75 !important;
+  font-weight: 600 !important;
+  border-color: rgba(13, 92, 117, 0.25) !important;
+}
+
+.dark input[type="time"],
+.dark input[type="date"] {
+  background-color: #1e293b !important;
+  color: #5eead4 !important;
+  border-color: rgba(94, 234, 212, 0.3) !important;
+}
+
+/* Switch thumb is ALWAYS clean white */
+button[role="switch"] span {
+  background-color: #ffffff !important;
+}
+
 [data-state="checked"].bg-primary,
 button[role="switch"][data-state="checked"] {
   background-color: #0d5c75 !important;

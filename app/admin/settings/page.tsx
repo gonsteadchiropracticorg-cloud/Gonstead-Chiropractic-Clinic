@@ -226,7 +226,7 @@ export default function AdminSettings() {
 
             <Button
               onClick={saveSettings}
-              className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white shadow-md rounded-xl h-10 px-5 text-sm font-semibold flex items-center gap-2 self-end md:self-auto"
+              className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#094254] hover:to-[#207a6f] text-white shadow-md rounded-xl h-10 px-5 text-sm font-semibold flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Save className="h-4 w-4" />
               Save All Settings
@@ -412,33 +412,46 @@ export default function AdminSettings() {
                 Operating Hours
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-5 sm:p-6 space-y-3">
+            <CardContent className="p-4 sm:p-6 space-y-3">
               {Object.entries(operatingHours).map(([day, hours]) => (
-                <div key={day} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-colors">
-                  <div className="w-24 text-sm font-semibold capitalize text-slate-700">{day}</div>
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      checked={!hours.closed}
-                      onCheckedChange={(checked) => updateOperatingHours(day, "closed", !checked)}
-                    />
+                <div
+                  key={day}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-2.5 rounded-xl hover:bg-slate-50/80 transition-colors border border-slate-100 sm:border-0 gap-2.5 sm:gap-2"
+                >
+                  {/* Left: Day & Switch Toggle */}
+                  <div className="flex items-center justify-between sm:justify-start gap-3">
+                    <div className="w-24 text-sm font-bold capitalize text-[#0d5c75]">{day}</div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={!hours.closed}
+                        onCheckedChange={(checked) => updateOperatingHours(day, "closed", !checked)}
+                      />
+                      <span className="text-[11px] font-semibold sm:hidden text-slate-500">
+                        {!hours.closed ? "Open" : "Closed"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right: Time inputs or Closed badge */}
+                  <div className="flex items-center gap-2 self-stretch sm:self-auto">
                     {!hours.closed ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
                         <Input
                           type="time"
                           value={hours.open}
                           onChange={(e) => updateOperatingHours(day, "open", e.target.value)}
-                          className="w-28 h-9 text-xs rounded-lg border-slate-200"
+                          className="flex-1 sm:w-28 h-9 text-xs font-semibold rounded-xl border border-[#0d5c75]/25 bg-white text-[#0d5c75] focus:ring-2 focus:ring-[#0d5c75]/20 focus:border-[#0d5c75] shadow-xs"
                         />
-                        <span className="text-xs text-slate-400">to</span>
+                        <span className="text-xs font-bold text-slate-400 shrink-0">to</span>
                         <Input
                           type="time"
                           value={hours.close}
                           onChange={(e) => updateOperatingHours(day, "close", e.target.value)}
-                          className="w-28 h-9 text-xs rounded-lg border-slate-200"
+                          className="flex-1 sm:w-28 h-9 text-xs font-semibold rounded-xl border border-[#0d5c75]/25 bg-white text-[#0d5c75] focus:ring-2 focus:ring-[#0d5c75]/20 focus:border-[#0d5c75] shadow-xs"
                         />
                       </div>
                     ) : (
-                      <span className="text-xs font-semibold text-rose-500 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+                      <span className="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
                         Closed
                       </span>
                     )}
