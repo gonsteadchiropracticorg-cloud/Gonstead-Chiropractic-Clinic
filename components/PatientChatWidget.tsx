@@ -187,12 +187,12 @@ export function PatientChatWidget({
             if (thread?.id) markChatReadByPatient(thread.id)
             setUnreadCount(0)
           }}
-          className="relative bg-gradient-to-r from-[#0d5c75] via-[#2a9d8f] to-[#245064] hover:from-[#0a4a5c] hover:to-[#1e7a6b] text-white rounded-full p-4 h-14 w-14 shadow-2xl border-2 border-teal-300/30 flex items-center justify-center transition-all duration-300 hover:scale-110"
+          className="relative bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white rounded-full p-0 h-11 w-11 sm:h-12 sm:w-12 shadow-xl border border-white/20 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95"
           title="Chat with Dr. Bashir Khan"
         >
-          <MessageSquare className="h-6 w-6 text-white animate-pulse" />
+          <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-2 -right-2 bg-rose-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center p-0 font-bold animate-bounce shadow-md border border-white">
+            <Badge className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] rounded-full h-5 w-5 flex items-center justify-center p-0 font-bold animate-bounce shadow-md border border-white">
               {unreadCount}
             </Badge>
           )}

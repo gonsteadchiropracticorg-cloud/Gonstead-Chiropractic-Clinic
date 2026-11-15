@@ -532,7 +532,7 @@ STRICT FORMATTING RULE:
       <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[99999] flex items-center justify-center">
         <button
           onClick={() => setIsOpen(true)}
-          className="relative h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-[#428b7c] hover:bg-[#387a6d] text-white flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all group"
+          className="relative h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all border border-white/20 group"
           aria-label="Open Chat"
         >
           <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 transition-transform group-hover:scale-110" />

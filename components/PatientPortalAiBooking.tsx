@@ -386,11 +386,11 @@ ACTION_JSON:{"action":"book","name":"${patientName || "Patient"}","phone":"${pat
       <div className="fixed bottom-6 left-6 z-50">
         <button
           onClick={() => setIsOpen(true)}
-          className="relative h-12 w-12 rounded-full bg-gradient-to-tr from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#238a7a] text-white flex items-center justify-center shadow-2xl border-2 border-teal-300/40 hover:scale-105 active:scale-95 transition-all group"
+          className="relative h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white flex items-center justify-center shadow-xl border border-white/20 hover:scale-105 active:scale-95 transition-all group"
           title="Open AI Health & Voice Booking Assistant"
           aria-label="Open AI Voice Assistant"
         >
-          <Bot className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+          <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-white group-hover:scale-110 transition-transform" />
           <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400 border border-slate-900"></span>

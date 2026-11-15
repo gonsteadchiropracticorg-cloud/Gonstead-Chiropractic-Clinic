@@ -680,7 +680,7 @@ Respond ONLY with valid JSON with format:
           onClick={handleToggleOpen}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.94 }}
-          className={`group relative h-12 w-12 sm:h-13 sm:w-13 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-xl ${
+          className={`group relative h-11 w-11 sm:h-12 sm:w-12 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-xl ${
             isOpen
               ? "bg-white/90 dark:bg-slate-900/85 ring-2 ring-[#2a9d8f] shadow-[0_0_28px_rgba(42,157,143,0.4),0_8px_24px_rgba(13,92,117,0.18)]"
               : "bg-white/80 dark:bg-slate-900/75 hover:bg-white/95 dark:hover:bg-slate-900/90 shadow-[0_8px_28px_rgba(13,92,117,0.18),0_2px_8px_rgba(42,157,143,0.12),inset_0_1px_2px_rgba(255,255,255,0.95)] hover:shadow-[0_12px_36px_rgba(13,92,117,0.25)]"

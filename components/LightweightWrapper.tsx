@@ -126,8 +126,8 @@ export const createLightweightDynamic = <P extends object>(
 // Lightweight fallback components that maintain visual consistency without layout shifts
 export const LightweightFallback = {
   Chatbot: () => (
-    <div className="fixed bottom-4 right-4 w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-r from-[rgb(70,146,138)] to-[rgb(30,96,118)] shadow-lg flex items-center justify-center pointer-events-none opacity-80">
-      <div className="w-6 h-6 border-2 border-white/60 border-t-transparent rounded-full animate-spin"></div>
+    <div className="fixed bottom-4 right-4 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] shadow-lg flex items-center justify-center pointer-events-none opacity-80">
+      <div className="w-5 h-5 border-2 border-white/60 border-t-transparent rounded-full animate-spin"></div>
     </div>
   ),
 

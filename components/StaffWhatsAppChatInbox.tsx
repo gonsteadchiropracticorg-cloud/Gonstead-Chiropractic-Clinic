@@ -260,10 +260,10 @@ export function StaffWhatsAppChatInbox({ staffUsername = "Staff Member" }: Staff
         <div className="fixed bottom-6 right-6 z-50">
           <Button
             onClick={() => setIsOpen(true)}
-            className="h-14 w-14 rounded-full p-0 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#238a7a] text-white shadow-2xl flex items-center justify-center border-2 border-white/40 transition-all duration-300 hover:scale-105"
+            className="h-11 w-11 sm:h-12 sm:w-12 rounded-full p-0 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl flex items-center justify-center border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95"
             title="Open Staff-Doctor Internal Desk Chat"
           >
-            <Stethoscope className="h-7 w-7 text-white" />
+            <Stethoscope className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </Button>
         </div>
       )}

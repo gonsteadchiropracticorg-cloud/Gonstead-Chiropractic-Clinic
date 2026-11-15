@@ -983,16 +983,12 @@ export default function WhatsAppChatInterface({
             console.log('Chat bubble clicked, opening chat...')
             setIsOpen(true)
           }}
-          className={`bg-gradient-to-r ${
-            adminMode 
-              ? 'from-[#0d5c75]/20 to-[#2a9d8f]/20 hover:from-[#0d5c75]/30 hover:to-[#2a9d8f]/30'
-              : 'from-[#2a9d8f]/20 to-[#264653]/20 hover:from-[#2a9d8f]/30 hover:to-[#264653]/30'
-          } text-white rounded-full p-4 shadow-lg relative border-2 border-white/20 backdrop-blur-xl`}
-          size="lg"
+          className="h-11 w-11 sm:h-12 sm:w-12 rounded-full p-0 flex items-center justify-center bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl relative border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95"
+          title="Open WhatsApp Chat"
         >
-          <MessageSquare className={`h-6 w-6 ${adminMode ? 'text-[#0d5c75]' : 'text-[#2a9d8f]'}`} />
+          <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           {totalUnread > 0 && (
-            <Badge className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs border-2 border-white">
+            <Badge className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-4 w-4 flex items-center justify-center text-[10px] border border-white">
               {totalUnread}
             </Badge>
           )}

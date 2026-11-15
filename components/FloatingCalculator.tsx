@@ -132,16 +132,16 @@ export default function FloatingCalculator({ isOpen, onClose, onToggle }: Floati
       {/* Calculator Window - Responsive */}
       <div className={`fixed z-50 transition-all duration-300 ${
         isMinimized 
-          ? "bottom-6 right-6 w-16 h-16" 
+          ? "bottom-6 right-6 w-11 h-11 sm:w-12 sm:h-12" 
           : "bottom-4 right-4 w-80 sm:w-96 max-w-[90vw] max-h-[80vh] overflow-auto"
       }`}>
         {isMinimized ? (
           /* Minimized State */
           <Button
             onClick={() => setIsMinimized(false)}
-            className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2a9d8f] to-[#0d5c75] hover:from-[#238a7a] hover:to-[#0a4a5c] shadow-2xl transition-all duration-300 hover:scale-110"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20 flex items-center justify-center"
           >
-            <Calculator className="h-6 w-6 text-white" />
+            <Calculator className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </Button>
         ) : (
           /* Simple Calculator Design */

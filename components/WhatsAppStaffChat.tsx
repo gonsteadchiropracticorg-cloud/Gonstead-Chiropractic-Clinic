@@ -393,12 +393,12 @@ export default function WhatsAppStaffChat({ staffId, staffName, adminId = 'admin
             setIsOpen(true)
             setUnreadCount(0)
           }}
-          className="bg-gradient-to-r from-[#2a9d8f] to-[#264653] hover:from-[#2a9d8f]/90 hover:to-[#264653]/90 text-white rounded-full p-4 shadow-lg relative border-2 border-white/30 backdrop-blur-xl"
-          size="lg"
+          className="h-11 w-11 sm:h-12 sm:w-12 rounded-full p-0 flex items-center justify-center bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl relative border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95"
+          title="Open Staff WhatsApp Chat"
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs border-2 border-white">
+            <Badge className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-4 w-4 flex items-center justify-center text-[10px] border border-white">
               {unreadCount}
             </Badge>
           )}

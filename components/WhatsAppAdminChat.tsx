@@ -389,12 +389,12 @@ export default function WhatsAppAdminChat({ adminId = 'admin-user', adminName = 
       <div className="fixed bottom-4 right-4 z-[9999]">
         <Button
           onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0d5c75]/90 hover:to-[#2a9d8f]/90 text-white rounded-full p-4 shadow-lg relative border-2 border-white/30 backdrop-blur-xl"
-          size="lg"
+          className="h-11 w-11 sm:h-12 sm:w-12 rounded-full p-0 flex items-center justify-center bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl relative border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95"
+          title="Open WhatsApp Admin Chat"
         >
-          <MessageSquare className="h-6 w-6" />
+          <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           {totalUnread > 0 && (
-            <Badge className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs border-2 border-white">
+            <Badge className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-4 w-4 flex items-center justify-center text-[10px] border border-white">
               {totalUnread}
             </Badge>
           )}

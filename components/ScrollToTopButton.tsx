@@ -69,7 +69,7 @@ export default function ScrollToTopButton({ showAfter = 200, className = "" }: S
       <Button
         onClick={scrollToTop}
         className={`
-          relative w-11 h-11 rounded-full p-0 shadow-md transition-all duration-300 ease-in-out flex items-center justify-center
+          relative w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0 shadow-md transition-all duration-300 ease-in-out flex items-center justify-center
           bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800
           border border-[#0d5c75]/25 dark:border-teal-500/30 backdrop-blur-md
           hover:scale-105 active:scale-95
@@ -80,7 +80,7 @@ export default function ScrollToTopButton({ showAfter = 200, className = "" }: S
       >
         <ChevronUp 
           className={`
-            h-5 w-5 text-[#0d5c75] dark:text-teal-300 transition-transform duration-300
+            h-5 w-5 sm:h-6 sm:w-6 text-[#0d5c75] dark:text-teal-300 transition-transform duration-300
             ${isAnimating ? 'translate-y-[-2px]' : ''}
           `} 
         />
@@ -123,20 +123,16 @@ export function NavigationScrollButton({ showAfter = 200, className = "" }: Scro
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={`
-          relative w-16 h-16 rounded-full shadow-2xl transition-all duration-500 ease-in-out group
-          bg-[rgba(40,147,135,0.12)] backdrop-blur-lg border-2 border-[rgba(40,147,135,0.25)]
-          hover:bg-[rgba(40,147,135,0.22)] hover:border-[rgba(40,147,135,0.45)]
-          hover:scale-110 active:scale-95 hover:shadow-[0_0_30px_rgba(40,147,135,0.4)]
+          relative w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0 shadow-xl transition-all duration-300 ease-in-out group flex items-center justify-center
+          bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white border border-white/20
+          hover:scale-105 active:scale-95
         `}
         title="Navigate to Top"
       >
-        {/* Glass effect background */}
-        <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/10 to-transparent opacity-50" />
-        
         {/* Animated navigation icon */}
         <Navigation 
           className={`
-            relative z-10 h-6 w-6 text-[rgb(40,147,135)] transition-all duration-300 group-hover:text-[rgb(35,127,117)]
+            relative z-10 h-5 w-5 sm:h-6 sm:w-6 text-white transition-all duration-300
             ${isHovered ? 'rotate-[-15deg] translate-y-[-1px]' : ''}
           `} 
         />

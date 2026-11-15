@@ -1551,13 +1551,13 @@ function MoneyManagementContent() {
         <div className="fixed bottom-6 left-20 sm:left-24 z-40">
           <Button
             onClick={() => setIsAddRecordDialogOpen(true)}
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#2a9d8f] to-[#0d5c75] hover:from-[#238a7a] hover:to-[#0a4a5c] shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 border-4 border-white/30"
+            className="h-11 w-11 sm:h-12 sm:w-12 rounded-full p-0 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20 flex items-center justify-center relative"
             title="Quick Add Payment Record"
           >
-            <Plus className="h-6 w-6 text-white" />
+            <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </Button>
-          <div className="absolute -top-2.5 -right-2.5 w-7 h-7 sm:w-8 sm:h-8 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse shadow-lg">
-            <DollarSign className="h-4 w-4 text-white" />
+          <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse shadow-md border border-white">
+            <DollarSign className="h-3 w-3 text-white" />
           </div>
         </div>
       )}
@@ -1567,13 +1567,13 @@ function MoneyManagementContent() {
         <div className="fixed bottom-6 right-6 z-40">
           <Button
             onClick={calculator.toggleCalculator}
-            className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#238a7a] shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 border-4 border-white/30"
+            className="h-11 w-11 sm:h-12 sm:w-12 rounded-full p-0 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20 flex items-center justify-center relative"
             title="Advanced Professional Calculator"
           >
-            <Calculator className="h-6 w-6 text-white" />
+            <Calculator className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </Button>
-          <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center animate-pulse shadow-lg">
-            <div className="w-2 h-2 bg-white rounded-full"></div>
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full flex items-center justify-center animate-pulse shadow-md border border-white">
+            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
           </div>
         </div>
       )}

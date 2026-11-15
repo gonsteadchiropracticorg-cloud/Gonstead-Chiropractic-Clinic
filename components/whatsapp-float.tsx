@@ -18,27 +18,14 @@ export function WhatsAppFloat() {
         onClick={handleWhatsAppClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`h-14 w-14 md:h-16 md:w-16 lg:h-18 lg:w-18 rounded-full bg-gradient-to-br from-[#25D366] via-[#128C7E] to-[#075E54] hover:from-[#25D366] hover:via-[#075E54] hover:to-[#25D366] shadow-lg hover:shadow-2xl transition-all duration-300 transform ${
-          isHovered ? "scale-110" : "scale-100"
-        } relative overflow-hidden border-4 border-white/30 ring-4 ring-white/20 backdrop-blur-sm`}
+        className="h-11 w-11 sm:h-12 sm:w-12 rounded-full p-0 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 relative overflow-hidden border border-white/20"
         size="icon"
         title="Chat on WhatsApp"
       >
-        {/* Logo in background */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-20">
-          <div className="relative w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12">
-            <Image
-              src="/images/gonstead-logo-new.png"
-              alt="Gonstead Logo"
-              fill
-              className="object-contain filter brightness-200"
-            />
-          </div>
-        </div>
         {/* WhatsApp icon on top */}
-        <MessageCircle className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-white filter drop-shadow-sm relative z-10" />
-        {/* Pulse animation for active state */}
-        <div className="absolute inset-0 rounded-full bg-[#25D366]/30 animate-ping"></div>
+        <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white filter drop-shadow-sm relative z-10" />
+        {/* Subtle glow border */}
+        <div className="absolute inset-0 rounded-full border border-white/30"></div>
       </Button>
 
       {/* Enhanced Tooltip */}

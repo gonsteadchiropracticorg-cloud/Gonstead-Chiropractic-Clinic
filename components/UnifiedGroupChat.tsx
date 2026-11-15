@@ -420,10 +420,9 @@ export default function UnifiedGroupChat({
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg"
-        size="lg"
+        className="fixed bottom-4 right-4 h-11 w-11 sm:h-12 sm:w-12 rounded-full p-0 flex items-center justify-center bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95"
       >
-        <MessageCircle className="h-6 w-6" />
+        <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
         {activeMessages.length > 0 && (
           <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
             {activeMessages.length}

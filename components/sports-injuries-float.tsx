@@ -243,21 +243,19 @@ export function SportsInjuriesFloat() {
         onClick={() => setIsOpen(!isOpen)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-className={`h-14 w-14 md:h-16 md:w-16 lg:h-18 lg:w-18 rounded-full bg-gradient-to-br from-[#2a9d8f] via-[#0d5c75] to-[#1e6f8f] hover:from-[#2a9d8f] hover:via-[#0d5c75] hover:to-[#2a9d8f] shadow-lg hover:shadow-2xl transition-all duration-300 transform ${
-          isHovered ? "scale-110 opacity-100" : "scale-100 opacity-90"
-        } relative overflow-hidden border-4 border-white/30 ring-4 ring-white/20 backdrop-blur-sm`}
+        className={`h-11 w-11 sm:h-12 sm:w-12 rounded-full p-0 bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] hover:from-[#0a4a5c] hover:to-[#207a6f] text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 relative overflow-hidden border border-white/20`}
         size="icon"
         title="Sports Injuries Information"
       >
         {/* Sports injuries icon on top */}
-        <Activity className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-white filter drop-shadow-sm relative z-10" />
+        <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-white filter drop-shadow-sm relative z-10" />
         {/* Subtle glow border */}
-        <div className="absolute inset-0 rounded-full border border-white/40"></div>
+        <div className="absolute inset-0 rounded-full border border-white/30"></div>
       </Button>
 
       {/* Enhanced Tooltip */}
       {isHovered && !isOpen && (
-        <div className="absolute bottom-16 md:bottom-20 left-0 bg-gradient-to-r from-gray-900 to-gray-800 text-white text-xs md:text-sm px-3 py-2 rounded-lg shadow-xl whitespace-nowrap animate-in fade-in-0 zoom-in-95 duration-200 backdrop-blur-md border border-white/10">
+        <div className="absolute bottom-14 sm:bottom-16 left-0 bg-gradient-to-r from-gray-900 to-gray-800 text-white text-xs px-3 py-1.5 rounded-lg shadow-xl whitespace-nowrap animate-in fade-in-0 zoom-in-95 duration-200 backdrop-blur-md border border-white/10 z-50">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-[#2a9d8f] rounded-full animate-pulse"></div>
             Sports Injuries
