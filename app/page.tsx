@@ -36,8 +36,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { LanguageProvider, useLanguage } from "@/components/language-provider"
 import { LanguageToggle } from "@/components/language-toggle"
-import { ThemeProvider } from "@/components/theme-provider"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { useTheme } from "@/components/theme-provider"
 import { AppointmentBookingModal } from "@/components/appointment-booking-modal"
 import { EmailContactSection } from "@/components/EmailContactSection"
 import { NoSSR } from "@/components/no-ssr"
@@ -61,6 +60,18 @@ const HomePageContent = memo(() => {
   const [activeSection, setActiveSection] = useState(null as string | null)
   const [isPatientAuth, setIsPatientAuth] = useState(false)
   const { t } = useLanguage()
+  const { setTheme } = useTheme()
+
+  // Ensure main home page strictly renders in the clean official light theme
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setTheme("light")
+      document.documentElement.classList.remove("dark")
+      document.documentElement.classList.add("light")
+      document.body.classList.remove("dark")
+      document.body.classList.add("light")
+    }
+  }, [setTheme])
 
   // Check patient auth state on mount for header action button
   useEffect(() => {
@@ -174,9 +185,8 @@ const HomePageContent = memo(() => {
               </Link>
             </div>
 
-            {/* Right: Actions, Theme, Language & Portal CTA */}
+            {/* Right: Actions, Language & Portal CTA */}
             <div className="hidden md:flex items-center gap-2.5">
-              <ThemeToggle />
               <LanguageToggle />
 
               <Link
@@ -241,9 +251,6 @@ const HomePageContent = memo(() => {
                   <span className="text-[10px] bg-emerald-400 text-slate-900 font-bold px-2 py-0.5 rounded-full">AI Clinical</span>
                 </Link>
                 <div className="flex items-center gap-3 pt-2 px-4">
-                  <div className="bg-white/10 rounded-lg p-2">
-                    <ThemeToggle />
-                  </div>
                   <div className="bg-white/10 rounded-lg p-2">
                     <LanguageToggle />
                   </div>
