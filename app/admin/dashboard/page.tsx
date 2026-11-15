@@ -1,7 +1,6 @@
 "use client"
 
-import React from "react"
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useTheme } from "@/components/theme-provider"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -2288,7 +2287,7 @@ export default function AdminDashboard() {
   // Toggle function for expanding/collapsing action buttons with auto-close
   const toggleActionsExpanded = (patientId: string) => {
     setExpandedActions(prev => {
-      const newExpanded = new Set()
+      const newExpanded = new Set<string>()
 
       // If the clicked patient's menu is already open, close it
       // If it's closed, open only this one (auto-close all others)
