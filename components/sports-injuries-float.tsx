@@ -193,32 +193,42 @@ const sportsInjuries = [
 export function SportsInjuriesFloat() {
   const [isOpen, setIsOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const [selectedInjury, setSelectedInjury] = useState<string | null>("RMAN")
+  const [selectedInjury, setSelectedInjury] = useState<string>("Sports Injuries")
   const [hoveredInjury, setHoveredInjury] = useState<string | null>(null)
   const [expandedInjury, setExpandedInjury] = useState<string | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
+  // Preload all injury images in browser memory immediately on mount for instantaneous (0ms) hover response
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      sportsInjuries.forEach(injury => {
+        if (injury.image) {
+          const img = new window.Image()
+          img.src = injury.image
+        }
+      })
+    }
+  }, [])
+
   const handleInjuryClick = (injuryName: string) => {
     setSelectedInjury(injuryName)
+    setHoveredInjury(injuryName)
     setExpandedInjury(expandedInjury === injuryName ? null : injuryName)
   }
 
-  const handleInjuryHover = (injuryName: string | null) => {
+  const handleInjuryHover = (injuryName: string) => {
+    setSelectedInjury(injuryName)
     setHoveredInjury(injuryName)
   }
 
-  // Handle mouse leave to reset to default RMAN
+  // Handle mouse leave: retain current injury so it doesn't flicker or cause reload delay
   const handleInjuryMouseLeave = () => {
     setHoveredInjury(null)
-    // Reset to RMAN as default when not hovering
-    if (!selectedInjury || selectedInjury === hoveredInjury) {
-      setSelectedInjury("RMAN")
-    }
   }
 
-  // Always show hovered injury in image area, or selected injury, or default to RMAN
-  const currentInjury = hoveredInjury || selectedInjury || "RMAN"
-  const currentInjuryData = sportsInjuries.find(injury => injury.name === currentInjury)
+  // Active injury data (instant lookup)
+  const currentInjury = hoveredInjury || selectedInjury || sportsInjuries[0].name
+  const currentInjuryData = sportsInjuries.find(injury => injury.name === currentInjury) || sportsInjuries[0]
 
   // Handle click outside to close panel
   useEffect(() => {
@@ -292,16 +302,15 @@ export function SportsInjuriesFloat() {
                   <div key={index} className="border-b border-gray-200 dark:border-gray-600">
                     {/* Injury Name Row */}
                     <div
-                      className={`p-2 md:p-3 cursor-pointer transition-all duration-200 active:bg-[#2a9d8f]/20 hover:bg-[#2a9d8f]/10 hover:border-l-4 hover:border-l-[#2a9d8f] ${
-                        selectedInjury === injury.name 
+                      className={`p-2 md:p-3 cursor-pointer transition-colors duration-75 active:bg-[#2a9d8f]/20 hover:bg-[#2a9d8f]/10 hover:border-l-4 hover:border-l-[#2a9d8f] ${
+                        currentInjury === injury.name 
                           ? 'bg-[#2a9d8f]/20 border-l-4 border-l-[#2a9d8f] text-[#0d5c75] font-semibold' 
-                          : hoveredInjury === injury.name
-                          ? 'bg-[#2a9d8f]/10 border-l-4 border-l-[#2a9d8f] text-[#0d5c75] font-medium'
                           : 'text-gray-700 dark:text-gray-300'
                       }`}
                       onClick={() => handleInjuryClick(injury.name)}
                       onMouseEnter={() => handleInjuryHover(injury.name)}
-                      onMouseLeave={() => handleInjuryMouseLeave()}
+                      onPointerEnter={() => handleInjuryHover(injury.name)}
+                      onMouseLeave={handleInjuryMouseLeave}
                       onTouchStart={() => handleInjuryHover(injury.name)}
                     >
                       <div className="flex items-center justify-between">
@@ -402,10 +411,14 @@ export function SportsInjuriesFloat() {
               <div className="p-3 md:p-6 w-full h-full flex flex-col items-center justify-center">
                 <div className="relative w-full h-3/4 mb-2 md:mb-4">
                   <Image
-                    src={sportsInjuries.find(injury => injury.name === currentInjury)?.image || ''}
+                    key={currentInjuryData.image}
+                    src={currentInjuryData.image}
                     alt={currentInjury}
                     fill
+                    sizes="(max-width: 640px) 100vw, 360px"
                     className="object-contain rounded-lg"
+                    priority
+                    unoptimized
                   />
                 </div>
                 <div className="text-center">

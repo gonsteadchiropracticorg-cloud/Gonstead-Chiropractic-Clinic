@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback } from "react"
+import Image from "next/image"
 import {
   Send,
   X,
@@ -576,8 +577,15 @@ STRICT FORMATTING RULE:
         {/* FIXED HEADER (Never hides behind phone address bar) */}
         <div className="flex-shrink-0 bg-white dark:bg-gray-900 px-3.5 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="relative w-9 h-9 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-[#428b7c]">
-              <Bot className="h-5 w-5" />
+            <div className="relative w-9 h-9 rounded-full bg-white dark:bg-slate-800 p-1 border border-teal-200 dark:border-teal-700/50 flex items-center justify-center shadow-xs overflow-hidden flex-shrink-0">
+              <Image
+                src="/images/gonstead-chiropractic-logo-new.png"
+                alt="Gonstead Chiropractic Clinic Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+                priority
+              />
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-white dark:ring-gray-900"></span>
             </div>
             <div>
@@ -662,8 +670,14 @@ STRICT FORMATTING RULE:
               className={`flex items-start gap-2 ${m.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               {m.sender === "bot" && (
-                <div className="w-7 h-7 rounded-full bg-[#428b7c] text-white flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
-                  AI
+                <div className="w-7 h-7 rounded-full bg-white dark:bg-slate-800 p-0.5 border border-teal-200 dark:border-teal-700/50 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs overflow-hidden">
+                  <Image
+                    src="/images/gonstead-chiropractic-logo-new.png"
+                    alt="Gonstead Logo"
+                    width={22}
+                    height={22}
+                    className="object-contain"
+                  />
                 </div>
               )}
               <div className="max-w-[85%] space-y-2">
@@ -721,8 +735,14 @@ STRICT FORMATTING RULE:
 
           {isTyping && (
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#428b7c] text-white flex items-center justify-center text-xs flex-shrink-0">
-                AI
+              <div className="w-7 h-7 rounded-full bg-white dark:bg-slate-800 p-0.5 border border-teal-200 dark:border-teal-700/50 flex items-center justify-center flex-shrink-0 shadow-xs overflow-hidden">
+                <Image
+                  src="/images/gonstead-chiropractic-logo-new.png"
+                  alt="Gonstead Logo"
+                  width={22}
+                  height={22}
+                  className="object-contain"
+                />
               </div>
               <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl text-xs text-gray-500 shadow-sm flex items-center gap-1.5 border border-gray-100 dark:border-gray-700">
                 <span className="w-2 h-2 rounded-full bg-[#428b7c] animate-bounce"></span>
