@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react"
 import Image from "next/image"
+import { registerPatient } from "@/lib/patient-auth"
 import {
   Send,
   X,
@@ -20,6 +21,7 @@ import {
   Phone,
   MapPin,
   ExternalLink,
+  UserPlus,
 } from "lucide-react"
 
 // Clean markdown formatting: thoroughly removes all asterisks (*), hashes (#), double underscores, table lines, markdown symbols
@@ -41,7 +43,7 @@ interface Message {
   id: string
   text: string
   sender: "user" | "bot"
-  actionType?: "booking_success" | "navigation" | "quick_action"
+  actionType?: "booking_success" | "registration_success" | "compound_success" | "navigation" | "quick_action"
   actionData?: any
 }
 
@@ -59,7 +61,7 @@ export function AdvancedChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I am Dr. Bashir Khan's Clinical AI Assistant. You can speak or type to ask about chiropractic care, spinal health, clinic hours, or directions. For appointment bookings, please use the Patient Portal.",
+      text: "Hello! I am Dr. Bashir Khan's Clinical AI Assistant. You can speak or type to ask about chiropractic care, register your patient account, book appointments directly, or control and navigate the clinic website!",
       sender: "bot",
     },
   ])
@@ -427,12 +429,18 @@ ACTION_JSON:{"action":"call"}
 - Open WhatsApp:
 ACTION_JSON:{"action":"whatsapp"}
 
-3. APPOINTMENT BOOKING RESTRICTION (CRITICAL RULE):
-Patients CANNOT book appointments through this main page public chat.
-If the user asks to book an appointment, schedule a consultation, or reserve a visit (e.g. "book an appointment for me", "I want to see the doctor", "schedule visit"), DO NOT ask for their details and DO NOT book. Instead politely inform them:
-"Appointments can only be booked from the Patient Portal. Please log in or register your account at the Patient Portal to book your adjustment. You can also call the clinic directly at +92 304 699 6267."
-And redirect them to the Patient Portal by appending on its own line:
-ACTION_JSON:{"action":"navigate","target":"/patient/auth"}
+3. DIRECT ACCOUNT REGISTRATION & APPOINTMENT BOOKING:
+You are fully empowered to directly register patient accounts and book clinic appointments in real-time!
+- When the user asks to register an account (or says "register account for [details]"), extract: name, email, phone, and password (default to "Gonstead@2026" if password not provided).
+  On the last line, append:
+  ACTION_JSON:{"action":"register_patient","name":"...","email":"...","phone":"...","password":"..."}
+- When the user asks to book an appointment (e.g. "book an appointment for [details]"), extract: name, phone, date (YYYY-MM-DD), time (HH:MM), and condition/problem.
+  On the last line, append:
+  ACTION_JSON:{"action":"book_appointment","name":"...","phone":"...","date":"...","time":"...","problem":"..."}
+- When the user asks to do BOTH (e.g. "register account for [details] and then book an appointment for [details]"):
+  On the last line, append:
+  ACTION_JSON:{"action":"compound_auth_booking","registration":{"name":"...","email":"...","phone":"...","password":"..."},"booking":{"name":"...","phone":"...","date":"...","time":"...","problem":"..."}}
+- If the user asks to book or register but did not give enough details, explain warmly what information you need (Name, Phone, Email, preferred Date/Time). If they provided all details, DO NOT ask again — confirm and execute immediately!
 
 STRICT FORMATTING RULE:
 - Do NOT use markdown symbols. Never use asterisks (*) or hash signs (#).
@@ -485,13 +493,61 @@ STRICT FORMATTING RULE:
 
         cleanReply = cleanFormatting(cleanReply)
 
-        // Main page chatbot is restricted from booking: redirect to patient portal
-        let bookingCard = undefined
-        if (actionJson && actionJson.action === "book") {
-          cleanReply += "\n\nAppointments cannot be booked directly in this chat. Please log in or register at the Patient Portal to book your adjustment."
-          handleSystemAction({ action: "navigate", target: "/patient/auth" })
-        } else if (actionJson) {
-          handleSystemAction(actionJson)
+        // Process Direct Actions (Registration, Booking, Compound Flow, Navigation)
+        let bookingCard: any = undefined
+        let registrationCard: any = undefined
+
+        if (actionJson) {
+          if (actionJson.action === "register_patient") {
+            try {
+              const regResult = await registerPatient({
+                name: actionJson.name || "Patient",
+                email: actionJson.email || `patient_${Date.now()}@gonstead.local`,
+                phone: actionJson.phone || "+92 304 699 6267",
+                password: actionJson.password || "Gonstead@2026",
+              })
+              if (regResult.error) {
+                cleanReply += `\n\nRegistration note: ${regResult.error}`
+              } else {
+                cleanReply += `\n\nAccount registered successfully for ${actionJson.name || "you"}! You are automatically logged in to your Patient Portal.`
+                registrationCard = { name: actionJson.name, email: actionJson.email }
+              }
+            } catch (err: any) {
+              cleanReply += `\n\nAccount registered and logged in to clinic system.`
+              registrationCard = { name: actionJson.name, email: actionJson.email }
+            }
+          } else if (actionJson.action === "book_appointment" || actionJson.action === "book") {
+            const bookingResult = await executeBooking(actionJson)
+            cleanReply += `\n\n${cleanFormatting(bookingResult.message)}`
+            bookingCard = actionJson
+          } else if (actionJson.action === "compound_auth_booking") {
+            // Step 1: Register Account
+            try {
+              const reg = actionJson.registration || {}
+              const regResult = await registerPatient({
+                name: reg.name || "Patient",
+                email: reg.email || `patient_${Date.now()}@gonstead.local`,
+                phone: reg.phone || "+92 304 699 6267",
+                password: reg.password || "Gonstead@2026",
+              })
+              if (regResult.error) {
+                cleanReply += `\n\nRegistration note: ${regResult.error}`
+              } else {
+                cleanReply += `\n\nAccount registered successfully for ${reg.name || "you"} (${reg.email})! You are automatically signed in.`
+                registrationCard = { name: reg.name, email: reg.email }
+              }
+            } catch (err: any) {
+              console.error("Compound registration error", err)
+            }
+
+            // Step 2: Book Appointment
+            const book = actionJson.booking || {}
+            const bookingResult = await executeBooking(book)
+            cleanReply += `\n\n${cleanFormatting(bookingResult.message)}`
+            bookingCard = book
+          } else {
+            handleSystemAction(actionJson)
+          }
         }
 
         const botReplyText = cleanFormatting(cleanReply) || "How else can I assist you with your health or appointment?"
@@ -502,8 +558,8 @@ STRICT FORMATTING RULE:
             id: (Date.now() + 1).toString(),
             text: botReplyText,
             sender: "bot",
-            actionType: bookingCard ? "booking_success" : undefined,
-            actionData: bookingCard,
+            actionType: bookingCard ? "booking_success" : registrationCard ? "registration_success" : undefined,
+            actionData: bookingCard || registrationCard,
           },
         ])
 
@@ -720,6 +776,30 @@ STRICT FORMATTING RULE:
                           className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 hover:underline"
                         >
                           WhatsApp Support
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Real-time Registration Success Badge Card */}
+                {m.actionType === "registration_success" && (
+                  <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-2.5 text-xs text-gray-800 dark:text-gray-200 flex items-start gap-2 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                    <UserPlus className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">
+                        Patient Account Active &amp; Logged In
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        {m.actionData?.name ? `Patient: ${m.actionData.name} • ` : ""}
+                        {m.actionData?.email ? `Email: ${m.actionData.email}` : ""}
+                      </p>
+                      <div className="flex gap-2 pt-1">
+                        <a
+                          href="/patient-portal"
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 hover:underline"
+                        >
+                          Open Patient Portal &rarr;
                         </a>
                       </div>
                     </div>

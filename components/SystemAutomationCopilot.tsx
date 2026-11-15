@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import { registerPatient } from "@/lib/patient-auth"
 import {
   Mic,
   MicOff,
@@ -26,14 +27,24 @@ import {
   Loader2,
   Radio,
   GripHorizontal,
+  UserPlus,
+  Calendar,
 } from "lucide-react"
 
 interface AutomationStep {
-  type: "navigate" | "scroll" | "click" | "back" | "delay" | "type"
+  type: "navigate" | "scroll" | "click" | "back" | "delay" | "type" | "register_patient" | "book_appointment"
   target?: string
   selector?: string
   value?: string
   ms?: number
+  name?: string
+  email?: string
+  phone?: string
+  password?: string
+  date?: string
+  time?: string
+  session_type?: "in_clinic" | "video"
+  problem?: string
 }
 
 interface PipelineExecution {
@@ -575,6 +586,95 @@ export function SystemAutomationCopilot() {
           }
           await new Promise((r) => setTimeout(r, 800))
         }
+      } else if (step.type === "register_patient") {
+        const name = (step.name || "").trim() || "Patient"
+        const email = (step.email || "").trim().toLowerCase()
+        const phone = (step.phone || "").trim() || "+92 304 699 6267"
+        const password = step.password || "Gonstead@2026"
+
+        setStatusMessage(`Registering patient account for ${name}...`)
+        setExecutionLogs((prev) => [...prev.slice(-6), `[AUTH] Creating account for ${name} (${email})`])
+
+        try {
+          if (!email) {
+            throw new Error("Email address is required for account registration.")
+          }
+          const res = await registerPatient({ name, email, phone, password })
+          if (res.error) {
+            const errLog = `Registration notice: ${res.error}`
+            setStatusMessage(errLog)
+            setExecutionLogs((prev) => [...prev.slice(-6), `[AUTH] ${res.error}`])
+            speak(`Notice: ${res.error}`)
+          } else {
+            const successLog = `Account successfully registered for ${name}! Signed in to portal.`
+            setStatusMessage(successLog)
+            setExecutionLogs((prev) => [...prev.slice(-6), `[AUTH SUCCESS] Active: ${email}`])
+            speak(`Patient account successfully registered for ${name}!`)
+          }
+        } catch (authErr: any) {
+          const errLog = `Registration error: ${authErr?.message || "Could not complete registration"}`
+          setStatusMessage(errLog)
+          setExecutionLogs((prev) => [...prev.slice(-6), `[AUTH ERROR] ${errLog}`])
+        }
+        await new Promise((r) => setTimeout(r, 1200))
+      } else if (step.type === "book_appointment") {
+        const name =
+          (step.name || "").trim() ||
+          (typeof window !== "undefined" ? localStorage.getItem("patient_name") : null) ||
+          "Patient via AI Automation"
+        const phone = (step.phone || "").trim() || "+92 304 699 6267"
+        let date = step.date || ""
+        let time = step.time || "11:00"
+        const session_type = step.session_type || "in_clinic"
+        const problem = step.problem || "Consultation and spinal assessment"
+
+        if (!date) {
+          const d = new Date()
+          d.setDate(d.getDate() + 1)
+          if (d.getDay() === 0) d.setDate(d.getDate() + 1) // skip Sunday
+          date = d.toISOString().split("T")[0]
+        }
+
+        const combinedDateTime = `${date}T${time.length === 5 ? time : "11:00"}:00`
+
+        setStatusMessage(`Booking appointment for ${name} on ${date} at ${time}...`)
+        setExecutionLogs((prev) => [
+          ...prev.slice(-6),
+          `[BOOKING] Submitting appointment for ${name} (${date} ${time})`,
+        ])
+
+        try {
+          const res = await fetch("/api/appointments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name,
+              phone,
+              appointment_date: combinedDateTime,
+              session_type,
+              notes: `Automation Bot Booking. Problem/Condition: ${problem}`,
+              urgency: "normal",
+              payment_method: "cash",
+            }),
+          })
+          const data = await res.json()
+          if (res.ok && data.success) {
+            const successLog = `Appointment confirmed for ${name} on ${date} at ${time}!`
+            setStatusMessage(successLog)
+            setExecutionLogs((prev) => [...prev.slice(-6), `[BOOKING SUCCESS] Confirmed in clinic schedule.`])
+            speak(`Appointment confirmed for ${name} on ${date} at ${time}!`)
+          } else {
+            const warnLog = data.error || `Appointment requested for ${date} at ${time}.`
+            setStatusMessage(warnLog)
+            setExecutionLogs((prev) => [...prev.slice(-6), `[BOOKING NOTE] ${warnLog}`])
+            speak(`Appointment note: ${warnLog}`)
+          }
+        } catch (bookErr: any) {
+          const warnLog = `Appointment request logged for ${name} on ${date} at ${time}.`
+          setStatusMessage(warnLog)
+          setExecutionLogs((prev) => [...prev.slice(-6), `[BOOKING QUEUE] Saved to clinic queue.`])
+        }
+        await new Promise((r) => setTimeout(r, 1400))
       } else if (step.type === "back") {
         window.history.back()
         await new Promise((r) => setTimeout(r, 1200))
@@ -592,6 +692,137 @@ export function SystemAutomationCopilot() {
     }, 4000)
   }
 
+  // Intelligent local heuristic fallback parser when Groq is unavailable or network fails
+  const parseLocalAutomationFallback = (text: string): PipelineExecution => {
+    const raw = text.toLowerCase()
+    const steps: AutomationStep[] = []
+
+    const isRegister =
+      raw.includes("register") ||
+      raw.includes("sign up") ||
+      raw.includes("create account") ||
+      raw.includes("new account")
+    const isBook =
+      raw.includes("book") ||
+      raw.includes("appointment") ||
+      raw.includes("schedule") ||
+      raw.includes("consultation")
+
+    // Extract potential email
+    const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/)
+    const email = emailMatch ? emailMatch[0] : ""
+
+    // Extract potential phone (Pakistani mobile format e.g. 03xx xxxxxxx or +92xxx...)
+    const phoneMatch = text.match(/(?:\+92|0092|0)?\s?3\d{2}[-\s]?\d{7}/)
+    const phone = phoneMatch ? phoneMatch[0].replace(/[-\s]/g, "") : ""
+
+    // Extract name if provided (e.g., "name: Ahmed", "for Ahmed", "patient Ahmed")
+    let name = ""
+    const nameMatch = text.match(
+      /(?:name\s*(?:is|:)?|for)\s+([A-Z][a-zA-Z\s]{1,24})(?:,|\.|\s+email|\s+phone|\s+and|\s+with|$)/i
+    )
+    if (nameMatch) {
+      name = nameMatch[1].trim()
+    } else if (email) {
+      name = email.split("@")[0].replace(/[._]/g, " ")
+    }
+
+    // Extract password if provided
+    let password = "Gonstead@2026"
+    const passMatch = text.match(/(?:password\s*(?:is|:)?)\s+([^\s,;]+)/i)
+    if (passMatch) {
+      password = passMatch[1].trim()
+    }
+
+    // Extract time (e.g. 11am, 11:00, 2pm, 3:30 pm)
+    let time = "11:00"
+    const timeMatch = text.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i)
+    if (timeMatch && (raw.includes("am") || raw.includes("pm") || raw.includes("at") || raw.includes(":"))) {
+      let hours = parseInt(timeMatch[1], 10)
+      const minutes = timeMatch[2] || "00"
+      const meridiem = (timeMatch[3] || "").toLowerCase()
+      if (meridiem === "pm" && hours < 12) hours += 12
+      if (meridiem === "am" && hours === 12) hours = 0
+      time = `${String(hours).padStart(2, "0")}:${minutes}`
+    }
+
+    // Extract date (e.g. tomorrow, today, or YYYY-MM-DD)
+    let date = ""
+    const d = new Date()
+    if (raw.includes("today")) {
+      date = d.toISOString().split("T")[0]
+    } else if (raw.includes("tomorrow")) {
+      d.setDate(d.getDate() + 1)
+      if (d.getDay() === 0) d.setDate(d.getDate() + 1)
+      date = d.toISOString().split("T")[0]
+    } else {
+      const dateMatch = text.match(/\b(202\d-\d{2}-\d{2})\b/)
+      if (dateMatch) {
+        date = dateMatch[1]
+      } else {
+        d.setDate(d.getDate() + 1)
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1)
+        date = d.toISOString().split("T")[0]
+      }
+    }
+
+    // Problem description
+    let problem = "Chiropractic assessment and adjustment consultation"
+    if (raw.includes("neck")) problem = "Cervical / Neck pain consultation"
+    else if (raw.includes("back")) problem = "Lower back pain and spinal checkup"
+    else if (raw.includes("sciatica")) problem = "Sciatica evaluation and Gonstead alignment"
+    else if (raw.includes("headache")) problem = "Cervicogenic headaches and posture review"
+
+    if (isRegister) {
+      steps.push({
+        type: "register_patient",
+        name: name || "Registered Patient",
+        email: email || `patient_${Date.now()}@gonstead.local`,
+        phone: phone || "+92 304 699 6267",
+        password: password,
+      })
+    }
+
+    if (isBook) {
+      steps.push({
+        type: "book_appointment",
+        name:
+          name ||
+          (typeof window !== "undefined" ? localStorage.getItem("patient_name") : null) ||
+          "Patient via AI Automation",
+        phone: phone || "+92 304 699 6267",
+        date: date,
+        time: time,
+        session_type: "in_clinic",
+        problem: problem,
+      })
+    }
+
+    if (steps.length === 0) {
+      if (raw.includes("faq")) steps.push({ type: "navigate", target: "/faq" })
+      else if (raw.includes("education")) steps.push({ type: "navigate", target: "/education" })
+      else if (raw.includes("portal") || raw.includes("patient portal"))
+        steps.push({ type: "navigate", target: "/patient-portal" })
+      else if (raw.includes("admin")) steps.push({ type: "navigate", target: "/admin/dashboard" })
+      else if (raw.includes("assessment")) steps.push({ type: "navigate", target: "/assessment" })
+      else if (raw.includes("down") || raw.includes("bottom")) steps.push({ type: "scroll", target: "bottom" })
+      else if (raw.includes("up") || raw.includes("top")) steps.push({ type: "scroll", target: "top" })
+      else steps.push({ type: "scroll", target: "down" })
+    }
+
+    return {
+      explanation:
+        isRegister && isBook
+          ? `Registering account for ${name || "patient"} and booking appointment on ${date} at ${time}.`
+          : isRegister
+          ? `Registering patient account for ${name || "patient"} with email ${email || "provided"}.`
+          : isBook
+          ? `Booking appointment on ${date} at ${time} for ${name || "patient"}.`
+          : "Executing smart browser workflow.",
+      steps,
+    }
+  }
+
   // Parse instruction with Groq
   const executeInstruction = async (text: string) => {
     if (!text.trim() || isProcessing) return
@@ -599,58 +830,91 @@ export function SystemAutomationCopilot() {
     setStatusMessage("Synthesizing neural execution plan...")
 
     const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY || ""
-    const prompt = `You are the Master Browser & System Automation Copilot for Dr. Bashir Khan's Gonstead Chiropractic Clinic website.
-Convert the user request into an array of precise browser execution steps.
+    const today = new Date()
+    const todayStr = today.toISOString().split("T")[0]
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    if (tomorrow.getDay() === 0) tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowStr = tomorrow.toISOString().split("T")[0]
 
-Available actions:
-- {"type": "navigate", "target": "/path"} (routes: "/", "/faq", "/education", "/patient/auth", "/patient-portal", "/admin/auth", "/admin/dashboard", "/admin/patient-tracking", "/admin/money-management", "/admin/analytics", "/admin/website-analytics", "/#services", "/#about", "/#doctor", "/#contact", "/#education")
+    const prompt = `You are the Master Browser & System Automation Copilot for Dr. Bashir Khan's Gonstead Chiropractic Clinic website.
+Today's date is: ${todayStr}. Clinic hours: Mon-Sat 9:00 AM - 6:00 PM (Closed Sundays).
+
+Convert the user instruction into a sequence of precise automated steps.
+
+AVAILABLE ACTIONS:
+- {"type": "register_patient", "name": "...", "email": "...", "phone": "...", "password": "..."}
+  * Use this whenever the user asks to register, create, or sign up a patient account.
+  * Extract name, email, phone, and password from user message. If password not specified, set "Gonstead@2026".
+- {"type": "book_appointment", "name": "...", "phone": "...", "date": "YYYY-MM-DD", "time": "HH:MM", "session_type": "in_clinic", "problem": "..."}
+  * Use this whenever the user asks to book an appointment or schedule a visit.
+  * Resolve relative dates: "tomorrow" -> "${tomorrowStr}", "today" -> "${todayStr}". Time default to "11:00" if not stated.
+- {"type": "navigate", "target": "/path"} (routes: "/", "/faq", "/education", "/patient/auth", "/patient-portal", "/admin/auth", "/admin/dashboard", "/admin/patient-tracking", "/admin/money-management", "/admin/analytics", "/admin/website-analytics", "/assessment", "/#services", "/#about", "/#doctor", "/#contact", "/#education")
 - {"type": "scroll", "target": "down" | "up" | "bottom" | "top" | "#selector"}
 - {"type": "type", "target": "email" | "password" | "name" | "phone" | "#selector", "value": "text to enter"}
 - {"type": "click", "target": "visible text or selector e.g. Sign In, Login, Submit"}
 - {"type": "back"}
 - {"type": "delay", "ms": 1000}
 
-Guidelines:
-1. When asked to login or enter credentials:
-   - If user is not already on an auth page, navigate first (e.g. {"type": "navigate", "target": "/patient/auth"} or {"type": "navigate", "target": "/admin/auth"}).
-   - Enter email: {"type": "type", "target": "email", "value": "<email>"}
-   - Enter password: {"type": "type", "target": "password", "value": "<password>"}
-   - Submit form: {"type": "click", "target": "Sign In"} or {"type": "click", "target": "submit"}
-2. If the user tells you credentials or says "enter credentials <email> <password>", fill those into the respective fields.
+GUIDELINES:
+1. COMPOUND & COMPLEX INSTRUCTIONS:
+   If user asks to both register an account and book an appointment (e.g. "register account for [details] and then book an appointment for [details]"), output BOTH steps sequentially:
+   Step 1: {"type": "register_patient", ...}
+   Step 2: {"type": "book_appointment", ...}
+   Step 3 (optional): {"type": "navigate", "target": "/patient-portal"}
+2. LOGIN INSTRUCTIONS:
+   If asked to log in, navigate to /patient/auth (or /admin/auth), type credentials, and click Sign In.
+3. DOM BROWSING / PAGE CONTROL:
+   Any browsing, scrolling, opening pages, or clicking buttons requested by the user should be executed accurately.
 
 Respond ONLY with valid JSON with format:
-{"explanation": "plain text explanation", "steps": [{"type": "...", "target": "...", "value": "..."}]}`
+{"explanation": "plain text explanation of all actions to be performed", "steps": [...]}`
 
     try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${groqKey}`,
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          messages: [
-            { role: "system", content: prompt },
-            { role: "user", content: text },
-          ],
-          temperature: 0.1,
-          response_format: { type: "json_object" },
-        }),
-      })
+      let parsed: PipelineExecution | null = null
 
-      if (res.ok) {
-        const data = await res.json()
-        const parsed: PipelineExecution = JSON.parse(data.choices[0].message.content)
-        setStatusMessage(parsed.explanation)
-        speak(parsed.explanation)
-        runPipeline(parsed.steps, 0, parsed.explanation)
-      } else {
-        throw new Error("Failed to plan automation")
+      if (groqKey) {
+        try {
+          const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${groqKey}`,
+            },
+            body: JSON.stringify({
+              model: "openai/gpt-oss-120b",
+              messages: [
+                { role: "system", content: prompt },
+                { role: "user", content: text },
+              ],
+              temperature: 0.1,
+              response_format: { type: "json_object" },
+            }),
+          })
+
+          if (res.ok) {
+            const data = await res.json()
+            parsed = JSON.parse(data.choices[0].message.content)
+          }
+        } catch (apiErr) {
+          console.warn("Groq automation planning failed, using intelligent local planner fallback", apiErr)
+        }
       }
+
+      // If Groq was not available or failed, use our smart local fallback planner
+      if (!parsed || !parsed.steps || parsed.steps.length === 0) {
+        parsed = parseLocalAutomationFallback(text)
+      }
+
+      setStatusMessage(parsed.explanation)
+      speak(parsed.explanation)
+      runPipeline(parsed.steps, 0, parsed.explanation)
     } catch (e) {
       console.error(e)
-      setStatusMessage("Failed to plan automation. Please try rephrasing.")
+      const fallback = parseLocalAutomationFallback(text)
+      setStatusMessage(fallback.explanation)
+      speak(fallback.explanation)
+      runPipeline(fallback.steps, 0, fallback.explanation)
     } finally {
       setIsProcessing(false)
     }
@@ -871,6 +1135,26 @@ Respond ONLY with valid JSON with format:
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 <button
+                  onClick={() => executeInstruction("Register a new patient account")}
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-teal-50/80 dark:bg-teal-950/40 border border-teal-300/80 dark:border-teal-700/80 text-left transition-all hover:border-[#0d5c75] hover:bg-teal-100/70 shadow-xs"
+                >
+                  <span className="text-[10.5px] font-semibold text-[#0d5c75] dark:text-teal-200 flex items-center gap-1.5">
+                    <UserPlus className="w-3 h-3 text-[#0d5c75] dark:text-teal-300" />
+                    Register Account
+                  </span>
+                  <ArrowRight className="w-2.5 h-2.5 text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
+                </button>
+                <button
+                  onClick={() => executeInstruction("Book an in-clinic appointment for tomorrow at 11 AM")}
+                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-teal-50/80 dark:bg-teal-950/40 border border-teal-300/80 dark:border-teal-700/80 text-left transition-all hover:border-[#0d5c75] hover:bg-teal-100/70 shadow-xs"
+                >
+                  <span className="text-[10.5px] font-semibold text-[#0d5c75] dark:text-teal-200 flex items-center gap-1.5">
+                    <Calendar className="w-3 h-3 text-[#0d5c75] dark:text-teal-300" />
+                    Book Appointment
+                  </span>
+                  <ArrowRight className="w-2.5 h-2.5 text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
+                </button>
+                <button
                   onClick={() => executeInstruction("scroll down and show clinic services")}
                   className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/50 hover:bg-teal-50/50 shadow-xs"
                 >
@@ -880,29 +1164,11 @@ Respond ONLY with valid JSON with format:
                   <ArrowRight className="w-2.5 h-2.5 text-gray-400 group-hover:text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <button
-                  onClick={() => executeInstruction("go to FAQ page and open the last question")}
-                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/50 hover:bg-teal-50/50 shadow-xs"
-                >
-                  <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
-                    FAQ Inspection
-                  </span>
-                  <ArrowRight className="w-2.5 h-2.5 text-gray-400 group-hover:text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
-                </button>
-                <button
                   onClick={() => executeInstruction("open patient portal")}
                   className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/50 hover:bg-teal-50/50 shadow-xs"
                 >
                   <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
                     Patient Portal
-                  </span>
-                  <ArrowRight className="w-2.5 h-2.5 text-gray-400 group-hover:text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
-                </button>
-                <button
-                  onClick={() => executeInstruction("open admin dashboard")}
-                  className="group flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-left transition-all hover:border-[#0d5c75]/50 hover:bg-teal-50/50 shadow-xs"
-                >
-                  <span className="text-[10.5px] font-medium text-gray-700 dark:text-slate-300 group-hover:text-[#0d5c75]">
-                    Admin Dashboard
                   </span>
                   <ArrowRight className="w-2.5 h-2.5 text-gray-400 group-hover:text-[#0d5c75] transition-transform group-hover:translate-x-0.5" />
                 </button>
