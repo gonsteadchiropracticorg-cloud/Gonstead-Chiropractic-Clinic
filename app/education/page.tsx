@@ -112,6 +112,7 @@ export default function EducationPage() {
           src="/educational-guide.html"
           title="Gonstead Patient Educational Guide"
           className="absolute inset-0 w-full h-full border-0 block"
+          loading="eager"
           onLoad={() => setIframeLoaded(true)}
         />
       </main>

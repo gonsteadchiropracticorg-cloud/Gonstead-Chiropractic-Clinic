@@ -4215,8 +4215,8 @@ export default function AdminDashboard() {
                           </TableCell>
 
                           {/* Col 6: Actions Menu */}
-                          <TableCell className="py-2.5 px-2 align-middle text-right pr-3">
-                            <div className="relative inline-block text-right">
+                          <TableCell className="py-2.5 px-2 align-middle text-right pr-3 overflow-visible">
+                            <div className="relative inline-block text-right overflow-visible">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -4232,7 +4232,7 @@ export default function AdminDashboard() {
                               </Button>
 
                               {expandedActions.has(patient.id) && (
-                                <div className={`absolute top-full right-0 mt-1 z-50 w-64 sm:w-72 max-w-[calc(100vw-3rem)] ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-2.5 space-y-1.5`}>
+                                <div className={`absolute top-full right-0 mt-1 z-[9999] w-64 sm:w-72 max-w-[calc(100vw-3rem)] ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-2.5 space-y-1.5`}>
                                   <div className="grid grid-cols-2 gap-1.5 text-left">
                                     <Button
                                       size="sm"

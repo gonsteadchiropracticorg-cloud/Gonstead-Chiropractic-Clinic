@@ -2411,6 +2411,7 @@ body { font-family:'Inter',sans-serif; background:#c9c5bc; color:var(--ink); pad
 .fb-main { font-family:'Playfair Display',serif; font-size:12px; font-weight:600; color:rgba(255,255,255,.2); letter-spacing:.05em; display:block; }
 .fb-sub { font-size:7px; color:rgba(255,255,255,.12); letter-spacing:.15em; text-transform:uppercase; }
 @media (max-width:620px){ .rh-inner{grid-template-columns:1fr;gap:12px;} .rh-meta{text-align:left;align-items:flex-start;} .body{padding:18px 14px 0;} .top-row,.two-col,.steps-inner{grid-template-columns:1fr;} .clinic-block{grid-template-columns:1fr;} .report-footer{flex-direction:column;gap:8px;padding:12px 14px;} .doc-bar{padding:10px 14px;flex-direction:column;align-items:flex-start;gap:6px;} }
+@media print { body{padding:0 !important;margin:0 !important;background:transparent !important;} .toolbar{display:none !important;} .report{width:100% !important;max-width:100% !important;margin:0 !important;box-shadow:none !important;} }
 </style>
 </head>
 <body>
@@ -2701,14 +2702,23 @@ body { font-family:'Inter',sans-serif; background:#c9c5bc; color:var(--ink); pad
             const patientSlug = sanitizeFileName(resultsData.patientName);
             const fileName = `gonstead_assessment_${patientSlug}_${Date.now()}.pdf`;
 
-            // Build an off-screen export host and inject the template styles so html2canvas captures the exact visual design.
+            // Standard A4 aspect ratio: 841.89 / 595.28 = 1.4142756...
+            const A4_ASPECT = 841.89 / 595.28;
+            const exportWidth = 940;
+            const exportHeight = Math.round(exportWidth * A4_ASPECT); // 1329px
+
+            // Build an off-screen export host with exact A4 dimensions and zero external margins
             const exportHost = document.createElement('div');
             exportHost.style.position = 'fixed';
             exportHost.style.left = '-100000px';
             exportHost.style.top = '0';
-            exportHost.style.width = '940px';
-            exportHost.style.background = '#c9c5bc';
+            exportHost.style.width = exportWidth + 'px';
+            exportHost.style.height = exportHeight + 'px';
+            exportHost.style.background = '#ffffff';
+            exportHost.style.margin = '0';
+            exportHost.style.padding = '0';
             exportHost.style.zIndex = '-1';
+            exportHost.style.overflow = 'hidden';
 
             let reportClone = null;
 
@@ -2732,7 +2742,6 @@ body { font-family:'Inter',sans-serif; background:#c9c5bc; color:var(--ink); pad
                 }
 
                 reportClone = reportNode.cloneNode(true);
-                exportHost.appendChild(reportClone);
             } else {
                 // Fallback: render from template directly if iframe not available
                 const docHtml = buildV2AssessmentReportDocument(resultsData, assessmentData, new Date());
@@ -2742,9 +2751,24 @@ body { font-family:'Inter',sans-serif; background:#c9c5bc; color:var(--ink); pad
                 parsedDoc.querySelectorAll('style').forEach(st => exportHost.appendChild(st.cloneNode(true)));
                 parsedDoc.querySelectorAll('link[rel="stylesheet"]').forEach(lk => exportHost.appendChild(lk.cloneNode(true)));
                 reportClone = parsedReport ? parsedReport.cloneNode(true) : document.createElement('div');
-                exportHost.appendChild(reportClone);
             }
 
+            // Configure reportClone to span full width and full height with zero margin/shadow
+            // Eliminates any left/right empty borders so the design touches borders on all 4 sides perfectly.
+            reportClone.style.width = exportWidth + 'px';
+            reportClone.style.maxWidth = exportWidth + 'px';
+            reportClone.style.minHeight = exportHeight + 'px';
+            reportClone.style.maxHeight = exportHeight + 'px';
+            reportClone.style.height = exportHeight + 'px';
+            reportClone.style.boxSizing = 'border-box';
+            reportClone.style.margin = '0';
+            reportClone.style.boxShadow = 'none';
+            reportClone.style.borderRadius = '0';
+            reportClone.style.display = 'flex';
+            reportClone.style.flexDirection = 'column';
+            reportClone.style.justifyContent = 'space-between';
+
+            exportHost.appendChild(reportClone);
             document.body.appendChild(exportHost);
 
             // Let fonts/styles settle before capture for maximum visual fidelity.
@@ -2756,7 +2780,7 @@ body { font-family:'Inter',sans-serif; background:#c9c5bc; color:var(--ink); pad
                 }
             }
 
-            if (frameDoc.fonts && frameDoc.fonts.ready) {
+            if (frameDoc && frameDoc.fonts && frameDoc.fonts.ready) {
                 try {
                     await frameDoc.fonts.ready;
                 } catch (_error) {
@@ -2772,39 +2796,33 @@ body { font-family:'Inter',sans-serif; background:#c9c5bc; color:var(--ink); pad
                     scale: 2,
                     useCORS: true,
                     allowTaint: true,
-                    backgroundColor: '#c9c5bc',
+                    backgroundColor: '#ffffff',
+                    width: exportWidth,
+                    height: exportHeight,
+                    windowWidth: exportWidth,
+                    windowHeight: exportHeight,
                     logging: false
                 },
                 jsPDF: {
                     unit: 'pt',
                     format: 'a4',
                     orientation: 'portrait'
-                },
-                pagebreak: { mode: ['css', 'legacy'] }
+                }
             };
 
             try {
-                // Capture the report as one canvas, fit to full A4 width,
-                // and paginate vertically so each PDF page keeps perfect horizontal fit.
+                // Capture the report as one canvas with exact A4 proportions
                 const canvas = await window.html2canvas(reportClone, options.html2canvas);
                 const imageData = canvas.toDataURL('image/jpeg', 0.98);
 
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait' });
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
+                const pageWidth = pdf.internal.pageSize.getWidth();   // 595.28 pt
+                const pageHeight = pdf.internal.pageSize.getHeight(); // 841.89 pt
 
-                // Force single-page A4 output: scale report to fit both page width and height.
-                const widthScale = pageWidth / canvas.width;
-                const heightScale = pageHeight / canvas.height;
-                const fitScale = Math.min(widthScale, heightScale);
-
-                const renderWidth = canvas.width * fitScale;
-                const renderHeight = canvas.height * fitScale;
-                const offsetX = (pageWidth - renderWidth) / 2;
-                const offsetY = (pageHeight - renderHeight) / 2;
-
-                pdf.addImage(imageData, 'JPEG', offsetX, offsetY, renderWidth, renderHeight, undefined, 'FAST');
+                // Exact full-bleed A4 placement: flush to left (0), right (pageWidth), top (0), bottom (pageHeight)
+                // Completely eliminates empty space / gaps on right and left sides, fitting borders perfectly.
+                pdf.addImage(imageData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
 
                 // Force direct file download instead of letting browser PDF viewers open first.
                 const pdfBlob = pdf.output('blob');
