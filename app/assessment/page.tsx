@@ -20,21 +20,22 @@ export default function AssessmentPage() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#f8f5f0] text-slate-800 dark:text-slate-100">
       {/* Assessment Platform Header Bar */}
       <header className="shrink-0 z-30 bg-[#0d5c75] text-white shadow-md border-b border-[#0d5c75]/30">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 h-13 sm:h-16 flex items-center justify-between gap-2">
           {/* Left: Branding & Back Navigation */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/20"
+              className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/20 shrink-0"
+              title="Return to Home"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Back to Home</span>
+              <span className="hidden xs:inline">Home</span>
             </Link>
 
-            <div className="hidden sm:block h-6 w-px bg-white/20" />
+            <div className="hidden sm:block h-6 w-px bg-white/20 shrink-0" />
 
-            <div className="flex items-center gap-2.5">
-              <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-white/10 p-0.5 border border-white/20 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg overflow-hidden bg-white/10 p-0.5 border border-white/20 shrink-0">
                 <Image
                   src="/images/gonstead-chiropractic-logo-new.png"
                   alt="Gonstead Chiropractic Clinic"
@@ -43,12 +44,12 @@ export default function AssessmentPage() {
                   priority
                 />
               </div>
-              <div className="leading-tight">
-                <h1 className="text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
-                  <Stethoscope className="h-4 w-4 text-[#2a9d8f]" />
-                  <span>Spinal Health Assessment</span>
+              <div className="leading-tight min-w-0">
+                <h1 className="text-xs sm:text-base font-bold text-white flex items-center gap-1 truncate font-poppins">
+                  <Stethoscope className="h-3.5 w-3.5 text-[#2a9d8f] shrink-0 hidden xs:inline" />
+                  <span className="truncate">Spinal Assessment</span>
                 </h1>
-                <p className="text-[10px] sm:text-xs text-white/70 hidden md:block">
+                <p className="text-[10px] text-teal-200 hidden md:block truncate">
                   Groq AI 120B Biomechanical Analysis & Clinical Report
                 </p>
               </div>
@@ -56,35 +57,37 @@ export default function AssessmentPage() {
           </div>
 
           {/* Right: Quick actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               onClick={() => {
                 setIframeLoaded(false)
                 setIframeKey(k => k + 1)
               }}
               title="Restart Assessment"
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all text-xs flex items-center gap-1.5"
+              className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all text-xs flex items-center gap-1"
+              aria-label="Restart"
             >
-              <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline font-medium">Restart</span>
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden md:inline font-medium">Restart</span>
             </button>
 
             <a
               href="/assessment.html"
               target="_blank"
               rel="noopener noreferrer"
-              title="Open full page view"
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all text-xs flex items-center gap-1.5"
+              title="Open full page view in new tab"
+              className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all text-xs flex items-center gap-1"
+              aria-label="Fullscreen"
             >
-              <ExternalLink className="h-4 w-4" />
-              <span className="hidden sm:inline font-medium">Fullscreen</span>
+              <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden md:inline font-medium">Fullscreen</span>
             </a>
 
             <Link
               href="/patient-portal"
-              className="px-3 py-1.5 rounded-xl bg-[#2a9d8f] hover:bg-[#238276] text-white text-xs sm:text-sm font-semibold transition-all shadow-sm border border-white/20 flex items-center gap-1.5"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#2a9d8f] hover:bg-[#238276] text-white text-xs sm:text-sm font-semibold transition-all shadow-sm border border-white/20 flex items-center gap-1 shrink-0"
             >
-              <UserCheck className="h-4 w-4" />
+              <UserCheck className="h-3.5 w-3.5" />
               <span>Portal</span>
             </Link>
           </div>

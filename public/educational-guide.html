@@ -1968,8 +1968,11 @@ left: 80px;
         }
         .in-iframe .main-content,
         body.in-iframe .main-content {
-            padding-top: 16px !important;
+            padding-top: 12px !important;
             min-height: 100% !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
         }
 
         /* Ensure content sections and titles render visibly with clear high-contrast colors in iframe */
@@ -1991,6 +1994,355 @@ left: 80px;
         body.in-iframe .doctor-introduction {
             opacity: 1 !important;
             visibility: visible !important;
+        }
+
+        /* ------------------------------------------------------------------
+           COMPREHENSIVE MOBILE & TABLET RESPONSIVENESS OVERRIDES
+           Eliminates text squeezing, excessive nested paddings, and horizontal overflow
+        ------------------------------------------------------------------- */
+        @media (max-width: 1024px) {
+            .sidebar,
+            .in-iframe .sidebar,
+            body.in-iframe .sidebar {
+                display: none !important;
+                width: 0 !important;
+            }
+
+            .sidebar.expanded {
+                display: block !important;
+                width: min(85vw, 320px) !important;
+                left: 0 !important;
+                top: 0 !important;
+                height: 100vh !important;
+                z-index: 99999 !important;
+                box-shadow: 0 0 50px rgba(0,0,0,0.5) !important;
+            }
+
+            .main-content,
+            .in-iframe .main-content,
+            body.in-iframe .main-content {
+                margin-left: 0 !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .container,
+            .in-iframe .container,
+            body.in-iframe .container {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden !important;
+                width: 100% !important;
+                font-size: 15px !important;
+            }
+
+            .container,
+            .in-iframe .container,
+            body.in-iframe .container {
+                padding: 0 10px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .main-content,
+            .in-iframe .main-content,
+            body.in-iframe .main-content {
+                margin-left: 0 !important;
+                padding: 10px 0 30px 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .content-grid {
+                gap: 18px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            .content-card {
+                padding: 16px 12px !important;
+                margin-bottom: 20px !important;
+                border-radius: 16px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .card-header {
+                flex-direction: row !important;
+                text-align: left !important;
+                align-items: center !important;
+                gap: 12px !important;
+                margin-bottom: 14px !important;
+            }
+
+            .card-icon {
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 1.1rem !important;
+                flex-shrink: 0 !important;
+                margin-right: 0 !important;
+            }
+
+            .card-title {
+                font-size: 1.15rem !important;
+                text-align: left !important;
+                line-height: 1.3 !important;
+                margin: 0 !important;
+            }
+
+            .card-content {
+                font-size: 0.92rem !important;
+                line-height: 1.6 !important;
+            }
+
+            .card-content h3 {
+                font-size: 1.15rem !important;
+                margin: 18px 0 10px 0 !important;
+                text-align: left !important;
+            }
+
+            .card-content h4 {
+                font-size: 1.05rem !important;
+                margin: 16px 0 8px 0 !important;
+                text-align: left !important;
+            }
+
+            /* FIX: Chart containers & narrative text blocks from squeezing text into 120-150px! */
+            .chart-container,
+            div[style*="padding: 30px"],
+            div[style*="padding: 35px"],
+            div[style*="padding: 40px"] {
+                padding: 14px 10px !important;
+                margin: 16px 0 !important;
+                border-radius: 14px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .chart-container > div,
+            div[style*="padding: 25px"],
+            div[style*="border-left: 4px solid"],
+            div[style*="border-left:4px solid"] {
+                padding: 12px 10px !important;
+                margin-top: 14px !important;
+                border-radius: 10px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .chart-container h5 {
+                font-size: 1.1rem !important;
+                margin-bottom: 12px !important;
+                line-height: 1.35 !important;
+            }
+
+            .chart-container h6 {
+                font-size: 1rem !important;
+                margin-bottom: 10px !important;
+            }
+
+            .chart-container p,
+            .chart-container div,
+            .content-card p,
+            .content-card div {
+                font-size: 0.92rem !important;
+                line-height: 1.6 !important;
+                word-break: normal !important;
+                overflow-wrap: break-word !important;
+            }
+
+            .visual-caption {
+                font-size: 0.82rem !important;
+                line-height: 1.5 !important;
+                margin-top: 10px !important;
+            }
+
+            /* All images fit fluidly within viewport with zero overflow */
+            img,
+            .chart-image,
+            .visual-item img {
+                max-width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                border-radius: 10px !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Doctor Introduction Header on Mobile */
+            .doctor-introduction {
+                flex-direction: column !important;
+                text-align: center !important;
+                padding: 18px 12px !important;
+                gap: 14px !important;
+                margin-bottom: 20px !important;
+                border-radius: 14px !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .doctor-image {
+                margin: 0 auto !important;
+            }
+
+            .doctor-image img {
+                width: 110px !important;
+                height: 110px !important;
+                border-width: 4px !important;
+            }
+
+            .doctor-content h3 {
+                font-size: 1.35rem !important;
+                margin-bottom: 6px !important;
+            }
+
+            .doctor-content p {
+                font-size: 0.9rem !important;
+                line-height: 1.55 !important;
+                margin-bottom: 10px !important;
+            }
+
+            /* Section Titles */
+            .section-title {
+                font-size: 1.45rem !important;
+                line-height: 1.3 !important;
+                margin-bottom: 10px !important;
+                text-align: center !important;
+            }
+
+            .section-subtitle {
+                font-size: 0.9rem !important;
+                line-height: 1.5 !important;
+                margin-bottom: 18px !important;
+                text-align: center !important;
+            }
+
+            /* Quote and Highlight Boxes */
+            .quote-box,
+            .highlight-box {
+                padding: 14px 12px !important;
+                margin: 16px 0 !important;
+                border-radius: 12px !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .quote-text {
+                font-size: 0.95rem !important;
+                line-height: 1.55 !important;
+            }
+
+            /* Tables Responsiveness: Horizontal touch scroll without breaking layout */
+            table,
+            .comparison-table {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                font-size: 0.8rem !important;
+                border-collapse: collapse !important;
+            }
+
+            th, td {
+                padding: 8px 10px !important;
+                white-space: nowrap !important;
+            }
+
+            /* Interactive Assessment Promo Section */
+            .assessment-promo-container {
+                padding: 18px 12px !important;
+                border-radius: 14px !important;
+                margin: 20px 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .promo-buttons-container {
+                flex-direction: column !important;
+                gap: 10px !important;
+                width: 100% !important;
+            }
+
+            .btn-start-assessment,
+            .btn-fullscreen-assessment {
+                width: 100% !important;
+                justify-content: center !important;
+                padding: 12px 14px !important;
+                font-size: 0.9rem !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Assessment & Results Modals */
+            .assessment-modal .modal-content,
+            .results-modal .modal-content {
+                width: 95vw !important;
+                max-width: 95vw !important;
+                max-height: 90vh !important;
+                padding: 16px 12px !important;
+                border-radius: 14px !important;
+                box-sizing: border-box !important;
+            }
+
+            .results-footer {
+                flex-direction: column !important;
+                gap: 8px !important;
+                width: 100% !important;
+            }
+
+            .results-footer button,
+            .results-footer a {
+                width: 100% !important;
+                justify-content: center !important;
+                text-align: center !important;
+                padding: 11px 14px !important;
+                font-size: 0.88rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container,
+            .in-iframe .container,
+            body.in-iframe .container {
+                padding: 0 6px !important;
+            }
+
+            .content-card {
+                padding: 12px 8px !important;
+                border-radius: 12px !important;
+            }
+
+            .chart-container,
+            div[style*="padding: 30px"],
+            div[style*="padding: 35px"],
+            div[style*="padding: 40px"] {
+                padding: 10px 8px !important;
+                border-radius: 10px !important;
+            }
+
+            .chart-container > div,
+            div[style*="border-left: 4px solid"],
+            div[style*="border-left:4px solid"] {
+                padding: 10px 8px !important;
+                border-radius: 8px !important;
+            }
         }
     </style>
     <script>
@@ -2181,7 +2533,7 @@ left: 80px;
                                 <p class="visual-caption" style="text-align: center; margin-top: 20px; font-size: 16px; color: #4a5568; font-weight: 500; line-height: 1.6;">Click to enlarge - Historical photograph of Dr. Clarence Gonstead's first chiropractic office in downtown Mount Horeb, Wisconsin (1923). This modest beginning would grow into one of the most influential chiropractic practices in history, as patients from around the world would eventually travel to seek his revolutionary approach to spinal care. The success of this humble practice led to patients literally overflowing into the street, necessitating the construction of the world-renowned Gonstead Clinic in 1964.</p>
                                 
                                 <!-- Professional Narrative Text -->
-                                <div style="margin-top: 30px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #2a9d8f;">
+                                <div class="chart-narrative-box" style="margin-top: 30px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #2a9d8f;">
                                     <h6 style="color: #0d5c75; font-weight: 600; font-size: 1.2rem; margin-bottom: 15px; font-family: 'Poppins', sans-serif;">The Foundation of Excellence</h6>
                                     <p style="color: #4a5568; font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px;">In 1923, Dr. Clarence Gonstead opened his first chiropractic office in downtown Mount Horeb, Wisconsin. This humble beginning marked the start of what would become one of the most revolutionary approaches to spinal care in chiropractic history. From this modest practice, Dr. Gonstead would develop his systematic approach to diagnosis and treatment that would eventually influence practitioners worldwide.</p>
                                     <p style="color: #4a5568; font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px;">Dr. Gonstead's unwavering dedication to his patients and his relentless pursuit of clinical excellence quickly distinguished his practice. His methodical approach to spinal analysis, combined with his mechanical engineering background, allowed him to develop precise diagnostic techniques that would become the hallmark of the Gonstead method. Word of his remarkable clinical results spread rapidly throughout the region.</p>
@@ -2302,7 +2654,7 @@ left: 80px;
                                     <p class="visual-caption" style="text-align: center; margin-top: 20px; font-size: 16px; color: #4a5568; font-weight: 500; line-height: 1.6;">Click to enlarge - Interactive educational animation demonstrating the three primary divisions of the nervous system: <strong>Autonomic</strong> (controlling involuntary functions like heart rate and digestion), <strong>Motor</strong> (controlling voluntary muscle movements), and <strong>Sensory</strong> (processing sensory information). This visualization helps illustrate why proper spinal alignment through Gonstead chiropractic care is essential for optimal nervous system function and overall health.</p>
                                     
                                     <!-- Educational Context Box -->
-                                    <div style="margin-top: 30px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #2a9d8f;">
+                                    <div class="chart-narrative-box" style="margin-top: 30px; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 4px solid #2a9d8f;">
                                         <h6 style="color: #0d5c75; font-weight: 600; font-size: 1.2rem; margin-bottom: 15px; font-family: 'Poppins', sans-serif;">Understanding Nervous System Integration</h6>
                                         <p style="color: #4a5568; font-size: 1.05rem; line-height: 1.7; margin-bottom: 15px;">The nervous system functions as an integrated network where spinal misalignments (subluxations) can disrupt communication between the brain and body. The Gonstead technique's precision in identifying and correcting these subluxations helps restore optimal nervous system function.</p>
                                         <p style="color: #4a5568; font-size: 1.05rem; line-height: 1.7; margin-bottom: 0;">By understanding how autonomic, motor, and sensory systems work together, patients can better appreciate why specific Gonstead adjustments can have wide-ranging effects on their health and well-being, from improved organ function to enhanced movement and reduced pain.</p>
