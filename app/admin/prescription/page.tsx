@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, FileText, Settings, SlidersHorizontal, Printer, Eye } from "lucide-react"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { getCurrentUser } from "@/lib/data-service"
 import { PrescriptionData } from "@/lib/prescription-types"
@@ -94,6 +94,7 @@ function PrescriptionPageContent() {
   const [clinicLogo, setClinicLogo] = useState<string>("")
   const [selectedTemplate, setSelectedTemplate] = useState<string>("classic")
   const [showQRCode, setShowQRCode] = useState(false)
+  const [mobileTab, setMobileTab] = useState<'prescription' | 'controls'>('prescription')
   
   const router = useRouter()
   const prescriptionRef = useRef<HTMLDivElement>(null)
@@ -1034,6 +1035,313 @@ function PrescriptionPageContent() {
           visibility: visible !important;
         }
 
+        /* ============================================================
+           MOBILE & TABLET RESPONSIVE OVERRIDES (SCREEN ONLY)
+           ============================================================ */
+        @media screen and (max-width: 1024px) {
+          .main-container {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 16px !important;
+            padding: 8px 6px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            overflow-x: hidden !important;
+          }
+
+          .prescription-area {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            overflow-x: hidden !important;
+          }
+
+          .controls-area {
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            top: 0 !important;
+            max-height: none !important;
+            overflow-y: visible !important;
+            box-sizing: border-box !important;
+          }
+
+          .control-sections {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+        }
+
+        @media screen and (max-width: 768px) {
+          .prescription-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: auto !important;
+            max-height: none !important;
+            height: auto !important;
+            padding: 10px 8px !important;
+            margin: 0 auto !important;
+            box-sizing: border-box !important;
+            border-width: 2px !important;
+            border-radius: 12px !important;
+            overflow: hidden !important;
+            box-shadow: 0 2px 12px rgba(36,80,100,0.1) !important;
+          }
+
+          /* Header */
+          .header {
+            padding: 10px 8px !important;
+            margin-bottom: 10px !important;
+            position: relative !important;
+            border-radius: 8px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+          }
+
+          .logo-container {
+            width: 60px !important;
+            height: 60px !important;
+            margin: 0 auto 6px auto !important;
+          }
+
+          .clinic-name {
+            font-size: 14px !important;
+            line-height: 1.25 !important;
+            margin-bottom: 3px !important;
+            word-break: break-word !important;
+            white-space: normal !important;
+            text-shadow: none !important;
+          }
+
+          .doctor-name {
+            font-size: 13px !important;
+            line-height: 1.2 !important;
+            margin-bottom: 2px !important;
+          }
+
+          .specialization {
+            font-size: 11px !important;
+          }
+
+          .patient-id-badge {
+            position: static !important;
+            display: inline-flex !important;
+            margin: 0 auto 6px auto !important;
+            font-size: 10.5px !important;
+            padding: 3px 8px !important;
+          }
+
+          /* Patient Information */
+          .patient-info {
+            padding: 8px 10px !important;
+            margin-bottom: 10px !important;
+            border-radius: 8px !important;
+          }
+
+          .patient-info h3 {
+            font-size: 12.5px !important;
+            margin-bottom: 8px !important;
+            padding-bottom: 2px !important;
+          }
+
+          .patient-details {
+            grid-template-columns: 1fr !important;
+            gap: 6px !important;
+          }
+
+          .field-label {
+            font-size: 11px !important;
+            margin-bottom: 2px !important;
+          }
+
+          .field-input {
+            font-size: 12px !important;
+            min-height: 28px !important;
+            padding: 2px 4px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+          }
+
+          /* Treatment Prescription Section */
+          .prescription-section {
+            padding: 10px 8px !important;
+            margin-bottom: 10px !important;
+            border-radius: 8px !important;
+          }
+
+          .prescription-section h3 {
+            font-size: 12.5px !important;
+            margin-bottom: 8px !important;
+          }
+
+          .prescription-content {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+          }
+
+          .cure-section, .medicine-section {
+            width: 100% !important;
+            box-sizing: border-box !important;
+          }
+
+          .cure-section h4, .medicine-section h4 {
+            font-size: 11.5px !important;
+            margin-bottom: 4px !important;
+          }
+
+          .cure-input, .medicine-input {
+            font-size: 12px !important;
+            min-height: 75px !important;
+            padding: 6px 8px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 6px !important;
+          }
+
+          /* Sessions Section */
+          .sessions-section {
+            padding: 8px !important;
+            margin-top: 8px !important;
+            border-radius: 6px !important;
+          }
+
+          .sessions-section h4 {
+            font-size: 11.5px !important;
+            margin-bottom: 6px !important;
+          }
+
+          .session-checkboxes {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 5px !important;
+          }
+
+          .session-checkbox {
+            font-size: 10.5px !important;
+            padding: 4px !important;
+          }
+
+          .session-total {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 4px !important;
+            font-size: 11px !important;
+          }
+
+          .session-total input {
+            width: 60px !important;
+          }
+
+          /* Payment & Billing */
+          .payment-billing-section {
+            padding: 8px !important;
+            margin-top: 8px !important;
+          }
+
+          .payment-billing-grid {
+            grid-template-columns: 1fr !important;
+            gap: 6px !important;
+          }
+
+          /* Signatures */
+          .signature-section {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+            margin-top: 10px !important;
+          }
+
+          .signature-box {
+            padding: 6px !important;
+          }
+
+          /* Footer */
+          .footer {
+            padding: 8px !important;
+            margin-top: 10px !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            border-radius: 8px !important;
+          }
+
+          .footer-info {
+            flex-direction: column !important;
+            gap: 4px !important;
+            text-align: center !important;
+          }
+
+          .footer-address, .footer-phone {
+            text-align: center !important;
+            font-size: 11px !important;
+          }
+
+          .footer-address strong, .footer-phone strong {
+            font-size: 12px !important;
+          }
+
+          .qr-code-container {
+            margin: 4px auto 0 auto !important;
+          }
+
+          /* Doctor Controls Area */
+          .action-buttons {
+            padding: 12px !important;
+            gap: 8px !important;
+            flex-direction: column !important;
+            margin-bottom: 15px !important;
+          }
+
+          .action-buttons .btn {
+            width: 100% !important;
+            justify-content: center !important;
+            font-size: 13px !important;
+            padding: 10px 14px !important;
+          }
+
+          .doctor-control-panel {
+            padding: 12px 10px !important;
+            border-radius: 12px !important;
+          }
+
+          .control-panel-header {
+            font-size: 13.5px !important;
+            padding-bottom: 8px !important;
+          }
+
+          .chiro-conditions-panel, .prescription-customizer {
+            padding: 12px !important;
+            border-radius: 10px !important;
+          }
+
+          .panel-section-title {
+            font-size: 13px !important;
+            margin-bottom: 10px !important;
+          }
+
+          .prescription-toggles {
+            grid-template-columns: 1fr !important;
+            gap: 8px !important;
+          }
+
+          .quick-actions-panel {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+          }
+        }
+
+        @media screen and (min-width: 480px) and (max-width: 768px) {
+          .patient-details {
+            grid-template-columns: 1fr 1fr !important;
+          }
+          .session-checkboxes {
+            grid-template-columns: repeat(3, 1fr) !important;
+          }
+          .signature-section {
+            grid-template-columns: 1fr 1fr !important;
+          }
+        }
+
         @media print {
           @page {
             size: A4;
@@ -1402,24 +1710,74 @@ function PrescriptionPageContent() {
       `}</style>
 
       {/* Header */}
-      <header className="bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] text-white shadow-2xl">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
+      <header className="bg-gradient-to-br from-[#0d5c75] to-[#2a9d8f] text-white shadow-2xl no-print">
+        <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             <Button
               variant="ghost"
               onClick={() => router.push('/admin')}
-              className="text-white hover:bg-white/10 flex items-center gap-2"
+              className="text-white hover:bg-white/10 flex items-center gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm font-semibold rounded-xl"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
+              <span>Back</span>
             </Button>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPreviewModal(true)}
+                className="bg-white/10 hover:bg-white/20 text-white border-white/30 h-8 px-2.5 text-xs font-semibold rounded-xl flex items-center gap-1.5"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                <span>Preview</span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={printPrescription}
+                className="bg-white text-[#0d5c75] hover:bg-slate-100 h-8 px-3 text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>Print</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
+      {/* Mobile View Switcher (Prescription View vs Doctor Controls) */}
+      <div className="block md:hidden px-3 pt-3 no-print">
+        <div className="flex items-center justify-center p-1 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl border border-[#0d5c75]/25 shadow-xs gap-1">
+          <button
+            type="button"
+            onClick={() => setMobileTab('prescription')}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+              mobileTab === 'prescription'
+                ? 'bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white shadow-md'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+            }`}
+          >
+            <FileText className="h-3.5 w-3.5" />
+            <span>Prescription View</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab('controls')}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+              mobileTab === 'controls'
+                ? 'bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white shadow-md'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+            }`}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <span>Doctor Controls</span>
+          </button>
+        </div>
+      </div>
+
       <div className="main-container">
         {/* Left Side - Prescription */}
-        <div className="prescription-area">
+        <div className={`prescription-area ${mobileTab === 'controls' ? 'hidden md:block' : 'block'}`}>
           <div className="prescription-container" ref={prescriptionRef}>
             <div className="header">
               {patient?.id && (
@@ -1712,7 +2070,7 @@ function PrescriptionPageContent() {
         </div>
         
         {/* Right Side - Doctor Controls */}
-        <div className="controls-area">
+        <div className={`controls-area ${mobileTab === 'prescription' ? 'hidden md:block' : 'block'}`}>
           {/* Action Buttons */}
           <div className="action-buttons">
             <button className="btn btn-secondary" onClick={printPrescription}>
