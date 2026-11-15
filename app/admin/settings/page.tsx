@@ -450,14 +450,14 @@ export default function AdminSettings() {
                           type="time"
                           value={hours.open}
                           onChange={(e) => updateOperatingHours(day, "open", e.target.value)}
-                          className="flex-1 sm:w-28 h-9 text-xs font-semibold rounded-xl border border-[#0d5c75]/25 bg-white text-[#0d5c75] focus:ring-2 focus:ring-[#0d5c75]/20 focus:border-[#0d5c75] shadow-xs"
+                          className="flex-1 sm:w-28 h-9 text-xs font-semibold rounded-xl border border-[#0d5c75]/25 !bg-white !text-[#0d5c75] focus:ring-2 focus:ring-[#0d5c75]/20 focus:border-[#0d5c75] shadow-xs"
                         />
                         <span className="text-xs font-bold text-slate-400 shrink-0">to</span>
                         <Input
                           type="time"
                           value={hours.close}
                           onChange={(e) => updateOperatingHours(day, "close", e.target.value)}
-                          className="flex-1 sm:w-28 h-9 text-xs font-semibold rounded-xl border border-[#0d5c75]/25 bg-white text-[#0d5c75] focus:ring-2 focus:ring-[#0d5c75]/20 focus:border-[#0d5c75] shadow-xs"
+                          className="flex-1 sm:w-28 h-9 text-xs font-semibold rounded-xl border border-[#0d5c75]/25 !bg-white !text-[#0d5c75] focus:ring-2 focus:ring-[#0d5c75]/20 focus:border-[#0d5c75] shadow-xs"
                         />
                       </div>
                     ) : (
