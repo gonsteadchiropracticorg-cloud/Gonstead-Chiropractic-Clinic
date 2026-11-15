@@ -155,12 +155,29 @@ export default function AuditLogsPage() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const [logs, setLogs] = useState<AuditLog[]>([])
+  const [logs, setLogs] = useState<AuditLog[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("gonstead_local_audit_logs")
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      } catch (e) {}
+    }
+    return []
+  })
   const [search, setSearch] = useState("")
   const [actionFilter, setActionFilter] = useState<string>("all")
   const [entityFilter, setEntityFilter] = useState<string>("all")
   const [timeRange, setTimeRange] = useState<string>("all")
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      const raw = localStorage.getItem("gonstead_local_audit_logs")
+      return !raw
+    }
+    return true
+  })
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true)
   const [page, setPage] = useState<number>(1)
   const pageSize = 20

@@ -55,8 +55,30 @@ interface PrescriptionRecord {
 
 export default function PatientTrackingPage() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<Patient[]>([])
-  const [prescriptionRecords, setPrescriptionRecords] = useState<PrescriptionRecord[]>([])
+  const [searchResults, setSearchResults] = useState<Patient[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("gonstead_patients")
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      } catch (e) {}
+    }
+    return []
+  })
+  const [prescriptionRecords, setPrescriptionRecords] = useState<PrescriptionRecord[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("prescription_records")
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed)) return parsed
+        }
+      } catch (e) {}
+    }
+    return []
+  })
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isSearching, setIsSearching] = useState(false)

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
+import Link from "next/link"
 import Image from "next/image"
 import {
   LayoutDashboard,
@@ -52,7 +53,23 @@ export function AdminAutoSidebar() {
 
   const [isHovered, setIsHovered] = useState(false)
   const [isPinnedOpen, setIsPinnedOpen] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") === "true"
+    }
+    return false
+  })
+
+  // Prefetch all admin subpages into browser cache on mount for instant 0ms page transitions
+  useEffect(() => {
+    mainNavItems.forEach((item) => {
+      if (item.href) {
+        try {
+          router.prefetch(item.href)
+        } catch (e) {}
+      }
+    })
+  }, [router])
 
   useEffect(() => {
     // Check client-side authentication state
@@ -174,12 +191,11 @@ export function AdminAutoSidebar() {
             const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href))
 
             return (
-              <button
+              <Link
                 key={item.id}
-                onClick={() => {
-                  router.push(item.href)
-                  setIsPinnedOpen(false)
-                }}
+                href={item.href}
+                prefetch={true}
+                onClick={() => setIsPinnedOpen(false)}
                 title={item.title}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 relative group ${
                   isActive
@@ -213,7 +229,7 @@ export function AdminAutoSidebar() {
                 {isExpanded && isActive && (
                   <ChevronRight className="h-4 w-4 ml-auto text-white/90 shrink-0" />
                 )}
-              </button>
+              </Link>
             )
           })}
 

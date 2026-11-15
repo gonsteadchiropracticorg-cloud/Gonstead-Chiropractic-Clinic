@@ -61,10 +61,28 @@ import { useSeamlessData } from "@/hooks/use-silent-sync"
 import { SeamlessDotIndicator } from "@/components/ui/seamless-update-indicator"
 
 export default function AdminAnalytics() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") === "true"
+    }
+    return false
+  })
+  const [isCheckingAuth, setIsCheckingAuth] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") !== "true"
+    }
+    return true
+  })
   const [activeTab, setActiveTab] = useState<"clinic" | "website">("clinic")
-  const [patients, setPatients] = useState<any[]>([])
+  const [patients, setPatients] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("gonstead_patients")
+        if (saved) return JSON.parse(saved)
+      } catch (e) {}
+    }
+    return []
+  })
   const [timeRange, setTimeRange] = useState("30")
   const [analytics, setAnalytics] = useState({
     totalPatients: 0,

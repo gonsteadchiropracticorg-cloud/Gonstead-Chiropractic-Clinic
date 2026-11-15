@@ -167,6 +167,22 @@ export default function AdminSidebar({ isOpen, onClose, currentPath }: AdminSide
     return () => clearInterval(timer)
   }, [mounted])
 
+  // Prefetch admin routes into browser cache for instant 0ms navigation
+  useEffect(() => {
+    sidebarItems.forEach((item) => {
+      if (item.href) {
+        try { router.prefetch(item.href) } catch (e) {}
+      }
+      if (item.children) {
+        item.children.forEach((c) => {
+          if (c.href) {
+            try { router.prefetch(c.href) } catch (e) {}
+          }
+        })
+      }
+    })
+  }, [router])
+
   const toggleExpanded = (itemId: string) => {
     const newExpanded = new Set(expandedItems)
     if (newExpanded.has(itemId)) {

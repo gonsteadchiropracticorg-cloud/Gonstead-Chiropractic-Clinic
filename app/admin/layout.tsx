@@ -11,7 +11,14 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [isAuth, setIsAuth] = useState<boolean | null>(null)
+  const [isAuth, setIsAuth] = useState<boolean | null>(() => {
+    if (typeof window !== "undefined") {
+      const authenticated = localStorage.getItem("admin_authenticated") === "true"
+      const adminEmail = localStorage.getItem("admin_email")
+      return Boolean(authenticated && adminEmail)
+    }
+    return null
+  })
 
   const isAuthPage = pathname === "/admin/auth" || 
                      pathname === "/staff-login" || 

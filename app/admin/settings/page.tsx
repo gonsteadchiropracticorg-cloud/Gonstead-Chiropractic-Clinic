@@ -14,8 +14,18 @@ import { useToast } from "@/hooks/use-toast"
 export default function AdminSettings() {
   const router = useRouter()
   const { toast } = useToast()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [authChecked, setAuthChecked] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") === "true"
+    }
+    return false
+  })
+  const [authChecked, setAuthChecked] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") === "true"
+    }
+    return false
+  })
   const [clinicSettings, setClinicSettings] = useState({
     clinicName: "Gonstead Chiropractic Clinic - Dr. Bashir",
     address: "Near Peshawar Model School, Tehsil Road, Nowshera, Pakistan",

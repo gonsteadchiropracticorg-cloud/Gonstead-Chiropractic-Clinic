@@ -57,9 +57,30 @@ interface PaymentRecord {
 }
 
 function MoneyManagementContent() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const [records, setRecords] = useState<PaymentRecord[]>([])
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") === "true"
+    }
+    return false
+  })
+  const [isCheckingAuth, setIsCheckingAuth] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") !== "true"
+    }
+    return true
+  })
+  const [records, setRecords] = useState<PaymentRecord[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedRecords = localStorage.getItem("money_records")
+        if (savedRecords) {
+          const parsed = JSON.parse(savedRecords)
+          if (Array.isArray(parsed)) return parsed
+        }
+      } catch (e) {}
+    }
+    return []
+  })
   const [isAddRecordDialogOpen, setIsAddRecordDialogOpen] = useState(false)
   const [isEditRecordDialogOpen, setIsEditRecordDialogOpen] = useState(false)
   const [editingRecord, setEditingRecord] = useState<PaymentRecord | null>(null)

@@ -34,9 +34,26 @@ import StaffSecurityMonitor from "@/components/StaffSecurityMonitor"
 
 export default function StaffAccessPage() {
   const { toast } = useToast()
-  const [accounts, setAccounts] = useState<StaffAccount[]>([])
+  const [accounts, setAccounts] = useState<StaffAccount[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("gonstead_staff_accounts")
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      } catch (e) {}
+    }
+    return []
+  })
   const [search, setSearch] = useState("")
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      const raw = localStorage.getItem("gonstead_staff_accounts")
+      return !raw
+    }
+    return true
+  })
   const [openDialog, setOpenDialog] = useState(false)
   const [editing, setEditing] = useState<StaffAccount | null>(null)
   const [roleFilter, setRoleFilter] = useState<'all' | 'staff' | 'assistant'>('all')
@@ -54,17 +71,20 @@ export default function StaffAccessPage() {
   const [showSecurityMonitor, setShowSecurityMonitor] = useState(false)
 
   const load = async () => {
-    setLoading(true)
     try {
       const response = await fetch('/api/staff')
       const result = await response.json()
-      setAccounts(result.data || [])
+      const data = result.data || []
+      setAccounts(data)
+      try {
+        localStorage.setItem("gonstead_staff_accounts", JSON.stringify(data))
+      } catch (e) {}
     } catch (error) {
       console.error('Failed to load staff accounts:', error)
       toast({ title: 'Error', description: 'Failed to load staff accounts', variant: 'destructive' })
-      setAccounts([])
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {

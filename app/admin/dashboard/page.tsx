@@ -100,7 +100,18 @@ import {
 import { generateAppointmentConfirmationPDF } from "@/lib/pdf-appointment-confirmation"
 
 export default function AdminDashboard() {
-  const [patients, setPatients] = useState<Patient[]>([])
+  const [patients, setPatients] = useState<Patient[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("gonstead_patients")
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed
+        }
+      } catch (e) {}
+    }
+    return []
+  })
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [isPatientDialogOpen, setIsPatientDialogOpen] = useState(false)
@@ -112,23 +123,55 @@ export default function AdminDashboard() {
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterUrgency, setFilterUrgency] = useState<string>("all")
   const [filterTimePeriod, setFilterTimePeriod] = useState<string>("all")
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      const isAuth = localStorage.getItem("admin_authenticated") === "true"
+      const raw = localStorage.getItem("gonstead_patients")
+      return !(isAuth && raw)
+    }
+    return true
+  })
   const { theme, setTheme } = useTheme()
   const isDarkMode = theme === "dark"
   const [currentTime, setCurrentTime] = useState(new Date())
   const [patientCount, setPatientCount] = useState(0)
-  const [authChecked, setAuthChecked] = useState(false)
+  const [authChecked, setAuthChecked] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") === "true"
+    }
+    return false
+  })
   const [clinicLocation, setClinicLocation] = useState({
     address: "Near Peshawar Model School, Tehsil Road, Nowshera",
     coordinates: { lat: 34.0153, lng: 71.9804 },
     mapUrl: "https://maps.app.goo.gl/8pJ9o2hCPtGY3XtD9",
   })
-  const [stats, setStats] = useState({
-    totalPatients: 0,
-    todayAppointments: 0,
-    pendingAppointments: 0,
-    completedSessions: 0,
-    emergencyPatients: 0,
+  const [stats, setStats] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("gonstead_patients")
+        if (raw) {
+          const cached = JSON.parse(raw)
+          if (Array.isArray(cached) && cached.length > 0) {
+            const today = new Date().toDateString()
+            return {
+              totalPatients: cached.length,
+              todayAppointments: cached.filter((p: any) => new Date(p.appointment_date).toDateString() === today).length,
+              pendingAppointments: cached.filter((p: any) => p.status === "pending").length,
+              completedSessions: cached.reduce((sum: number, p: any) => sum + (p.sessions_completed || 0), 0),
+              emergencyPatients: cached.filter((p: any) => p.urgency === "emergency").length,
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    return {
+      totalPatients: 0,
+      todayAppointments: 0,
+      pendingAppointments: 0,
+      completedSessions: 0,
+      emergencyPatients: 0,
+    }
   })
   const [viewedPatients, setViewedPatients] = useState<Set<string>>(new Set())
   const [newPatient, setNewPatient] = useState({
@@ -2681,8 +2724,8 @@ export default function AdminDashboard() {
     return `${days} day${days > 1 ? 's' : ''} ago`
   }
 
-  // Show loading screen while checking auth
-  if (!authChecked || isLoading) {
+  // Show loading screen only on cold initial load without cache
+  if (!authChecked || (isLoading && patients.length === 0)) {
     return (
       <div className="fixed inset-0 z-[999999] bg-[rgb(174,193,192)] flex items-center justify-center overflow-hidden">
         {/* Animated Background Elements */}

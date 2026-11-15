@@ -71,8 +71,18 @@ function PrescriptionPageContent() {
   const [patientPhone, setPatientPhone] = useState("")
   const [patientEmail, setPatientEmail] = useState("")
   const [patientAddress, setPatientAddress] = useState("")
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") === "true"
+    }
+    return false
+  })
+  const [isCheckingAuth, setIsCheckingAuth] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("admin_authenticated") !== "true"
+    }
+    return true
+  })
   const [currentPrescriptionId, setCurrentPrescriptionId] = useState<PrescriptionIdData | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   // Visual components state
