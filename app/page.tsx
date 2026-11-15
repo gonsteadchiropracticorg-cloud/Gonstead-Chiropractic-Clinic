@@ -165,6 +165,13 @@ const HomePageContent = memo(() => {
               >
                 FAQ
               </Link>
+              <Link
+                href="/assessment"
+                className="text-sm font-semibold transition-all duration-200 px-3 py-1.5 rounded-lg text-white bg-teal-400/20 hover:bg-teal-400/35 border border-teal-300/30 shadow-sm flex items-center gap-1.5"
+              >
+                <Stethoscope className="h-3.5 w-3.5 text-teal-300" />
+                <span>Spinal Assessment</span>
+              </Link>
             </div>
 
             {/* Right: Actions, Theme, Language & Portal CTA */}
@@ -221,6 +228,17 @@ const HomePageContent = memo(() => {
                 >
                   <span>FAQ & Knowledge Base</span>
                   <span className="text-[10px] bg-emerald-400 text-slate-900 font-bold px-2 py-0.5 rounded-full">New Page</span>
+                </Link>
+                <Link
+                  href="/assessment"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-left text-white hover:text-white/80 font-semibold px-4 py-2.5 rounded-lg transition-colors flex items-center justify-between bg-gradient-to-r from-teal-500/30 to-emerald-500/20 border border-teal-300/30 shadow-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-teal-300" />
+                    <span>Spinal Health Assessment</span>
+                  </div>
+                  <span className="text-[10px] bg-emerald-400 text-slate-900 font-bold px-2 py-0.5 rounded-full">AI Clinical</span>
                 </Link>
                 <div className="flex items-center gap-3 pt-2 px-4">
                   <div className="bg-white/10 rounded-lg p-2">

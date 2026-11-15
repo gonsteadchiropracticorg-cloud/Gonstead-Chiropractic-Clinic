@@ -531,32 +531,32 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {viewingNote?.notes && (
                 <div>
-                  <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Clinical Notes</h4>
-                  <div className="bg-white rounded-lg p-4 border text-sm text-gray-800 whitespace-pre-wrap">
+                  <h4 className="text-sm font-semibold text-[#0d5c75] dark:text-teal-300 mb-2">Clinical Notes</h4>
+                  <div className="!bg-white dark:!bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 whitespace-pre-wrap shadow-xs">
                     {viewingNote.notes}
                   </div>
                 </div>
               )}
               {viewingNote?.diagnosis && (
                 <div>
-                  <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Diagnosis / Assessment</h4>
-                  <div className="bg-white rounded-lg p-4 border text-sm text-gray-800 whitespace-pre-wrap">
+                  <h4 className="text-sm font-semibold text-[#0d5c75] dark:text-teal-300 mb-2">Diagnosis / Assessment</h4>
+                  <div className="!bg-white dark:!bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 whitespace-pre-wrap shadow-xs">
                     {viewingNote.diagnosis}
                   </div>
                 </div>
               )}
               {viewingNote?.treatmentProvided && (
                 <div>
-                  <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Treatment Provided</h4>
-                  <div className="bg-white rounded-lg p-4 border text-sm text-gray-800 whitespace-pre-wrap">
+                  <h4 className="text-sm font-semibold text-[#0d5c75] dark:text-teal-300 mb-2">Treatment Provided</h4>
+                  <div className="!bg-white dark:!bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 whitespace-pre-wrap shadow-xs">
                     {viewingNote.treatmentProvided}
                   </div>
                 </div>
               )}
               {viewingNote?.nextSteps && (
                 <div>
-                  <h4 className="text-sm font-semibold text-[#0d5c75] mb-2">Next Steps / Recommendations</h4>
-                  <div className="bg-white rounded-lg p-4 border text-sm text-gray-800 whitespace-pre-wrap">
+                  <h4 className="text-sm font-semibold text-[#0d5c75] dark:text-teal-300 mb-2">Next Steps / Recommendations</h4>
+                  <div className="!bg-white dark:!bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 whitespace-pre-wrap shadow-xs">
                     {viewingNote.nextSteps}
                   </div>
                 </div>

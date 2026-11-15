@@ -416,6 +416,8 @@ Action examples:
 ACTION_JSON:{"action":"pipeline","steps":[{"type":"scroll","target":"bottom"},{"type":"navigate","target":"/educational-guide.html"},{"type":"scroll","target":"bottom"},{"type":"scroll","target":"top"},{"type":"navigate","target":"/"},{"type":"navigate","target":"/faq?open=last#last"}]}
 - Direct page navigation:
 ACTION_JSON:{"action":"navigate","target":"/faq?open=last#last"}
+- Open Spinal Assessment:
+ACTION_JSON:{"action":"navigate","target":"/assessment"}
 - Scroll down/up:
 ACTION_JSON:{"action":"scroll","target":"bottom"}
 - Click specific element/button:

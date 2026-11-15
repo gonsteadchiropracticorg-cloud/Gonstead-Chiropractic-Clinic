@@ -2898,8 +2898,8 @@ export default function AdminDashboard() {
             {/* Single-Row Responsive Layout - Aligned on Mobile and Desktop */}
             <div className="flex flex-row justify-between items-center gap-2 sm:gap-4 w-full">
 
-              {/* Left Side: Title perfectly aligned to the left */}
-              <div className="flex items-center min-w-0 flex-1">
+              {/* Left Side: Title with mobile menu clearance */}
+              <div className="flex items-center min-w-0 flex-1 pl-12 md:pl-0">
                 <div className="space-y-0.5 min-w-0 flex-1 text-left">
                   <h1 className={`text-sm sm:text-xl md:text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins leading-tight whitespace-nowrap drop-shadow-sm`}>
                     Dr. Bashir Khan
@@ -4236,7 +4236,7 @@ export default function AdminDashboard() {
                               </Button>
 
                               {expandedActions.has(patient.id) && (
-                                <div className={`absolute top-full right-0 mt-1 z-50 w-72 ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-2.5 space-y-1.5`}>
+                                <div className={`absolute top-full right-0 mt-1 z-50 w-64 sm:w-72 max-w-[calc(100vw-3rem)] ${isDarkMode ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200"} shadow-2xl border rounded-xl p-2.5 space-y-1.5`}>
                                   <div className="grid grid-cols-2 gap-1.5 text-left">
                                     <Button
                                       size="sm"

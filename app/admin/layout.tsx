@@ -62,7 +62,7 @@ export default function AdminLayout({
   return (
     <div className="relative min-h-screen bg-slate-50 dark:bg-gray-950 overflow-x-hidden">
       {!isAuthPage && isAuth && <AdminAutoSidebar />}
-      <div className={`transition-all duration-300 ${isAuthPage || !isAuth ? "pl-0" : "pl-14 sm:pl-16"} max-w-full overflow-x-hidden`}>
+      <div className={`transition-all duration-300 ${isAuthPage || !isAuth ? "pl-0" : "pl-0 md:pl-16"} max-w-full overflow-x-hidden`}>
         {children}
       </div>
     </div>

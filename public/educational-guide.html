@@ -2787,10 +2787,16 @@ left: 80px;
                             <span class="feature-tag"><i class="fas fa-check-circle"></i> Personalized Report</span>
                         </div>
                         
-                        <button class="start-assessment-btn-compact" onclick="startAssessment()">
-                            <i class="fas fa-play"></i>
-                            <span>Start Assessment</span>
-                        </button>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px;">
+                            <button class="start-assessment-btn-compact" onclick="startAssessment()">
+                                <i class="fas fa-play"></i>
+                                <span>Start Assessment</span>
+                            </button>
+                            <a href="/assessment.html" target="_blank" class="start-assessment-btn-compact" style="background: #ffffff; color: #0d5c75; border: 2px solid #2a9d8f; text-decoration: none; box-shadow: 0 4px 12px rgba(42, 157, 143, 0.15);">
+                                <i class="fas fa-external-link-alt"></i>
+                                <span>Open Fullscreen Assessment</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4324,7 +4330,7 @@ left: 80px;
             var script = document.createElement('script');
             script.type = 'text/javascript';
             script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-          ...
+            document.head.appendChild(script);
         })();
     </script>
     
@@ -4816,15 +4822,20 @@ left: 80px;
                 }
                 
                 if (modal) {
+                    if (modal.parentElement !== document.body) {
+                        document.body.appendChild(modal);
+                    }
                     modal.style.display = 'flex';
                     modal.style.position = 'fixed';
                     modal.style.top = '0';
                     modal.style.left = '0';
                     modal.style.width = '100vw';
                     modal.style.height = '100vh';
-                    modal.style.zIndex = '999999';
-                    modal.style.background = 'rgba(0, 0, 0, 0.82)';
+                    modal.style.zIndex = '9999999';
+                    modal.style.background = 'rgba(0, 0, 0, 0.85)';
                     modal.style.backdropFilter = 'blur(6px)';
+                    modal.style.visibility = 'visible';
+                    modal.style.opacity = '1';
                     
                     document.body.style.overflow = 'hidden';
                     
@@ -5482,15 +5493,20 @@ left: 80px;
             
             resultsBody.innerHTML = html;
             if (resultsModal) {
+                if (resultsModal.parentElement !== document.body) {
+                    document.body.appendChild(resultsModal);
+                }
                 resultsModal.style.display = 'flex';
                 resultsModal.style.position = 'fixed';
                 resultsModal.style.top = '0';
                 resultsModal.style.left = '0';
                 resultsModal.style.width = '100vw';
                 resultsModal.style.height = '100vh';
-                resultsModal.style.zIndex = '999999';
+                resultsModal.style.zIndex = '9999999';
                 resultsModal.style.background = 'rgba(0, 0, 0, 0.85)';
                 resultsModal.style.backdropFilter = 'blur(6px)';
+                resultsModal.style.visibility = 'visible';
+                resultsModal.style.opacity = '1';
                 document.body.style.overflow = 'hidden';
             }
         }
@@ -5798,9 +5814,7 @@ left: 80px;
                     <ul>${(results.immediateActionPlan || []).map(a => `<li>${a}</li>`).join('')}</ul>
                     <hr style="margin-top: 30px; border: none; border-top: 1px solid #cbd5e1;">
                     <p style="font-size: 11px; color: #64748b; text-align: right;">Dr. Bashir Khan, Gonstead Specialist • Nowshera, Pakistan</p>
-                    <script>
-                        window.onload = function() { window.print(); };
-                    </script>
+                    <script>window.onload = function() { window.print(); };<\/script>
                 </body>
                 </html>
             `);
