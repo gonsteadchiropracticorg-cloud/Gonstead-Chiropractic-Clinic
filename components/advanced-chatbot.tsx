@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { registerPatient } from "@/lib/patient-auth"
 import { createPatientFirestore, upsertAppointmentQueueFirestore } from "@/lib/firebase-db"
+import { getGroqApiKey } from "@/lib/ai-config"
 import {
   Send,
   X,
@@ -527,7 +528,7 @@ STRICT FORMATTING RULE:
 - Write in clear plain text only.
 - Place ACTION_JSON on the very last line if a system navigation or pipeline step was triggered.`
 
-    const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY || ""
+    const groqKey = getGroqApiKey()
 
     const historyPayload = messages.slice(-5).map((m) => ({
       role: m.sender === "user" ? "user" : "assistant",

@@ -16,6 +16,7 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getGroqApiKey } from "@/lib/ai-config"
 
 function cleanFormatting(text: string): string {
   if (!text) return ""
@@ -255,7 +256,7 @@ export function PatientPortalAiBooking({
     setIsTyping(true)
 
     const todayStr = new Date().toISOString().split("T")[0]
-    const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY || ""
+    const groqKey = getGroqApiKey()
 
     const systemPrompt = `You are the Patient Portal AI Assistant for Dr. Bashir Khan's Gonstead Chiropractic Clinic.
 Logged in Patient Name: ${patientName || "Valued Patient"}

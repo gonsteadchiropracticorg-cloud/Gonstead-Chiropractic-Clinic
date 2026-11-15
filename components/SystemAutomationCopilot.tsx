@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { registerPatient } from "@/lib/patient-auth"
 import { createPatientFirestore, upsertAppointmentQueueFirestore } from "@/lib/firebase-db"
+import { getGroqApiKey } from "@/lib/ai-config"
 import {
   Mic,
   MicOff,
@@ -958,7 +959,7 @@ export function SystemAutomationCopilot() {
     setIsProcessing(true)
     setStatusMessage("Synthesizing neural execution plan...")
 
-    const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY || ""
+    const groqKey = getGroqApiKey()
     const today = new Date()
     const todayStr = today.toISOString().split("T")[0]
     const tomorrow = new Date(today)

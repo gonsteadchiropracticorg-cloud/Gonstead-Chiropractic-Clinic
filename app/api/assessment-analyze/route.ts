@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getGroqApiKey } from '@/lib/ai-config'
 
 interface PatientAssessmentInput {
   fullName?: string
@@ -203,7 +204,7 @@ export async function POST(req: NextRequest) {
   try {
     const input: PatientAssessmentInput = await req.json()
 
-    const apiKey = process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY || ''
+    const apiKey = getGroqApiKey()
 
     if (!apiKey) {
       console.warn('Groq API key not set, using clinical fallback engine')
