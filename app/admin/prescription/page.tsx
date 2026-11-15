@@ -1057,6 +1057,20 @@ function PrescriptionPageContent() {
             overflow-x: hidden !important;
           }
 
+          .prescription-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: auto !important;
+            max-height: none !important;
+            height: auto !important;
+            padding: 12px 10px !important;
+            margin: 0 auto !important;
+            box-sizing: border-box !important;
+            border-width: 2px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 2px 12px rgba(36,80,100,0.1) !important;
+          }
+
           .controls-area {
             position: static !important;
             width: 100% !important;

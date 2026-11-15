@@ -2301,18 +2301,14 @@ export default function AdminDashboard() {
     })
   }
 
-  // Sort patients to show ALL new appointments at the top (both admin and website bookings)
-  const sortedPatients = [...patients].sort((a, b) => {
-    // First, prioritize ALL new appointments (those not viewed, regardless of booking source)
-    const aIsNew = !viewedPatients.has(a.id)
-    const bIsNew = !viewedPatients.has(b.id)
-
-    if (aIsNew && !bIsNew) return -1
-    if (!aIsNew && bIsNew) return 1
-
-    // If both are new or both are viewed, sort by appointment date (newest first)
-    return new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime()
-  })
+  // Sort patients stably by appointment date (newest first) so clicking View does not unexpectedly jump the row to the bottom
+  const sortedPatients = useMemo(() => {
+    return [...patients].sort((a, b) => {
+      const timeA = new Date(a.appointment_date || a.created_at || 0).getTime()
+      const timeB = new Date(b.appointment_date || b.created_at || 0).getTime()
+      return timeB - timeA
+    })
+  }, [patients])
 
   const filteredPatients = sortedPatients.filter((patient) => {
     // Enhanced comprehensive search across all patient fields, including code and date/time
@@ -3405,9 +3401,9 @@ export default function AdminDashboard() {
               </div>
 
               {/* Responsive Filters Toolbar */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2.5 mt-3 sm:mt-4">
-                {/* Search Input - Full width on mobile, auto-width on tablet/desktop */}
-                <div className="relative w-full sm:w-64 md:w-72 shrink-0">
+              <div className="flex flex-col md:flex-row md:items-center gap-2.5 mt-3 sm:mt-4 w-full">
+                {/* Search Input - Full width on mobile/tablet, fixed width on large desktop */}
+                <div className="relative w-full md:w-72 shrink-0">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-white/70" />
                   <Input
                     placeholder="Search by name, phone, code..."
@@ -3418,7 +3414,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Filter Dropdowns & Action Buttons - Clean horizontally scrollable bar on mobile, flex on desktop */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 no-scrollbar flex-nowrap sm:flex-wrap flex-1">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 no-scrollbar flex-nowrap md:flex-wrap flex-1 w-full">
                   {/* Status Dropdown */}
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
                     <SelectTrigger className="w-28 sm:w-32 shrink-0 bg-white/10 border-white/20 text-white rounded-xl h-8 sm:h-9 text-xs">

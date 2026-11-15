@@ -495,6 +495,120 @@ body {
             background: #f8f9fa;
         }
 
+        /* Citations list styling - ensures numbering 1., 2., 3. is never cut off */
+        #referencesList {
+            padding-left: 36px !important;
+            margin-left: 0 !important;
+            list-style-type: decimal !important;
+            list-style-position: outside !important;
+            box-sizing: border-box !important;
+        }
+        #referencesList li {
+            padding-left: 6px !important;
+            margin-bottom: 12px !important;
+            line-height: 1.65 !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            font-size: 0.95rem !important;
+            color: #334155 !important;
+        }
+        body.dark-mode #referencesList li {
+            color: #e2e8f0 !important;
+        }
+
+        /* Responsive Dr. Clarence Gonstead Hero Introduction */
+        .doctor-introduction {
+            display: flex;
+            align-items: center;
+            gap: 36px;
+            margin-bottom: 36px;
+            padding: 36px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            box-sizing: border-box !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+        body.dark-mode .doctor-introduction {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .doctor-image {
+            flex-shrink: 0;
+        }
+        .doctor-image img {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #0d5c75;
+            box-shadow: 0 8px 24px rgba(13, 92, 117, 0.3);
+            display: block;
+        }
+        .doctor-content {
+            flex: 1;
+            min-width: 0;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        .doctor-content h3 {
+            color: #0d5c75;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.25;
+        }
+        body.dark-mode .doctor-content h3 {
+            color: #5eead4;
+        }
+        .doctor-content .doctor-subtitle {
+            color: #2a9d8f;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            font-style: italic;
+        }
+        .doctor-content p {
+            color: #4a5568;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+        body.dark-mode .doctor-content p {
+            color: #cbd5e1;
+        }
+        @media (max-width: 900px) {
+            .doctor-introduction {
+                flex-direction: column !important;
+                text-align: center !important;
+                gap: 18px !important;
+                padding: 24px 16px !important;
+            }
+            .doctor-image {
+                margin: 0 auto !important;
+            }
+            .doctor-image img {
+                width: 130px !important;
+                height: 130px !important;
+                border-width: 4px !important;
+            }
+            .doctor-content h3 {
+                font-size: 1.5rem !important;
+                margin-bottom: 8px !important;
+            }
+            .doctor-content .doctor-subtitle {
+                font-size: 1.05rem !important;
+                margin-bottom: 12px !important;
+            }
+            .doctor-content p {
+                font-size: 0.94rem !important;
+                line-height: 1.6 !important;
+                text-align: center !important;
+            }
+        }
+
         .visual-section {
             text-align: center;
             margin: 40px 0;
@@ -1402,11 +1516,23 @@ width: 68px; /* collapsed width */
         .main-content {
             padding: 48px 0;
             margin-left: 0; /* default, overridden on desktop */
-            transition: margin-left 120ms ease-out;
+            transition: margin-left 140ms ease-out, width 140ms ease-out;
+            box-sizing: border-box !important;
+            max-width: 100% !important;
         }
         @media (min-width: 1025px) {
-.main-content { margin-left: 90px; }
-body.sidebar-expanded .main-content { margin-left: 320px; }
+            .main-content {
+                margin-left: 68px !important;
+                width: calc(100% - 68px) !important;
+                max-width: calc(100% - 68px) !important;
+                box-sizing: border-box !important;
+            }
+            body.sidebar-expanded .main-content {
+                margin-left: 300px !important;
+                width: calc(100% - 300px) !important;
+                max-width: calc(100% - 300px) !important;
+                box-sizing: border-box !important;
+            }
         }
         /* Hide back-to-top on desktop to reduce icon clutter */
         @media (min-width: 769px) { #backToTop { display: none !important; } }
@@ -2010,7 +2136,7 @@ left: 80px;
 
             .sidebar.expanded {
                 display: block !important;
-                width: min(85vw, 320px) !important;
+                width: min(85vw, 300px) !important;
                 left: 0 !important;
                 top: 0 !important;
                 height: 100vh !important;
@@ -2020,12 +2146,14 @@ left: 80px;
 
             .main-content,
             .in-iframe .main-content,
-            body.in-iframe .main-content {
+            body.in-iframe .main-content,
+            body.sidebar-expanded .main-content {
                 margin-left: 0 !important;
                 padding-left: 0 !important;
                 padding-right: 0 !important;
                 width: 100% !important;
                 max-width: 100% !important;
+                box-sizing: border-box !important;
             }
 
             .container,
@@ -2403,6 +2531,9 @@ left: 80px;
         <i class="fas fa-bars" aria-hidden="true"></i>
     </button>
 
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 99990;"></div>
+
     <nav class="sidebar" aria-label="On this page">
         <div class="sidebar-header" style="padding: 0 8px 8px 8px;">
             <a class="toc-link toc-link--header" href="#mainContent" aria-label="On this page" data-tip="On this page">
@@ -2479,15 +2610,15 @@ left: 80px;
                 
                 <div class="intro-section">
                     <!-- Dr. Clarence Gonstead Introduction -->
-                    <div class="doctor-introduction" style="display: flex; align-items: center; gap: 40px; margin-bottom: 40px; padding: 40px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
-                        <div class="doctor-image" style="flex-shrink: 0;">
-<img src="/images/clarence-gonstead.png" loading="lazy" alt="Dr. Clarence S. Gonstead - Founder of the Gonstead Chiropractic Technique" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 6px solid #0d5c75; box-shadow: 0 8px 24px rgba(13, 92, 117, 0.3);">
+                    <div class="doctor-introduction">
+                        <div class="doctor-image">
+                            <img src="/images/clarence-gonstead.png" loading="lazy" alt="Dr. Clarence S. Gonstead - Founder of the Gonstead Chiropractic Technique">
                         </div>
-                        <div class="doctor-content" style="flex: 1;">
-                            <h3 style="color: #0d5c75; font-size: 2.2rem; font-weight: 700; margin-bottom: 15px; font-family: 'Poppins', sans-serif;">Dr. Clarence S. Gonstead</h3>
-                            <p style="color: #2a9d8f; font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; font-style: italic;">Founder of the Gonstead Chiropractic Technique</p>
-                            <p style="color: #4a5568; font-size: 1.1rem; line-height: 1.7; margin-bottom: 15px;">A visionary chiropractor who revolutionized spinal care through scientific precision and biomechanical understanding. Dr. Gonstead's innovative approach transformed chiropractic from a rudimentary practice into a sophisticated, evidence-based healing art.</p>
-                            <p style="color: #4a5568; font-size: 1.1rem; line-height: 1.7;">His legacy continues to influence thousands of practitioners worldwide, ensuring that patients receive the most precise and effective chiropractic care available.</p>
+                        <div class="doctor-content">
+                            <h3>Dr. Clarence S. Gonstead</h3>
+                            <p class="doctor-subtitle">Founder of the Gonstead Chiropractic Technique</p>
+                            <p>A visionary chiropractor who revolutionized spinal care through scientific precision and biomechanical understanding. Dr. Gonstead's innovative approach transformed chiropractic from a rudimentary practice into a sophisticated, evidence-based healing art.</p>
+                            <p>His legacy continues to influence thousands of practitioners worldwide, ensuring that patients receive the most precise and effective chiropractic care available.</p>
                         </div>
                     </div>
                     
@@ -3294,22 +3425,24 @@ left: 80px;
                 <div class="content-card">
                     <div class="card-header"><div class="card-icon"><i class="fas fa-balance-scale"></i></div><h3 class="card-title">Technique Comparison</h3></div>
                     <div class="card-content">
-                        <table class="comparison-table" aria-label="Technique comparison">
-                            <thead>
-                                <tr>
-                                    <th>Technique</th>
-                                    <th>Primary Focus</th>
-                                    <th>Typical Plan</th>
-                                    <th>Outcomes (indicative)</th>
-                                    <th>Evidence Level</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>Gonstead</td><td>Specific, primary subluxation</td><td>Targeted HVLA, imaging-guided</td><td>High specificity; consistent mobility improvements</td><td><span class="evidence-badge" data-grade="B">B</span></td></tr>
-                                <tr><td>Diversified</td><td>Broad manual manipulation</td><td>Segmental HVLA</td><td>General improvements; strong evidence base</td><td><span class="evidence-badge" data-grade="A">A</span></td></tr>
-                                <tr><td>Activator</td><td>Instrument-assisted</td><td>Low-force impulses</td><td>Mixed evidence for some outcomes</td><td><span class="evidence-badge" data-grade="B">B</span></td></tr>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive-wrapper" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 10px 0;">
+                            <table class="comparison-table" aria-label="Technique comparison">
+                                <thead>
+                                    <tr>
+                                        <th>Technique</th>
+                                        <th>Primary Focus</th>
+                                        <th>Typical Plan</th>
+                                        <th>Outcomes (indicative)</th>
+                                        <th>Evidence Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Gonstead</td><td>Specific, primary subluxation</td><td>Targeted HVLA, imaging-guided</td><td>High specificity; consistent mobility improvements</td><td><span class="evidence-badge" data-grade="B">B</span></td></tr>
+                                    <tr><td>Diversified</td><td>Broad manual manipulation</td><td>Segmental HVLA</td><td>General improvements; strong evidence base</td><td><span class="evidence-badge" data-grade="A">A</span></td></tr>
+                                    <tr><td>Activator</td><td>Instrument-assisted</td><td>Low-force impulses</td><td>Mixed evidence for some outcomes</td><td><span class="evidence-badge" data-grade="B">B</span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4413,27 +4546,56 @@ left: 80px;
                 });
             })();
 
-            // Sidebar toggle logic
+            // Sidebar toggle logic with mobile backdrop
             const sidebar = document.querySelector('.sidebar');
             const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+            const closeSidebarMobile = () => {
+                if (sidebar) {
+                    sidebar.classList.remove('expanded');
+                }
+                if (sidebarToggle) {
+                    sidebarToggle.setAttribute('aria-expanded', 'false');
+                }
+                document.body.classList.remove('sidebar-expanded');
+                if (sidebarBackdrop) {
+                    sidebarBackdrop.style.display = 'none';
+                }
+            };
+
             if (sidebar && sidebarToggle) {
                 const toggle = () => {
                     const isExpanded = sidebar.classList.toggle('expanded');
                     sidebarToggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
                     if (window.matchMedia('(min-width: 1025px)').matches) {
                         document.body.classList.toggle('sidebar-expanded', isExpanded);
+                    } else {
+                        document.body.classList.remove('sidebar-expanded');
+                        if (sidebarBackdrop) {
+                            sidebarBackdrop.style.display = isExpanded ? 'block' : 'none';
+                        }
                     }
                 };
                 sidebarToggle.addEventListener('click', toggle);
                 sidebarToggle.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
                 });
+                if (sidebarBackdrop) {
+                    sidebarBackdrop.addEventListener('click', closeSidebarMobile);
+                }
+                // Close sidebar on mobile when a link is clicked
+                sidebar.querySelectorAll('.toc-link').forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (!window.matchMedia('(min-width: 1025px)').matches) {
+                            closeSidebarMobile();
+                        }
+                    });
+                });
                 // Close on Esc (mobile/keyboard)
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape' && sidebar.classList.contains('expanded')) {
-                        sidebar.classList.remove('expanded');
-                        sidebarToggle.setAttribute('aria-expanded', 'false');
-                        document.body.classList.remove('sidebar-expanded');
+                        closeSidebarMobile();
                     }
                 });
                 // Desktop hover to sync content offset
