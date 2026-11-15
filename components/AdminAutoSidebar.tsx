@@ -115,7 +115,7 @@ export function AdminAutoSidebar() {
       {/* Mobile/Touch Backdrop when pinned open */}
       {isPinnedOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9990] transition-opacity"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 transition-opacity"
           onClick={() => setIsPinnedOpen(false)}
         />
       )}
@@ -124,7 +124,7 @@ export function AdminAutoSidebar() {
       <aside
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`fixed top-0 left-0 h-screen z-[9995] transition-all duration-300 ease-in-out flex flex-col justify-between shadow-2xl select-none ${
+        className={`fixed top-0 left-0 h-screen z-40 transition-all duration-300 ease-in-out flex flex-col justify-between shadow-2xl select-none ${
           isExpanded ? "w-64 sm:w-72" : "w-14 sm:w-16"
         } ${
           isDarkMode

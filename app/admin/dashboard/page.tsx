@@ -2799,6 +2799,88 @@ export default function AdminDashboard() {
     )
   }
 
+  const renderInlinePatientDetails = (detailPatient: Patient) => (
+    <div className={`mt-3.5 p-3.5 sm:p-5 rounded-2xl border transition-all animate-in fade-in-0 duration-200 ${
+      isDarkMode ? "bg-gray-800 border-gray-700 text-slate-100" : "bg-white border-[#0d5c75]/25 shadow-lg text-slate-800"
+    }`}>
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-gray-700 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="h-8 w-8 rounded-lg bg-teal-50 dark:bg-teal-950/50 flex items-center justify-center text-[#0d5c75] dark:text-teal-300 shrink-0">
+            <Eye className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h4 className="text-sm font-bold text-[#0d5c75] dark:text-teal-300 font-poppins truncate">
+              Clinical Record: {detailPatient.name}
+            </h4>
+            <p className="text-[10.5px] font-mono text-slate-500">
+              {getOrAssignPatientCode(detailPatient)} • {detailPatient.session_type === "in_clinic" ? "In-Clinic" : "Video"}
+            </p>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setSelectedPatientDetail(null)}
+          className="h-7 px-2 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-lg shrink-0"
+        >
+          <X className="h-3.5 w-3.5 mr-1" /> Close
+        </Button>
+      </div>
+
+      {/* Information Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-3 text-xs">
+        {/* Patient Contact */}
+        <div className="space-y-1.5 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-100 dark:border-gray-800">
+          <h5 className="font-bold text-[#0d5c75] dark:text-teal-300 text-xs uppercase tracking-wide">Patient Contact</h5>
+          <p><span className="font-semibold text-slate-500">Name:</span> {detailPatient.name}</p>
+          <p><span className="font-semibold text-slate-500">Phone:</span> <a href={`tel:${detailPatient.phone}`} className="text-teal-600 hover:underline">{detailPatient.phone}</a></p>
+          <p><span className="font-semibold text-slate-500">Email:</span> {detailPatient.email || "Not provided"}</p>
+          {detailPatient.city && <p><span className="font-semibold text-slate-500">City:</span> {detailPatient.city}</p>}
+          {detailPatient.address && <p><span className="font-semibold text-slate-500">Address:</span> {detailPatient.address}</p>}
+          {detailPatient.emergency_contact_phone && (
+            <p><span className="font-semibold text-slate-500">Emergency Phone:</span> {detailPatient.emergency_contact_phone}</p>
+          )}
+        </div>
+
+        {/* Appointment Details */}
+        <div className="space-y-1.5 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-100 dark:border-gray-800">
+          <h5 className="font-bold text-[#0d5c75] dark:text-teal-300 text-xs uppercase tracking-wide">Appointment Details</h5>
+          <p><span className="font-semibold text-slate-500">Date:</span> {new Date(detailPatient.appointment_date).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</p>
+          <p><span className="font-semibold text-slate-500">Time:</span> {new Date(detailPatient.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+          <p><span className="font-semibold text-slate-500">Status:</span> <span className="font-bold uppercase text-teal-700 dark:text-teal-300">{detailPatient.status}</span></p>
+          <p><span className="font-semibold text-slate-500">Urgency:</span> <span className="capitalize">{detailPatient.urgency || "normal"}</span></p>
+          <p><span className="font-semibold text-slate-500">Payment:</span> {detailPatient.payment_method?.toUpperCase?.() || "CASH"}</p>
+          {detailPatient.last_visit && (
+            <p><span className="font-semibold text-slate-500">Last Visit:</span> {new Date(detailPatient.last_visit).toLocaleDateString()}</p>
+          )}
+        </div>
+
+        {/* Sessions & History */}
+        <div className="space-y-1.5 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-100 dark:border-gray-800">
+          <h5 className="font-bold text-[#0d5c75] dark:text-teal-300 text-xs uppercase tracking-wide">Sessions & Clinical History</h5>
+          <p><span className="font-semibold text-slate-500">Sessions Completed:</span> <span className="font-bold text-[#0d5c75] dark:text-teal-300 text-sm">{detailPatient.sessions_completed || 0}</span> / {detailPatient.total_sessions || 8}</p>
+          <p><span className="font-semibold text-slate-500">Prescription:</span> {detailPatient.prescription_generated ? `Generated (${detailPatient.prescription_count || 1})` : "Pending"}</p>
+          {detailPatient.allergies && (
+            <p className="text-rose-600 dark:text-rose-400"><span className="font-semibold">Allergies:</span> {detailPatient.allergies}</p>
+          )}
+          {detailPatient.notes && (
+            <p><span className="font-semibold text-slate-500">Chief Complaint:</span> {detailPatient.notes}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Treatment Notes Component */}
+      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-gray-700">
+        <TreatmentNotes
+          patient={detailPatient}
+          onNotesUpdated={loadPatients}
+          isDarkMode={isDarkMode}
+        />
+      </div>
+    </div>
+  )
+
   return (
     <React.Fragment>
 
@@ -2816,18 +2898,19 @@ export default function AdminDashboard() {
             {/* Single-Row Responsive Layout - Aligned on Mobile and Desktop */}
             <div className="flex flex-row justify-between items-center gap-2 sm:gap-4 w-full">
 
-              {/* Left Side: Title perfectly aligned to the left (Logo removed) */}
+              {/* Left Side: Title perfectly aligned to the left */}
               <div className="flex items-center min-w-0 flex-1">
                 <div className="space-y-0.5 min-w-0 flex-1 text-left">
-                  <h1 className={`text-base sm:text-xl md:text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins tracking-wide drop-shadow-sm truncate`}>
+                  <h1 className={`text-sm sm:text-xl md:text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#0d5c75]"} font-poppins leading-tight whitespace-nowrap drop-shadow-sm`}>
                     Dr. Bashir Khan
                   </h1>
-                  <p className={`text-xs sm:text-sm font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm truncate`}>
-                    Gonstead Chiropractic Specialist
+                  <p className={`text-[11px] sm:text-sm font-semibold ${isDarkMode ? "text-gray-300" : "text-[#2a9d8f]"} drop-shadow-sm truncate`}>
+                    <span className="inline sm:hidden">Gonstead Clinic</span>
+                    <span className="hidden sm:inline">Gonstead Chiropractic Specialist</span>
                   </p>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 bg-emerald-400 rounded-full shrink-0 animate-pulse"></div>
-                    <p className={`text-[9px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider uppercase truncate`}>
+                    <p className={`text-[9px] sm:text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"} font-medium tracking-wider uppercase`}>
                       Admin Portal
                     </p>
                   </div>
@@ -3634,18 +3717,19 @@ export default function AdminDashboard() {
                                       Edit Total
                                     </button>
                                   </DialogTrigger>
-                                  <DialogContent className="max-w-sm">
+                                  <DialogContent className="w-[calc(100vw-32px)] max-w-sm !bg-white dark:!bg-gray-900 border border-slate-200 dark:border-gray-700 shadow-2xl p-5 rounded-2xl">
                                     <DialogHeader>
-                                      <DialogTitle className="text-[#0d5c75]">Set Total Sessions</DialogTitle>
+                                      <DialogTitle className="text-[#0d5c75] dark:text-teal-300">Set Total Sessions</DialogTitle>
                                     </DialogHeader>
                                     <div className="space-y-4">
-                                      <Label>Total Sessions for {patient.name}</Label>
+                                      <Label className="text-slate-700 dark:text-slate-300">Total Sessions for {patient.name}</Label>
                                       <Input
                                         type="number"
                                         min="1"
                                         max="100"
                                         defaultValue={patient.total_sessions || 8}
                                         id={`mob-set-total-${patient.id}`}
+                                        className="!bg-white dark:!bg-slate-800 !text-slate-800 dark:!text-slate-100"
                                       />
                                       <Button
                                         onClick={async () => {
@@ -3657,7 +3741,7 @@ export default function AdminDashboard() {
                                           await loadPatients()
                                           toast({ title: "Updated", description: `Prescribed ${newTotal} sessions` })
                                         }}
-                                        className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c]"
+                                        className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c] !text-white font-semibold h-10 rounded-xl shadow-md"
                                       >
                                         Save
                                       </Button>
@@ -3678,22 +3762,27 @@ export default function AdminDashboard() {
 
                           {/* Row 4: Primary Symmetrical Action Grid */}
                           <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-gray-700/60 space-y-2">
-                            <div className="grid grid-cols-4 gap-1.5 w-full">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
                                   const currentPatientData = patients.find(p => p.id === patient.id) || patient
-                                  setSelectedPatientDetail(currentPatientData)
-                                  setViewedPatients(prev => new Set([...prev, patient.id]))
-                                  setTimeout(() => {
-                                    detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                                  }, 0)
+                                  if (selectedPatientDetail?.id === patient.id) {
+                                    setSelectedPatientDetail(null)
+                                  } else {
+                                    setSelectedPatientDetail(currentPatientData)
+                                    setViewedPatients(prev => new Set([...prev, patient.id]))
+                                  }
                                 }}
-                                className="h-8 px-1 text-[11px] font-semibold border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white rounded-xl flex items-center justify-center gap-1 transition-all"
+                                className={`h-9 px-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+                                  selectedPatientDetail?.id === patient.id
+                                    ? "bg-[#0d5c75] text-white border-[#0d5c75]"
+                                    : "border-[#0d5c75]/30 text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white"
+                                }`}
                               >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span>View</span>
+                                <Eye className="h-3.5 w-3.5 shrink-0" />
+                                <span>{selectedPatientDetail?.id === patient.id ? "Hide Details" : "View"}</span>
                               </Button>
 
                               <Button
@@ -3704,9 +3793,9 @@ export default function AdminDashboard() {
                                   localStorage.setItem('prescriptionPatient', JSON.stringify(currentPatientData))
                                   router.push('/admin/prescription')
                                 }}
-                                className="h-8 px-1 text-[11px] font-semibold border-[#2a9d8f]/40 text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white rounded-xl flex items-center justify-center gap-1 transition-all"
+                                className="h-9 px-2 text-xs font-semibold border-[#2a9d8f]/40 text-[#2a9d8f] hover:bg-[#2a9d8f] hover:text-white rounded-xl flex items-center justify-center gap-1.5 transition-all"
                               >
-                                <FileText className="h-3.5 w-3.5" />
+                                <FileText className="h-3.5 w-3.5 shrink-0" />
                                 <span>Rx</span>
                               </Button>
 
@@ -3718,9 +3807,9 @@ export default function AdminDashboard() {
                                     setPatientToCancel(patient)
                                     setIsCancelConfirmDialogOpen(true)
                                   }}
-                                  className="h-8 px-1 text-[11px] font-semibold border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl flex items-center justify-center gap-1 transition-all"
+                                  className="h-9 px-2 text-xs font-semibold border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl flex items-center justify-center gap-1.5 transition-all"
                                 >
-                                  <X className="h-3.5 w-3.5" />
+                                  <X className="h-3.5 w-3.5 shrink-0" />
                                   <span>Cancel</span>
                                 </Button>
                               ) : (
@@ -3728,9 +3817,9 @@ export default function AdminDashboard() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleUpdatePatientStatus(patient.id, "pending")}
-                                  className="h-8 px-1 text-[11px] font-semibold border-emerald-200 text-emerald-600 hover:bg-emerald-50 rounded-xl flex items-center justify-center gap-1 transition-all"
+                                  className="h-9 px-2 text-xs font-semibold border-emerald-200 text-emerald-600 hover:bg-emerald-50 rounded-xl flex items-center justify-center gap-1.5 transition-all"
                                 >
-                                  <CheckCircle className="h-3.5 w-3.5" />
+                                  <CheckCircle className="h-3.5 w-3.5 shrink-0" />
                                   <span>Restore</span>
                                 </Button>
                               )}
@@ -3739,14 +3828,14 @@ export default function AdminDashboard() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => toggleActionsExpanded(patient.id)}
-                                className={`h-8 px-1 text-[11px] font-semibold rounded-xl flex items-center justify-center gap-1 transition-all ${
+                                className={`h-9 px-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
                                   isActionsOpen
                                     ? "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-400"
                                     : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
                                 }`}
                                 title="More Actions"
                               >
-                                <MoreVertical className="h-3.5 w-3.5" />
+                                <MoreVertical className="h-3.5 w-3.5 shrink-0" />
                                 <span>More</span>
                               </Button>
                             </div>
@@ -3847,6 +3936,9 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                             )}
+
+                            {/* Inline Patient Clinical Details View on Mobile */}
+                            {selectedPatientDetail?.id === patient.id && renderInlinePatientDetails(patient)}
                           </div>
                         </div>
                       )
@@ -3890,8 +3982,8 @@ export default function AdminDashboard() {
                     </TableHeader>
                     <TableBody>
                       {userSortedPatients.map((patient) => (
+                        <React.Fragment key={patient.id}>
                         <TableRow
-                          key={patient.id}
                           className={`${isDarkMode ? "hover:bg-gray-700/60 border-gray-700" : "hover:bg-[#F8F5F0]/60 border-gray-100"} border-b transition-colors`}
                         >
                           {/* Col 1: Patient Info + Code + Profession */}
@@ -4091,18 +4183,19 @@ export default function AdminDashboard() {
                                       Edit
                                     </button>
                                   </DialogTrigger>
-                                  <DialogContent className="max-w-sm">
+                                  <DialogContent className="w-[calc(100vw-32px)] max-w-sm !bg-white dark:!bg-gray-900 border border-slate-200 dark:border-gray-700 shadow-2xl p-5 rounded-2xl">
                                     <DialogHeader>
-                                      <DialogTitle className="text-[#0d5c75]">Set Total Sessions</DialogTitle>
+                                      <DialogTitle className="text-[#0d5c75] dark:text-teal-300">Set Total Sessions</DialogTitle>
                                     </DialogHeader>
                                     <div className="space-y-4">
-                                      <Label>Total Sessions for {patient.name}</Label>
+                                      <Label className="text-slate-700 dark:text-slate-300">Total Sessions for {patient.name}</Label>
                                       <Input
                                         type="number"
                                         min="1"
                                         max="100"
                                         defaultValue={patient.total_sessions || 8}
                                         id={`set-total-${patient.id}`}
+                                        className="!bg-white dark:!bg-slate-800 !text-slate-800 dark:!text-slate-100"
                                       />
                                       <Button
                                         onClick={async () => {
@@ -4114,7 +4207,7 @@ export default function AdminDashboard() {
                                           await loadPatients();
                                           toast({ title: "Updated", description: `Prescribed ${newTotal} sessions` });
                                         }}
-                                        className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c]"
+                                        className="w-full bg-[#0d5c75] hover:bg-[#0a4a5c] !text-white font-semibold h-10 rounded-xl shadow-md"
                                       >
                                         Save
                                       </Button>
@@ -4150,16 +4243,17 @@ export default function AdminDashboard() {
                                       variant="outline"
                                       onClick={() => {
                                         const currentPatientData = patients.find(p => p.id === patient.id) || patient;
-                                        setSelectedPatientDetail(currentPatientData);
-                                        setViewedPatients(prev => new Set([...prev, patient.id]));
+                                        if (selectedPatientDetail?.id === patient.id) {
+                                          setSelectedPatientDetail(null);
+                                        } else {
+                                          setSelectedPatientDetail(currentPatientData);
+                                          setViewedPatients(prev => new Set([...prev, patient.id]));
+                                        }
                                         setExpandedActions(new Set());
-                                        setTimeout(() => {
-                                          detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                        }, 0);
                                       }}
                                       className="border-[#0d5c75] text-[#0d5c75] hover:bg-[#0d5c75] hover:text-white text-xs justify-start h-7"
                                     >
-                                      <Eye className="h-3 w-3 mr-1" /> View
+                                      <Eye className="h-3 w-3 mr-1" /> {selectedPatientDetail?.id === patient.id ? "Hide Details" : "View"}
                                     </Button>
 
                                     <Button
@@ -4255,6 +4349,16 @@ export default function AdminDashboard() {
                             </div>
                           </TableCell>
                         </TableRow>
+
+                        {/* Inline Patient Clinical Details View on Desktop */}
+                        {selectedPatientDetail?.id === patient.id && (
+                          <TableRow key={`detail-row-${patient.id}`} className="border-b-2 border-[#0d5c75]/30">
+                            <TableCell colSpan={6} className="p-3 sm:p-5 bg-slate-50/80 dark:bg-gray-800/80">
+                              {renderInlinePatientDetails(patient)}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
                       ))}
                     </TableBody>
                   </Table>
@@ -4263,156 +4367,6 @@ export default function AdminDashboard() {
             )}
           </CardContent>
           </Card>
-
-          {selectedPatientDetail && (
-            <div ref={detailsRef} className="mt-6">
-              <Card className={`border-[#0d5c75]/20 shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                <CardHeader className="bg-gradient-to-r from-[#0d5c75] to-[#2a9d8f] text-white flex flex-row items-center justify-between">
-                  <CardTitle className="font-poppins">Selected Patient Details</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-white/20 text-white">
-                      {selectedPatientDetail.session_type === 'in_clinic' ? 'Clinic' : 'Video'} • {selectedPatientDetail.urgency}
-                    </Badge>
-                    <Button size="sm" variant="outline" onClick={() => setSelectedPatientDetail(null)} className="border-white/40 text-white hover:bg-white/20">
-                      Hide Details
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Patient Info</h4>
-                      <p className="text-sm"><span className="font-medium">Name:</span> {selectedPatientDetail.name}</p>
-                      <p className="text-sm"><span className="font-medium">Phone:</span> {selectedPatientDetail.phone}</p>
-                      <p className="text-sm"><span className="font-medium">Email:</span> {selectedPatientDetail.email || 'Not provided'}</p>
-                      <p className="text-sm"><span className="font-medium">Patient Code:</span> <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">{getPatientCodeById(selectedPatientDetail.id)}</code></p>
-                      {selectedPatientDetail.profession && (
-                        <p className="text-sm"><span className="font-medium">Profession:</span> {selectedPatientDetail.profession.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Appointment</h4>
-                      <p className="text-sm"><span className="font-medium">Date:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleDateString()}</p>
-                      <p className="text-sm"><span className="font-medium">Time:</span> {new Date(selectedPatientDetail.appointment_date).toLocaleTimeString()}</p>
-                      <div className="text-sm flex items-center gap-2">
-                        <span className="font-medium">Status:</span>
-                        <Badge>{selectedPatientDetail.status}</Badge>
-                      </div>
-                      <p className="text-sm"><span className="font-medium">Payment:</span> {selectedPatientDetail.payment_method?.toUpperCase?.() || 'CASH'}</p>
-                      {selectedPatientDetail.last_visit && (
-                        <p className="text-sm"><span className="font-medium">Last Visit:</span> {new Date(selectedPatientDetail.last_visit).toLocaleDateString()}</p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Sessions</h4>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm">
-                          <span className="font-medium">Progress:</span>
-                          <span className={`ml-2 text-xl font-bold ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>
-                            {selectedPatientDetail.status === 'cancelled' ? 0 : (selectedPatientDetail.sessions_completed || 0)}
-                          </span>
-                          <span className="text-gray-500">/</span>
-                          <span className="text-lg font-semibold text-gray-600">
-                            {selectedPatientDetail.status === 'cancelled' ? 0 : (selectedPatientDetail.total_sessions || 8)}
-                          </span>
-                          <span className="ml-1 text-sm text-gray-500">sessions</span>
-                        </p>
-                      </div>
-                      <p className="text-sm"><span className="font-medium">Prescription Generated:</span> {selectedPatientDetail.prescription_generated ? `Yes (${selectedPatientDetail.prescription_count || 0})` : 'No'}</p>
-                      {selectedPatientDetail.treatment_plan?.progress && (
-                        <p className="text-sm"><span className="font-medium">Progress:</span> {selectedPatientDetail.treatment_plan.progress}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Next Appointment Section - Professional Display */}
-                  {selectedPatientDetail.next_appointment_date && (
-                    <div className="mt-6">
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 rounded-lg shadow-md">
-                        <div className="flex items-start gap-4">
-                          <div className="bg-green-500 rounded-full p-3 flex-shrink-0">
-                            <Calendar className="h-6 w-6 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-bold text-green-800 text-lg mb-3 flex items-center gap-2">
-                              📅 Next Appointment Scheduled
-                              <Badge className="bg-green-600 text-white text-xs">Confirmed</Badge>
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4 text-green-600" />
-                                  <div>
-                                    <p className="text-xs text-gray-600 font-medium">Date</p>
-                                    <p className="text-sm font-bold text-gray-900">
-                                      {new Date(selectedPatientDetail.next_appointment_date).toLocaleDateString('en-US', {
-                                        weekday: 'long',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                      })}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-green-600" />
-                                  <div>
-                                    <p className="text-xs text-gray-600 font-medium">Time</p>
-                                    <p className="text-sm font-bold text-gray-900">
-                                      {new Date(selectedPatientDetail.next_appointment_date).toLocaleTimeString('en-US', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: true
-                                      })}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <div>
-                                  <p className="text-xs text-gray-600 font-medium mb-1">Appointment Notes</p>
-                                  <p className="text-sm text-gray-800 bg-white/60 p-2 rounded border border-green-200">
-                                    {selectedPatientDetail.next_appointment_notes || 'Follow-up appointment'}
-                                  </p>
-                                </div>
-                                {selectedPatientDetail.next_appointment_booked_at && (
-                                  <div className="text-xs text-gray-500">
-                                    Booked on: {new Date(selectedPatientDetail.next_appointment_booked_at).toLocaleDateString()}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div className="mt-3 pt-3 border-t border-green-200">
-                              <p className="text-xs text-gray-600 flex items-center gap-1">
-                                <CheckCircle className="h-3 w-3 text-green-600" />
-                                Reminder: Patient will receive notification 24 hours before appointment
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-4">
-                    <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-[#0d5c75]'}`}>Clinical Notes</h4>
-                    <p className="text-sm bg-gray-50 p-3 rounded border">{selectedPatientDetail.notes || 'No complaints noted'}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 📝 TREATMENT NOTES SECTION */}
-              <Card className="mt-6 border-[#2a9d8f]/20 shadow-xl">
-                <CardContent className="p-6">
-                  <TreatmentNotes
-                    patient={selectedPatientDetail}
-                    onNotesUpdated={loadPatients}
-                    isDarkMode={isDarkMode}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </main>
       </div>
 
@@ -4420,7 +4374,7 @@ export default function AdminDashboard() {
       <ScrollToTopButton showAfter={300} />
 
       <Dialog open={isPrescriptionDialogOpen} onOpenChange={setIsPrescriptionDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-24px)] sm:w-full max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
               <div className="w-16 h-16 relative bg-transparent">
@@ -5185,7 +5139,7 @@ export default function AdminDashboard() {
 
       {/* Patient History Dialog */}
       <Dialog open={isPatientHistoryDialogOpen} onOpenChange={setIsPatientHistoryDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-24px)] sm:w-full max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between gap-4">
               <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-3">
@@ -5537,7 +5491,7 @@ export default function AdminDashboard() {
 
       {/* Edit Patient Dialog */}
       <Dialog open={isEditPatientDialogOpen} onOpenChange={setIsEditPatientDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[calc(100vw-24px)] sm:w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-[#0d5c75] font-poppins flex items-center gap-2">
               <Edit3 className="h-5 w-5" />
@@ -5745,7 +5699,7 @@ export default function AdminDashboard() {
 
       {/* Professional Medical-Grade Cancellation Confirmation Dialog */}
       <Dialog open={isCancelConfirmDialogOpen} onOpenChange={setIsCancelConfirmDialogOpen}>
-        <DialogContent className="max-w-2xl overflow-hidden p-0 border-0 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-24px)] sm:w-full max-w-2xl overflow-hidden p-0 border-0 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
           {/* Premium Header with Gradient */}
           <div className="relative bg-gradient-to-br from-red-600 via-red-500 to-orange-600 text-white p-6 pb-8">
             {/* Animated Background Pattern */}

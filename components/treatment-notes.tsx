@@ -295,40 +295,40 @@ export function TreatmentNotes({ patient, onNotesUpdated, isDarkMode = false }: 
               {/* Form fields */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="col-span-1">
-                  <Label>Clinical Notes</Label>
+                  <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Clinical Notes</Label>
                   <Textarea
                     value={newNote.notes}
                     onChange={(e) => setNewNote({ ...newNote, notes: e.target.value })}
                     placeholder="Document observations, patient feedback, etc."
-                    className="min-h-[120px]"
+                    className="min-h-[120px] !bg-white dark:!bg-slate-900 !text-slate-800 dark:!text-slate-100 border-slate-300 dark:border-slate-700 rounded-xl"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label>Diagnosis / Assessment</Label>
+                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Diagnosis / Assessment</Label>
                     <Textarea
                       value={newNote.diagnosis}
                       onChange={(e) => setNewNote({ ...newNote, diagnosis: e.target.value })}
                       placeholder="Current diagnosis and assessment findings"
-                      className="min-h-[100px]"
+                      className="min-h-[100px] !bg-white dark:!bg-slate-900 !text-slate-800 dark:!text-slate-100 border-slate-300 dark:border-slate-700 rounded-xl"
                     />
                   </div>
                   <div>
-                    <Label>Treatment Provided</Label>
+                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Treatment Provided</Label>
                     <Textarea
                       value={newNote.treatmentProvided}
                       onChange={(e) => setNewNote({ ...newNote, treatmentProvided: e.target.value })}
                       placeholder="Adjustments, techniques used, etc."
-                      className="min-h-[100px]"
+                      className="min-h-[100px] !bg-white dark:!bg-slate-900 !text-slate-800 dark:!text-slate-100 border-slate-300 dark:border-slate-700 rounded-xl"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label>Next Steps / Recommendations</Label>
+                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Next Steps / Recommendations</Label>
                     <Textarea
                       value={newNote.nextSteps}
                       onChange={(e) => setNewNote({ ...newNote, nextSteps: e.target.value })}
                       placeholder="Follow-up plan, home care instructions, etc."
-                      className="min-h-[100px]"
+                      className="min-h-[100px] !bg-white dark:!bg-slate-900 !text-slate-800 dark:!text-slate-100 border-slate-300 dark:border-slate-700 rounded-xl"
                     />
                   </div>
                 </div>
