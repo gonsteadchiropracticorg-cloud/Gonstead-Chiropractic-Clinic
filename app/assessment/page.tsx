@@ -50,7 +50,7 @@ export default function AssessmentPage() {
                   <span className="truncate">Spinal Assessment</span>
                 </h1>
                 <p className="text-[10px] text-teal-200 hidden md:block truncate">
-                  Groq AI 120B Biomechanical Analysis & Clinical Report
+                  Clinical Biomechanical Analysis & Spinal Health Report
                 </p>
               </div>
             </div>
@@ -103,7 +103,7 @@ export default function AssessmentPage() {
               Loading Spinal Health Assessment...
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              Preparing diagnostic questions, Groq AI engine & PDF generator
+              Preparing diagnostic questions, clinical biomechanical engine & PDF generator
             </p>
           </div>
         )}
