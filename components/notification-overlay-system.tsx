@@ -199,54 +199,10 @@ export function NotificationOverlaySystem({
     setNotificationQueue(prev => [...prev, queueItem])
   }, [])
 
-  // Simulate real-time notifications
+  // Real-time notifications listener (demo/simulated notifications disabled)
   useEffect(() => {
-    if (currentUser.role !== "doctor") return
-
-    const simulateNotifications = () => {
-      const mockPatients = [
-        "Muhammad Ali", "Fatima Sheikh", "Hassan Ahmed", "Aisha Khan",
-        "Omar Abdullah", "Zainab Malik", "Ali Raza", "Maria Siddiqui"
-      ]
-      
-      const notificationTypes: NotificationData["type"][] = ["appointment", "reminder", "system"]
-      const urgencyLevels: NotificationData["urgency"][] = ["normal", "urgent", "emergency"]
-
-      const createRandomNotification = () => {
-        const type = notificationTypes[Math.floor(Math.random() * notificationTypes.length)]
-        const urgency = urgencyLevels[Math.floor(Math.random() * urgencyLevels.length)]
-        const patient = mockPatients[Math.floor(Math.random() * mockPatients.length)]
-
-        queueNotification({
-          type,
-          patientName: patient,
-          appointmentId: `APT-${Date.now().toString().slice(-6)}`,
-          phoneNumber: `+92 3${Math.floor(Math.random() * 10)}${Math.floor(Math.random() * 10)} ${Math.floor(Math.random() * 9000000) + 1000000}`,
-          appointmentTime: new Date(Date.now() + Math.random() * 4 * 60 * 60 * 1000).toISOString(),
-          sessionType: Math.random() > 0.7 ? "video" : "in_clinic",
-          urgency,
-          message: type === "appointment" ? `New ${urgency} appointment scheduled` :
-                  type === "reminder" ? `Appointment reminder for ${patient}` :
-                  `System notification: ${urgency} priority`,
-          timestamp: new Date(),
-          autoShow: true,
-          source: `${type}_system`
-        })
-      }
-
-      // Add notifications at random intervals
-      const interval = setInterval(() => {
-        if (!isPaused && Math.random() > 0.7) { // 30% chance every interval
-          createRandomNotification()
-        }
-      }, 15000) // Every 15 seconds
-
-      return () => clearInterval(interval)
-    }
-
-    const timer = setTimeout(simulateNotifications, 5000) // Start after 5 seconds
-    return () => clearTimeout(timer)
-  }, [currentUser.role, isPaused, queueNotification])
+    // Only real events triggered via window dispatch are displayed
+  }, [])
 
   const shouldShowNotification = (notification: NotificationQueueItem): boolean => {
     if (filterActive === "all") return true

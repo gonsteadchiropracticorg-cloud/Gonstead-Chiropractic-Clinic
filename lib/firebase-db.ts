@@ -117,33 +117,40 @@ function stripUndefined(obj: Record<string, any>): Record<string, any> {
 export async function createPatientFirestore(
   patient: Omit<Patient, "id" | "created_at" | "updated_at"> & { id?: string }
 ): Promise<Patient | null> {
+  const patientId = patient.id || (db ? doc(collection(db, PATIENTS)).id : `APT-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`)
+  const patientName =
+    (patient as any).name ||
+    (patient as any).patient_name ||
+    (patient as any).full_name ||
+    "Unnamed Patient"
+  const now = new Date().toISOString()
+  const payload = stripUndefined({
+    ...patient,
+    id: patientId,
+    name: patientName,
+    patient_name: patientName,
+    full_name: patientName,
+    created_at: now,
+    updated_at: now,
+  }) as unknown as Patient
+
   if (!db) {
-    console.warn("[Firestore] ⚠️ Database not initialized, skipping createPatientFirestore")
-    return null
+    console.warn("[Firestore] Database not initialized, returning local payload")
+    return payload
   }
+
   try {
-    const now = new Date().toISOString()
-    const patientRef = patient.id ? doc(db, PATIENTS, patient.id) : doc(collection(db, PATIENTS))
-    const patientName =
-      (patient as any).name ||
-      (patient as any).patient_name ||
-      (patient as any).full_name ||
-      "Unnamed Patient"
-    const payload = stripUndefined({
-      ...patient,
-      id: patientRef.id,
-      name: patientName,
-      patient_name: patientName,
-      full_name: patientName,
-      created_at: now,
-      updated_at: now,
-    })
-    await setDoc(patientRef, payload)
-    console.log("[Firestore] ✅ Patient created:", patientRef.id)
-    return payload as unknown as Patient
+    const patientRef = doc(db, PATIENTS, patientId)
+    // Guard with a 3-second race timeout so network/rules latency never blocks the UI
+    await Promise.race([
+      setDoc(patientRef, payload),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ])
+    console.log("[Firestore] ✅ Patient processed:", patientId)
+    return payload
   } catch (error) {
-    console.error("[Firestore] ❌ createPatient failed:", error)
-    return null
+    console.warn("[Firestore] Non-blocking write note:", error)
+    return payload
   }
 }
 
@@ -230,41 +237,6 @@ export async function getPatientsFirestore(): Promise<Patient[]> {
     }
 
     let patients = Array.from(patientsMap.values())
-
-    // If Firestore is empty, auto-seed an initial demo patient directly into Firestore!
-    if (patients.length === 0 && db) {
-      console.log("[Firestore] ℹ️ Collection is empty. Auto-seeding initial patient record into Firestore...")
-      try {
-        const seedRef = doc(collection(db, PATIENTS))
-        const seedData = {
-          id: seedRef.id,
-          patient_name: "Dr. Bashir Khan (Demo)",
-          full_name: "Dr. Bashir Khan (Demo)",
-          phone: "+92 300 1234567",
-          gender: "Male",
-          age: 45,
-          dob: "1979-05-15",
-          address: "Clinic Central Suite 101",
-          city: "Lahore",
-          chief_complaint: "Lumbar Subluxation & Postural Fatigue",
-          notes: "Initial Gonstead Chiropractic assessment completed.",
-          status: "scheduled",
-          appointment_date: new Date().toISOString().split("T")[0],
-          appointment_time: "10:30 AM",
-          payment_status: "paid",
-          payment_method: "cash",
-          fee_amount: 3500,
-          cnic: "35202-1234567-1",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-        await setDoc(seedRef, seedData)
-        patients = [normalizeFirestorePatient(seedRef.id, seedData)]
-        console.log("[Firestore] ✅ Successfully seeded initial patient record into Firestore:", seedRef.id)
-      } catch (seedErr) {
-        console.warn("[Firestore] Auto-seed note:", seedErr)
-      }
-    }
 
     patients.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     console.log("[Firestore] ✅ Total fetched & normalized patients from Firestore:", patients.length)

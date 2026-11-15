@@ -521,8 +521,15 @@ export default function AdminDashboard() {
       try {
         const rawCached = localStorage.getItem("gonstead_patients")
         if (rawCached) {
-          const cached = JSON.parse(rawCached)
-          if (Array.isArray(cached) && cached.length > 0) {
+          const cachedRaw = JSON.parse(rawCached)
+          if (Array.isArray(cachedRaw) && cachedRaw.length > 0) {
+            // Strip out any demo bookings
+            const cached = cachedRaw.filter(
+              (p: any) =>
+                !p.name?.toLowerCase().includes("(demo)") &&
+                !p.patient_name?.toLowerCase().includes("(demo)") &&
+                !p.name?.toLowerCase().includes("demo")
+            )
             setPatients(cached)
             const today = new Date().toDateString()
             setStats({
@@ -559,11 +566,21 @@ export default function AdminDashboard() {
         return
       }
 
-      const firebasePatients = data || []
+      const firebasePatients = (data || []).filter(
+        (p: any) =>
+          !p.name?.toLowerCase().includes("(demo)") &&
+          !p.patient_name?.toLowerCase().includes("(demo)") &&
+          !p.name?.toLowerCase().includes("demo")
+      )
       console.log("Dashboard: Loaded Firebase patients:", firebasePatients.length)
 
       // Load from localStorage as fallback / local additions
-      const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+      const localStoragePatients = JSON.parse(localStorage.getItem("gonstead_patients") || "[]").filter(
+        (p: any) =>
+          !p.name?.toLowerCase().includes("(demo)") &&
+          !p.patient_name?.toLowerCase().includes("(demo)") &&
+          !p.name?.toLowerCase().includes("demo")
+      )
 
       // Merge patients with deduplication, prioritizing fresh Firebase records
       const mergedPatients = [...firebasePatients]
@@ -576,7 +593,7 @@ export default function AdminDashboard() {
         }
       })
 
-      // ALWAYS save the merged/displayed data to localStorage
+      // ALWAYS save the cleaned data to localStorage (removing any previous demo entries)
       try {
         localStorage.setItem("gonstead_patients", JSON.stringify(mergedPatients))
       } catch (err) {

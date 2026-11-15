@@ -6,7 +6,7 @@ const nextConfig = {
   distDir: process.env.BUILD_ELECTRON ? 'out' : '.next',
   reactStrictMode: true,
   experimental: {
-    optimizePackageImports: ['lucide-react'],
+    optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-icons', 'jspdf', 'html2canvas', '@fullcalendar/react'],
     esmExternals: true,
   },
   eslint: {

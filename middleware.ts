@@ -124,9 +124,10 @@ export function middleware(request: NextRequest) {
     rateLimitMap.set(rateLimitKey, { count: 1, timestamp: now })
   }
   
-  // 4. Block requests without referer (suspicious for automated tools)
-  // BUT allow direct access from mobile browsers, bookmarks, etc.
-  if (!referer && !userAgent.includes('google') && !userAgent.includes('bing')) {
+  // In development/localhost, or for standard clinic pages, bypass referer requirement
+  if (process.env.NODE_ENV === 'development' || !url.startsWith('/api')) {
+    // Normal site navigation is always permitted
+  } else if (!referer && !userAgent.includes('google') && !userAgent.includes('bing')) {
     const isDirectAccess = url === '/' || url === '/index'
     const isAssetRequest = url.startsWith('/images/') || 
                           url.startsWith('/fonts/') || 
@@ -144,7 +145,10 @@ export function middleware(request: NextRequest) {
                            userAgent.includes('android') || 
                            userAgent.includes('iphone') || 
                            userAgent.includes('ipad') || 
-                           userAgent.includes('safari')
+                           userAgent.includes('safari') ||
+                           userAgent.includes('chrome') ||
+                           userAgent.includes('firefox') ||
+                           userAgent.includes('edge')
     
     if (!isDirectAccess && !isAssetRequest && !isMobileBrowser) {
       console.log(`Blocked request without referer: ${url} from IP: ${ip}`)

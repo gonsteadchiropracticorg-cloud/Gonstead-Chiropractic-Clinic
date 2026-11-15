@@ -42,16 +42,27 @@ import {
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { useToast } from "@/hooks/use-toast"
+import dynamic from "next/dynamic"
 import { logoutPatient, getPatientAppointmentsFromFirestore } from "@/lib/patient-auth"
 import { updatePatientFirestore, getPrescriptionsFirestore, type Patient } from "@/lib/firebase-db"
 import { doc, updateDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import { EnhancedAppointmentBooking } from "@/components/enhanced-appointment-booking"
 import { AppointmentConfirmation } from "@/components/appointment-confirmation"
 import { checkUpcomingPreAppointmentReminders, type AppointmentReminder } from "@/lib/patient-reminder-service"
 import { registerPatientServiceWorker } from "@/lib/pwa-service-worker"
-import { PatientChatWidget } from "@/components/PatientChatWidget"
-import { PatientPortalAiBooking } from "@/components/PatientPortalAiBooking"
+
+const EnhancedAppointmentBooking = dynamic(
+  () => import("@/components/enhanced-appointment-booking").then((mod) => mod.EnhancedAppointmentBooking),
+  { ssr: false, loading: () => <div className="p-8 text-center text-sm text-slate-500">Loading booking system...</div> }
+)
+const PatientChatWidget = dynamic(
+  () => import("@/components/PatientChatWidget").then((mod) => mod.PatientChatWidget),
+  { ssr: false }
+)
+const PatientPortalAiBooking = dynamic(
+  () => import("@/components/PatientPortalAiBooking").then((mod) => mod.PatientPortalAiBooking),
+  { ssr: false }
+)
 
 export default function PatientPortalPage() {
   const router = useRouter()
