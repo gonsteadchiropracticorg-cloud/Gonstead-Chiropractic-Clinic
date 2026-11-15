@@ -120,6 +120,12 @@ export async function registerPatient(params: {
       msg = "Password should be at least 6 characters long."
     } else if (err.code === "auth/invalid-email") {
       msg = "Please enter a valid email address."
+    } else if (err.code === "auth/unauthorized-domain") {
+      msg = "Domain not authorized in Firebase. Please add your Vercel domain to Firebase Console -> Authentication -> Settings -> Authorized Domains."
+    } else if (err.code === "auth/operation-not-allowed") {
+      msg = "Email/Password sign-in is not enabled in Firebase Console -> Authentication -> Sign-in method."
+    } else if (err.code === "permission-denied" || err.message?.includes("insufficient permissions")) {
+      msg = "Firestore permission denied. Please check Firestore Database -> Rules in Firebase Console."
     }
     return { user: null, account: null, error: msg }
   }
@@ -186,6 +192,10 @@ export async function loginPatient(
       err.code === "auth/invalid-credential"
     ) {
       msg = "Invalid email or password. Please check your credentials."
+    } else if (err.code === "auth/unauthorized-domain") {
+      msg = "Domain not authorized in Firebase. Please add your Vercel domain to Firebase Console -> Authentication -> Settings -> Authorized Domains."
+    } else if (err.code === "permission-denied" || err.message?.includes("insufficient permissions")) {
+      msg = "Firestore permission denied. Please check Firestore Database -> Rules in Firebase Console."
     }
     return { user: null, account: null, error: msg }
   }
