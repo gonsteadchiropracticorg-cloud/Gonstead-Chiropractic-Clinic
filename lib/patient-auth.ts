@@ -40,6 +40,13 @@ export interface PatientAccount {
   emergency_contact?: string
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ])
+}
+
 const PATIENT_ACCOUNTS = "patient_accounts"
 const PATIENTS = "patients"
 
@@ -61,13 +68,31 @@ export async function registerPatient(params: {
   const cleanName = params.name.trim()
 
   try {
-    // 1. Create Firebase Auth user
-    const cred = await createUserWithEmailAndPassword(auth, cleanEmail, params.password)
-    const user = cred.user
+    // 1. Create Firebase Auth user (or sign in if already created from a previous attempt)
+    let user: User | null = null
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, cleanEmail, params.password)
+      user = cred.user
+    } catch (authErr: any) {
+      if (authErr.code === "auth/email-already-in-use") {
+        try {
+          const signInCred = await signInWithEmailAndPassword(auth, cleanEmail, params.password)
+          user = signInCred.user
+        } catch {
+          throw authErr
+        }
+      } else {
+        throw authErr
+      }
+    }
+
+    if (!user) {
+      return { user: null, account: null, error: "Failed to authenticate account." }
+    }
 
     const now = new Date().toISOString()
 
-    // 2. Link or create Patient document in Firestore
+    // 2. Build Patient document & Account record
     const patientDocRef = doc(collection(db, PATIENTS))
     const patientData = {
       id: patientDocRef.id,
@@ -85,9 +110,7 @@ export async function registerPatient(params: {
       payment_method: "cash",
       booking_source: "patient_portal",
     }
-    await setDoc(patientDocRef, patientData)
 
-    // 3. Save Account record in `patient_accounts` Firestore collection
     const accountDocRef = doc(db, PATIENT_ACCOUNTS, user.uid)
     const accountPayload: PatientAccount = {
       uid: user.uid,
@@ -99,15 +122,34 @@ export async function registerPatient(params: {
       role: "patient",
       patient_id: patientDocRef.id,
     }
-    await setDoc(accountDocRef, accountPayload)
 
-    // 4. Automatically persist session in localStorage so user is signed in immediately
+    // 3. Immediately persist session in localStorage so the user is authenticated instantly
     if (typeof window !== "undefined") {
       localStorage.setItem("patient_authenticated", "true")
       localStorage.setItem("patient_uid", user.uid)
       localStorage.setItem("patient_email", cleanEmail)
       localStorage.setItem("patient_name", cleanName)
+      localStorage.setItem("patient_phone", cleanPhone)
       localStorage.setItem("patient_id", patientDocRef.id)
+
+      try {
+        const localPatients: any[] = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+        localStorage.setItem("gonstead_patients", JSON.stringify([patientData, ...localPatients]))
+      } catch {}
+    }
+
+    // 4. Save to Firestore with a 3.5s timeout guard so network/rules latency never hangs the UI
+    try {
+      await withTimeout(
+        Promise.all([
+          setDoc(patientDocRef, patientData),
+          setDoc(accountDocRef, accountPayload),
+        ]),
+        3500,
+        null
+      )
+    } catch (fsErr) {
+      console.warn("[Firestore] Non-blocking registration sync note:", fsErr)
     }
 
     return { user, account: accountPayload, error: null }
@@ -148,37 +190,45 @@ export async function loginPatient(
     const cred = await signInWithEmailAndPassword(auth, cleanEmail, pass)
     const user = cred.user
 
-    // Fetch account details from Firestore
-    const accountRef = doc(db, PATIENT_ACCOUNTS, user.uid)
-    const accountSnap = await getDoc(accountRef)
+    const fallbackName = user.displayName || user.email?.split("@")[0] || "Patient"
 
+    // Set authenticated session immediately
+    if (typeof window !== "undefined") {
+      localStorage.setItem("patient_authenticated", "true")
+      localStorage.setItem("patient_uid", user.uid)
+      localStorage.setItem("patient_email", cleanEmail)
+      localStorage.setItem("patient_name", fallbackName)
+    }
+
+    // Fetch account details from Firestore with a 3-second timeout guard
+    const accountRef = doc(db, PATIENT_ACCOUNTS, user.uid)
     let account: PatientAccount | null = null
 
-    if (accountSnap.exists()) {
-      account = accountSnap.data() as PatientAccount
-      // Update last_login_at timestamp in Firestore
-      await updateDoc(accountRef, { last_login_at: new Date().toISOString() })
-    } else {
-      // Fallback: build account if missing in Firestore
+    try {
+      const accountSnap = await withTimeout(getDoc(accountRef), 3000, null)
+
+      if (accountSnap && accountSnap.exists()) {
+        account = accountSnap.data() as PatientAccount
+        if (typeof window !== "undefined") {
+          localStorage.setItem("patient_name", account.name)
+          if (account.phone) localStorage.setItem("patient_phone", account.phone)
+          if (account.patient_id) localStorage.setItem("patient_id", account.patient_id)
+        }
+        updateDoc(accountRef, { last_login_at: new Date().toISOString() }).catch(() => {})
+      }
+    } catch (fsErr) {
+      console.warn("[Firestore] Non-blocking account fetch note:", fsErr)
+    }
+
+    if (!account) {
       account = {
         uid: user.uid,
-        name: user.displayName || user.email?.split("@")[0] || "Patient",
+        name: fallbackName,
         email: cleanEmail,
         phone: user.phoneNumber || "",
         created_at: new Date().toISOString(),
         last_login_at: new Date().toISOString(),
         role: "patient",
-      }
-      await setDoc(accountRef, account)
-    }
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem("patient_authenticated", "true")
-      localStorage.setItem("patient_uid", user.uid)
-      localStorage.setItem("patient_email", cleanEmail)
-      localStorage.setItem("patient_name", account.name)
-      if (account.patient_id) {
-        localStorage.setItem("patient_id", account.patient_id)
       }
     }
 
@@ -254,16 +304,18 @@ export async function getPatientAppointmentsFromFirestore(
 
     for (const q of queries) {
       try {
-        const snap = await getDocs(q)
-        snap.docs.forEach((d) => {
-          if (!resultsMap.has(d.id)) {
-            const data = d.data()
-            // Do not show placeholder registration records that have no scheduled appointment date
-            if (data.appointment_date || data.booking_source === "admin_dashboard" || data.status === "completed") {
-              resultsMap.set(d.id, normalizeFirestorePatient(d.id, data))
+        const snap = await withTimeout(getDocs(q), 3000, null)
+        if (snap) {
+          snap.docs.forEach((d) => {
+            if (!resultsMap.has(d.id)) {
+              const data = d.data()
+              // Do not show placeholder registration records that have no scheduled appointment date
+              if (data.appointment_date || data.booking_source === "admin_dashboard" || data.status === "completed") {
+                resultsMap.set(d.id, normalizeFirestorePatient(d.id, data))
+              }
             }
-          }
-        })
+          })
+        }
       } catch (e) {
         // Skip query failure
       }
@@ -273,37 +325,35 @@ export async function getPatientAppointmentsFromFirestore(
     if (cleanPhone) {
       try {
         const qQueue = query(collection(db, "appointment_queue"), where("patient_phone", "==", cleanPhone))
-        const snapQueue = await getDocs(qQueue)
-        snapQueue.docs.forEach((d) => {
-          if (!resultsMap.has(d.id)) {
-            resultsMap.set(d.id, normalizeFirestorePatient(d.id, d.data()))
-          }
-        })
+        const snapQueue = await withTimeout(getDocs(qQueue), 3000, null)
+        if (snapQueue) {
+          snapQueue.docs.forEach((d) => {
+            if (!resultsMap.has(d.id)) {
+              resultsMap.set(d.id, normalizeFirestorePatient(d.id, d.data()))
+            }
+          })
+        }
       } catch (e) {}
     }
 
-    // 3. Match only by exact Email or exact Phone (never by name alone, which pulls unrelated patients)
-    try {
-      if (cleanEmail || cleanPhone) {
-        const allDocsSnap = await getDocs(collection(db, PATIENTS))
-        allDocsSnap.docs.forEach((d) => {
-          if (!resultsMap.has(d.id)) {
-            const data = d.data()
-            const docEmail = (data.email || data.patient_email || "").toString().trim().toLowerCase()
-            const docPhone = (data.phone || data.patient_phone || "").toString().replace(/\D/g, "")
-
-            const isEmailMatch = cleanEmail && docEmail && docEmail === cleanEmail
-            const isPhoneMatch = cleanPhone && docPhone && cleanPhone.length >= 8 && docPhone === cleanPhone
-
-            // Ensure we only link appointments with actual dates/details
-            if ((isEmailMatch || isPhoneMatch) && (data.appointment_date || data.booking_source === "admin_dashboard")) {
-              resultsMap.set(d.id, normalizeFirestorePatient(d.id, data))
+    // 3. Fallback to localStorage cache if resultsMap is empty
+    if (resultsMap.size === 0 && typeof window !== "undefined") {
+      try {
+        const localList: any[] = JSON.parse(localStorage.getItem("gonstead_patients") || "[]")
+        localList.forEach((p) => {
+          const pEmail = (p.email || p.patient_email || "").toString().toLowerCase()
+          const pPhone = (p.phone || p.patient_phone || "").toString().replace(/\D/g, "")
+          if (
+            (cleanEmail && pEmail === cleanEmail) ||
+            (cleanPhone && pPhone && (cleanPhone.includes(pPhone) || pPhone.includes(cleanPhone)))
+          ) {
+            const pid = p.id || String(Math.random())
+            if (!resultsMap.has(pid)) {
+              resultsMap.set(pid, normalizeFirestorePatient(pid, p))
             }
           }
         })
-      }
-    } catch (scanErr) {
-      console.warn("Patient match note:", scanErr)
+      } catch {}
     }
 
     const list = Array.from(resultsMap.values())

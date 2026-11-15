@@ -185,53 +185,57 @@ export default function PatientPortalPage() {
     const uu = uid || patientUid
     const nm = name || patientName
 
-    // Load Appointments
-    const list = await getPatientAppointmentsFromFirestore(em, ph, uu, nm)
-    setAppointments(list)
-
-    // Load Reminders
-    const rems = checkUpcomingPreAppointmentReminders(list, nm)
-    setReminders(rems)
-
-    // Fill profile extra details if patient object found
-    if (list.length > 0) {
-      const p = list[0] as any
-      if (p.dob) setEditDob(p.dob)
-      if (p.gender) setEditGender(p.gender)
-      if (p.address) setEditAddress(p.address)
-      if (p.demographics?.emergency_contact) setEditEmergency(p.demographics.emergency_contact)
-    }
-
-    // Load Prescriptions
-    setIsLoadingPrescriptions(true)
     try {
-      const allRx = await getPrescriptionsFirestore()
-      const cEmail = em.trim().toLowerCase()
-      const cPhone = ph.replace(/\D/g, "")
-      const cName = nm.trim().toLowerCase()
+      // Load Appointments with timeout guarantee
+      const list = await getPatientAppointmentsFromFirestore(em, ph, uu, nm)
+      setAppointments(list)
 
-      const userRx = allRx.filter((rx) => {
-        const rxEmail = (rx.patient_email || "").toLowerCase()
-        const rxPhone = (rx.patient_phone || "").replace(/\D/g, "")
-        const rxName = (rx.patient_name || "").toLowerCase()
-        const rxPatientId = rx.patient_id || ""
+      // Load Reminders
+      const rems = checkUpcomingPreAppointmentReminders(list, nm)
+      setReminders(rems)
 
-        return (
-          (cEmail && rxEmail === cEmail) ||
-          (cPhone && rxPhone && (rxPhone.includes(cPhone) || cPhone.includes(rxPhone))) ||
-          (cName && rxName && (rxName.includes(cName) || cName.includes(rxName))) ||
-          (patientId && rxPatientId === patientId)
-        )
-      })
+      // Fill profile extra details if patient object found
+      if (list.length > 0) {
+        const p = list[0] as any
+        if (p.dob) setEditDob(p.dob)
+        if (p.gender) setEditGender(p.gender)
+        if (p.address) setEditAddress(p.address)
+        if (p.demographics?.emergency_contact) setEditEmergency(p.demographics.emergency_contact)
+      }
 
-      setPrescriptions(userRx)
-    } catch (e) {
-      console.warn("Load Prescriptions note:", e)
+      // Load Prescriptions
+      setIsLoadingPrescriptions(true)
+      try {
+        const allRx = await getPrescriptionsFirestore()
+        const cEmail = em.trim().toLowerCase()
+        const cPhone = ph.replace(/\D/g, "")
+        const cName = nm.trim().toLowerCase()
+
+        const userRx = allRx.filter((rx) => {
+          const rxEmail = (rx.patient_email || "").toLowerCase()
+          const rxPhone = (rx.patient_phone || "").replace(/\D/g, "")
+          const rxName = (rx.patient_name || "").toLowerCase()
+          const rxPatientId = rx.patient_id || ""
+
+          return (
+            (cEmail && rxEmail === cEmail) ||
+            (cPhone && rxPhone && (rxPhone.includes(cPhone) || cPhone.includes(rxPhone))) ||
+            (cName && rxName && (rxName.includes(cName) || cName.includes(rxName))) ||
+            (patientId && rxPatientId === patientId)
+          )
+        })
+
+        setPrescriptions(userRx)
+      } catch (e) {
+        console.warn("Load Prescriptions note:", e)
+      } finally {
+        setIsLoadingPrescriptions(false)
+      }
+    } catch (loadErr) {
+      console.warn("loadData error note:", loadErr)
     } finally {
-      setIsLoadingPrescriptions(false)
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const handleLogout = async () => {
