@@ -340,9 +340,34 @@
         });
         
         function initializeBookingFeatures() {
+            // Read incoming query params from Assessment
+            const params = new URLSearchParams(window.location.search);
+            const patientName = params.get('name');
+            const patientPhone = params.get('phone');
+            const problem = params.get('problem') || params.get('notes');
+
+            if (patientName || problem) {
+                const welcomeTitle = document.querySelector('.welcome-message h2');
+                if (welcomeTitle && patientName) {
+                    welcomeTitle.textContent = `Welcome ${patientName}! Ready to Schedule Your Consultation?`;
+                }
+
+                if (problem) {
+                    const welcomeP = document.querySelector('.welcome-message p');
+                    if (welcomeP) {
+                        welcomeP.innerHTML = `Your spinal assessment indicated: <strong style="color:#0d5c75;">${decodeURIComponent(problem)}</strong>.<br>Connect directly with Dr. Bashir Khan's clinic desk to schedule your clinical examination.`;
+                    }
+                }
+            }
+
             // Add loading states to interactive elements
             const phoneButton = document.querySelector('a[href^="tel:"]');
             const whatsappButton = document.querySelector('a[href^="https://wa.me"]');
+
+            if (whatsappButton && (patientName || problem)) {
+                const msg = `Dear Gonstead Chiropractic Clinic,%0A%0AMy name is ${encodeURIComponent(patientName || 'Patient')}${patientPhone ? ' (' + encodeURIComponent(patientPhone) + ')' : ''}.%0AI completed the Spinal Health Assessment (${encodeURIComponent(problem || 'Spine Consultation')}).%0AI would like to schedule an in-person consultation with Dr. Bashir Khan at your earliest convenience.%0A%0AThank you!`;
+                whatsappButton.href = `https://wa.me/923046996267?text=${msg}`;
+            }
             
             if (phoneButton) {
                 phoneButton.addEventListener('click', () => {

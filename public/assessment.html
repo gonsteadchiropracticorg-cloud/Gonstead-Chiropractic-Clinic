@@ -2651,9 +2651,15 @@ body { font-family:'Inter',sans-serif; background:#c9c5bc; color:var(--ink); pad
             }
         }
         
-        // Book Consultation - Navigate to appointment booking page
+        // Book Consultation - Navigate to appointment booking page with patient context
         function bookConsultation() {
-            window.location.href = '/appointment-booking.html';
+            const resultsData = getCurrentResults();
+            const patientName = assessmentData.name || 'Patient';
+            const patientPhone = assessmentData.phone || '';
+            const findings = resultsData.conditions || [];
+            const primaryCondition = findings[0]?.name || 'Spinal Assessment Consultation';
+            const bookingUrl = `/appointment-booking.html?name=${encodeURIComponent(patientName)}&phone=${encodeURIComponent(patientPhone)}&problem=${encodeURIComponent('From Fullscreen Assessment: ' + primaryCondition)}`;
+            window.location.href = bookingUrl;
         }
         
         // Get current assessment results for PDF generation
@@ -2784,14 +2790,10 @@ body { font-family:'Inter',sans-serif; background:#c9c5bc; color:var(--ink); pad
             const frameDoc = previewFrame?.contentDocument;
             const reportNode = frameDoc?.querySelector('.report');
 
-            if (!previewFrame || !frameDoc || !reportNode) {
-                throw new Error('Live report preview is not available for PDF export');
-            }
-
             const patientSlug = sanitizeFileName(resultsData.patientName);
             const fileName = `gonstead_assessment_${patientSlug}_${Date.now()}.pdf`;
 
-            // Build an off-screen export host and inject the template styles so html2pdf captures the exact visual design.
+            // Build an off-screen export host and inject the template styles so html2canvas captures the exact visual design.
             const exportHost = document.createElement('div');
             exportHost.style.position = 'fixed';
             exportHost.style.left = '-100000px';
@@ -2800,26 +2802,41 @@ body { font-family:'Inter',sans-serif; background:#c9c5bc; color:var(--ink); pad
             exportHost.style.background = '#c9c5bc';
             exportHost.style.zIndex = '-1';
 
-            // Include external stylesheets (fonts) and inline template styles from iframe.
-            frameDoc.querySelectorAll('link[rel="stylesheet"]').forEach((link) => {
-                const clonedLink = document.createElement('link');
-                clonedLink.rel = 'stylesheet';
-                clonedLink.href = link.href;
-                exportHost.appendChild(clonedLink);
-            });
+            let reportClone = null;
 
-            const mergedStyles = Array.from(frameDoc.querySelectorAll('style'))
-                .map((styleTag) => styleTag.textContent || '')
-                .join('\n');
+            if (previewFrame && frameDoc && reportNode) {
+                // Include external stylesheets (fonts) and inline template styles from iframe.
+                frameDoc.querySelectorAll('link[rel="stylesheet"]').forEach((link) => {
+                    const clonedLink = document.createElement('link');
+                    clonedLink.rel = 'stylesheet';
+                    clonedLink.href = link.href;
+                    exportHost.appendChild(clonedLink);
+                });
 
-            if (mergedStyles.trim()) {
-                const styleEl = document.createElement('style');
-                styleEl.textContent = mergedStyles;
-                exportHost.appendChild(styleEl);
+                const mergedStyles = Array.from(frameDoc.querySelectorAll('style'))
+                    .map((styleTag) => styleTag.textContent || '')
+                    .join('\n');
+
+                if (mergedStyles.trim()) {
+                    const styleEl = document.createElement('style');
+                    styleEl.textContent = mergedStyles;
+                    exportHost.appendChild(styleEl);
+                }
+
+                reportClone = reportNode.cloneNode(true);
+                exportHost.appendChild(reportClone);
+            } else {
+                // Fallback: render from template directly if iframe not available
+                const docHtml = buildV2AssessmentReportDocument(resultsData, assessmentData, new Date());
+                const parser = new DOMParser();
+                const parsedDoc = parser.parseFromString(docHtml, 'text/html');
+                const parsedReport = parsedDoc.querySelector('.report');
+                parsedDoc.querySelectorAll('style').forEach(st => exportHost.appendChild(st.cloneNode(true)));
+                parsedDoc.querySelectorAll('link[rel="stylesheet"]').forEach(lk => exportHost.appendChild(lk.cloneNode(true)));
+                reportClone = parsedReport ? parsedReport.cloneNode(true) : document.createElement('div');
+                exportHost.appendChild(reportClone);
             }
 
-            const reportClone = reportNode.cloneNode(true);
-            exportHost.appendChild(reportClone);
             document.body.appendChild(exportHost);
 
             // Let fonts/styles settle before capture for maximum visual fidelity.
