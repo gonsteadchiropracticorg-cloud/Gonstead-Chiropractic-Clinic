@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: process.env.BUILD_ELECTRON ? 'export' : undefined,
-  serverExternalPackages: ['geoip-lite', 'country-flag-icons'],
+  serverExternalPackages: ['country-flag-icons'],
   trailingSlash: true,
   distDir: process.env.BUILD_ELECTRON ? 'out' : '.next',
   reactStrictMode: true,

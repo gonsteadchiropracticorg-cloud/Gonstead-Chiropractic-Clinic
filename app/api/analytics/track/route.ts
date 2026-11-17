@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import geoip from 'geoip-lite'
 
 // In-memory storage for demo (in production, use a database)
 interface AnalyticsEvent {
@@ -165,21 +164,12 @@ export async function POST(request: NextRequest) {
                     request.ip || 
                     '127.0.0.1' // fallback for development
 
-    // Get geolocation data
-    let location = undefined
-    try {
-      const geo = geoip.lookup(clientIP === '127.0.0.1' ? '8.8.8.8' : clientIP) // Use Google DNS for demo
-      if (geo) {
-        location = {
-          country: geo.country || 'Unknown',
-          region: geo.region || 'Unknown', 
-          city: geo.city || 'Unknown',
-          timezone: geo.timezone || 'Unknown',
-          ll: geo.ll
-        }
-      }
-    } catch (geoError) {
-      console.warn('Geolocation lookup failed:', geoError)
+    // Get geolocation data safely from request headers
+    let location = {
+      country: headersList.get('x-vercel-ip-country') || 'PK',
+      region: headersList.get('x-vercel-ip-country-region') || 'KP',
+      city: headersList.get('x-vercel-ip-city') || 'Nowshera',
+      timezone: 'Asia/Karachi',
     }
 
     // Extract performance data if available
